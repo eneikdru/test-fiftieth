@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Вход и восстановление пароля — НИИ Эпидемиологии</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary": "#00328a",
+            "on-primary": "#ffffff",
+            "background": "#f9f9fc",
+            "on-surface": "#1a1c1e",
+            "on-surface-variant": "#434653",
+            "outline": "#737685",
+            "outline-variant": "#c3c6d6",
+            "surface-container-lowest": "#ffffff",
+            "surface-container": "#eeeef0",
+            "error": "#ba1a1a",
+            "error-container": "#ffdad6",
+            "on-error-container": "#93000a"
+          },
+          fontFamily: {
+            "sans": ["Inter", "sans-serif"],
+            "heading": ["Manrope", "sans-serif"]
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-background min-h-screen text-on-surface antialiased font-sans">
+  <div id="app"></div>
+
+  <script>
+    // State machine reproducing LoginRecovery.svelte behavior in standalone harness
+    let state = {
+      mode: 'login', // 'login' | 'recovery' | 'recovery_sent' | 'authenticated'
+      username: '',
+      password: '',
+      recoveryIdentity: '',
+      isLoading: false,
+      errorMessage: '',
+      successMessage: '',
+      currentUser: null
+    };
+
+    function render() {
+      const app = document.getElementById('app');
+      const isAdmin = state.currentUser && state.currentUser.role === 'ADMIN';
+
+      let content = `
+        <div class="auth-wrapper font-sans min-h-screen bg-[#f9f9fc] text-[#1a1c1e] flex flex-col justify-between antialiased">
+          <!-- Top App Bar -->
+          <header class="w-full top-0 sticky bg-[#f9f9fc] flex items-center justify-between h-16 px-6 max-w-md mx-auto z-10 border-b border-[#e2e2e5]">
+      `;
+
+      if (state.mode === 'recovery' || state.mode === 'recovery_sent') {
+        content += `
+            <button
+              id="back-to-login-btn"
+              type="button"
+              aria-label="Назад к входу"
+              onclick="switchToLogin()"
+              class="mr-4 text-[#00328a] hover:opacity-80 transition-opacity flex items-center justify-center p-2 rounded-full focus:outline-none focus:ring-2 focus:ring-[#00328a]"
+            >
+              <span class="text-xl font-bold">←</span>
+            </button>
+            <h1 class="font-semibold text-lg text-[#00328a] flex-1">Восстановление</h1>
+        `;
+      } else {
+        content += `
+            <div class="flex items-center space-x-2">
+              <span class="text-[#00328a] font-bold text-xl tracking-tight">ЭпидБаза</span>
+            </div>
+            <span class="text-xs text-[#434653] font-medium bg-[#eeeef0] px-2.5 py-1 rounded-full">НИИ Эпидемиологии</span>
+        `;
+      }
+
+      content += `
+          </header>
+
+          <!-- Main Canvas -->
+          <main class="flex-1 flex flex-col justify-center px-6 max-w-md mx-auto w-full pt-6 pb-8">
+      `;
+
+      if (state.mode === 'login') {
+        content += `
+            <!-- LOGIN VIEW -->
+            <div class="mb-8">
+              <h2 class="text-3xl font-bold text-[#1a1c1e] mb-2 tracking-tight">Вход в систему</h2>
+              <p class="text-base text-[#434653]">
+                База знаний по эпидемиологии. Введите учетные данные института для доступа.
+              </p>
+            </div>
+
+            ${state.errorMessage ? `
+              <div role="alert" class="mb-6 p-4 rounded-lg bg-[#ffdad6] text-[#93000a] text-sm border border-[#ba1a1a]/20 flex items-start space-x-2">
+                <span class="font-bold">!</span>
+                <span>${state.errorMessage}</span>
+              </div>
+            ` : ''}
+
+            <form id="login-form" onsubmit="handleLogin(event)" class="flex flex-col space-y-5" novalidate>
+              <div>
+                <label for="username-input" class="block text-sm font-semibold text-[#1a1c1e] mb-2">
+                  Имя пользователя или Email
+                </label>
+                <div class="relative rounded-md border border-[#c3c6d6] bg-white focus-within:border-[#00328a] focus-within:ring-2 focus-within:ring-[#00328a]/10 transition-all">
+                  <input
+                    id="username-input"
+                    type="text"
+                    value="${state.username}"
+                    oninput="state.username = this.value"
+                    placeholder="ivanov@epidemiology-inst.ru"
+                    required
+                    class="w-full h-14 px-4 bg-transparent border-none rounded-md focus:outline-none text-base text-[#1a1c1e] placeholder-[#737685]"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <div class="flex justify-between items-center mb-2">
+                  <label for="password-input" class="block text-sm font-semibold text-[#1a1c1e]">
+                    Пароль
+                  </label>
+                  <button
+                    id="forgot-password-link"
+                    type="button"
+                    onclick="switchToRecovery()"
+                    class="text-sm font-medium text-[#00328a] hover:underline focus:outline-none focus:ring-1 focus:ring-[#00328a] rounded px-1"
+                  >
+                    Забыли пароль?
+                  </button>
+                </div>
+                <div class="relative rounded-md border border-[#c3c6d6] bg-white focus-within:border-[#00328a] focus-within:ring-2 focus-within:ring-[#00328a]/10 transition-all">
+                  <input
+                    id="password-input"
+                    type="password"
+                    value="${state.password}"
+                    oninput="state.password = this.value"
+                    placeholder="••••••••"
+                    required
+                    class="w-full h-14 px-4 bg-transparent border-none rounded-md focus:outline-none text-base text-[#1a1c1e] placeholder-[#737685]"
+                  />
+                </div>
+              </div>
+
+              <div class="pt-4">
+                <button
+                  type="submit"
+                  class="w-full h-13 bg-[#00328a] text-white rounded-lg font-medium text-base py-3 flex items-center justify-center hover:bg-[#002566] active:scale-[0.98] transition-all shadow-sm"
+                >
+                  <span>Войти</span>
+                </button>
+              </div>
+            </form>
+        `;
+      } else if (state.mode === 'recovery') {
+        content += `
+            <!-- RECOVERY REQUEST VIEW -->
+            <div class="mb-8">
+              <h2 class="text-3xl font-bold text-[#1a1c1e] mb-2 tracking-tight">Забыли пароль?</h2>
+              <p class="text-base text-[#434653]">
+                Введите ваш email или логин, чтобы получить инструкции по сбросу пароля.
+              </p>
+            </div>
+
+            ${state.errorMessage ? `
+              <div role="alert" class="mb-6 p-4 rounded-lg bg-[#ffdad6] text-[#93000a] text-sm border border-[#ba1a1a]/20 flex items-start space-x-2">
+                <span class="font-bold">!</span>
+                <span>${state.errorMessage}</span>
+              </div>
+            ` : ''}
+
+            <form id="recovery-form" onsubmit="handleRecoveryRequest(event)" class="flex flex-col space-y-5" novalidate>
+              <div>
+                <label for="recovery-identity-input" class="block text-sm font-semibold text-[#1a1c1e] mb-2">
+                  Email или логин
+                </label>
+                <div class="relative rounded-md border border-[#c3c6d6] bg-white focus-within:border-[#00328a] focus-within:ring-2 focus-within:ring-[#00328a]/10 transition-all">
+                  <input
+                    id="recovery-identity-input"
+                    type="text"
+                    value="${state.recoveryIdentity}"
+                    oninput="state.recoveryIdentity = this.value"
+                    placeholder="name@example.com"
+                    required
+                    class="w-full h-14 px-4 bg-transparent border-none rounded-md focus:outline-none text-base text-[#1a1c1e] placeholder-[#737685]"
+                  />
+                </div>
+              </div>
+
+              <div class="pt-4">
+                <button
+                  type="submit"
+                  class="w-full h-13 bg-[#00328a] text-white rounded-lg font-medium text-base py-3 flex items-center justify-center hover:bg-[#002566] active:scale-[0.98] transition-all shadow-sm"
+                >
+                  <span>Отправить</span>
+                </button>
+              </div>
+            </form>
+        `;
+      } else if (state.mode === 'authenticated') {
+        content += `
+            <!-- AUTHENTICATED USER VIEW -->
+            <div class="bg-white p-6 rounded-xl border border-[#c3c6d6] shadow-sm space-y-6">
+              <div class="flex items-center space-x-3 pb-4 border-b border-[#eeeef0]">
+                <div class="w-10 h-10 rounded-full bg-[#00328a] text-white flex items-center justify-center font-bold text-lg">
+                  ${(state.currentUser?.full_name || state.currentUser?.username || 'С')[0]}
+                </div>
+                <div>
+                  <h3 class="font-bold text-[#1a1c1e] text-base">${state.currentUser?.full_name || state.currentUser?.username}</h3>
+                  <p class="text-xs text-[#434653]">
+                    Роль: <span class="font-semibold">${state.currentUser?.role || 'RESEARCHER'}</span>
+                  </p>
+                </div>
+              </div>
+
+              <div class="space-y-3">
+                <h4 class="text-sm font-semibold text-[#1a1c1e]">Каталог эпидемиологических материалов</h4>
+                <p class="text-xs text-[#434653]">
+                  Вам доступен просмотр и поиск протоколов расследований вспышек, отчетов эпиднадзора и методических руководств.
+                </p>
+
+                ${isAdmin ? `
+                  <div class="p-3 bg-[#f3f3f6] rounded border border-[#c3c6d6] flex space-x-2">
+                    <button class="px-3 py-1.5 bg-[#00328a] text-white text-xs rounded font-medium">Загрузить документ</button>
+                    <button class="px-3 py-1.5 bg-[#ba1a1a] text-white text-xs rounded font-medium">Удалить</button>
+                  </div>
+                ` : `
+                  <!-- Non-admin / employee session: upload and delete controls are entirely hidden -->
+                  <div id="employee-message" class="p-3 bg-[#f3f3f6] text-[#434653] text-xs rounded">
+                    Права доступа: Просмотр и поиск материалов (загрузка и удаление ограничены администратором института)
+                  </div>
+                `}
+              </div>
+
+              <div class="pt-2">
+                <button
+                  type="button"
+                  onclick="handleLogout()"
+                  class="w-full py-2.5 border border-[#c3c6d6] text-[#1a1c1e] hover:bg-[#eeeef0] rounded-lg text-sm font-medium transition-colors"
+                >
+                  Выйти из системы
+                </button>
+              </div>
+            </div>
+        `;
+      }
+
+      content += `
+          </main>
+
+          <!-- Footer -->
+          <footer class="w-full py-4 text-center text-xs text-[#737685] border-t border-[#eeeef0]">
+            <p>Российский научно-исследовательский институт эпидемиологии</p>
+          </footer>
+        </div>
+      `;
+
+      app.innerHTML = content;
+    }
+
+    function switchToRecovery() {
+      state.errorMessage = '';
+      state.successMessage = '';
+      state.mode = 'recovery';
+      render();
+    }
+
+    function switchToLogin() {
+      state.errorMessage = '';
+      state.successMessage = '';
+      state.mode = 'login';
+      render();
+    }
+
+    function handleLogin(event) {
+      if (event) event.preventDefault();
+      if (!state.username.trim() || !state.password) {
+        state.errorMessage = 'Заполните все обязательные поля.';
+        render();
+        return;
+      }
+
+      state.currentUser = {
+        id: 101,
+        username: state.username.trim(),
+        role: 'RESEARCHER',
+        full_name: 'Сотрудник института',
+        email: 'ivanov@epidemiology-inst.ru'
+      };
+      state.mode = 'authenticated';
+      render();
+    }
+
+    function handleRecoveryRequest(event) {
+      if (event) event.preventDefault();
+      if (!state.recoveryIdentity.trim()) {
+        state.errorMessage = 'Пожалуйста, укажите ваш email или имя пользователя.';
+        render();
+        return;
+      }
+
+      state.successMessage = 'Инструкции по восстановлению пароля отправлены на ваш электронный адрес.';
+      state.mode = 'recovery_sent';
+      render();
+    }
+
+    function handleLogout() {
+      state.currentUser = null;
+      state.username = '';
+      state.password = '';
+      state.recoveryIdentity = '';
+      state.errorMessage = '';
+      state.successMessage = '';
+      state.mode = 'login';
+      render();
+    }
+
+    // Initial render
+    render();
+  </script>
+</body>
+</html>
