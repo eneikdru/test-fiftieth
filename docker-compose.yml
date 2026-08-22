@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: epidemiology_db
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-epidemiology_db}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backup:
+    image: postgres:15-alpine
+    container_name: epidemiology_backup
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      POSTGRES_HOST: db
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: ${POSTGRES_DB:-epidemiology_db}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      UPLOADS_DIR: /app/data/uploads
+      BACKUP_DIR: /backups
+      BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-7}
+      BACKUP_SCHEDULE: ${BACKUP_SCHEDULE:-0 2 * * *}
+    volumes:
+      - ./scripts/backup.sh:/usr/local/bin/backup.sh:ro
+      - app_uploads:/app/data/uploads:ro
+      - backup_data:/backups
+    entrypoint: >
+      /bin/sh -c "
+      apk add --no-cache bash tar gzip findutils;
+      echo \"$${BACKUP_SCHEDULE} /usr/local/bin/backup.sh >> /var/log/backup.log 2>&1\" > /etc/crontabs/root;
+      echo 'Running initial startup backup check...';
+      /usr/local/bin/backup.sh;
+      echo 'Starting cron daemon with schedule: $${BACKUP_SCHEDULE}';
+      crond -f -l 2
+      "
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  app_uploads:
+  backup_data:
