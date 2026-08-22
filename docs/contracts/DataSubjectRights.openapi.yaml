@@ -1,0 +1,393 @@
+openapi: 3.0.3
+info:
+  title: Data Subject Rights API Contract
+  description: Shared API contract for Data Subject Rights (Export and Erasure / 152-FZ Compliance) for the Epidemiology Knowledge Base.
+  version: 1.0.0
+servers:
+  - url: /api/v1
+    description: Primary API endpoint base path
+
+paths:
+  /privacy/export-requests:
+    post:
+      summary: Initiate personal data export
+      description: Submits a request to export all personal data associated with a data subject.
+      operationId: createDataExportRequest
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DataExportRequest'
+      responses:
+        '202':
+          description: Export request accepted and processing initiated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataExportJobResponse'
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Access denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Active export request already in progress for this subject
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /privacy/export-requests/{requestId}:
+    get:
+      summary: Get data export job status
+      description: Retrieves the current status and result metadata of a data export request.
+      operationId: getDataExportJobStatus
+      parameters:
+        - name: requestId
+          in: path
+          required: true
+          description: Unique identifier of the export request
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Export job status details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataExportJobResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Access denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Export request not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /privacy/export-requests/{requestId}/download:
+    get:
+      summary: Download exported personal data
+      description: Downloads the generated data export package for a completed export request.
+      operationId: downloadExportedData
+      parameters:
+        - name: requestId
+          in: path
+          required: true
+          description: Unique identifier of the completed export request
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Export payload archive or structured file
+          content:
+            application/zip:
+              schema:
+                type: string
+                format: binary
+            application/json:
+              schema:
+                type: object
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Access denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Export request or file not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '410':
+          description: Download link expired
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /privacy/erasure-requests:
+    post:
+      summary: Initiate personal data erasure
+      description: Submits a request to erase/destroy personal data for a data subject according to 152-FZ compliance rules.
+      operationId: createDataErasureRequest
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DataErasureRequest'
+      responses:
+        '202':
+          description: Erasure request accepted and queued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataErasureJobResponse'
+        '400':
+          description: Invalid confirmation token or missing required scope
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Insufficient administrative privileges
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Active erasure request already processing
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /privacy/erasure-requests/{requestId}:
+    get:
+      summary: Get data erasure job status
+      description: Retrieves the current state and audit log summary of an erasure request.
+      operationId: getDataErasureJobStatus
+      parameters:
+        - name: requestId
+          in: path
+          required: true
+          description: Unique identifier of the erasure request
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Erasure job status details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataErasureJobResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Access denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Erasure request not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    DataExportRequest:
+      type: object
+      required:
+        - subject_id
+      properties:
+        subject_id:
+          type: string
+          description: Unique ID of the user / data subject whose data is being exported
+          example: "usr_123456"
+        requested_format:
+          type: string
+          enum: [JSON, ZIP]
+          default: ZIP
+          description: Format of the exported archive
+        notes:
+          type: string
+          description: Optional administrative notes or justification
+
+    DataExportJobResponse:
+      type: object
+      required:
+        - request_id
+        - subject_id
+        - status
+        - created_at
+      properties:
+        request_id:
+          type: string
+          format: uuid
+          description: Unique ID of the export job
+          example: "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"
+        subject_id:
+          type: string
+          description: Unique ID of the data subject
+          example: "usr_123456"
+        status:
+          $ref: '#/components/schemas/JobStatus'
+        download_url:
+          type: string
+          nullable: true
+          description: URL to download the export package once status is COMPLETED
+          example: "/api/v1/privacy/export-requests/a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11/download"
+        created_at:
+          type: string
+          format: date-time
+          description: Timestamp when the request was submitted
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when processing completed
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Expiration timestamp for download availability
+        error_details:
+          $ref: '#/components/schemas/ErrorDetails'
+
+    DataErasureRequest:
+      type: object
+      required:
+        - subject_id
+        - confirmation_token
+        - reason
+      properties:
+        subject_id:
+          type: string
+          description: Unique ID of the user / data subject whose data is being erased
+          example: "usr_123456"
+        confirmation_token:
+          type: string
+          description: Explicit confirmation token required for destructive operations
+          example: "CONFIRM_ERASURE_USR_123456"
+        reason:
+          type: string
+          description: Legal or administrative reason for deletion (e.g. Withdrawal of consent / 152-FZ request)
+          example: "Отозвано согласие на обработку персональных данных (152-ФЗ)"
+        erasure_scope:
+          type: string
+          enum: [ALL_PERSONAL_DATA, ANONYMIZE_ACTIVITY_LOGS_ONLY]
+          default: ALL_PERSONAL_DATA
+
+    DataErasureJobResponse:
+      type: object
+      required:
+        - request_id
+        - subject_id
+        - status
+        - created_at
+      properties:
+        request_id:
+          type: string
+          format: uuid
+          description: Unique ID of the erasure job
+          example: "b1fec988-8b0a-4bf7-aa5c-5aa8ac270b22"
+        subject_id:
+          type: string
+          description: Unique ID of the data subject
+          example: "usr_123456"
+        status:
+          $ref: '#/components/schemas/JobStatus'
+        created_at:
+          type: string
+          format: date-time
+          description: Timestamp when erasure was initiated
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when erasure was finalized
+        records_erased_count:
+          type: integer
+          nullable: true
+          description: Count of personal data records erased/anonymized
+        error_details:
+          $ref: '#/components/schemas/ErrorDetails'
+
+    JobStatus:
+      type: string
+      enum:
+        - PENDING
+        - PROCESSING
+        - COMPLETED
+        - FAILED
+      description: Definitive status state of a background privacy job
+
+    ErrorResponse:
+      type: object
+      required:
+        - error_code
+        - message
+        - timestamp
+      properties:
+        error_code:
+          type: string
+          example: "INVALID_CONFIRMATION_TOKEN"
+        message:
+          type: string
+          description: Human-readable error message in Russian
+          example: "Неверный токен подтверждения удаления данных."
+        details:
+          type: object
+          additionalProperties: true
+          nullable: true
+        timestamp:
+          type: string
+          format: date-time
+
+    ErrorDetails:
+      type: object
+      nullable: true
+      properties:
+        code:
+          type: string
+          example: "STORAGE_UNAVAILABLE"
+        message:
+          type: string
+          example: "Ошибка при формировании архива данных."
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - BearerAuth: []
