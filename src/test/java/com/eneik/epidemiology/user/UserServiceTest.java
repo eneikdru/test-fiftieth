@@ -22,7 +22,7 @@ class UserServiceTest {
     private UserRepository userRepository;
 
     @Autowired
-    private UserService.SecurityConfig securityConfig;
+    private UserService.PasswordEncoderConfig passwordEncoderConfig;
 
     @Test
     @DisplayName("Given a new user is created, When saved, Then password is securely hashed and role is assigned with fixed clock")
@@ -30,7 +30,7 @@ class UserServiceTest {
         // Inject fixed clock for deterministic timestamp assertions
         Instant fixedInstant = Instant.parse("2026-08-22T10:00:00Z");
         Clock fixedClock = Clock.fixed(fixedInstant, ZoneId.of("UTC"));
-        UserService userService = new UserService(userRepository, securityConfig.passwordEncoder(), fixedClock);
+        UserService userService = new UserService(userRepository, passwordEncoderConfig.passwordEncoder(), fixedClock);
 
         String rawPassword = "SecurePassword123!";
         User createdUser = userService.createUser("epidemiologist_ivan", rawPassword, "RESEARCHER");
@@ -47,7 +47,7 @@ class UserServiceTest {
     @Test
     @DisplayName("Given an existing user, When schema is queried by username or ID, Then role can be quickly resolved for authorization")
     void testResolveRole_ResolvesRoleForAuthorization() {
-        UserService userService = new UserService(userRepository, securityConfig.passwordEncoder());
+        UserService userService = new UserService(userRepository, passwordEncoderConfig.passwordEncoder());
         User createdUser = userService.createUser("admin_anna", "AdminPass456!", "ADMIN");
 
         Optional<String> roleByUsername = userService.resolveRoleByUsername("admin_anna");
@@ -62,7 +62,7 @@ class UserServiceTest {
     @Test
     @DisplayName("Given existing username, When creating user with same username, Then throws IllegalArgumentException")
     void testCreateUser_DuplicateUsernameThrowsException() {
-        UserService userService = new UserService(userRepository, securityConfig.passwordEncoder());
+        UserService userService = new UserService(userRepository, passwordEncoderConfig.passwordEncoder());
         userService.createUser("user_unique", "Pass123!", "USER");
 
         assertThrows(IllegalArgumentException.class, () -> {

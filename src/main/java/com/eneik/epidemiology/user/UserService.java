@@ -64,7 +64,7 @@ public class UserService {
     }
 
     @Configuration
-    public static class SecurityConfig {
+    public static class PasswordEncoderConfig {
         @Bean
         public PasswordEncoder passwordEncoder() {
             return new BCryptPasswordEncoder();
