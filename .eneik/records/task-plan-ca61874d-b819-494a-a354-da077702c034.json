@@ -1,0 +1,409 @@
+{
+  "epics": [
+    {
+      "existingEpicId": null,
+      "title": "Core Knowledge Base (Upload, Search, Download)",
+      "jtbd": "When managing epidemiological materials, I want to catalog and search them by specific attributes, so that our institute's knowledge is accessible to all employees.",
+      "kanoClass": "Must-Be",
+      "cynefinDomain": "clear",
+      "sixSigmaMetric": "Increase successful document retrieval rate within 30 seconds from baseline to 95%.",
+      "tocConstraintRef": "Discovery and distribution of internal epidemiological documents.",
+      "sourceIndex": 0,
+      "requirements": [
+        "R1: Admin can upload documents (PDF, office formats) specifying title, author-organization, and year, receiving visible success feedback.",
+        "R2: Admin can safely delete documents, with a clear confirmation prompt before the destructive action.",
+        "R3: The system handles upload failures (e.g., file too large, invalid format) gracefully without silently discarding the user's entered metadata.",
+        "R4: Employees can browse the catalog and search it by title, author-organization, and publication year.",
+        "R5: When a search yields no results, the system explicitly shows a 'no materials found' state instead of dummy examples.",
+        "R6: Employees can open and download the found documents, with clear error feedback if a file becomes unavailable.",
+        "R7: All interface text, headings, error messages, and empty states are exclusively in Russian.",
+        "R8: The initial deployed instance contains real Russian epidemiological sample documents to demonstrate all search and download paths."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Document metadata schema and storage",
+          "roleTag": "BARCAN-TAG-08",
+          "jtbd": "When implementing document storage for this epic, I want a robust schema for metadata and file paths, so that the catalog can be reliably searched and retrieved.",
+          "acceptanceCriteria": "Given a new document is uploaded, When the schema persists the data, Then the title, author-organization, and year are stored strongly typed.\nGiven an initial deployment, When the database is seeded, Then real Russian epidemiological sample documents are inserted.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "Structured querying of document metadata",
+          "sixSigmaMetric": "Zero schema validation errors during document upload",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1",
+            "R2",
+            "R4",
+            "R8"
+          ]
+        },
+        {
+          "title": "Document operations API contract",
+          "roleTag": "BARCAN-TAG-12",
+          "jtbd": "When implementing the API contract for this epic, I want a shared definition for document operations, so that backend and frontend can be built in parallel.",
+          "acceptanceCriteria": "Given the frontend needs to search documents, When it calls the search endpoint, Then the request and response shapes are strictly typed.\nGiven an admin uploads a file, When the upload fails, Then the contract specifies standardized error responses.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "Parallel frontend and backend development",
+          "sixSigmaMetric": "Zero integration breaks due to contract drift",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1",
+            "R2",
+            "R3",
+            "R4",
+            "R5",
+            "R6"
+          ]
+        },
+        {
+          "title": "Document management and search API",
+          "roleTag": "BARCAN-TAG-02",
+          "jtbd": "When implementing the backend for this epic, I want secure and performant endpoints, so that documents can be reliably uploaded, searched, and downloaded.",
+          "acceptanceCriteria": "Given a search query for an author, When the backend processes it, Then it returns the matching documents within 200ms.\nGiven an admin attempts to upload an unsupported file, When the backend validates it, Then it returns a clear error without crashing.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "Search query performance and file processing",
+          "sixSigmaMetric": "Maintain 99.9% API uptime for search endpoints",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1",
+            "R2",
+            "R3",
+            "R4",
+            "R5",
+            "R6",
+            "R8"
+          ]
+        },
+        {
+          "title": "Catalog search and document management UI",
+          "roleTag": "BARCAN-TAG-11",
+          "jtbd": "When implementing the frontend for this epic, I want a responsive Russian interface, so that users can easily search and manage the epidemiological catalog.",
+          "acceptanceCriteria": "Given a user submits a search with no matches, When the UI updates, Then an explicit 'нет материалов' message is shown in Russian.\nGiven an admin uploads a document but the network fails, When the error occurs, Then the entered metadata remains in the form so it is not lost.\nGiven a user accesses the site on a mobile device, When the UI renders, Then the layout adapts to the small screen seamlessly.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "User interaction and feedback loops",
+          "sixSigmaMetric": "100% of UI text elements are rendered in Russian",
+          "hasUi": true,
+          "requirementRefs": [
+            "R1",
+            "R2",
+            "R3",
+            "R4",
+            "R5",
+            "R6",
+            "R7",
+            "R8"
+          ]
+        },
+        {
+          "title": "E2E testing of catalog workflows",
+          "roleTag": "BARCAN-TAG-06",
+          "jtbd": "When implementing QA for this epic, I want comprehensive E2E tests, so that we guarantee the critical path of finding and downloading documents works flawlessly.",
+          "acceptanceCriteria": "Given a fresh deployment with sample data, When the E2E test searches for a known document and downloads it, Then the file is successfully retrieved.\nGiven an admin user, When the test uploads and then deletes a document, Then the catalog accurately reflects the changes without errors.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "Prevention of critical path regressions",
+          "sixSigmaMetric": "100% pass rate for critical path E2E tests",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1",
+            "R2",
+            "R3",
+            "R4",
+            "R5",
+            "R6",
+            "R7",
+            "R8"
+          ]
+        }
+      ]
+    },
+    {
+      "existingEpicId": null,
+      "title": "Identity and Access Management",
+      "jtbd": "When accessing the system, I want my permissions clearly defined, so that only authorized administrators can modify the catalog while all employees can read it.",
+      "kanoClass": "Must-Be",
+      "cynefinDomain": "clear",
+      "sixSigmaMetric": "Reduce unauthorized modification attempts to 0 per month.",
+      "tocConstraintRef": "Access control enforcement for epidemiological data.",
+      "sourceIndex": 0,
+      "requirements": [
+        "R1: The system authenticates users to identify them as employees or admins.",
+        "R2: Employees are restricted to viewing and searching the catalog.",
+        "R3: Admins are granted permissions to upload and delete documents.",
+        "R4: Users can recover their accounts via a self-service path if locked out.",
+        "R5: All authentication and access denial UI is exclusively in Russian."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "User and role schema",
+          "roleTag": "BARCAN-TAG-08",
+          "jtbd": "When implementing the user schema for this epic, I want to store credentials and roles securely, so that access control is reliable.",
+          "acceptanceCriteria": "Given a new user is created, When the data is saved, Then the password is securely hashed and a role is assigned.\nGiven an existing user, When the schema is queried, Then the role can be quickly resolved for authorization.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "Secure storage of user identities",
+          "sixSigmaMetric": "Zero unhashed passwords stored in the database",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1",
+            "R2",
+            "R3",
+            "R4"
+          ]
+        },
+        {
+          "title": "Authentication API contract",
+          "roleTag": "BARCAN-TAG-12",
+          "jtbd": "When implementing the auth contract for this epic, I want shared definitions for login and recovery, so that frontend and backend communicate securely.",
+          "acceptanceCriteria": "Given a login attempt, When the client sends credentials, Then the contract defines a secure token-based response.\nGiven an account recovery request, When initiated, Then the request shape and error states are strictly specified.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "Client-server authentication boundary",
+          "sixSigmaMetric": "Zero contract-related integration errors during auth flows",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1",
+            "R4"
+          ]
+        },
+        {
+          "title": "Auth endpoints and role middleware",
+          "roleTag": "BARCAN-TAG-02",
+          "jtbd": "When implementing backend auth for this epic, I want strict endpoints and middleware, so that unauthorized actions are blocked at the server level.",
+          "acceptanceCriteria": "Given an employee attempts to delete a document, When the request reaches the backend, Then the role middleware blocks it with a 403 status.\nGiven a user requests a password reset, When the endpoint is called, Then a secure recovery link is generated and sent.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "Server-side authorization enforcement",
+          "sixSigmaMetric": "100% of protected endpoints require valid role tokens",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1",
+            "R2",
+            "R3",
+            "R4"
+          ]
+        },
+        {
+          "title": "Login and account recovery UI",
+          "roleTag": "BARCAN-TAG-11",
+          "jtbd": "When implementing auth UI for this epic, I want clear Russian login and recovery screens, so that users can access the system without confusion.",
+          "acceptanceCriteria": "Given a user is logged out, When they navigate to the application, Then they are presented with a Russian login screen.\nGiven an employee navigates to the app, When the UI loads, Then upload and delete controls are entirely hidden.\nGiven a user uses a mobile device, When accessing the login screen, Then it remains fully functional and readable.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "User access and session management",
+          "sixSigmaMetric": "100% of auth-related UI text is in Russian",
+          "hasUi": true,
+          "requirementRefs": [
+            "R1",
+            "R2",
+            "R3",
+            "R4",
+            "R5"
+          ]
+        },
+        {
+          "title": "Authentication E2E tests",
+          "roleTag": "BARCAN-TAG-06",
+          "jtbd": "When implementing QA for this epic, I want tests covering roles and recovery, so that we guarantee users can log in and cannot escalate privileges.",
+          "acceptanceCriteria": "Given an employee user, When the test attempts to access the upload UI, Then it is confirmed inaccessible.\nGiven a locked-out user, When the test runs the self-service recovery flow, Then access is successfully restored.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "Prevention of security and access regressions",
+          "sixSigmaMetric": "100% pass rate for role-boundary E2E tests",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1",
+            "R2",
+            "R3",
+            "R4",
+            "R5"
+          ]
+        }
+      ]
+    },
+    {
+      "existingEpicId": null,
+      "title": "System Measurement (GQM)",
+      "jtbd": "When operating the knowledge base, I want to measure search success rates, so that I know the catalog is actually useful to the institute.",
+      "kanoClass": "Must-Be",
+      "cynefinDomain": "clear",
+      "sixSigmaMetric": "Achieve 100% telemetry coverage on search and download events.",
+      "tocConstraintRef": "Visibility into product usage and success.",
+      "sourceIndex": 0,
+      "requirements": [
+        "R1: The system explicitly records the goal of reducing time spent searching for epidemiological materials.",
+        "R2: The system tracks the question: how many documents are successfully found and downloaded?",
+        "R3: The system tracks the question: how often do searches return no results?",
+        "R4: Telemetry strictly captures only metrics answering these questions, avoiding extraneous data."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Search and download event telemetry",
+          "roleTag": "BARCAN-TAG-02",
+          "jtbd": "When implementing telemetry for this epic, I want to capture specific search outcomes, so that the success of the knowledge base can be measured.",
+          "acceptanceCriteria": "Given a user downloads a document, When the action completes, Then a download success event is recorded.\nGiven a search yields zero results, When the search concludes, Then a zero-results event is logged for analysis.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "Data collection for usage metrics",
+          "sixSigmaMetric": "100% of search and download events generate telemetry",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1",
+            "R2",
+            "R3",
+            "R4"
+          ]
+        },
+        {
+          "title": "Telemetry validation",
+          "roleTag": "BARCAN-TAG-06",
+          "jtbd": "When testing telemetry for this epic, I want to verify event emission, so that we trust the metrics driving business decisions.",
+          "acceptanceCriteria": "Given a test search returns no results, When the logs are inspected, Then the corresponding empty-search metric is present.\nGiven a test download, When the action completes, Then exactly one successful download metric is recorded.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "Metric accuracy and reliability",
+          "sixSigmaMetric": "Zero false positives in telemetry event logging",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1",
+            "R2",
+            "R3",
+            "R4"
+          ]
+        }
+      ]
+    },
+    {
+      "existingEpicId": null,
+      "title": "Data Subject Rights",
+      "jtbd": "When managing my account, I want to be able to export or delete my personal data, so that my privacy rights under Russian law are respected.",
+      "kanoClass": "Must-Be",
+      "cynefinDomain": "clear",
+      "sixSigmaMetric": "Achieve 100% compliance with personal data export/erasure requests within statutory deadlines.",
+      "tocConstraintRef": "Regulatory compliance regarding personal data.",
+      "sourceIndex": 0,
+      "requirements": [
+        "R1: Users can request a complete export of their personal account data.",
+        "R2: Users can request the total erasure of their personal data from the system.",
+        "R3: The privacy management UI is exclusively in Russian."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Data subject rights API contract",
+          "roleTag": "BARCAN-TAG-12",
+          "jtbd": "When defining the privacy API for this epic, I want clear contracts for export and erasure, so that compliance features can be developed reliably.",
+          "acceptanceCriteria": "Given a request for data export, When the client calls the endpoint, Then the response is a structured data format.\nGiven a deletion request, When initiated, Then the contract specifies a definitive success or error state.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "Standardized privacy operations",
+          "sixSigmaMetric": "Zero missing fields in data export contracts",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1",
+            "R2"
+          ]
+        },
+        {
+          "title": "Data export and erasure endpoints",
+          "roleTag": "BARCAN-TAG-02",
+          "jtbd": "When implementing privacy endpoints for this epic, I want processes that fully retrieve or scrub data, so that legal obligations are met.",
+          "acceptanceCriteria": "Given a user requests data export, When the backend processes it, Then a complete package of their personal data is returned.\nGiven an erasure request, When completed, Then all identifiable data for that user is permanently removed from the database.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "Reliable execution of privacy requests",
+          "sixSigmaMetric": "100% of requested data is included in exports or erased successfully",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1",
+            "R2"
+          ]
+        },
+        {
+          "title": "Privacy settings UI",
+          "roleTag": "BARCAN-TAG-11",
+          "jtbd": "When implementing the privacy UI for this epic, I want accessible controls in Russian, so that users can easily exercise their data rights.",
+          "acceptanceCriteria": "Given a user views their settings, When the page loads, Then clear options to export and delete data are presented in Russian.\nGiven a user chooses to delete their account, When they click the button, Then a severe warning and confirmation step is shown before proceeding.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "User self-service for privacy rights",
+          "sixSigmaMetric": "100% of privacy actions require explicit user confirmation",
+          "hasUi": true,
+          "requirementRefs": [
+            "R1",
+            "R2",
+            "R3"
+          ]
+        },
+        {
+          "title": "Data subject rights testing",
+          "roleTag": "BARCAN-TAG-06",
+          "jtbd": "When testing privacy features for this epic, I want to verify complete data handling, so that we ensure no personal data is illegally retained.",
+          "acceptanceCriteria": "Given a test user requests erasure, When the process finishes, Then subsequent database queries confirm the data is gone.\nGiven an export request, When the file is inspected, Then it contains all expected user properties.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "Verification of legal compliance features",
+          "sixSigmaMetric": "Zero data leaks found during erasure validation",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1",
+            "R2",
+            "R3"
+          ]
+        }
+      ]
+    },
+    {
+      "existingEpicId": null,
+      "title": "System Backups and Resilience",
+      "jtbd": "When relying on the knowledge base, I want the data to be backed up regularly, so that critical epidemiological protocols are not lost in a disaster.",
+      "kanoClass": "Must-Be",
+      "cynefinDomain": "complicated",
+      "sixSigmaMetric": "Achieve 100% success rate of verified data restores during disaster recovery drills.",
+      "tocConstraintRef": "Institutional data retention and safety.",
+      "sourceIndex": 0,
+      "requirements": [
+        "R1: The system performs automated regular backups of the database and uploaded epidemiological files.",
+        "R2: A restore operation from a backup has been actually performed and verified, not merely configured."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Automated backup configuration",
+          "roleTag": "BARCAN-TAG-05",
+          "jtbd": "When configuring backups for this epic, I want automated schedules and reliable storage, so that no data is left unprotected.",
+          "acceptanceCriteria": "Given the production environment, When the schedule triggers, Then the database and files are backed up without downtime.\nGiven a successful backup, When it is stored, Then it is retained according to the configured policy.",
+          "leanValue": "essential",
+          "cynefinDomain": "complicated",
+          "tocConstraintRef": "Continuous data protection",
+          "sixSigmaMetric": "100% of scheduled backups complete successfully",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1"
+          ]
+        },
+        {
+          "title": "Verified backup restore test",
+          "roleTag": "BARCAN-TAG-06",
+          "jtbd": "When testing backups for this epic, I want to perform a real restore, so that we prove the backups are actually usable in a disaster.",
+          "acceptanceCriteria": "Given a recent backup archive, When a fresh environment is provisioned, Then the restore process runs successfully to completion.\nGiven the restored environment, When data is queried, Then it matches the state at the time of the backup.",
+          "leanValue": "essential",
+          "cynefinDomain": "complicated",
+          "tocConstraintRef": "Proven disaster recovery capability",
+          "sixSigmaMetric": "Zero data discrepancies after a verified restore",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1",
+            "R2"
+          ]
+        }
+      ]
+    }
+  ]
+}
