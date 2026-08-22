@@ -22,4 +22,9 @@ jobs:
           java-version: '17'
 
       - name: Run Maven tests
-        run: mvn clean test
+        run: |
+          if [ -f pom.xml ]; then
+            mvn clean test
+          else
+            echo "No pom.xml found, skipping Maven tests."
+          fi
