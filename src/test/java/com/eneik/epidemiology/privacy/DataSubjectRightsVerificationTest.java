@@ -4,6 +4,7 @@ import com.eneik.epidemiology.user.User;
 import com.eneik.epidemiology.user.UserRepository;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -15,7 +16,9 @@ import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.time.Instant;
+import java.time.OffsetDateTime;
 import java.time.ZoneId;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.zip.ZipEntry;
@@ -39,6 +42,9 @@ class DataSubjectRightsVerificationTest {
     @Autowired
     private ObjectMapper objectMapper;
 
+    @Autowired
+    private EntityManager entityManager;
+
     private PrivacyService privacyService;
     private final Clock fixedClock = Clock.fixed(Instant.parse("2026-08-22T15:00:00Z"), ZoneId.of("UTC"));
 
@@ -51,6 +57,53 @@ class DataSubjectRightsVerificationTest {
             objectMapper,
             fixedClock
         );
+    }
+
+    @Test
+    @DisplayName("Given a stuck subject record from task ea2d1954-4da4-4912-8565-dcd27a569279, When updated atomically, Then it transitions out of PENDING/PROCESSING to a resolvable state")
+    void testStuckSubjectAtomicallyTransitionsToResolvableState() {
+        String stuckSubjectId = "fd6672c6-02c4-455e-a4d9-91e4ae9d308c";
+        String requestId = "stuck-export-request-1";
+
+        DataExportJob stuckJob = new DataExportJob();
+        stuckJob.setRequestId(requestId);
+        stuckJob.setSubjectId(stuckSubjectId);
+        stuckJob.setStatus("PENDING");
+        stuckJob.setRequestedFormat("ZIP");
+        stuckJob.setCreatedAt(OffsetDateTime.now(fixedClock));
+        exportJobRepository.save(stuckJob);
+
+        entityManager.flush();
+
+        // Verify subject is initialised in stuck/pending state
+        DataExportJob fetchedInitial = exportJobRepository.findById(requestId).orElseThrow();
+        assertEquals("PENDING", fetchedInitial.getStatus());
+
+        // Perform atomically-guarded update
+        int updatedCount = exportJobRepository.updateStatusToCompleted(
+            requestId,
+            "PENDING",
+            "RESOLVED",
+            "/api/v1/privacy/export-requests/" + requestId + "/download",
+            "{}",
+            OffsetDateTime.now(fixedClock),
+            OffsetDateTime.now(fixedClock).plusDays(7)
+        );
+
+        assertEquals(1, updatedCount, "Exactly one row should be updated atomically");
+
+        entityManager.flush();
+        entityManager.clear();
+
+        DataExportJob fetchedUpdated = exportJobRepository.findById(requestId).orElseThrow();
+        assertEquals("RESOLVED", fetchedUpdated.getStatus());
+
+        // Verify that auditor won't find active pending/processing jobs for this subject
+        List<DataExportJob> activeJobs = exportJobRepository.findBySubjectIdAndStatusIn(
+            stuckSubjectId,
+            List.of("PENDING", "PROCESSING")
+        );
+        assertTrue(activeJobs.isEmpty(), "No active pending or processing jobs should remain for stuck subject");
     }
 
     @Test
