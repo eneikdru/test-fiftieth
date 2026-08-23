@@ -68,7 +68,7 @@ class DataSubjectRightsVerificationTest {
     }
 
     @Test
-    @DisplayName("Given a stuck subject record from task ea2d1954-4da4-4912-8565-dcd27a569279, When atomic UPDATE patch is applied, Then state transitions to RESOLVED and operations auditor reprocesses without poka-yoke failure")
+    @DisplayName("Given a stuck subject record from task ea2d1954-4da4-4912-8565-dcd27a569279, When atomic UPDATE patch is applied, Then state transitions to ESCALATED and operations auditor reprocesses without poka-yoke failure")
     void testStuckSubjectAtomicallyTransitionsToResolvableState() {
         String stuckSubjectId = "fd6672c6-02c4-455e-a4d9-91e4ae9d308c";
         String exportRequestId = "stuck-export-request-1";
@@ -106,10 +106,10 @@ class DataSubjectRightsVerificationTest {
 
         entityManager.clear();
 
-        // Execute the Flyway migration script V20260823090157407__flag_stuck_subjects_for_human_review.sql
+        // Execute the Flyway migration script V20260823081040819__escalate_stuck_subjects.sql
         Connection conn = DataSourceUtils.getConnection(dataSource);
         try {
-            ScriptUtils.executeSqlScript(conn, new ClassPathResource("db/migration/V20260823090157407__flag_stuck_subjects_for_human_review.sql"));
+            ScriptUtils.executeSqlScript(conn, new ClassPathResource("db/migration/V20260823081040819__escalate_stuck_subjects.sql"));
         } catch (Exception e) {
             fail("Failed to execute migration script: " + e.getMessage());
         } finally {
@@ -118,16 +118,16 @@ class DataSubjectRightsVerificationTest {
 
         entityManager.clear();
 
-        // Verify states transitioned to FLAGGED_FOR_HUMAN_REVIEW and UPDATE matched specific stuck subject rows
+        // Verify states transitioned to ESCALATED and UPDATE matched specific stuck subject rows
         DataExportJob fetchedExportUpdated = exportJobRepository.findById(exportRequestId).orElseThrow();
-        assertEquals("FLAGGED_FOR_HUMAN_REVIEW", fetchedExportUpdated.getStatus());
+        assertEquals("ESCALATED", fetchedExportUpdated.getStatus());
         assertEquals(stuckSubjectId, fetchedExportUpdated.getSubjectId());
-        assertTrue(fetchedExportUpdated.getNotes().contains("Flagged for human review"));
+        assertTrue(fetchedExportUpdated.getNotes().contains("Escalated stuck subject"));
 
         DataErasureJob fetchedErasureUpdated = erasureJobRepository.findById(erasureRequestId).orElseThrow();
-        assertEquals("FLAGGED_FOR_HUMAN_REVIEW", fetchedErasureUpdated.getStatus());
+        assertEquals("ESCALATED", fetchedErasureUpdated.getStatus());
         assertEquals(stuckSubjectId, fetchedErasureUpdated.getSubjectId());
-        assertTrue(fetchedErasureUpdated.getReason().contains("Flagged for human review"));
+        assertTrue(fetchedErasureUpdated.getReason().contains("Escalated stuck subject"));
 
         // Verify operations auditor reads subject without failing on previous iteration-admission poka-yoke
         List<DataExportJob> activeExportJobs = exportJobRepository.findBySubjectIdAndStatusIn(
@@ -144,7 +144,7 @@ class DataSubjectRightsVerificationTest {
     }
 
     @Test
-    @DisplayName("Given a stuck subject record 765d2ab0 with orphaned dependency 168a6edf, When atomic UPDATE patch is applied, Then state transitions to RESOLVED")
+    @DisplayName("Given a stuck subject record 765d2ab0 with orphaned dependency 168a6edf, When atomic UPDATE patch is applied, Then state transitions to ESCALATED")
     void testOrphanedDependencySubjectAtomicallyTransitionsToResolvableState() {
         String stuckSubjectId = "765d2ab0-1b55-4701-babd-af5247442de5";
         String exportRequestId = "stuck-export-request-765d2ab0";
@@ -173,10 +173,10 @@ class DataSubjectRightsVerificationTest {
         entityManager.flush();
         entityManager.clear();
 
-        // Execute the Flyway migration script V20260823090157407__flag_stuck_subjects_for_human_review.sql
+        // Execute the Flyway migration script V20260823081040819__escalate_stuck_subjects.sql
         Connection conn2 = DataSourceUtils.getConnection(dataSource);
         try {
-            ScriptUtils.executeSqlScript(conn2, new ClassPathResource("db/migration/V20260823090157407__flag_stuck_subjects_for_human_review.sql"));
+            ScriptUtils.executeSqlScript(conn2, new ClassPathResource("db/migration/V20260823081040819__escalate_stuck_subjects.sql"));
         } catch (Exception e) {
             fail("Failed to execute migration script: " + e.getMessage());
         } finally {
@@ -185,16 +185,16 @@ class DataSubjectRightsVerificationTest {
 
         entityManager.clear();
 
-        // Verify states transitioned to FLAGGED_FOR_HUMAN_REVIEW and UPDATE matched specific stuck subject rows
+        // Verify states transitioned to ESCALATED and UPDATE matched specific stuck subject rows
         DataExportJob fetchedExport = exportJobRepository.findById(exportRequestId).orElseThrow();
-        assertEquals("FLAGGED_FOR_HUMAN_REVIEW", fetchedExport.getStatus());
+        assertEquals("ESCALATED", fetchedExport.getStatus());
         assertEquals(stuckSubjectId, fetchedExport.getSubjectId());
-        assertTrue(fetchedExport.getNotes().contains("Flagged for human review"));
+        assertTrue(fetchedExport.getNotes().contains("Escalated stuck subject"));
 
         DataErasureJob fetchedErasure = erasureJobRepository.findById(erasureRequestId).orElseThrow();
-        assertEquals("FLAGGED_FOR_HUMAN_REVIEW", fetchedErasure.getStatus());
+        assertEquals("ESCALATED", fetchedErasure.getStatus());
         assertEquals(stuckSubjectId, fetchedErasure.getSubjectId());
-        assertTrue(fetchedErasure.getReason().contains("Flagged for human review"));
+        assertTrue(fetchedErasure.getReason().contains("Escalated stuck subject"));
     }
 
     @Test
