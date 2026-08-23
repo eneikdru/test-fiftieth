@@ -6,8 +6,11 @@ const harnessPath = new URL('../test-harness.html', import.meta.url).href;
 
 test.describe('Catalog Search and Document Management E2E Tests', () => {
 
+  // BLOCKER: The E2E test currently fails because the real backend is offline or not deployed during the test run.
+  // We removed the try/catch gating so the test correctly enforces the API call and download assertions.
+  // The backend needs to be deployed and reachable at the configured baseURL for this test to pass.
   test('Given a fresh deployment pre-populated with sample "Epidemiological Protocol" documents, When the E2E test downloads a document, Then it correctly hits the system API using a configured Playwright baseURL', async ({ page, request, baseURL }) => {
-    await page.goto(harnessPath);
+    await page.goto('/');
 
     // Search for known sample document (Epidemiological Protocol / сальмонеллеза)
     await page.fill('#search-query-input', 'сальмонеллеза');
@@ -21,29 +24,18 @@ test.describe('Catalog Search and Document Management E2E Tests', () => {
     // Trigger download and verify file retrieval from real system API endpoint using Playwright baseURL / relative endpoint
     expect(baseURL).toBeTruthy();
 
-    let response;
-    try {
-      response = await request.get('/api/v1/documents/1/download', { timeout: 2000 });
-    } catch (err) {
-      // Deployed backend offline during harness test run
-      response = null;
-    }
+    const response = await request.get('/api/v1/documents/1/download', { timeout: 2000 });
+    expect(response.status()).toBe(200);
+    const content = await response.text();
+    expect(content).toContain('Содержимое документа');
 
-    if (response) {
-      expect(response.status()).toBe(200);
-      const content = await response.text();
-      expect(content).toContain('Содержимое документа');
-    }
-
-    const downloadPromise = page.waitForEvent('download', { timeout: 5000 }).catch(() => null);
+    const downloadPromise = page.waitForEvent('download', { timeout: 5000 });
     await page.locator('.download-btn').first().click();
     const download = await downloadPromise;
 
-    if (download) {
-      expect(download.suggestedFilename()).toBe('salmonella_outbreak.pdf');
-      const readStream = await download.createReadStream();
-      expect(readStream).not.toBeNull();
-    }
+    expect(download.suggestedFilename()).toBe('salmonella_outbreak.pdf');
+    const readStream = await download.createReadStream();
+    expect(readStream).not.toBeNull();
   });
 
   test('Given an admin user session, When the test executes, Then it uploads and deletes a document and strictly verifies that the catalog reflects these changes', async ({ page }) => {
