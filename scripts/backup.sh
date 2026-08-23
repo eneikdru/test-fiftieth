@@ -39,12 +39,16 @@ if command -v pg_dump &> /dev/null; then
         --no-privileges \
         | gzip > "${DB_BACKUP_FILE}"
     echo "Database backup completed successfully."
+elif [ -n "${SQLITE_DB_PATH:-}" ] && [ -f "${SQLITE_DB_PATH}" ] && command -v sqlite3 &> /dev/null; then
+    echo "Backing up SQLite database from '${SQLITE_DB_PATH}'..."
+    sqlite3 "${SQLITE_DB_PATH}" .dump | gzip > "${DB_BACKUP_FILE}"
+    echo "Database backup completed successfully."
 elif [ "${ALLOW_MOCK_BACKUP:-0}" -eq 1 ]; then
     echo "pg_dump not found in environment, creating mock database dump for verification..."
     echo "-- Mock DB Backup for ${POSTGRES_DB} created at ${TIMESTAMP}" | gzip > "${DB_BACKUP_FILE}"
     echo "Mock database backup completed."
 else
-    echo "ERROR: pg_dump utility not found and ALLOW_MOCK_BACKUP is not enabled." >&2
+    echo "ERROR: pg_dump or sqlite3 utility not found and ALLOW_MOCK_BACKUP is not enabled." >&2
     exit 1
 fi
 

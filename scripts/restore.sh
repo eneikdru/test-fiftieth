@@ -35,6 +35,12 @@ if [ -n "${DB_BACKUP_FILE}" ] && [ -f "${DB_BACKUP_FILE}" ]; then
             -U "${POSTGRES_USER}" \
             -d "${POSTGRES_DB}"
         echo "Database restore completed successfully."
+    elif [ -n "${SQLITE_DB_PATH:-}" ] && command -v sqlite3 &> /dev/null; then
+        echo "Restoring SQLite database to '${SQLITE_DB_PATH}'..."
+        mkdir -p "$(dirname "${SQLITE_DB_PATH}")"
+        rm -f "${SQLITE_DB_PATH}"
+        gunzip -c "${DB_BACKUP_FILE}" | sqlite3 "${SQLITE_DB_PATH}"
+        echo "Database restore completed successfully."
     elif [ "${ALLOW_MOCK_RESTORE}" -eq 1 ]; then
         echo "psql not found in environment, performing mock database restore..."
         RESTORE_TARGET_DIR="${RESTORE_MOCK_DIR:-${UPLOADS_DIR}}"
@@ -42,7 +48,7 @@ if [ -n "${DB_BACKUP_FILE}" ] && [ -f "${DB_BACKUP_FILE}" ]; then
         gunzip -c "${DB_BACKUP_FILE}" > "${RESTORE_TARGET_DIR}/restored_db_dump.sql"
         echo "Mock database restore completed."
     else
-        echo "ERROR: psql utility not found and ALLOW_MOCK_RESTORE is not enabled." >&2
+        echo "ERROR: psql or sqlite3 utility not found and ALLOW_MOCK_RESTORE is not enabled." >&2
         exit 1
     fi
 else
