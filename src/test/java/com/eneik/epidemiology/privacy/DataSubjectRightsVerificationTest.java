@@ -106,12 +106,12 @@ class DataSubjectRightsVerificationTest {
 
         entityManager.clear();
 
-        // Execute the actual shipped Flyway migration script V20260823065127618__unblock_stuck_subjects.sql
+        // Execute the actual Flyway migration script V20260823075743029__resolve_stuck_operations_auditor_subjects.sql
         Connection conn = DataSourceUtils.getConnection(dataSource);
         try {
-            ScriptUtils.executeSqlScript(conn, new ClassPathResource("db/migration/V20260823065127618__unblock_stuck_subjects.sql"));
+            ScriptUtils.executeSqlScript(conn, new ClassPathResource("db/migration/V20260823075743029__resolve_stuck_operations_auditor_subjects.sql"));
         } catch (Exception e) {
-            fail("Failed to execute shipped migration script: " + e.getMessage());
+            fail("Failed to execute migration script: " + e.getMessage());
         } finally {
             DataSourceUtils.releaseConnection(conn, dataSource);
         }
@@ -171,12 +171,12 @@ class DataSubjectRightsVerificationTest {
         entityManager.flush();
         entityManager.clear();
 
-        // Execute the actual shipped Flyway migration script V20260823065127618__unblock_stuck_subjects.sql
+        // Execute the actual Flyway migration script V20260823075743029__resolve_stuck_operations_auditor_subjects.sql
         Connection conn2 = DataSourceUtils.getConnection(dataSource);
         try {
-            ScriptUtils.executeSqlScript(conn2, new ClassPathResource("db/migration/V20260823065127618__unblock_stuck_subjects.sql"));
+            ScriptUtils.executeSqlScript(conn2, new ClassPathResource("db/migration/V20260823075743029__resolve_stuck_operations_auditor_subjects.sql"));
         } catch (Exception e) {
-            fail("Failed to execute shipped migration script: " + e.getMessage());
+            fail("Failed to execute migration script: " + e.getMessage());
         } finally {
             DataSourceUtils.releaseConnection(conn2, dataSource);
         }
