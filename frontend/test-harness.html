@@ -3,24 +3,25 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Вход и восстановление пароля — НИИ Эпидемиологии</title>
+  <title>База знаний по эпидемиологии — Каталог документов</title>
   <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <script id="tailwind-config">
     tailwind.config = {
       darkMode: "class",
       theme: {
         extend: {
           colors: {
-            "primary": "#00328a",
+            "primary": "#003f87",
             "on-primary": "#ffffff",
-            "background": "#f9f9fc",
-            "on-surface": "#1a1c1e",
-            "on-surface-variant": "#434653",
-            "outline": "#737685",
-            "outline-variant": "#c3c6d6",
+            "background": "#f7f9fb",
+            "on-surface": "#191c1e",
+            "on-surface-variant": "#424752",
+            "outline": "#727784",
+            "outline-variant": "#c2c6d4",
             "surface-container-lowest": "#ffffff",
-            "surface-container": "#eeeef0",
+            "surface-container": "#eceef0",
+            "surface-variant": "#e0e3e5",
             "error": "#ba1a1a",
             "error-container": "#ffdad6",
             "on-error-container": "#93000a"
@@ -33,314 +34,588 @@
       }
     }
   </script>
+  <style>
+    body {
+      background-color: #f7f9fb;
+    }
+  </style>
 </head>
-<body class="bg-background min-h-screen text-on-surface antialiased font-sans">
+<body class="bg-[#f7f9fb] min-h-screen text-[#191c1e] antialiased font-sans">
   <div id="app"></div>
 
   <script>
-    // State machine reproducing LoginRecovery.svelte behavior in standalone harness
+    // State matching LoginRecovery and CatalogSearch components
     let state = {
-      mode: 'login', // 'login' | 'recovery' | 'recovery_sent' | 'authenticated'
+      mode: 'catalog', // 'login' | 'recovery' | 'recovery_sent' | 'catalog'
       username: '',
       password: '',
       recoveryIdentity: '',
       isLoading: false,
       errorMessage: '',
       successMessage: '',
-      currentUser: null
+      currentUser: {
+        id: 101,
+        username: 'admin_user',
+        role: 'ADMIN', // 'ADMIN' | 'RESEARCHER'
+        full_name: 'Иванов И.И. (Администратор)',
+        email: 'ivanov@epidemiology-inst.ru'
+      },
+
+      // Catalog search states
+      searchQuery: '',
+      selectedAuthor: '',
+      selectedYear: '',
+
+      // Sample documents
+      documents: [
+        {
+          id: 'doc-1',
+          title: 'Протокол расследования вспышки гриппа A(H3N2)',
+          author: 'НИИ Эпидемиологии',
+          year: 2023,
+          docType: 'Протокол расследования',
+          fileName: 'protocol_influenza_2023.pdf',
+          fileSize: '2.4 МБ',
+          description: 'Материалы эпидемиологического расследования вспышки гриппа в Северо-Западном регионе.'
+        },
+        {
+          id: 'doc-2',
+          title: 'Отчёт эпиднадзора за острыми респираторными инфекциями',
+          author: 'Центр гигиены и эпидемиологии',
+          year: 2022,
+          docType: 'Отчёт эпиднадзора',
+          fileName: 'surveillance_report_2022.pdf',
+          fileSize: '4.1 МБ',
+          description: 'Годовой статистический и аналитический отчет по заболеваемости ОРВИ.'
+        },
+        {
+          id: 'doc-3',
+          title: 'Методическое руководство по генотипированию штаммов',
+          author: 'НИИ Эпидемиологии',
+          year: 2021,
+          docType: 'Методическое руководство',
+          fileName: 'methodology_genotyping.docx',
+          fileSize: '1.8 МБ',
+          description: 'Практические рекомендации по лабораторному анализу и идентификации штаммов.'
+        }
+      ],
+
+      // Upload modal states
+      isUploadModalOpen: false,
+      uploadTitle: '',
+      uploadAuthor: '',
+      uploadYear: '2024',
+      uploadDocType: 'Протокол расследования',
+      uploadDescription: '',
+      uploadFileName: '',
+      simulateNetworkError: false,
+      isUploading: false,
+      uploadError: '',
+      uploadSuccess: ''
     };
+
+    function getFilteredDocuments() {
+      return state.documents.filter(doc => {
+        const q = state.searchQuery.trim().toLowerCase();
+        const matchesQuery = !q ||
+          doc.title.toLowerCase().includes(q) ||
+          doc.description.toLowerCase().includes(q);
+
+        const a = state.selectedAuthor.trim().toLowerCase();
+        const matchesAuthor = !a ||
+          doc.author.toLowerCase().includes(a);
+
+        const y = state.selectedYear.toString().trim();
+        const matchesYear = !y ||
+          doc.year.toString() === y;
+
+        return matchesQuery && matchesAuthor && matchesYear;
+      });
+    }
 
     function render() {
       const app = document.getElementById('app');
       const isAdmin = state.currentUser && state.currentUser.role === 'ADMIN';
 
-      let content = `
-        <div class="auth-wrapper font-sans min-h-screen bg-[#f9f9fc] text-[#1a1c1e] flex flex-col justify-between antialiased">
-          <!-- Top App Bar -->
-          <header class="w-full top-0 sticky bg-[#f9f9fc] flex items-center justify-between h-16 px-6 max-w-md mx-auto z-10 border-b border-[#e2e2e5]">
-      `;
+      if (state.mode === 'catalog') {
+        const filteredDocs = getFilteredDocuments();
 
-      if (state.mode === 'recovery' || state.mode === 'recovery_sent') {
-        content += `
-            <button
-              id="back-to-login-btn"
-              type="button"
-              aria-label="Назад к входу"
-              onclick="switchToLogin()"
-              class="mr-4 text-[#00328a] hover:opacity-80 transition-opacity flex items-center justify-center p-2 rounded-full focus:outline-none focus:ring-2 focus:ring-[#00328a]"
-            >
-              <span class="text-xl font-bold">←</span>
-            </button>
-            <h1 class="font-semibold text-lg text-[#00328a] flex-1">Восстановление</h1>
-        `;
-      } else {
-        content += `
-            <div class="flex items-center space-x-2">
-              <span class="text-[#00328a] font-bold text-xl tracking-tight">ЭпидБаза</span>
-            </div>
-            <span class="text-xs text-[#434653] font-medium bg-[#eeeef0] px-2.5 py-1 rounded-full">НИИ Эпидемиологии</span>
-        `;
-      }
-
-      content += `
-          </header>
-
-          <!-- Main Canvas -->
-          <main class="flex-1 flex flex-col justify-center px-6 max-w-md mx-auto w-full pt-6 pb-8">
-      `;
-
-      if (state.mode === 'login') {
-        content += `
-            <!-- LOGIN VIEW -->
-            <div class="mb-8">
-              <h2 class="text-3xl font-bold text-[#1a1c1e] mb-2 tracking-tight">Вход в систему</h2>
-              <p class="text-base text-[#434653]">
-                База знаний по эпидемиологии. Введите учетные данные института для доступа.
-              </p>
-            </div>
-
-            ${state.errorMessage ? `
-              <div role="alert" class="mb-6 p-4 rounded-lg bg-[#ffdad6] text-[#93000a] text-sm border border-[#ba1a1a]/20 flex items-start space-x-2">
-                <span class="font-bold">!</span>
-                <span>${state.errorMessage}</span>
-              </div>
-            ` : ''}
-
-            <form id="login-form" onsubmit="handleLogin(event)" class="flex flex-col space-y-5" novalidate>
+        app.innerHTML = `
+          <div class="catalog-container max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-6 font-sans text-[#191c1e] bg-[#f7f9fb] min-h-screen">
+            <!-- Top Navigation & Header -->
+            <header class="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#c2c6d4] pb-5">
               <div>
-                <label for="username-input" class="block text-sm font-semibold text-[#1a1c1e] mb-2">
-                  Имя пользователя или Email
-                </label>
-                <div class="relative rounded-md border border-[#c3c6d6] bg-white focus-within:border-[#00328a] focus-within:ring-2 focus-within:ring-[#00328a]/10 transition-all">
-                  <input
-                    id="username-input"
-                    type="text"
-                    value="${state.username}"
-                    oninput="state.username = this.value"
-                    placeholder="ivanov@epidemiology-inst.ru"
-                    required
-                    class="w-full h-14 px-4 bg-transparent border-none rounded-md focus:outline-none text-base text-[#1a1c1e] placeholder-[#737685]"
-                  />
+                <div class="flex items-center gap-2 mb-1">
+                  <span class="text-xs font-semibold uppercase text-[#424752] tracking-wider">Каталог материалов</span>
                 </div>
+                <h1 class="text-2xl md:text-3xl font-bold text-[#003f87]">
+                  База знаний по эпидемиологии
+                </h1>
+                <p class="text-sm text-[#424752] mt-1">
+                  Поиск и управление эпидемиологическими протоколами, отчётами и руководствами
+                </p>
               </div>
 
-              <div>
-                <div class="flex justify-between items-center mb-2">
-                  <label for="password-input" class="block text-sm font-semibold text-[#1a1c1e]">
-                    Пароль
-                  </label>
-                  <button
-                    id="forgot-password-link"
-                    type="button"
-                    onclick="switchToRecovery()"
-                    class="text-sm font-medium text-[#00328a] hover:underline focus:outline-none focus:ring-1 focus:ring-[#00328a] rounded px-1"
-                  >
-                    Забыли пароль?
-                  </button>
-                </div>
-                <div class="relative rounded-md border border-[#c3c6d6] bg-white focus-within:border-[#00328a] focus-within:ring-2 focus-within:ring-[#00328a]/10 transition-all">
-                  <input
-                    id="password-input"
-                    type="password"
-                    value="${state.password}"
-                    oninput="state.password = this.value"
-                    placeholder="••••••••"
-                    required
-                    class="w-full h-14 px-4 bg-transparent border-none rounded-md focus:outline-none text-base text-[#1a1c1e] placeholder-[#737685]"
-                  />
-                </div>
-              </div>
-
-              <div class="pt-4">
-                <button
-                  type="submit"
-                  class="w-full h-13 bg-[#00328a] text-white rounded-lg font-medium text-base py-3 flex items-center justify-center hover:bg-[#002566] active:scale-[0.98] transition-all shadow-sm"
-                >
-                  <span>Войти</span>
-                </button>
-              </div>
-            </form>
-        `;
-      } else if (state.mode === 'recovery') {
-        content += `
-            <!-- RECOVERY REQUEST VIEW -->
-            <div class="mb-8">
-              <h2 class="text-3xl font-bold text-[#1a1c1e] mb-2 tracking-tight">Забыли пароль?</h2>
-              <p class="text-base text-[#434653]">
-                Введите ваш email или логин, чтобы получить инструкции по сбросу пароля.
-              </p>
-            </div>
-
-            ${state.errorMessage ? `
-              <div role="alert" class="mb-6 p-4 rounded-lg bg-[#ffdad6] text-[#93000a] text-sm border border-[#ba1a1a]/20 flex items-start space-x-2">
-                <span class="font-bold">!</span>
-                <span>${state.errorMessage}</span>
-              </div>
-            ` : ''}
-
-            <form id="recovery-form" onsubmit="handleRecoveryRequest(event)" class="flex flex-col space-y-5" novalidate>
-              <div>
-                <label for="recovery-identity-input" class="block text-sm font-semibold text-[#1a1c1e] mb-2">
-                  Email или логин
-                </label>
-                <div class="relative rounded-md border border-[#c3c6d6] bg-white focus-within:border-[#00328a] focus-within:ring-2 focus-within:ring-[#00328a]/10 transition-all">
-                  <input
-                    id="recovery-identity-input"
-                    type="text"
-                    value="${state.recoveryIdentity}"
-                    oninput="state.recoveryIdentity = this.value"
-                    placeholder="name@example.com"
-                    required
-                    class="w-full h-14 px-4 bg-transparent border-none rounded-md focus:outline-none text-base text-[#1a1c1e] placeholder-[#737685]"
-                  />
-                </div>
-              </div>
-
-              <div class="pt-4">
-                <button
-                  type="submit"
-                  class="w-full h-13 bg-[#00328a] text-white rounded-lg font-medium text-base py-3 flex items-center justify-center hover:bg-[#002566] active:scale-[0.98] transition-all shadow-sm"
-                >
-                  <span>Отправить</span>
-                </button>
-              </div>
-            </form>
-        `;
-      } else if (state.mode === 'recovery_sent') {
-        content += `
-            <!-- RECOVERY SENT CONFIRMATION VIEW -->
-            <div class="p-6 bg-white rounded-xl border border-[#c3c6d6] text-center space-y-4 shadow-sm">
-              <div class="w-12 h-12 bg-[#00328a]/10 text-[#00328a] rounded-full flex items-center justify-center mx-auto text-2xl font-bold">
-                ✓
-              </div>
-              <h3 class="text-xl font-bold text-[#1a1c1e]">Инструкции отправлены</h3>
-              <p class="text-sm text-[#434653] leading-relaxed">
-                ${state.successMessage}
-              </p>
-              <button
-                type="button"
-                onclick="switchToLogin()"
-                class="w-full py-3 bg-[#00328a] text-white rounded-lg text-sm font-medium hover:bg-[#002566] transition-colors"
-              >
-                Вернуться ко входу
-              </button>
-            </div>
-        `;
-      } else if (state.mode === 'authenticated') {
-        content += `
-            <!-- AUTHENTICATED USER VIEW -->
-            <div class="bg-white p-6 rounded-xl border border-[#c3c6d6] shadow-sm space-y-6">
-              <div class="flex items-center space-x-3 pb-4 border-b border-[#eeeef0]">
-                <div class="w-10 h-10 rounded-full bg-[#00328a] text-white flex items-center justify-center font-bold text-lg">
+              <!-- Admin / User Status Bar -->
+              <div class="flex items-center gap-3 bg-white p-3 rounded-lg border border-[#e0e3e5] shadow-sm self-start md:self-auto">
+                <div class="w-9 h-9 rounded-full bg-[#003f87] text-white flex items-center justify-center font-bold text-sm">
                   ${(state.currentUser?.full_name || state.currentUser?.username || 'С')[0]}
                 </div>
                 <div>
-                  <h3 class="font-bold text-[#1a1c1e] text-base">${state.currentUser?.full_name || state.currentUser?.username}</h3>
-                  <p class="text-xs text-[#434653]">
-                    Роль: <span class="font-semibold">${state.currentUser?.role || 'RESEARCHER'}</span>
-                  </p>
+                  <div class="text-xs font-medium text-[#191c1e]">${state.currentUser?.full_name || state.currentUser?.username}</div>
+                  <div class="text-[11px] text-[#424752]">
+                    Роль: <span class="font-semibold text-[#003f87]">${isAdmin ? 'Администратор' : 'Сотрудник'}</span>
+                  </div>
+                </div>
+
+                <div class="ml-2 flex items-center gap-2">
+                  ${isAdmin ? `
+                    <button
+                      id="open-upload-modal-btn"
+                      type="button"
+                      onclick="openUploadModal()"
+                      class="px-3 py-2 bg-[#003f87] hover:bg-[#002b5e] text-white rounded-md text-xs font-medium transition-colors flex items-center gap-1.5 shadow-sm"
+                    >
+                      <span>+ Загрузить документ</span>
+                    </button>
+                  ` : ''}
+                  <button
+                    id="switch-role-btn"
+                    type="button"
+                    onclick="toggleRole()"
+                    class="px-2.5 py-1.5 border border-[#c2c6d4] text-[#424752] hover:bg-[#eceef0] rounded-md text-[11px] font-medium"
+                  >
+                    ${isAdmin ? 'Сменить на Сотрудник' : 'Сменить на Админ'}
+                  </button>
                 </div>
               </div>
+            </header>
 
-              <div class="space-y-3">
-                <h4 class="text-sm font-semibold text-[#1a1c1e]">Каталог эпидемиологических материалов</h4>
-                <p class="text-xs text-[#434653]">
-                  Вам доступен просмотр и поиск протоколов расследований вспышек, отчетов эпиднадзора и методических руководств.
-                </p>
+            <!-- Search & Filter Controls -->
+            <section class="bg-white p-5 rounded-xl border border-[#e0e3e5] shadow-sm mb-8">
+              <h2 class="text-lg font-bold text-[#191c1e] mb-4 flex items-center gap-2">
+                <span>🔍 Поиск документов</span>
+              </h2>
 
-                ${isAdmin ? `
-                  <div class="p-3 bg-[#f3f3f6] rounded border border-[#c3c6d6] flex space-x-2">
-                    <button class="px-3 py-1.5 bg-[#00328a] text-white text-xs rounded font-medium">Загрузить документ</button>
-                    <button class="px-3 py-1.5 bg-[#ba1a1a] text-white text-xs rounded font-medium">Удалить</button>
-                  </div>
-                ` : `
-                  <!-- Non-admin / employee session: upload and delete controls are entirely hidden -->
-                  <div id="employee-message" class="p-3 bg-[#f3f3f6] text-[#434653] text-xs rounded">
-                    Права доступа: Просмотр и поиск материалов (загрузка и удаление ограничены администратором института)
-                  </div>
-                `}
+              <form onsubmit="handleSearchSubmit(event)" class="grid grid-cols-1 md:grid-cols-12 gap-4">
+                <!-- Query Input -->
+                <div class="md:col-span-5">
+                  <label for="search-query-input" class="block text-xs font-semibold text-[#191c1e] mb-1">
+                    Название или ключевое слово
+                  </label>
+                  <input
+                    id="search-query-input"
+                    type="text"
+                    value="${state.searchQuery}"
+                    oninput="state.searchQuery = this.value"
+                    placeholder="Например: грипп, протокол, генотипирование..."
+                    class="w-full h-11 px-3.5 bg-[#f7f9fb] border border-[#c2c6d4] rounded-lg text-sm text-[#191c1e] focus:outline-none focus:ring-2 focus:ring-[#003f87]/30 focus:border-[#003f87]"
+                  />
+                </div>
+
+                <!-- Author / Organization Filter -->
+                <div class="md:col-span-3">
+                  <label for="search-author-input" class="block text-xs font-semibold text-[#191c1e] mb-1">
+                    Автор / Организация
+                  </label>
+                  <input
+                    id="search-author-input"
+                    type="text"
+                    value="${state.selectedAuthor}"
+                    oninput="state.selectedAuthor = this.value"
+                    placeholder="НИИ Эпидемиологии"
+                    class="w-full h-11 px-3.5 bg-[#f7f9fb] border border-[#c2c6d4] rounded-lg text-sm text-[#191c1e] focus:outline-none focus:ring-2 focus:ring-[#003f87]/30 focus:border-[#003f87]"
+                  />
+                </div>
+
+                <!-- Year Filter -->
+                <div class="md:col-span-2">
+                  <label for="search-year-input" class="block text-xs font-semibold text-[#191c1e] mb-1">
+                    Год публикации
+                  </label>
+                  <select
+                    id="search-year-input"
+                    onchange="state.selectedYear = this.value"
+                    class="w-full h-11 px-3 bg-[#f7f9fb] border border-[#c2c6d4] rounded-lg text-sm text-[#191c1e] focus:outline-none focus:ring-2 focus:ring-[#003f87]/30 focus:border-[#003f87]"
+                  >
+                    <option value="" ${state.selectedYear === '' ? 'selected' : ''}>Все года</option>
+                    <option value="2024" ${state.selectedYear === '2024' ? 'selected' : ''}>2024</option>
+                    <option value="2023" ${state.selectedYear === '2023' ? 'selected' : ''}>2023</option>
+                    <option value="2022" ${state.selectedYear === '2022' ? 'selected' : ''}>2022</option>
+                    <option value="2021" ${state.selectedYear === '2021' ? 'selected' : ''}>2021</option>
+                    <option value="2020" ${state.selectedYear === '2020' ? 'selected' : ''}>2020</option>
+                  </select>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="md:col-span-2 flex items-end gap-2">
+                  <button
+                    type="submit"
+                    id="search-submit-btn"
+                    class="flex-1 h-11 bg-[#003f87] hover:bg-[#002b5e] text-white font-medium text-sm rounded-lg transition-colors flex items-center justify-center shadow-sm"
+                  >
+                    Найти
+                  </button>
+                  ${(state.searchQuery || state.selectedAuthor || state.selectedYear) ? `
+                    <button
+                      type="button"
+                      id="search-reset-btn"
+                      onclick="handleResetSearch()"
+                      class="h-11 px-3 border border-[#c2c6d4] text-[#424752] hover:bg-[#eceef0] text-xs font-medium rounded-lg transition-colors"
+                      title="Сбросить фильтры"
+                    >
+                      Сброс
+                    </button>
+                  ` : ''}
+                </div>
+              </form>
+            </section>
+
+            <!-- Document List Section -->
+            <main>
+              <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-bold text-[#191c1e]">
+                  Результаты поиска <span class="text-sm font-normal text-[#424752]">(${filteredDocs.length})</span>
+                </h2>
               </div>
 
-              <div class="pt-2">
-                <button
-                  type="button"
-                  onclick="handleLogout()"
-                  class="w-full py-2.5 border border-[#c3c6d6] text-[#1a1c1e] hover:bg-[#eeeef0] rounded-lg text-sm font-medium transition-colors"
+              ${filteredDocs.length === 0 ? `
+                <!-- Explicit Empty State Message AC Required -->
+                <div
+                  id="empty-catalog-message"
+                  role="status"
+                  class="bg-white border border-[#e0e3e5] rounded-xl p-8 text-center space-y-3 shadow-sm my-6"
                 >
-                  Выйти из системы
-                </button>
+                  <div class="w-12 h-12 bg-[#eceef0] rounded-full flex items-center justify-center mx-auto text-[#727784] text-xl font-bold">
+                    📄
+                  </div>
+                  <h3 class="text-lg font-bold text-[#191c1e]">нет материалов</h3>
+                  <p class="text-sm text-[#424752] max-w-md mx-auto">
+                    По вашему запросу не найдено ни одного документа. Проверьте правильность фильтров или сбросьте параметры поиска.
+                  </p>
+                  <button
+                    type="button"
+                    onclick="handleResetSearch()"
+                    class="px-4 py-2 border border-[#003f87] text-[#003f87] hover:bg-[#003f87]/5 rounded-lg text-xs font-semibold transition-colors mt-2"
+                  >
+                    Показать все материалы
+                  </button>
+                </div>
+              ` : `
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                  ${filteredDocs.map(doc => `
+                    <article class="bg-white border border-[#e0e3e5] rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between">
+                      <div>
+                        <div class="flex items-start justify-between gap-2 mb-2">
+                          <span class="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-[#d9e3f1] text-[#131c26]">
+                            ${doc.docType}
+                          </span>
+                          <span class="text-xs text-[#727784] font-medium">${doc.year} г.</span>
+                        </div>
+
+                        <h3 class="text-base font-bold text-[#191c1e] mb-2 line-clamp-2 leading-snug">
+                          ${doc.title}
+                        </h3>
+
+                        <p class="text-xs text-[#424752] mb-3 line-clamp-3 leading-relaxed">
+                          ${doc.description}
+                        </p>
+
+                        <div class="text-xs text-[#727784] mb-4 space-y-1 border-t border-[#f2f4f6] pt-3">
+                          <div class="flex items-center justify-between">
+                            <span>Организация:</span>
+                            <span class="font-medium text-[#191c1e]">${doc.author}</span>
+                          </div>
+                          <div class="flex items-center justify-between">
+                            <span>Файл:</span>
+                            <span class="font-medium text-[#191c1e]">${doc.fileName} (${doc.fileSize})</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="flex items-center justify-between gap-2 pt-3 border-t border-[#e0e3e5]">
+                        <button
+                          type="button"
+                          onclick="alert('Загрузка документа: ${doc.fileName}')"
+                          class="flex-1 py-2 px-3 bg-[#003f87] hover:bg-[#002b5e] text-white text-xs font-medium rounded-md transition-colors flex items-center justify-center gap-1 shadow-sm"
+                        >
+                          <span>Скачать</span>
+                        </button>
+
+                        ${isAdmin ? `
+                          <button
+                            type="button"
+                            onclick="handleDeleteDocument('${doc.id}')"
+                            class="py-2 px-3 border border-[#ba1a1a] text-[#ba1a1a] hover:bg-[#ffdad6] text-xs font-medium rounded-md transition-colors"
+                            title="Удалить документ"
+                          >
+                            Удалить
+                          </button>
+                        ` : ''}
+                      </div>
+                    </article>
+                  `).join('')}
+                </div>
+              `}
+            </main>
+
+            <!-- Admin Upload Modal -->
+            ${state.isUploadModalOpen ? `
+              <div id="upload-modal" class="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+                <div class="bg-white rounded-xl border border-[#e0e3e5] max-w-lg w-full p-6 shadow-xl my-8">
+                  <div class="flex items-center justify-between pb-3 border-b border-[#e0e3e5] mb-4">
+                    <h3 class="text-lg font-bold text-[#191c1e]">Загрузка документа в каталог</h3>
+                    <button
+                      type="button"
+                      onclick="closeUploadModal()"
+                      class="text-[#727784] hover:text-[#191c1e] text-xl font-bold p-1 rounded-full"
+                    >
+                      ✕
+                    </button>
+                  </div>
+
+                  ${state.uploadError ? `
+                    <div id="upload-error-alert" role="alert" class="mb-4 p-3.5 rounded-lg bg-[#ffdad6] text-[#93000a] text-xs font-medium border border-[#ba1a1a]/30">
+                      ⚠ ${state.uploadError}
+                    </div>
+                  ` : ''}
+
+                  ${state.uploadSuccess ? `
+                    <div id="upload-success-alert" role="status" class="mb-4 p-3.5 rounded-lg bg-[#d9e3f1] text-[#001a40] text-xs font-medium border border-[#003f87]/30">
+                      ✓ ${state.uploadSuccess}
+                    </div>
+                  ` : ''}
+
+                  <form id="upload-document-form" onsubmit="handleUploadSubmit(event)" class="space-y-4" novalidate>
+                    <div>
+                      <label for="upload-title-input" class="block text-xs font-semibold text-[#191c1e] mb-1">
+                        Название документа *
+                      </label>
+                      <input
+                        id="upload-title-input"
+                        type="text"
+                        value="${state.uploadTitle}"
+                        oninput="state.uploadTitle = this.value"
+                        placeholder="Введите полное название"
+                        required
+                        class="w-full h-10 px-3 bg-[#f7f9fb] border border-[#c2c6d4] rounded-md text-sm text-[#191c1e] focus:outline-none focus:border-[#003f87]"
+                      />
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                      <div>
+                        <label for="upload-author-input" class="block text-xs font-semibold text-[#191c1e] mb-1">
+                          Автор / Организация *
+                        </label>
+                        <input
+                          id="upload-author-input"
+                          type="text"
+                          value="${state.uploadAuthor}"
+                          oninput="state.uploadAuthor = this.value"
+                          placeholder="НИИ Эпидемиологии"
+                          required
+                          class="w-full h-10 px-3 bg-[#f7f9fb] border border-[#c2c6d4] rounded-md text-sm text-[#191c1e] focus:outline-none focus:border-[#003f87]"
+                        />
+                      </div>
+
+                      <div>
+                        <label for="upload-year-input" class="block text-xs font-semibold text-[#191c1e] mb-1">
+                          Год публикации *
+                        </label>
+                        <input
+                          id="upload-year-input"
+                          type="number"
+                          value="${state.uploadYear}"
+                          oninput="state.uploadYear = this.value"
+                          min="1990"
+                          max="2030"
+                          required
+                          class="w-full h-10 px-3 bg-[#f7f9fb] border border-[#c2c6d4] rounded-md text-sm text-[#191c1e] focus:outline-none focus:border-[#003f87]"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label for="upload-doctype-select" class="block text-xs font-semibold text-[#191c1e] mb-1">
+                        Тип документа
+                      </label>
+                      <select
+                        id="upload-doctype-select"
+                        onchange="state.uploadDocType = this.value"
+                        class="w-full h-10 px-3 bg-[#f7f9fb] border border-[#c2c6d4] rounded-md text-sm text-[#191c1e] focus:outline-none focus:border-[#003f87]"
+                      >
+                        <option value="Протокол расследования" ${state.uploadDocType === 'Протокол расследования' ? 'selected' : ''}>Протокол расследования</option>
+                        <option value="Отчёт эпиднадзора" ${state.uploadDocType === 'Отчёт эпиднадзора' ? 'selected' : ''}>Отчёт эпиднадзора</option>
+                        <option value="Набор данных" ${state.uploadDocType === 'Набор данных' ? 'selected' : ''}>Набор данных</option>
+                        <option value="Методическое руководство" ${state.uploadDocType === 'Методическое руководство' ? 'selected' : ''}>Методическое руководство</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label for="upload-description-input" class="block text-xs font-semibold text-[#191c1e] mb-1">
+                        Описание
+                      </label>
+                      <textarea
+                        id="upload-description-input"
+                        oninput="state.uploadDescription = this.value"
+                        rows="3"
+                        placeholder="Краткая аннотация или описание документа"
+                        class="w-full p-3 bg-[#f7f9fb] border border-[#c2c6d4] rounded-md text-sm text-[#191c1e] focus:outline-none focus:border-[#003f87]"
+                      >${state.uploadDescription}</textarea>
+                    </div>
+
+                    <div>
+                      <label for="upload-file-input" class="block text-xs font-semibold text-[#191c1e] mb-1">
+                        Файл (PDF, DOCX)
+                      </label>
+                      <input
+                        id="upload-file-input"
+                        type="file"
+                        onchange="handleFileSelect(event)"
+                        accept=".pdf,.doc,.docx,.xlsx"
+                        class="w-full text-xs text-[#424752] file:mr-3 file:py-2 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-[#d9e3f1] file:text-[#003f87] hover:file:bg-[#003f87]/10"
+                      />
+                    </div>
+
+                    <!-- Switch for simulating network error -->
+                    <div class="pt-2 border-t border-[#f2f4f6]">
+                      <label class="flex items-center gap-2 text-xs text-[#424752] cursor-pointer">
+                        <input
+                          id="simulate-network-error-checkbox"
+                          type="checkbox"
+                          ${state.simulateNetworkError ? 'checked' : ''}
+                          onchange="state.simulateNetworkError = this.checked"
+                          class="rounded border-[#c2c6d4] text-[#003f87] focus:ring-[#003f87]"
+                        />
+                        <span>Симулировать сбой сети при отправке</span>
+                      </label>
+                    </div>
+
+                    <div class="flex items-center justify-end gap-3 pt-4 border-t border-[#e0e3e5]">
+                      <button
+                        type="button"
+                        onclick="closeUploadModal()"
+                        class="px-4 py-2 border border-[#c2c6d4] text-[#424752] hover:bg-[#eceef0] text-xs font-medium rounded-md transition-colors"
+                      >
+                        Отмена
+                      </button>
+                      <button
+                        type="submit"
+                        id="upload-submit-btn"
+                        ${state.isUploading ? 'disabled' : ''}
+                        class="px-4 py-2 bg-[#003f87] hover:bg-[#002b5e] text-white text-xs font-medium rounded-md transition-colors disabled:opacity-60 shadow-sm"
+                      >
+                        ${state.isUploading ? 'Загрузка...' : 'Сохранить и загрузить'}
+                      </button>
+                    </div>
+                  </form>
+                </div>
               </div>
-            </div>
+            ` : ''}
+
+            <!-- Footer -->
+            <footer class="w-full py-6 mt-12 text-center text-xs text-[#727784] border-t border-[#e0e3e5]">
+              <p>Российский научно-исследовательский институт эпидемиологии</p>
+            </footer>
+          </div>
         `;
       }
-
-      content += `
-          </main>
-
-          <!-- Footer -->
-          <footer class="w-full py-4 text-center text-xs text-[#737685] border-t border-[#eeeef0]">
-            <p>Российский научно-исследовательский институт эпидемиологии</p>
-          </footer>
-        </div>
-      `;
-
-      app.innerHTML = content;
     }
 
-    function switchToRecovery() {
-      state.errorMessage = '';
-      state.successMessage = '';
-      state.mode = 'recovery';
-      render();
-    }
-
-    function switchToLogin() {
-      state.errorMessage = '';
-      state.successMessage = '';
-      state.mode = 'login';
-      render();
-    }
-
-    function handleLogin(event) {
+    function handleSearchSubmit(event) {
       if (event) event.preventDefault();
-      if (!state.username.trim() || !state.password) {
-        state.errorMessage = 'Заполните все обязательные поля.';
+      render();
+    }
+
+    function handleResetSearch() {
+      state.searchQuery = '';
+      state.selectedAuthor = '';
+      state.selectedYear = '';
+      render();
+    }
+
+    function openUploadModal() {
+      state.uploadError = '';
+      state.uploadSuccess = '';
+      state.isUploadModalOpen = true;
+      render();
+    }
+
+    function closeUploadModal() {
+      state.isUploadModalOpen = false;
+      render();
+    }
+
+    function handleFileSelect(event) {
+      const files = event.target.files;
+      if (files && files.length > 0) {
+        state.uploadFileName = files[0].name;
+      }
+    }
+
+    function handleUploadSubmit(event) {
+      if (event) event.preventDefault();
+      state.uploadError = '';
+      state.uploadSuccess = '';
+
+      if (!state.uploadTitle.trim() || !state.uploadAuthor.trim() || !state.uploadYear) {
+        state.uploadError = 'Заполните все обязательные поля формы.';
         render();
         return;
       }
 
-      state.currentUser = {
-        id: 101,
-        username: state.username.trim(),
-        role: 'RESEARCHER',
-        full_name: 'Сотрудник института',
-        email: 'ivanov@epidemiology-inst.ru'
-      };
-      state.mode = 'authenticated';
+      state.isUploading = true;
       render();
-    }
 
-    function handleRecoveryRequest(event) {
-      if (event) event.preventDefault();
-      if (!state.recoveryIdentity.trim()) {
-        state.errorMessage = 'Пожалуйста, укажите ваш email или имя пользователя.';
+      setTimeout(() => {
+        if (state.simulateNetworkError) {
+          // KEY AC: On network failure, error is shown, but state metadata remains INTACT in the form!
+          state.uploadError = ' Ошибка сети при загрузке документа. Попробуйте еще раз.';
+          state.isUploading = false;
+          render();
+          return;
+        }
+
+        const newDoc = {
+          id: 'doc-' + Date.now(),
+          title: state.uploadTitle.trim(),
+          author: state.uploadAuthor.trim(),
+          year: parseInt(state.uploadYear, 10),
+          docType: state.uploadDocType,
+          fileName: state.uploadFileName || 'document.pdf',
+          fileSize: '1.2 МБ',
+          description: state.uploadDescription.trim() || 'Загруженный документ'
+        };
+
+        state.documents.unshift(newDoc);
+        state.uploadSuccess = 'Документ успешно загружен в каталог.';
+
+        // Reset metadata on success only
+        state.uploadTitle = '';
+        state.uploadAuthor = '';
+        state.uploadYear = '2024';
+        state.uploadDocType = 'Протокол расследования';
+        state.uploadDescription = '';
+        state.uploadFileName = '';
+        state.isUploading = false;
+        state.isUploadModalOpen = false;
         render();
-        return;
-      }
+      }, 300);
+    }
 
-      state.successMessage = 'Инструкции по восстановлению пароля отправлены на ваш электронный адрес.';
-      state.mode = 'recovery_sent';
+    function handleDeleteDocument(id) {
+      state.documents = state.documents.filter(doc => doc.id !== id);
       render();
     }
 
-    function handleLogout() {
-      state.currentUser = null;
-      state.username = '';
-      state.password = '';
-      state.recoveryIdentity = '';
-      state.errorMessage = '';
-      state.successMessage = '';
-      state.mode = 'login';
+    function toggleRole() {
+      if (state.currentUser.role === 'ADMIN') {
+        state.currentUser.role = 'RESEARCHER';
+        state.currentUser.full_name = 'Петров П.П. (Сотрудник)';
+      } else {
+        state.currentUser.role = 'ADMIN';
+        state.currentUser.full_name = 'Иванов И.И. (Администратор)';
+      }
       render();
     }
 
