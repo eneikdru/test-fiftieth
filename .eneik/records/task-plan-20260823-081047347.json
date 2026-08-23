@@ -1,0 +1,72 @@
+{
+  "epics": [
+    {
+      "existingEpicId": "605751e6-3d11-491f-af31-8d96d2c7f5bb",
+      "title": null,
+      "jtbd": null,
+      "kanoClass": null,
+      "cynefinDomain": null,
+      "sixSigmaMetric": null,
+      "tocConstraintRef": null,
+      "sourceIndex": 0,
+      "requirements": [
+        "R1: Move wishlist subject fd6672c6-02c4-455e-a4d9-91e4ae9d308c out of the converted_to_task state to bypass the mechanical retirement loop.",
+        "R2: Move wishlist subject 765d2ab0-1b55-4701-babd-af5247442de5 out of the converted_to_task state to bypass the mechanical retirement loop."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Patch stuck wishlist subjects out of blocked state",
+          "roleTag": "BARCAN-TAG-08",
+          "jtbd": "When implementing the unblock patch for this epic, I want to move the stuck subjects to a new state, so that the operations auditor can resume processing.",
+          "acceptanceCriteria": "Given subject fd6672c6-02c4-455e-a4d9-91e4ae9d308c is stuck, When the state patch runs, Then the subject is explicitly escalated.\nGiven subject 765d2ab0-1b55-4701-babd-af5247442de5 is stuck, When the state patch runs, Then the subject is explicitly escalated.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "Auditor processing loop",
+          "sixSigmaMetric": "Reducing stuck operations auditor subjects from 2 to 0",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1",
+            "R2"
+          ]
+        }
+      ]
+    },
+    {
+      "existingEpicId": "a26b51a4-6b52-497d-bce6-689ddb0bca03",
+      "title": null,
+      "jtbd": null,
+      "kanoClass": null,
+      "cynefinDomain": null,
+      "sixSigmaMetric": null,
+      "tocConstraintRef": null,
+      "sourceIndex": 1,
+      "requirements": [
+        "R1: Include a documentation or summary file with evidence of auditor reprocessing and blocker recording that explicitly states its subject scope.",
+        "R2: Include a recorded blocker or follow-up artifact in the repository.",
+        "R3: Add the missing migration file db/migration/V20260823065127618__unblock_stuck_subjects.sql to the diff.",
+        "R4: Restore row-count assertions in the migration test to prove the UPDATE matched rows for the specific subject."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Patch missing acceptance criteria for Runtime Contract",
+          "roleTag": "BARCAN-TAG-02",
+          "jtbd": "When implementing the missing criteria for this epic, I want to add the missing migration file and test assertions, so that the runtime datastore behaves exactly as tested.",
+          "acceptanceCriteria": "Given the missing migration file is needed, When the patch is applied, Then V20260823065127618__unblock_stuck_subjects.sql is added.\nGiven the migration test lacks assertions, When the test is updated, Then it asserts the UPDATE actually matched rows for the specific stuck subject IDs.\nGiven the task requires a blocker artifact, When the PR is finalized, Then a concrete blocker artifact is included explicitly stating the subject it applies to.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "Runtime datastore consistency",
+          "sixSigmaMetric": "Reducing missing acceptance criteria from 3 to 0",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1",
+            "R2",
+            "R3",
+            "R4"
+          ]
+        }
+      ]
+    }
+  ]
+}
