@@ -1,5 +1,5 @@
 CREATE TABLE telemetry_events (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     event_type VARCHAR(64) NOT NULL,
     query_term VARCHAR(255),
     document_id BIGINT,

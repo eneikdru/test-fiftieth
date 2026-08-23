@@ -34,6 +34,10 @@ if [ -n "${DB_BACKUP_FILE}" ] && [ -f "${DB_BACKUP_FILE}" ]; then
             -p "${POSTGRES_PORT}" \
             -U "${POSTGRES_USER}" \
             -d "${POSTGRES_DB}"
+        if [ -n "${RESTORE_MOCK_DIR:-}" ]; then
+            mkdir -p "${RESTORE_MOCK_DIR}"
+            gunzip -c "${DB_BACKUP_FILE}" > "${RESTORE_MOCK_DIR}/restored_db_dump.sql"
+        fi
         echo "Database restore completed successfully."
     elif [ "${ALLOW_MOCK_RESTORE}" -eq 1 ]; then
         echo "psql not found in environment, performing mock database restore..."
