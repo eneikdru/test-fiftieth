@@ -22,10 +22,24 @@
   let selectedAuthor = '';
   let selectedYear = '';
 
+
   // API Data view states: empty, loading, error, present
   let documents = [];
   let isLoading = false;
   let searchError = '';
+
+  // Pagination states
+  let currentPage = 0;
+  let pageSize = 6;
+  let totalPages = 0;
+  let totalItems = 0;
+  let isServerPaginated = false;
+  let isPageLoading = false;
+  let pageChangeError = '';
+  let pageRetryPage = 0;
+
+  $: displayDocuments = isServerPaginated ? documents : documents.slice(currentPage * pageSize, (currentPage + 1) * pageSize);
+
 
   // Upload modal / form states
   let isUploadModalOpen = false;
@@ -42,15 +56,24 @@
   let uploadSuccess = '';
 
   // Fetch documents from real backend endpoint /api/v1/documents/search
-  async function fetchDocuments() {
-    isLoading = true;
-    searchError = '';
+  async function fetchDocuments(pageIndex = 0, isPageChange = false) {
+    if (isPageChange) {
+      isPageLoading = true;
+      pageChangeError = '';
+    } else {
+      isLoading = true;
+      searchError = '';
+      currentPage = 0; // Reset page on new search
+    }
 
     try {
       const params = new URLSearchParams();
       if (searchQuery.trim()) params.append('query', searchQuery.trim());
       if (selectedAuthor.trim()) params.append('author', selectedAuthor.trim());
       if (selectedYear.toString().trim()) params.append('year', selectedYear.toString().trim());
+
+      params.append('page', pageIndex);
+      params.append('size', pageSize);
 
       const url = `${getApiBaseUrl()}/documents/search?${params.toString()}`;
       const response = await fetch(url);
@@ -60,21 +83,81 @@
       }
 
       const data = await response.json();
-      // Server response format: { query: '...', count: N, results: [...] } or direct array
+
+      let fetchedDocs = [];
       if (Array.isArray(data)) {
-        documents = data;
+        fetchedDocs = data;
+        isServerPaginated = false;
       } else if (data && Array.isArray(data.results)) {
-        documents = data.results;
+        fetchedDocs = data.results;
+        // Check if server returned pagination info, otherwise it's just wrapped
+        if (data.totalPages !== undefined) {
+           isServerPaginated = true;
+           totalPages = data.totalPages;
+           totalItems = data.totalItems;
+        } else {
+           isServerPaginated = false;
+        }
       } else {
-        documents = [];
+        fetchedDocs = [];
+        isServerPaginated = false;
+      }
+
+      documents = fetchedDocs;
+
+      if (!isServerPaginated) {
+        totalItems = documents.length;
+        totalPages = Math.ceil(totalItems / pageSize) || 1;
+      }
+
+      currentPage = pageIndex;
+
+      if (isPageChange) {
+        setTimeout(() => {
+          const heading = document.getElementById('search-results-heading');
+          if (heading) heading.focus();
+        }, 50);
       }
     } catch (err) {
-      documents = [];
-      searchError = err.message || 'Ошибка подключения к серверу. Каталог недоступен.';
+      if (isPageChange) {
+        pageChangeError = err.message || 'Ошибка загрузки страницы.';
+        pageRetryPage = pageIndex;
+      } else {
+        documents = [];
+        searchError = err.message || 'Ошибка подключения к серверу. Каталог недоступен.';
+      }
     } finally {
-      isLoading = false;
+      if (isPageChange) {
+        isPageLoading = false;
+      } else {
+        isLoading = false;
+      }
     }
   }
+
+  function handlePageChange(newPage) {
+    if (newPage >= 0 && newPage < totalPages) {
+      if (isServerPaginated) {
+        fetchDocuments(newPage, true);
+      } else {
+        isPageLoading = true;
+        pageChangeError = '';
+        setTimeout(() => {
+            currentPage = newPage;
+            isPageLoading = false;
+            setTimeout(() => {
+                const heading = document.getElementById('search-results-heading');
+                if (heading) heading.focus();
+            }, 50);
+        }, 150);
+      }
+    }
+  }
+
+  function retryPageChange() {
+    handlePageChange(pageRetryPage);
+  }
+
 
   onMount(() => {
     fetchDocuments();
@@ -322,8 +405,8 @@
   <!-- Document List Section -->
   <main>
     <div class="flex items-center justify-between mb-4">
-      <h2 class="text-xl font-bold text-[#191c1e]">
-        Результаты поиска <span class="text-sm font-normal text-[#424752]">({documents.length})</span>
+      <h2 id="search-results-heading" tabindex="-1" class="text-xl font-bold text-[#191c1e] focus:outline-none focus:ring-2 focus:ring-[#003f87]/50 rounded">
+        Результаты поиска <span class="text-sm font-normal text-[#424752]">({totalItems})</span>
       </h2>
     </div>
 
@@ -379,8 +462,27 @@
     <!-- State 4: Present State (Real Backend Data) -->
     {:else}
       <!-- Document Grid / List -->
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-        {#each documents as doc, index (getDocKey(doc, index))}
+      <div class="relative">
+        {#if isPageLoading}
+          <div class="absolute inset-0 z-10 bg-white/70 backdrop-blur-sm flex items-center justify-center rounded-xl">
+            <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-[#003f87] border-t-transparent"></div>
+          </div>
+        {/if}
+
+        {#if pageChangeError}
+          <div role="alert" class="mb-4 p-4 rounded-xl bg-[#ffdad6] border border-[#ba1a1a]/30 flex flex-col md:flex-row items-center justify-between gap-3 shadow-sm">
+            <div class="flex items-center gap-3">
+              <span class="text-xl">⚠️</span>
+              <p class="text-sm font-medium text-[#93000a]">{pageChangeError}</p>
+            </div>
+            <button type="button" on:click={retryPageChange} class="px-4 py-2 bg-[#ba1a1a] text-white hover:bg-[#93000a] rounded-lg text-xs font-medium focus:ring-2 focus:ring-[#ba1a1a]/50 focus:outline-none transition-colors">
+              Повторить
+            </button>
+          </div>
+        {/if}
+
+        <div id="document-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          {#each displayDocuments as doc, index (getDocKey(doc, index))}
           <article class="bg-white border border-[#e0e3e5] rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between">
             <div>
               <div class="flex items-start justify-between gap-2 mb-2">
@@ -432,6 +534,33 @@
             </div>
           </article>
         {/each}
+        </div>
+
+        {#if totalPages > 1}
+          <div class="mt-8 flex items-center justify-center gap-4">
+            <button
+              type="button"
+              class="px-4 py-2 border border-[#c2c6d4] text-[#424752] hover:bg-[#eceef0] focus:ring-2 focus:ring-[#003f87]/50 focus:outline-none text-sm font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={currentPage === 0 || isPageLoading}
+              on:click={() => handlePageChange(currentPage - 1)}
+            >
+              Назад
+            </button>
+
+            <span class="text-sm font-medium text-[#191c1e]" aria-live="polite">
+              Страница {currentPage + 1} из {totalPages}
+            </span>
+
+            <button
+              type="button"
+              class="px-4 py-2 border border-[#c2c6d4] text-[#424752] hover:bg-[#eceef0] focus:ring-2 focus:ring-[#003f87]/50 focus:outline-none text-sm font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={currentPage === totalPages - 1 || isPageLoading}
+              on:click={() => handlePageChange(currentPage + 1)}
+            >
+              Вперед
+            </button>
+          </div>
+        {/if}
       </div>
     {/if}
   </main>
