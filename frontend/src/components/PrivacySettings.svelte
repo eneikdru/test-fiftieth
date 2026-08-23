@@ -99,12 +99,13 @@
     isDeleting = true;
 
     try {
+      const subjectId = currentUser?.username || currentUser?.id || 'usr_101';
       const response = await fetch(`${getApiBaseUrl()}/privacy/erasure-requests`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          subject_id: currentUser?.username || currentUser?.id || 'usr_101',
-          confirmation_token: expectedConfirmationToken,
+          subject_id: subjectId,
+          confirmation_token: `CONFIRM_ERASURE_${subjectId}`,
           reason: erasureReason,
           erasure_scope: erasureScope
         })
