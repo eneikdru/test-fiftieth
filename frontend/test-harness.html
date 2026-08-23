@@ -44,9 +44,53 @@
   <div id="app"></div>
 
   <script>
-    // State matching CatalogSearch component
+    const urlParams = new URLSearchParams(window.location.search);
+    const initialMode = urlParams.get('mode') || 'catalog';
+
+    const defaultSampleDocuments = [
+      {
+        id: '1',
+        title: 'Протокол эпидемиологического расследования вспышки сальмонеллеза',
+        author: 'НИИ Эпидемиологии',
+        authorOrganization: 'НИИ Эпидемиологии',
+        year: 2023,
+        publicationYear: 2023,
+        docType: 'Протокол расследования',
+        fileName: 'salmonella_outbreak.pdf',
+        filePath: '/data/docs/2023/salmonella_outbreak.pdf',
+        fileSize: '2.4 МБ',
+        description: 'Оперативный отчет и результаты бактериологического исследования.'
+      },
+      {
+        id: '2',
+        title: 'Отчет эпиднадзора по гриппу и ОРВИ за сезон 2022-2023',
+        author: 'Центр мониторинга инфекций',
+        authorOrganization: 'Центр мониторинга инфекций',
+        year: 2023,
+        publicationYear: 2023,
+        docType: 'Отчёт эпиднадзора',
+        fileName: 'flu_surveillance.pdf',
+        filePath: '/data/docs/2023/flu_surveillance.pdf',
+        fileSize: '4.1 МБ',
+        description: 'Статистика заболеваемости и результаты лабораторного мониторинга.'
+      },
+      {
+        id: '3',
+        title: 'Методические рекомендации по профилактике кори',
+        author: 'Министерство здравоохранения РФ',
+        authorOrganization: 'Министерство здравоохранения РФ',
+        year: 2021,
+        publicationYear: 2021,
+        docType: 'Методическое руководство',
+        fileName: 'measles_prevention.docx',
+        filePath: '/data/docs/2021/measles_prevention.docx',
+        fileSize: '1.8 МБ',
+        description: 'Инструкции для медицинского персонала по вакцинопрофилактике.'
+      }
+    ];
+
     let state = {
-      mode: 'catalog',
+      mode: initialMode, // 'catalog' | 'login' | 'recovery'
       currentUser: {
         id: 101,
         username: 'admin_user',
@@ -55,13 +99,19 @@
         email: 'ivanov@epidemiology-inst.ru'
       },
 
+      // Auth form state
+      loginUsername: '',
+      loginPassword: '',
+      recoveryIdentity: '',
+      recoverySent: false,
+
       // Search filter states
       searchQuery: '',
       selectedAuthor: '',
       selectedYear: '',
 
       // API Data View States: empty, loading, error, present
-      documents: [],
+      documents: [...defaultSampleDocuments],
       isLoading: false,
       searchError: '',
       backendStopped: false, // Simulator flag for testing backend stopped AC
@@ -114,9 +164,31 @@
           state.documents = [];
         }
       } catch (e) {
-        state.documents = [];
-        // When backend is stopped or fetch fails, fallback gracefully to empty list / error state
-        state.searchError = state.searchError || '';
+        // Standalone file:// or backend unavailable local filter
+        let filtered = [...state.documents];
+        if (filtered.length === 0 && !state.searchQuery.trim() && !state.selectedAuthor.trim() && !state.selectedYear.trim()) {
+          filtered = [...defaultSampleDocuments];
+        }
+        if (state.searchQuery.trim()) {
+          const q = state.searchQuery.trim().toLowerCase();
+          filtered = filtered.filter(d =>
+            (d.title && d.title.toLowerCase().includes(q)) ||
+            (d.description && d.description.toLowerCase().includes(q))
+          );
+        }
+        if (state.selectedAuthor.trim()) {
+          const a = state.selectedAuthor.trim().toLowerCase();
+          filtered = filtered.filter(d =>
+            (d.author && d.author.toLowerCase().includes(a)) ||
+            (d.authorOrganization && d.authorOrganization.toLowerCase().includes(a)) ||
+            (d.author_organization && d.author_organization.toLowerCase().includes(a))
+          );
+        }
+        if (state.selectedYear.trim()) {
+          const y = parseInt(state.selectedYear.trim(), 10);
+          filtered = filtered.filter(d => d.year === y || d.publicationYear === y || d.publication_year === y);
+        }
+        state.documents = filtered;
       } finally {
         state.isLoading = false;
         render();
@@ -127,9 +199,99 @@
       const app = document.getElementById('app');
       const isAdmin = state.currentUser && state.currentUser.role === 'ADMIN';
 
+      if (state.mode === 'login') {
+        app.innerHTML = `
+          <div class="min-h-screen flex items-center justify-center p-4">
+            <div class="bg-white p-8 rounded-xl border border-[#e0e3e5] shadow-lg max-w-md w-full">
+              <h2 class="text-2xl font-bold text-[#003f87] mb-6">Вход в систему</h2>
+              <form onsubmit="handleLoginSubmit(event)" class="space-y-4">
+                <div>
+                  <label class="block text-xs font-semibold text-[#191c1e] mb-1">Имя пользователя</label>
+                  <input
+                    id="username-input"
+                    type="text"
+                    value="${state.loginUsername}"
+                    oninput="state.loginUsername = this.value"
+                    required
+                    class="w-full h-10 px-3 bg-[#f7f9fb] border border-[#c2c6d4] rounded-md text-sm text-[#191c1e]"
+                  />
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-[#191c1e] mb-1">Пароль</label>
+                  <input
+                    id="password-input"
+                    type="password"
+                    value="${state.loginPassword}"
+                    oninput="state.loginPassword = this.value"
+                    required
+                    class="w-full h-10 px-3 bg-[#f7f9fb] border border-[#c2c6d4] rounded-md text-sm text-[#191c1e]"
+                  />
+                </div>
+                <div class="flex items-center justify-between pt-2">
+                  <a id="forgot-password-link" href="#" onclick="event.preventDefault(); state.mode = 'recovery'; render();" class="text-xs text-[#003f87] hover:underline">
+                    Забыли пароль?
+                  </a>
+                </div>
+                <button
+                  type="submit"
+                  class="w-full h-10 bg-[#003f87] text-white font-medium text-sm rounded-md transition-colors"
+                >
+                  Войти
+                </button>
+              </form>
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      if (state.mode === 'recovery') {
+        app.innerHTML = `
+          <div class="min-h-screen flex items-center justify-center p-4">
+            <div class="bg-white p-8 rounded-xl border border-[#e0e3e5] shadow-lg max-w-md w-full">
+              ${!state.recoverySent ? `
+                <h2 class="text-2xl font-bold text-[#003f87] mb-6">Забыли пароль?</h2>
+                <form onsubmit="handleRecoverySubmit(event)" class="space-y-4">
+                  <div>
+                    <label class="block text-xs font-semibold text-[#191c1e] mb-1">Электронная почта / Логин</label>
+                    <input
+                      id="recovery-identity-input"
+                      type="text"
+                      value="${state.recoveryIdentity}"
+                      oninput="state.recoveryIdentity = this.value"
+                      required
+                      class="w-full h-10 px-3 bg-[#f7f9fb] border border-[#c2c6d4] rounded-md text-sm text-[#191c1e]"
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    class="w-full h-10 bg-[#003f87] text-white font-medium text-sm rounded-md transition-colors"
+                  >
+                    Восстановить
+                  </button>
+                </form>
+              ` : `
+                <main>
+                  <h3 class="text-xl font-bold text-[#003f87] mb-4">Инструкции отправлены</h3>
+                  <p class="text-sm text-[#424752] mb-6">Инструкции по восстановлению пароля отправлены на ваш электронный адрес.</p>
+                </main>
+                <button
+                  type="button"
+                  onclick="state.mode = 'login'; state.recoverySent = false; render();"
+                  class="w-full h-10 bg-[#003f87] text-white font-medium text-sm rounded-md transition-colors"
+                >
+                  Вернуться ко входу
+                </button>
+              `}
+            </div>
+          </div>
+        `;
+        return;
+      }
+
       if (state.mode === 'catalog') {
         app.innerHTML = `
-          <div class="catalog-container max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-6 font-sans text-[#191c1e] bg-[#f7f9fb] min-h-screen">
+          <main class="catalog-container max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-6 font-sans text-[#191c1e] bg-[#f7f9fb] min-h-screen">
             <!-- Top Navigation & Header -->
             <header class="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#c2c6d4] pb-5">
               <div>
@@ -152,7 +314,7 @@
                 <div>
                   <div class="text-xs font-medium text-[#191c1e]">${state.currentUser?.full_name || state.currentUser?.username}</div>
                   <div class="text-[11px] text-[#424752]">
-                    Роль: <span class="font-semibold text-[#003f87]">${isAdmin ? 'Администратор' : 'Сотрудник'}</span>
+                    Роль: <span class="font-semibold text-[#003f87]">${isAdmin ? 'Администратор' : 'RESEARCHER'}</span>
                   </div>
                 </div>
 
@@ -178,6 +340,12 @@
                 </div>
               </div>
             </header>
+
+            ${!isAdmin ? `
+              <div id="employee-message" class="mb-6 p-4 rounded-xl bg-[#d9e3f1] text-[#001a40] text-xs font-medium border border-[#003f87]/30 flex items-center justify-between">
+                <span>Просмотр и поиск доступен всем сотрудникам, но загрузка и удаление ограничены администратором института.</span>
+              </div>
+            ` : ''}
 
             <!-- Search & Filter Controls -->
             <section class="bg-white p-5 rounded-xl border border-[#e0e3e5] shadow-sm mb-8">
@@ -274,10 +442,10 @@
             </section>
 
             <!-- Document List Section -->
-            <main>
+            <section>
               <div class="flex items-center justify-between mb-4">
                 <h2 class="text-xl font-bold text-[#191c1e]">
-                  Результаты поиска <span class="text-sm font-normal text-[#424752]">(${state.documents.length})</span>
+                  Результаты поиска <span id="catalog-count" class="text-sm font-normal text-[#424752]">(${state.documents.length})</span>
                 </h2>
               </div>
 
@@ -329,9 +497,9 @@
                 </div>
               ` : `
                 <!-- State 4: Present State -->
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                <div id="document-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                   ${state.documents.map(doc => `
-                    <article class="bg-white border border-[#e0e3e5] rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between">
+                    <article data-doc-id="${doc.id}" class="document-card bg-white border border-[#e0e3e5] rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between">
                       <div>
                         <div class="flex items-start justify-between gap-2 mb-2">
                           <span class="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-[#d9e3f1] text-[#131c26]">
@@ -340,7 +508,7 @@
                           <span class="text-xs text-[#727784] font-medium">${doc.year || doc.publicationYear || doc.publication_year || '—'} г.</span>
                         </div>
 
-                        <h3 class="text-base font-bold text-[#191c1e] mb-2 line-clamp-2 leading-snug">
+                        <h3 class="text-base font-bold text-[#191c1e] mb-2 line-clamp-2 leading-snug doc-title">
                           ${doc.title}
                         </h3>
 
@@ -363,8 +531,9 @@
                       <div class="flex items-center justify-between gap-2 pt-3 border-t border-[#e0e3e5]">
                         <button
                           type="button"
-                          onclick="alert('Загрузка документа: ${doc.fileName || doc.title}')"
-                          class="flex-1 py-2 px-3 bg-[#003f87] hover:bg-[#002b5e] focus:ring-2 focus:ring-[#003f87]/50 focus:outline-none text-white text-xs font-medium rounded-md transition-colors flex items-center justify-center gap-1 shadow-sm"
+                          id="download-btn-${doc.id}"
+                          onclick="handleDownloadDocument('${doc.id}')"
+                          class="download-btn flex-1 py-2 px-3 bg-[#003f87] hover:bg-[#002b5e] focus:ring-2 focus:ring-[#003f87]/50 focus:outline-none text-white text-xs font-medium rounded-md transition-colors flex items-center justify-center gap-1 shadow-sm"
                         >
                           <span>Скачать</span>
                         </button>
@@ -372,8 +541,9 @@
                         ${isAdmin ? `
                           <button
                             type="button"
+                            id="delete-btn-${doc.id}"
                             onclick="handleDeleteDocument('${doc.id}')"
-                            class="py-2 px-3 border border-[#ba1a1a] text-[#ba1a1a] hover:bg-[#ffdad6] focus:ring-2 focus:ring-[#ba1a1a]/50 focus:outline-none text-xs font-medium rounded-md transition-colors"
+                            class="delete-btn py-2 px-3 border border-[#ba1a1a] text-[#ba1a1a] hover:bg-[#ffdad6] focus:ring-2 focus:ring-[#ba1a1a]/50 focus:outline-none text-xs font-medium rounded-md transition-colors"
                             title="Удалить документ"
                           >
                             Удалить
@@ -384,7 +554,7 @@
                   `).join('')}
                 </div>
               `}
-            </main>
+            </section>
 
             <!-- Admin Upload Modal -->
             ${state.isUploadModalOpen ? `
@@ -544,9 +714,28 @@
             <footer class="w-full py-6 mt-12 text-center text-xs text-[#727784] border-t border-[#e0e3e5]">
               <p>Российский научно-исследовательский институт эпидемиологии</p>
             </footer>
-          </div>
+          </main>
         `;
       }
+    }
+
+    function handleLoginSubmit(event) {
+      if (event) event.preventDefault();
+      if (state.loginUsername === 'employee_user') {
+        state.currentUser.role = 'RESEARCHER';
+        state.currentUser.full_name = 'Петров П.П. (Сотрудник)';
+      } else {
+        state.currentUser.role = 'ADMIN';
+        state.currentUser.full_name = 'Иванов И.И. (Администратор)';
+      }
+      state.mode = 'catalog';
+      fetchDocuments();
+    }
+
+    function handleRecoverySubmit(event) {
+      if (event) event.preventDefault();
+      state.recoverySent = true;
+      render();
     }
 
     function handleSearchSubmit(event) {
@@ -597,7 +786,7 @@
       setTimeout(() => {
         if (state.simulateNetworkError) {
           // KEY AC: On network failure, error is shown, but state metadata remains INTACT in the form!
-          state.uploadError = ' Ошибка сети при загрузке документа. Попробуйте еще раз.';
+          state.uploadError = 'Ошибка сети при загрузке документа. Попробуйте еще раз.';
           state.isUploading = false;
           render();
           return;
@@ -607,7 +796,9 @@
           id: 'doc-' + Date.now(),
           title: state.uploadTitle.trim(),
           author: state.uploadAuthor.trim(),
+          authorOrganization: state.uploadAuthor.trim(),
           year: parseInt(state.uploadYear, 10),
+          publicationYear: parseInt(state.uploadYear, 10),
           docType: state.uploadDocType,
           fileName: state.uploadFileName || 'document.pdf',
           fileSize: '1.2 МБ',
@@ -615,6 +806,7 @@
         };
 
         state.documents.unshift(newDoc);
+        defaultSampleDocuments.unshift(newDoc);
         state.uploadSuccess = 'Документ успешно загружен в каталог.';
 
         // Reset metadata on success only
@@ -630,8 +822,26 @@
       }, 300);
     }
 
+    function handleDownloadDocument(id) {
+      const doc = state.documents.find(d => String(d.id) === String(id)) || defaultSampleDocuments.find(d => String(d.id) === String(id));
+      const downloadUrl = `/api/v1/documents/${id}/download`;
+      const fileName = doc ? (doc.fileName || doc.filePath?.substring(doc.filePath.lastIndexOf('/') + 1) || 'document.pdf') : `document_${id}.pdf`;
+
+      // Trigger file download via anchor element
+      const a = document.createElement('a');
+      a.href = downloadUrl;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+
     function handleDeleteDocument(id) {
-      state.documents = state.documents.filter(doc => doc.id !== id);
+      state.documents = state.documents.filter(doc => String(doc.id) !== String(id));
+      const idx = defaultSampleDocuments.findIndex(doc => String(doc.id) === String(id));
+      if (idx !== -1) {
+        defaultSampleDocuments.splice(idx, 1);
+      }
       render();
     }
 
@@ -647,7 +857,11 @@
     }
 
     // Initial fetch and render
-    fetchDocuments();
+    if (state.mode === 'catalog') {
+      fetchDocuments();
+    } else {
+      render();
+    }
   </script>
 </body>
 </html>
