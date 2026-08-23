@@ -53,12 +53,12 @@ class StuckSubjectsResolutionTest {
 
         // Execute atomically-guarded database UPDATE matching the Flyway migration
         int exportUpdated = jdbcTemplate.update(
-            "UPDATE privacy_export_requests SET status = 'RESOLVED', notes = 'Resolved stuck subject from iteration-admission poka-yoke failure' WHERE subject_id = ? AND status IN ('PENDING', 'PROCESSING')",
+            "UPDATE privacy_export_requests SET status = 'ESCALATED', notes = 'Escalated stuck subject from iteration-admission poka-yoke failure' WHERE subject_id = ? AND status IN ('PENDING', 'PROCESSING')",
             subjectId
         );
 
         int erasureUpdated = jdbcTemplate.update(
-            "UPDATE privacy_erasure_requests SET status = 'RESOLVED', reason = 'Resolved stuck subject from iteration-admission poka-yoke failure' WHERE subject_id = ? AND status IN ('PENDING', 'PROCESSING')",
+            "UPDATE privacy_erasure_requests SET status = 'ESCALATED', reason = 'Escalated stuck subject from iteration-admission poka-yoke failure' WHERE subject_id = ? AND status IN ('PENDING', 'PROCESSING')",
             subjectId
         );
 
@@ -69,10 +69,10 @@ class StuckSubjectsResolutionTest {
         entityManager.clear();
 
         DataExportJob updatedExport = exportJobRepository.findById("test-exp-fd6672").orElseThrow();
-        assertEquals("RESOLVED", updatedExport.getStatus());
+        assertEquals("ESCALATED", updatedExport.getStatus());
 
         DataErasureJob updatedErasure = erasureJobRepository.findById("test-era-fd6672").orElseThrow();
-        assertEquals("RESOLVED", updatedErasure.getStatus());
+        assertEquals("ESCALATED", updatedErasure.getStatus());
     }
 
     @Test
@@ -89,7 +89,7 @@ class StuckSubjectsResolutionTest {
         exportJobRepository.saveAndFlush(exportJob);
 
         int exportUpdated = jdbcTemplate.update(
-            "UPDATE privacy_export_requests SET status = 'RESOLVED', notes = 'Resolved stuck subject with orphaned dependency' WHERE subject_id = ? AND status IN ('PENDING', 'PROCESSING')",
+            "UPDATE privacy_export_requests SET status = 'ESCALATED', notes = 'Escalated stuck subject with orphaned dependency' WHERE subject_id = ? AND status IN ('PENDING', 'PROCESSING')",
             subjectId
         );
 
@@ -99,6 +99,6 @@ class StuckSubjectsResolutionTest {
         entityManager.clear();
 
         DataExportJob updatedExport = exportJobRepository.findById("test-exp-765d2").orElseThrow();
-        assertEquals("RESOLVED", updatedExport.getStatus());
+        assertEquals("ESCALATED", updatedExport.getStatus());
     }
 }
