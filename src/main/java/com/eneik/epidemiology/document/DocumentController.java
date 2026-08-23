@@ -144,6 +144,61 @@ public class DocumentController {
         ));
     }
 
+    @GetMapping("/{id}/view")
+    public ResponseEntity<?> viewDocument(@PathVariable("id") Long id) {
+        telemetryService.recordDownloadTelemetry(id);
+
+        return documentRepository.findById(id)
+                .map(doc -> {
+                    String fileName = doc.getFilePath().substring(doc.getFilePath().lastIndexOf('/') + 1);
+                    if (fileName.isEmpty()) {
+                        fileName = "document_" + id + ".pdf";
+                    }
+
+                    try {
+                        // Prevent path traversal
+                        Path basePath = Paths.get("data/docs/uploads").toAbsolutePath().normalize();
+                        String normalizedDbPath = doc.getFilePath();
+
+                        // The file paths might start with a slash depending on how they are saved in tests or prod
+                        if (normalizedDbPath.startsWith("/")) {
+                            normalizedDbPath = normalizedDbPath.substring(1);
+                        }
+                        if (normalizedDbPath.startsWith("data/docs/uploads/")) {
+                            normalizedDbPath = normalizedDbPath.substring("data/docs/uploads/".length());
+                        }
+
+                        Path resolvedPath = basePath.resolve(normalizedDbPath).normalize();
+                        if (!resolvedPath.startsWith(basePath)) {
+                            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body((Object) "Invalid file path");
+                        }
+
+                        if (!Files.exists(resolvedPath)) {
+                            return ResponseEntity.status(HttpStatus.NOT_FOUND).body((Object) "Document file not found on disk");
+                        }
+
+                        // Streaming the response to avoid OOM for large files
+                        Object body = new org.springframework.core.io.FileSystemResource(resolvedPath.toFile());
+
+                        MediaType mediaType = MediaType.APPLICATION_PDF;
+                        if (fileName.toLowerCase().endsWith(".txt")) {
+                            mediaType = MediaType.TEXT_PLAIN;
+                        } else if (fileName.toLowerCase().endsWith(".doc") || fileName.toLowerCase().endsWith(".docx") ||
+                                   fileName.toLowerCase().endsWith(".xls") || fileName.toLowerCase().endsWith(".xlsx")) {
+                            mediaType = MediaType.APPLICATION_OCTET_STREAM;
+                        }
+
+                        return ResponseEntity.ok()
+                                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + fileName + "\"")
+                                .contentType(mediaType)
+                                .body(body);
+                    } catch (Exception e) {
+                        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body((Object) "Failed to process document view");
+                    }
+                })
+                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).body((Object) "Document not found in database"));
+    }
+
     @GetMapping("/{id}/download")
     public ResponseEntity<?> downloadDocument(@PathVariable("id") Long id) {
         telemetryService.recordDownloadTelemetry(id);

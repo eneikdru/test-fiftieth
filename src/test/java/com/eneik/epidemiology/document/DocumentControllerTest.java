@@ -16,6 +16,7 @@ import io.zonky.test.db.AutoConfigureEmbeddedDatabase.DatabaseType;
 import org.springframework.http.HttpHeaders;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -42,6 +43,9 @@ class DocumentControllerTest {
 
     @Autowired
     private JwtTokenProvider jwtTokenProvider;
+
+    @Autowired
+    private DocumentRepository documentRepository;
 
     private String researcherToken;
     private String adminToken;
@@ -71,6 +75,29 @@ class DocumentControllerTest {
 
         long durationMs = System.currentTimeMillis() - startTime;
         assertTrue(durationMs < 200, "Search query for author must execute within 200ms (took " + durationMs + "ms)");
+    }
+
+    @Test
+    @DisplayName("Given a document ID, When requesting inline document viewing from the API, Then the server returns the document with inline content headers")
+    void testViewDocument_ReturnsInlineDisposition() throws Exception {
+        Document doc = documentRepository.findAll().get(0);
+        Long docId = doc.getId();
+
+        // Let's use a dummy file in the current directory and mock it by modifying the document object
+        java.nio.file.Path testFilePath = java.nio.file.Paths.get("data/docs/uploads").resolve("test_" + docId + ".pdf");
+        doc.setFilePath("data/docs/uploads/test_" + docId + ".pdf");
+        documentRepository.save(doc);
+
+        if (!java.nio.file.Files.exists(testFilePath.getParent())) {
+            java.nio.file.Files.createDirectories(java.nio.file.Paths.get(".").resolve("data/docs/uploads"));
+        }
+        java.nio.file.Files.write(java.nio.file.Paths.get(".").resolve(testFilePath), "test pdf content".getBytes());
+
+        mockMvc.perform(get("/api/v1/documents/" + docId + "/view")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + researcherToken))
+                .andExpect(status().isOk())
+                .andExpect(header().string(HttpHeaders.CONTENT_DISPOSITION, org.hamcrest.Matchers.containsString("inline; filename=")))
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PDF));
     }
 
     @Test

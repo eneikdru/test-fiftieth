@@ -1,5 +1,6 @@
 <script>
   import { createEventDispatcher, onMount } from 'svelte';
+  import DocumentViewer from './DocumentViewer.svelte';
 
   const dispatch = createEventDispatcher();
 
@@ -50,6 +51,8 @@
   let uploadDescription = '';
   let uploadFileName = '';
   let simulateNetworkError = false;
+
+  let viewerDocument = null;
 
   let isUploading = false;
   let uploadError = '';
@@ -272,6 +275,21 @@
       window.open(`${getApiBaseUrl()}/documents/${doc.id}/download`, '_blank');
     } else {
       alert(`Загрузка документа: ${doc.fileName || doc.title}`);
+    }
+  }
+
+  function handleViewDocument(doc) {
+    viewerDocument = doc;
+  }
+
+  function handleCloseViewer() {
+    viewerDocument = null;
+  }
+
+  function handleViewerDownload(event) {
+    const doc = event.detail.document;
+    if (doc) {
+      handleDownload(doc);
     }
   }
 
@@ -515,6 +533,14 @@
             <div class="flex items-center justify-between gap-2 pt-3 border-t border-[#e0e3e5]">
               <button
                 type="button"
+                on:click={() => handleViewDocument(doc)}
+                class="flex-1 py-2 px-3 bg-[#e0e3e5] hover:bg-[#c2c6d4] focus:ring-2 focus:ring-[#003f87]/50 focus:outline-none text-[#191c1e] text-xs font-medium rounded-md transition-colors flex items-center justify-center gap-1 shadow-sm"
+              >
+                <span>Открыть</span>
+              </button>
+
+              <button
+                type="button"
                 on:click={() => handleDownload(doc)}
                 class="flex-1 py-2 px-3 bg-[#003f87] hover:bg-[#002b5e] focus:ring-2 focus:ring-[#003f87]/50 focus:outline-none text-white text-xs font-medium rounded-md transition-colors flex items-center justify-center gap-1 shadow-sm"
               >
@@ -564,6 +590,15 @@
       </div>
     {/if}
   </main>
+
+  {#if viewerDocument}
+    <DocumentViewer
+      document={viewerDocument}
+      apiBaseUrl={getApiBaseUrl()}
+      on:close={handleCloseViewer}
+      on:download={handleViewerDownload}
+    />
+  {/if}
 
   <!-- Admin Document Upload Modal -->
   {#if isUploadModalOpen}

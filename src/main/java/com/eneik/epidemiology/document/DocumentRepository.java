@@ -16,8 +16,8 @@ public interface DocumentRepository extends JpaRepository<Document, Long> {
     List<Document> findByPublicationYear(Integer year);
 
     @Query("SELECT d FROM Document d WHERE " +
-           "(:query IS NULL OR LOWER(d.title) LIKE LOWER(CONCAT('%', :query, '%'))) AND " +
-           "(:author IS NULL OR LOWER(d.authorOrganization) LIKE LOWER(CONCAT('%', :author, '%'))) AND " +
+           "(:query IS NULL OR LOWER(CAST(d.title AS java.lang.String)) LIKE LOWER(CONCAT('%', CAST(:query AS java.lang.String), '%'))) AND " +
+           "(:author IS NULL OR LOWER(CAST(d.authorOrganization AS java.lang.String)) LIKE LOWER(CONCAT('%', CAST(:author AS java.lang.String), '%'))) AND " +
            "(:year IS NULL OR d.publicationYear = :year)")
     Page<Document> searchDocuments(@Param("query") String query,
                                    @Param("author") String author,
