@@ -1,5 +1,5 @@
 CREATE TABLE documents (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
     author_organization VARCHAR(255) NOT NULL,
     publication_year INT NOT NULL,
