@@ -1,0 +1,68 @@
+{
+  "epics": [
+    {
+      "existingEpicId": null,
+      "title": "Delivery Plan Generation Fix",
+      "jtbd": "When managing task graphs, I want the delivery plan to be properly validated and saved in the correct directory, so that orchestration workflow can reliably execute it.",
+      "kanoClass": "Must-Be",
+      "cynefinDomain": "clear",
+      "sixSigmaMetric": "reduce task plan validation failures to 0%",
+      "tocConstraintRef": "task-graph-compliance",
+      "sourceIndex": 0,
+      "requirements": [
+        "R1: The JSON plan must be written to the .eneik directory and its sourceIndex validated against the payload.",
+        "R2: A verification command must be added to explicitly verify the sourceIndex validation."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Fix missing delivery plan criteria",
+          "roleTag": "BARCAN-TAG-05",
+          "jtbd": "When implementing the fix for this epic, I want to deliver exactly the missing validation and file path criteria, so that the task graph compliance checks pass.",
+          "acceptanceCriteria": "Given a task plan JSON, When it is saved, Then it is written to the .eneik directory rather than the docs directory.\nGiven the sourceIndex field, When validated, Then a schema validator strictly checks it against the payload instead of accepting a hardcoded literal.\nGiven the new validation, When the verification command runs, Then a test or script explicitly asserts the sourceIndex linkage.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "task-graph-compliance",
+          "sixSigmaMetric": "reduce PR rejection rate from missing criteria to 0%",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1",
+            "R2"
+          ]
+        }
+      ]
+    },
+    {
+      "existingEpicId": "7e24dafe-61b2-42ec-ac6c-5745b4049cd2",
+      "title": "Core Knowledge Base (Upload, Search, Download)",
+      "jtbd": "When managing epidemiological materials, I want to catalog and search them by specific attributes, so that our institute's knowledge is accessible to all employees.",
+      "kanoClass": "Must-Be",
+      "cynefinDomain": "clear",
+      "sixSigmaMetric": "increase E2E test coverage of the API to 100%",
+      "tocConstraintRef": "runtime-contract-verification",
+      "sourceIndex": 0,
+      "requirements": [
+        "R1: The E2E test must target a deployed backend API using a proper baseURL and hit the system API to download documents.",
+        "R2: The E2E test must perform and assert document upload and deletion by an admin user, and accurately reflect changes in the catalog."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Implement missing E2E test criteria",
+          "roleTag": "BARCAN-TAG-06",
+          "jtbd": "When implementing the test for this epic, I want to deliver exactly the missing criteria against a deployed backend, so that data operations do not fail unexpectedly in production.",
+          "acceptanceCriteria": "Given a fresh deployment pre-populated with sample 'Epidemiological Protocol' documents, When the E2E test downloads a document, Then it correctly hits the system API using a configured Playwright baseURL.\nGiven an admin user session, When the test executes, Then it uploads and deletes a document and strictly verifies that the catalog reflects these changes.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "runtime-contract-verification",
+          "sixSigmaMetric": "increase E2E test coverage of the API to 100%",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1",
+            "R2"
+          ]
+        }
+      ]
+    }
+  ]
+}
