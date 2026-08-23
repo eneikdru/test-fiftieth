@@ -1,0 +1,66 @@
+{
+  "epics": [
+    {
+      "existingEpicId": null,
+      "title": "System Containerization and Launch",
+      "jtbd": "When operating the platform, I want a single command to start the entire system locally, so that I can verify it works end-to-end without manual configuration.",
+      "kanoClass": "Must-Be",
+      "cynefinDomain": "clear",
+      "sixSigmaMetric": "Reduce system startup failure rate from 100% to 0% and time-to-first-healthy-launch below 2 minutes.",
+      "tocConstraintRef": "Deployment overhead bottleneck - engineering and QA verification cycle time.",
+      "sourceIndex": 0,
+      "requirements": [
+        "R1: The repository must contain a valid docker-compose.yml at the root.",
+        "R2: The docker-compose configuration must start the complete backend and frontend stack and expose a health-check endpoint to confirm successful launch."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Add docker-compose.yml for full stack launch",
+          "roleTag": "BARCAN-TAG-05",
+          "jtbd": "When implementing container orchestration for this epic, I want to define the services, networks, and volumes in docker-compose, so that the entire platform starts with one command.",
+          "acceptanceCriteria": "Given a clean clone of the repository\nWhen a developer runs `docker-compose up -d`\nThen all services start correctly and report healthy via a health-check endpoint.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "Local setup blocking verification",
+          "sixSigmaMetric": "100% success rate on `docker-compose up` execution on a clean machine.",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1",
+            "R2"
+          ]
+        }
+      ]
+    },
+    {
+      "existingEpicId": null,
+      "title": "Launch Health Fix",
+      "jtbd": "When launching the platform, I want the system to start cleanly without errors, so that I can observe and verify its actual runtime behavior.",
+      "kanoClass": "Must-Be",
+      "cynefinDomain": "clear",
+      "sixSigmaMetric": "Improve successful health-check rate on launch from 0% to 100%.",
+      "tocConstraintRef": "Local setup blocking verification",
+      "sourceIndex": 1,
+      "requirements": [
+        "R1: Resolve the error 'docker-compose.yml not found at repo root after clone' by ensuring the configuration exists and functions correctly."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Resolve docker-compose.yml not found error",
+          "roleTag": "BARCAN-TAG-05",
+          "jtbd": "When implementing the launch fix for this epic, I want to commit the missing docker-compose.yml to the repository root, so that the launcher can find and start it.",
+          "acceptanceCriteria": "Given the launch script checks the repository root\nWhen it looks for `docker-compose.yml`\nThen the file is found and the orchestration tool proceeds without error.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "Local setup blocking verification",
+          "sixSigmaMetric": "Zero occurrences of 'docker-compose.yml not found' during launch phase.",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1"
+          ]
+        }
+      ]
+    }
+  ]
+}
