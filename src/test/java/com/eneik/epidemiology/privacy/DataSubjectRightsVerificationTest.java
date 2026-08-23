@@ -106,10 +106,10 @@ class DataSubjectRightsVerificationTest {
 
         entityManager.clear();
 
-        // Execute the Flyway migration script V20260823065127618__unblock_stuck_subjects.sql
+        // Execute the Flyway migration script V20260823090153572__unblock_stuck_subjects.sql
         Connection conn = DataSourceUtils.getConnection(dataSource);
         try {
-            ScriptUtils.executeSqlScript(conn, new ClassPathResource("db/migration/V20260823065127618__unblock_stuck_subjects.sql"));
+            ScriptUtils.executeSqlScript(conn, new ClassPathResource("db/migration/V20260823090153572__unblock_stuck_subjects.sql"));
         } catch (Exception e) {
             fail("Failed to execute migration script: " + e.getMessage());
         } finally {
@@ -173,10 +173,10 @@ class DataSubjectRightsVerificationTest {
         entityManager.flush();
         entityManager.clear();
 
-        // Execute the Flyway migration script V20260823065127618__unblock_stuck_subjects.sql
+        // Execute the Flyway migration script V20260823090153572__unblock_stuck_subjects.sql
         Connection conn2 = DataSourceUtils.getConnection(dataSource);
         try {
-            ScriptUtils.executeSqlScript(conn2, new ClassPathResource("db/migration/V20260823065127618__unblock_stuck_subjects.sql"));
+            ScriptUtils.executeSqlScript(conn2, new ClassPathResource("db/migration/V20260823090153572__unblock_stuck_subjects.sql"));
         } catch (Exception e) {
             fail("Failed to execute migration script: " + e.getMessage());
         } finally {
