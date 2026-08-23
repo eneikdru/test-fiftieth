@@ -1,5 +1,5 @@
 <script>
-  import { createEventDispatcher } from 'svelte';
+  import { createEventDispatcher, onMount } from 'svelte';
 
   const dispatch = createEventDispatcher();
 
@@ -21,41 +21,11 @@
   let searchQuery = '';
   let selectedAuthor = '';
   let selectedYear = '';
-  let isSearchSubmitted = false;
 
-  // Document catalog sample data
-  let documents = [
-    {
-      id: 'doc-1',
-      title: 'Протокол расследования вспышки гриппа A(H3N2)',
-      author: 'НИИ Эпидемиологии',
-      year: 2023,
-      docType: 'Протокол расследования',
-      fileName: 'protocol_influenza_2023.pdf',
-      fileSize: '2.4 МБ',
-      description: 'Материалы эпидемиологического расследования вспышки гриппа в Северо-Западном регионе.'
-    },
-    {
-      id: 'doc-2',
-      title: 'Отчёт эпиднадзора за острыми респираторными инфекциями',
-      author: 'Центр гигиены и эпидемиологии',
-      year: 2022,
-      docType: 'Отчёт эпиднадзора',
-      fileName: 'surveillance_report_2022.pdf',
-      fileSize: '4.1 МБ',
-      description: 'Годовой статистический и аналитический отчет по заболеваемости ОРВИ.'
-    },
-    {
-      id: 'doc-3',
-      title: 'Методическое руководство по генотипированию штаммов',
-      author: 'НИИ Эпидемиологии',
-      year: 2021,
-      docType: 'Методическое руководство',
-      fileName: 'methodology_genotyping.docx',
-      fileSize: '1.8 МБ',
-      description: 'Практические рекомендации по лабораторому анализу и идентификации штаммов.'
-    }
-  ];
+  // API Data view states: empty, loading, error, present
+  let documents = [];
+  let isLoading = false;
+  let searchError = '';
 
   // Upload modal / form states
   let isUploadModalOpen = false;
@@ -71,31 +41,55 @@
   let uploadError = '';
   let uploadSuccess = '';
 
-  // Filtered documents reactive computation
-  $: filteredDocuments = documents.filter(doc => {
-    const matchesQuery = !searchQuery.trim() ||
-      doc.title.toLowerCase().includes(searchQuery.trim().toLowerCase()) ||
-      doc.description.toLowerCase().includes(searchQuery.trim().toLowerCase());
+  // Fetch documents from real backend endpoint /api/v1/documents/search
+  async function fetchDocuments() {
+    isLoading = true;
+    searchError = '';
 
-    const matchesAuthor = !selectedAuthor ||
-      doc.author.toLowerCase().includes(selectedAuthor.toLowerCase());
+    try {
+      const params = new URLSearchParams();
+      if (searchQuery.trim()) params.append('query', searchQuery.trim());
+      if (selectedAuthor.trim()) params.append('author', selectedAuthor.trim());
+      if (selectedYear.toString().trim()) params.append('year', selectedYear.toString().trim());
 
-    const matchesYear = !selectedYear ||
-      doc.year.toString() === selectedYear.toString();
+      const url = `${getApiBaseUrl()}/documents/search?${params.toString()}`;
+      const response = await fetch(url);
 
-    return matchesQuery && matchesAuthor && matchesYear;
+      if (!response.ok) {
+        throw new Error(`Ошибка сервера (${response.status}): Не удалось загрузить данные каталога.`);
+      }
+
+      const data = await response.json();
+      // Server response format: { query: '...', count: N, results: [...] } or direct array
+      if (Array.isArray(data)) {
+        documents = data;
+      } else if (data && Array.isArray(data.results)) {
+        documents = data.results;
+      } else {
+        documents = [];
+      }
+    } catch (err) {
+      documents = [];
+      searchError = err.message || 'Ошибка подключения к серверу. Каталог недоступен.';
+    } finally {
+      isLoading = false;
+    }
+  }
+
+  onMount(() => {
+    fetchDocuments();
   });
 
   function handleSearchSubmit(event) {
     if (event) event.preventDefault();
-    isSearchSubmitted = true;
+    fetchDocuments();
   }
 
   function handleResetSearch() {
     searchQuery = '';
     selectedAuthor = '';
     selectedYear = '';
-    isSearchSubmitted = false;
+    fetchDocuments();
   }
 
   function openUploadModal() {
@@ -175,13 +169,27 @@
     }
   }
 
-  function handleDeleteDocument(id) {
-    documents = documents.filter(doc => doc.id !== id);
+  async function handleDeleteDocument(id) {
+    try {
+      const response = await fetch(`${getApiBaseUrl()}/documents/${id}`, {
+        method: 'DELETE'
+      });
+      if (!response.ok) {
+        throw new Error('Не удалось удалить документ.');
+      }
+      documents = documents.filter(doc => doc.id !== id && doc.id !== String(id));
+    } catch (err) {
+      alert(err.message || 'Ошибка при удалении документа');
+    }
   }
 
   function handleDownload(doc) {
     dispatch('download', { document: doc });
-    alert(`Загрузка документа: ${doc.fileName}`);
+    if (doc.id) {
+      window.open(`${getApiBaseUrl()}/documents/${doc.id}/download`, '_blank');
+    } else {
+      alert(`Загрузка документа: ${doc.fileName || doc.title}`);
+    }
   }
 </script>
 
@@ -216,7 +224,7 @@
         <button
           type="button"
           on:click={openUploadModal}
-          class="ml-2 px-3 py-2 bg-[#003f87] hover:bg-[#002b5e] text-white rounded-md text-xs font-medium transition-colors flex items-center gap-1.5 shadow-sm"
+          class="ml-2 px-3 py-2 bg-[#003f87] hover:bg-[#002b5e] focus:ring-2 focus:ring-[#003f87]/50 focus:outline-none text-white rounded-md text-xs font-medium transition-colors flex items-center gap-1.5 shadow-sm"
         >
           <span>+ Загрузить документ</span>
         </button>
@@ -241,7 +249,7 @@
           type="text"
           bind:value={searchQuery}
           placeholder="Например: грипп, протокол, генотипирование..."
-          class="w-full h-11 px-3.5 bg-[#f7f9fb] border border-[#c2c6d4] rounded-lg text-sm text-[#191c1e] focus:outline-none focus:ring-2 focus:ring-[#003f87]/30 focus:border-[#003f87]"
+          class="w-full h-11 px-3.5 bg-[#f7f9fb] border border-[#c2c6d4] rounded-lg text-sm text-[#191c1e] focus:outline-none focus:ring-2 focus:ring-[#003f87]/50 focus:border-[#003f87]"
         />
       </div>
 
@@ -255,7 +263,7 @@
           type="text"
           bind:value={selectedAuthor}
           placeholder="НИИ Эпидемиологии"
-          class="w-full h-11 px-3.5 bg-[#f7f9fb] border border-[#c2c6d4] rounded-lg text-sm text-[#191c1e] focus:outline-none focus:ring-2 focus:ring-[#003f87]/30 focus:border-[#003f87]"
+          class="w-full h-11 px-3.5 bg-[#f7f9fb] border border-[#c2c6d4] rounded-lg text-sm text-[#191c1e] focus:outline-none focus:ring-2 focus:ring-[#003f87]/50 focus:border-[#003f87]"
         />
       </div>
 
@@ -267,7 +275,7 @@
         <select
           id="search-year-input"
           bind:value={selectedYear}
-          class="w-full h-11 px-3 bg-[#f7f9fb] border border-[#c2c6d4] rounded-lg text-sm text-[#191c1e] focus:outline-none focus:ring-2 focus:ring-[#003f87]/30 focus:border-[#003f87]"
+          class="w-full h-11 px-3 bg-[#f7f9fb] border border-[#c2c6d4] rounded-lg text-sm text-[#191c1e] focus:outline-none focus:ring-2 focus:ring-[#003f87]/50 focus:border-[#003f87]"
         >
           <option value="">Все года</option>
           <option value="2024">2024</option>
@@ -283,7 +291,7 @@
         <button
           type="submit"
           id="search-submit-btn"
-          class="flex-1 h-11 bg-[#003f87] hover:bg-[#002b5e] text-white font-medium text-sm rounded-lg transition-colors flex items-center justify-center shadow-sm"
+          class="flex-1 h-11 bg-[#003f87] hover:bg-[#002b5e] focus:ring-2 focus:ring-[#003f87]/50 focus:outline-none text-white font-medium text-sm rounded-lg transition-colors flex items-center justify-center shadow-sm"
         >
           Найти
         </button>
@@ -292,7 +300,7 @@
             type="button"
             id="search-reset-btn"
             on:click={handleResetSearch}
-            class="h-11 px-3 border border-[#c2c6d4] text-[#424752] hover:bg-[#eceef0] text-xs font-medium rounded-lg transition-colors"
+            class="h-11 px-3 border border-[#c2c6d4] text-[#424752] hover:bg-[#eceef0] focus:ring-2 focus:ring-[#003f87]/50 focus:outline-none text-xs font-medium rounded-lg transition-colors"
             title="Сбросить фильтры"
           >
             Сброс
@@ -306,12 +314,38 @@
   <main>
     <div class="flex items-center justify-between mb-4">
       <h2 class="text-xl font-bold text-[#191c1e]">
-        Результаты поиска <span class="text-sm font-normal text-[#424752]">({filteredDocuments.length})</span>
+        Результаты поиска <span class="text-sm font-normal text-[#424752]">({documents.length})</span>
       </h2>
     </div>
 
-    <!-- Empty State (When search query yields no matches) -->
-    {#if filteredDocuments.length === 0}
+    <!-- State 1: Loading State -->
+    {#if isLoading}
+      <div id="catalog-loading-state" role="status" class="bg-white border border-[#e0e3e5] rounded-xl p-8 text-center space-y-3 shadow-sm my-6">
+        <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-[#003f87] border-t-transparent"></div>
+        <p class="text-sm text-[#424752] font-medium">Загрузка данных каталога...</p>
+      </div>
+
+    <!-- State 2: Error State (Backend stopped / Network error) -->
+    {:else if searchError}
+      <div id="catalog-error-state" role="alert" class="bg-[#ffdad6] border border-[#ba1a1a]/30 rounded-xl p-8 text-center space-y-3 shadow-sm my-6">
+        <div class="w-12 h-12 bg-[#ffb4ab] rounded-full flex items-center justify-center mx-auto text-[#93000a] text-xl font-bold">
+          ⚠️
+        </div>
+        <h3 class="text-lg font-bold text-[#93000a]"> Ошибка загрузки данных</h3>
+        <p class="text-sm text-[#93000a]/80 max-w-md mx-auto">
+          {searchError}
+        </p>
+        <button
+          type="button"
+          on:click={fetchDocuments}
+          class="px-4 py-2 bg-[#ba1a1a] hover:bg-[#93000a] focus:ring-2 focus:ring-[#ba1a1a]/50 focus:outline-none text-white rounded-lg text-xs font-semibold transition-colors mt-2"
+        >
+          Повторить попытку
+        </button>
+      </div>
+
+    <!-- State 3: Empty State (Zero rows returned) -->
+    {:else if documents.length === 0}
       <div
         id="empty-catalog-message"
         role="status"
@@ -327,22 +361,24 @@
         <button
           type="button"
           on:click={handleResetSearch}
-          class="px-4 py-2 border border-[#003f87] text-[#003f87] hover:bg-[#003f87]/5 rounded-lg text-xs font-semibold transition-colors mt-2"
+          class="px-4 py-2 border border-[#003f87] text-[#003f87] hover:bg-[#003f87]/5 focus:ring-2 focus:ring-[#003f87]/50 focus:outline-none rounded-lg text-xs font-semibold transition-colors mt-2"
         >
           Показать все материалы
         </button>
       </div>
+
+    <!-- State 4: Present State (Real Backend Data) -->
     {:else}
       <!-- Document Grid / List -->
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-        {#each filteredDocuments as doc (doc.id)}
+        {#each documents as doc (doc.id || doc.title)}
           <article class="bg-white border border-[#e0e3e5] rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between">
             <div>
               <div class="flex items-start justify-between gap-2 mb-2">
                 <span class="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-[#d9e3f1] text-[#131c26]">
-                  {doc.docType}
+                  {doc.docType || doc.doc_type || 'Документ'}
                 </span>
-                <span class="text-xs text-[#727784] font-medium">{doc.year} г.</span>
+                <span class="text-xs text-[#727784] font-medium">{doc.year || doc.publicationYear || doc.publication_year || '—'} г.</span>
               </div>
 
               <h3 class="text-base font-bold text-[#191c1e] mb-2 line-clamp-2 leading-snug">
@@ -350,17 +386,17 @@
               </h3>
 
               <p class="text-xs text-[#424752] mb-3 line-clamp-3 leading-relaxed">
-                {doc.description}
+                {doc.description || 'Описание отсутствует'}
               </p>
 
               <div class="text-xs text-[#727784] mb-4 space-y-1 border-t border-[#f2f4f6] pt-3">
                 <div class="flex items-center justify-between">
                   <span>Организация:</span>
-                  <span class="font-medium text-[#191c1e]">{doc.author}</span>
+                  <span class="font-medium text-[#191c1e]">{doc.author || doc.authorOrganization || doc.author_organization || '—'}</span>
                 </div>
                 <div class="flex items-center justify-between">
                   <span>Файл:</span>
-                  <span class="font-medium text-[#191c1e]">{doc.fileName} ({doc.fileSize})</span>
+                  <span class="font-medium text-[#191c1e]">{doc.fileName || doc.filePath || doc.file_path || 'document.pdf'} {doc.fileSize ? `(${doc.fileSize})` : ''}</span>
                 </div>
               </div>
             </div>
@@ -369,7 +405,7 @@
               <button
                 type="button"
                 on:click={() => handleDownload(doc)}
-                class="flex-1 py-2 px-3 bg-[#003f87] hover:bg-[#002b5e] text-white text-xs font-medium rounded-md transition-colors flex items-center justify-center gap-1 shadow-sm"
+                class="flex-1 py-2 px-3 bg-[#003f87] hover:bg-[#002b5e] focus:ring-2 focus:ring-[#003f87]/50 focus:outline-none text-white text-xs font-medium rounded-md transition-colors flex items-center justify-center gap-1 shadow-sm"
               >
                 <span>Скачать</span>
               </button>
@@ -378,7 +414,7 @@
                 <button
                   type="button"
                   on:click={() => handleDeleteDocument(doc.id)}
-                  class="py-2 px-3 border border-[#ba1a1a] text-[#ba1a1a] hover:bg-[#ffdad6] text-xs font-medium rounded-md transition-colors"
+                  class="py-2 px-3 border border-[#ba1a1a] text-[#ba1a1a] hover:bg-[#ffdad6] focus:ring-2 focus:ring-[#ba1a1a]/50 focus:outline-none text-xs font-medium rounded-md transition-colors"
                   title="Удалить документ"
                 >
                   Удалить
@@ -400,7 +436,7 @@
           <button
             type="button"
             on:click={closeUploadModal}
-            class="text-[#727784] hover:text-[#191c1e] text-xl font-bold p-1 rounded-full"
+            class="text-[#727784] hover:text-[#191c1e] text-xl font-bold p-1 rounded-full focus:ring-2 focus:ring-[#003f87]/50 focus:outline-none"
           >
             ✕
           </button>
@@ -429,7 +465,7 @@
               bind:value={uploadTitle}
               placeholder="Введите полное название"
               required
-              class="w-full h-10 px-3 bg-[#f7f9fb] border border-[#c2c6d4] rounded-md text-sm text-[#191c1e] focus:outline-none focus:border-[#003f87]"
+              class="w-full h-10 px-3 bg-[#f7f9fb] border border-[#c2c6d4] rounded-md text-sm text-[#191c1e] focus:outline-none focus:ring-2 focus:ring-[#003f87]/50 focus:border-[#003f87]"
             />
           </div>
 
@@ -444,7 +480,7 @@
                 bind:value={uploadAuthor}
                 placeholder="НИИ Эпидемиологии"
                 required
-                class="w-full h-10 px-3 bg-[#f7f9fb] border border-[#c2c6d4] rounded-md text-sm text-[#191c1e] focus:outline-none focus:border-[#003f87]"
+                class="w-full h-10 px-3 bg-[#f7f9fb] border border-[#c2c6d4] rounded-md text-sm text-[#191c1e] focus:outline-none focus:ring-2 focus:ring-[#003f87]/50 focus:border-[#003f87]"
               />
             </div>
 
@@ -459,7 +495,7 @@
                 min="1990"
                 max="2030"
                 required
-                class="w-full h-10 px-3 bg-[#f7f9fb] border border-[#c2c6d4] rounded-md text-sm text-[#191c1e] focus:outline-none focus:border-[#003f87]"
+                class="w-full h-10 px-3 bg-[#f7f9fb] border border-[#c2c6d4] rounded-md text-sm text-[#191c1e] focus:outline-none focus:ring-2 focus:ring-[#003f87]/50 focus:border-[#003f87]"
               />
             </div>
           </div>
@@ -471,7 +507,7 @@
             <select
               id="upload-doctype-select"
               bind:value={uploadDocType}
-              class="w-full h-10 px-3 bg-[#f7f9fb] border border-[#c2c6d4] rounded-md text-sm text-[#191c1e] focus:outline-none focus:border-[#003f87]"
+              class="w-full h-10 px-3 bg-[#f7f9fb] border border-[#c2c6d4] rounded-md text-sm text-[#191c1e] focus:outline-none focus:ring-2 focus:ring-[#003f87]/50 focus:border-[#003f87]"
             >
               <option value="Протокол расследования">Протокол расследования</option>
               <option value="Отчёт эпиднадзора">Отчёт эпиднадзора</option>
@@ -489,7 +525,7 @@
               bind:value={uploadDescription}
               rows="3"
               placeholder="Краткая аннотация или описание документа"
-              class="w-full p-3 bg-[#f7f9fb] border border-[#c2c6d4] rounded-md text-sm text-[#191c1e] focus:outline-none focus:border-[#003f87]"
+              class="w-full p-3 bg-[#f7f9fb] border border-[#c2c6d4] rounded-md text-sm text-[#191c1e] focus:outline-none focus:ring-2 focus:ring-[#003f87]/50 focus:border-[#003f87]"
             ></textarea>
           </div>
 
@@ -502,7 +538,7 @@
               type="file"
               on:change={handleFileSelect}
               accept=".pdf,.doc,.docx,.xlsx"
-              class="w-full text-xs text-[#424752] file:mr-3 file:py-2 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-[#d9e3f1] file:text-[#003f87] hover:file:bg-[#003f87]/10"
+              class="w-full text-xs text-[#424752] file:mr-3 file:py-2 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-[#d9e3f1] file:text-[#003f87] hover:file:bg-[#003f87]/10 focus:ring-2 focus:ring-[#003f87]/50 focus:outline-none"
             />
           </div>
 
@@ -513,7 +549,7 @@
                 id="simulate-network-error-checkbox"
                 type="checkbox"
                 bind:checked={simulateNetworkError}
-                class="rounded border-[#c2c6d4] text-[#003f87] focus:ring-[#003f87]"
+                class="rounded border-[#c2c6d4] text-[#003f87] focus:ring-2 focus:ring-[#003f87]/50 focus:outline-none"
               />
               <span>Симулировать сбой сети при отправке</span>
             </label>
@@ -523,7 +559,7 @@
             <button
               type="button"
               on:click={closeUploadModal}
-              class="px-4 py-2 border border-[#c2c6d4] text-[#424752] hover:bg-[#eceef0] text-xs font-medium rounded-md transition-colors"
+              class="px-4 py-2 border border-[#c2c6d4] text-[#424752] hover:bg-[#eceef0] focus:ring-2 focus:ring-[#003f87]/50 focus:outline-none text-xs font-medium rounded-md transition-colors"
             >
               Отмена
             </button>
@@ -531,7 +567,7 @@
               type="submit"
               id="upload-submit-btn"
               disabled={isUploading}
-              class="px-4 py-2 bg-[#003f87] hover:bg-[#002b5e] text-white text-xs font-medium rounded-md transition-colors disabled:opacity-60 shadow-sm"
+              class="px-4 py-2 bg-[#003f87] hover:bg-[#002b5e] focus:ring-2 focus:ring-[#003f87]/50 focus:outline-none text-white text-xs font-medium rounded-md transition-colors disabled:opacity-60 shadow-sm"
             >
               {isUploading ? 'Загрузка...' : 'Сохранить и загрузить'}
             </button>
