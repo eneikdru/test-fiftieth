@@ -1,0 +1,260 @@
+openapi: 3.0.3
+info:
+  title: API Каталога Документов
+  description: Контракт API для поиска, загрузки и управления эпидемиологическими документами.
+  version: 1.0.0
+servers:
+  - url: /api/v1
+    description: Основной сервер API
+paths:
+  /documents:
+    get:
+      summary: Поиск документов
+      description: Возвращает список документов, соответствующих критериям поиска. Просмотр и поиск доступны всем сотрудникам. Если документы не найдены, возвращается пустой список.
+      operationId: searchDocuments
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: title
+          in: query
+          description: Название документа для поиска
+          required: false
+          schema:
+            type: string
+        - name: author_organization
+          in: query
+          description: Организация-автор для поиска
+          required: false
+          schema:
+            type: string
+        - name: publication_year
+          in: query
+          description: Год публикации
+          required: false
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Успешный поиск документов
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DocumentResponse'
+        '401':
+          description: Пользователь не авторизован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    post:
+      summary: Загрузка документа
+      description: Загружает новый документ в систему. Доступно только администратору. Поддерживаемые форматы - PDF и офисные документы.
+      operationId: uploadDocument
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/DocumentUploadRequest'
+      responses:
+        '201':
+          description: Документ успешно загружен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentResponse'
+        '400':
+          description: Ошибка валидации данных или неподдерживаемый формат файла
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Пользователь не авторизован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Недостаточно прав для выполнения операции (требуется роль администратора)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Ошибка при сохранении файла
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /documents/{id}:
+    delete:
+      summary: Удаление документа
+      description: Удаляет документ из системы по его идентификатору. Доступно только администратору.
+      operationId: deleteDocument
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Идентификатор документа
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: Документ успешно удален
+        '401':
+          description: Пользователь не авторизован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Недостаточно прав для выполнения операции (требуется роль администратора)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Документ не найден
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /documents/{id}/download:
+    get:
+      summary: Скачивание/просмотр документа
+      description: Отдает файл документа для скачивания или открытия. Доступно всем сотрудникам.
+      operationId: downloadDocument
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Идентификатор документа
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Файл документа
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        '401':
+          description: Пользователь не авторизован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Документ не найден
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    DocumentResponse:
+      type: object
+      required:
+        - id
+        - title
+        - author_organization
+        - publication_year
+        - created_at
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: Уникальный идентификатор документа
+          example: 1
+        title:
+          type: string
+          description: Название документа
+          example: "Протокол эпидемиологического расследования вспышки сальмонеллеза"
+        author_organization:
+          type: string
+          description: Организация-автор документа
+          example: "НИИ Эпидемиологии"
+        publication_year:
+          type: integer
+          description: Год публикации
+          example: 2023
+        created_at:
+          type: string
+          format: date-time
+          description: Дата и время загрузки документа в систему
+
+    DocumentUploadRequest:
+      type: object
+      required:
+        - title
+        - author_organization
+        - publication_year
+        - file
+      properties:
+        title:
+          type: string
+          description: Название документа
+          example: "Отчет эпиднадзора по гриппу"
+        author_organization:
+          type: string
+          description: Организация-автор документа
+          example: "Центр мониторинга инфекций"
+        publication_year:
+          type: integer
+          description: Год публикации документа
+          example: 2023
+        file:
+          type: string
+          format: binary
+          description: Файл документа (PDF или офисный документ)
+
+    ErrorResponse:
+      type: object
+      required:
+        - error_code
+        - message
+        - timestamp
+      properties:
+        error_code:
+          type: string
+          description: Машинно-читаемый код ошибки
+          example: "VALIDATION_ERROR"
+        message:
+          type: string
+          description: Человекочитаемое сообщение об ошибке на русском языке
+          example: "Обязательные поля не заполнены."
+        details:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Детальная информация об ошибках валидации полей
+        timestamp:
+          type: string
+          format: date-time
+          description: Временная метка ошибки
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
