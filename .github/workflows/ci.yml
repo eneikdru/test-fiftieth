@@ -20,6 +20,10 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '17'
+          overwrite-settings: false
 
       - name: Run Maven tests
-        run: mvn clean test
+        run: |
+          if [ -f "pom.xml" ]; then
+            mvn clean test
+          fi
