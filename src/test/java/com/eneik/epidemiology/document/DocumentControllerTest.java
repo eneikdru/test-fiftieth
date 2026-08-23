@@ -142,4 +142,17 @@ class DocumentControllerTest {
                 .andExpect(jsonPath("$.count", is(1)))
                 .andExpect(jsonPath("$.results[0].publicationYear", is(2023)));
     }
+
+    @Test
+    @DisplayName("Given a search query, When requesting search results from the API, Then page and size query parameters are supported by the backend")
+    void testSearchDocuments_SupportsPagination() throws Exception {
+        mockMvc.perform(get("/api/v1/documents/search")
+                        .param("page", "0")
+                        .param("size", "2")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + researcherToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalPages").exists())
+                .andExpect(jsonPath("$.totalElements").exists())
+                .andExpect(jsonPath("$.currentPage", is(0)));
+    }
 }
