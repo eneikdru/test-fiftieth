@@ -17,9 +17,12 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Map;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import io.zonky.test.db.AutoConfigureEmbeddedDatabase;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import io.zonky.test.db.AutoConfigureEmbeddedDatabase;
 
 @SpringBootTest
+@AutoConfigureEmbeddedDatabase
 @AutoConfigureMockMvc
 @Transactional
 class PrivacyControllerIntegrationTest {

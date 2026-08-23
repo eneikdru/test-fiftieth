@@ -13,11 +13,16 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
 import static org.hamcrest.Matchers.is;
+import io.zonky.test.db.AutoConfigureEmbeddedDatabase;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import io.zonky.test.db.AutoConfigureEmbeddedDatabase;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import io.zonky.test.db.AutoConfigureEmbeddedDatabase;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import io.zonky.test.db.AutoConfigureEmbeddedDatabase;
 
 @SpringBootTest
+@AutoConfigureEmbeddedDatabase
 @AutoConfigureMockMvc
 @Transactional
 class DocumentSecurityTest {

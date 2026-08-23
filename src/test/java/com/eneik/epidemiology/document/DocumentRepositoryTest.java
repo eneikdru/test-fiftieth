@@ -9,8 +9,10 @@ import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabas
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import io.zonky.test.db.AutoConfigureEmbeddedDatabase;
 
 @DataJpaTest
+@AutoConfigureEmbeddedDatabase
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 class DocumentRepositoryTest {
 

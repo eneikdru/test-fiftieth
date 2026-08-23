@@ -16,8 +16,10 @@ import java.time.ZoneId;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import io.zonky.test.db.AutoConfigureEmbeddedDatabase;
 
 @SpringBootTest
+@AutoConfigureEmbeddedDatabase
 @Transactional
 class PrivacyServiceTest {
 

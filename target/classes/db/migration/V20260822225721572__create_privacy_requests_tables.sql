@@ -5,7 +5,7 @@ CREATE TABLE privacy_export_requests (
     requested_format VARCHAR(20) NOT NULL,
     download_url VARCHAR(255),
     notes VARCHAR(500),
-    export_payload CLOB,
+    export_payload TEXT,
     error_code VARCHAR(50),
     error_message VARCHAR(500),
     created_at TIMESTAMP WITH TIME ZONE NOT NULL,

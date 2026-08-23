@@ -17,10 +17,14 @@ import java.time.OffsetDateTime;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
+import io.zonky.test.db.AutoConfigureEmbeddedDatabase;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import io.zonky.test.db.AutoConfigureEmbeddedDatabase;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import io.zonky.test.db.AutoConfigureEmbeddedDatabase;
 
 @SpringBootTest
+@AutoConfigureEmbeddedDatabase
 @AutoConfigureMockMvc
 @Transactional
 class TelemetryValidationTest {

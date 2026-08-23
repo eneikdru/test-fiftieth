@@ -24,12 +24,18 @@ import java.util.Map;
 import java.util.Random;
 
 import static org.hamcrest.Matchers.is;
+import io.zonky.test.db.AutoConfigureEmbeddedDatabase;
 import static org.hamcrest.Matchers.notNullValue;
+import io.zonky.test.db.AutoConfigureEmbeddedDatabase;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import io.zonky.test.db.AutoConfigureEmbeddedDatabase;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import io.zonky.test.db.AutoConfigureEmbeddedDatabase;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import io.zonky.test.db.AutoConfigureEmbeddedDatabase;
 
 @SpringBootTest
+@AutoConfigureEmbeddedDatabase
 @AutoConfigureMockMvc
 @Transactional
 class AuthControllerTest {
