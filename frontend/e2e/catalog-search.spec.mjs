@@ -6,19 +6,7 @@ const harnessPath = new URL('../test-harness.html', import.meta.url).href;
 
 test.describe('Catalog Search and Document Management E2E Tests', () => {
 
-  test('Given a fresh deployment with sample data, When the E2E test searches for a known document and downloads it, Then the file is successfully retrieved', async ({ page }) => {
-    // Intercept download request for document file
-    await page.route('**/api/v1/documents/*/download', async route => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/pdf',
-        headers: {
-          'Content-Disposition': 'attachment; filename="salmonella_outbreak.pdf"'
-        },
-        body: Buffer.from('Содержимое документа: Протокол эпидемиологического расследования вспышки сальмонеллеза')
-      });
-    });
-
+  test('Given a fresh deployment with sample data, When the E2E test searches for a known document and downloads it, Then the file is successfully retrieved', async ({ page, request }) => {
     await page.goto(harnessPath);
 
     // Search for known sample document
@@ -30,7 +18,12 @@ test.describe('Catalog Search and Document Management E2E Tests', () => {
     await expect(docTitle).toBeVisible();
     await expect(docTitle).toContainText('сальмонеллеза');
 
-    // Trigger download and verify file retrieval
+    // Trigger download and verify file retrieval from real backend endpoint
+    const response = await request.get('/api/v1/documents/1/download');
+    expect(response.status()).toBe(200);
+    const content = await response.text();
+    expect(content).toContain('Содержимое документа');
+
     const downloadPromise = page.waitForEvent('download');
     await page.locator('.download-btn').first().click();
     const download = await downloadPromise;
