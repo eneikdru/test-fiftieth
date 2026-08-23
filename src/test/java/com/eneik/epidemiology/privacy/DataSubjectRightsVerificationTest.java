@@ -106,10 +106,10 @@ class DataSubjectRightsVerificationTest {
 
         entityManager.clear();
 
-        // Execute the Flyway migration script V20260823065127618__unblock_stuck_subjects.sql
+        // Execute the Flyway migration script V20260823090157407__flag_stuck_subjects_for_human_review.sql
         Connection conn = DataSourceUtils.getConnection(dataSource);
         try {
-            ScriptUtils.executeSqlScript(conn, new ClassPathResource("db/migration/V20260823065127618__unblock_stuck_subjects.sql"));
+            ScriptUtils.executeSqlScript(conn, new ClassPathResource("db/migration/V20260823090157407__flag_stuck_subjects_for_human_review.sql"));
         } catch (Exception e) {
             fail("Failed to execute migration script: " + e.getMessage());
         } finally {
@@ -118,16 +118,16 @@ class DataSubjectRightsVerificationTest {
 
         entityManager.clear();
 
-        // Verify states transitioned to RESOLVED and UPDATE matched specific stuck subject rows
+        // Verify states transitioned to FLAGGED_FOR_HUMAN_REVIEW and UPDATE matched specific stuck subject rows
         DataExportJob fetchedExportUpdated = exportJobRepository.findById(exportRequestId).orElseThrow();
-        assertEquals("RESOLVED", fetchedExportUpdated.getStatus());
+        assertEquals("FLAGGED_FOR_HUMAN_REVIEW", fetchedExportUpdated.getStatus());
         assertEquals(stuckSubjectId, fetchedExportUpdated.getSubjectId());
-        assertTrue(fetchedExportUpdated.getNotes().contains("Resolved stuck subject from iteration-admission poka-yoke failure"));
+        assertTrue(fetchedExportUpdated.getNotes().contains("Flagged for human review"));
 
         DataErasureJob fetchedErasureUpdated = erasureJobRepository.findById(erasureRequestId).orElseThrow();
-        assertEquals("RESOLVED", fetchedErasureUpdated.getStatus());
+        assertEquals("FLAGGED_FOR_HUMAN_REVIEW", fetchedErasureUpdated.getStatus());
         assertEquals(stuckSubjectId, fetchedErasureUpdated.getSubjectId());
-        assertTrue(fetchedErasureUpdated.getReason().contains("Resolved stuck subject from iteration-admission poka-yoke failure"));
+        assertTrue(fetchedErasureUpdated.getReason().contains("Flagged for human review"));
 
         // Verify operations auditor reads subject without failing on previous iteration-admission poka-yoke
         List<DataExportJob> activeExportJobs = exportJobRepository.findBySubjectIdAndStatusIn(
@@ -173,10 +173,10 @@ class DataSubjectRightsVerificationTest {
         entityManager.flush();
         entityManager.clear();
 
-        // Execute the Flyway migration script V20260823065127618__unblock_stuck_subjects.sql
+        // Execute the Flyway migration script V20260823090157407__flag_stuck_subjects_for_human_review.sql
         Connection conn2 = DataSourceUtils.getConnection(dataSource);
         try {
-            ScriptUtils.executeSqlScript(conn2, new ClassPathResource("db/migration/V20260823065127618__unblock_stuck_subjects.sql"));
+            ScriptUtils.executeSqlScript(conn2, new ClassPathResource("db/migration/V20260823090157407__flag_stuck_subjects_for_human_review.sql"));
         } catch (Exception e) {
             fail("Failed to execute migration script: " + e.getMessage());
         } finally {
@@ -185,16 +185,16 @@ class DataSubjectRightsVerificationTest {
 
         entityManager.clear();
 
-        // Verify states transitioned to RESOLVED and UPDATE matched specific stuck subject rows
+        // Verify states transitioned to FLAGGED_FOR_HUMAN_REVIEW and UPDATE matched specific stuck subject rows
         DataExportJob fetchedExport = exportJobRepository.findById(exportRequestId).orElseThrow();
-        assertEquals("RESOLVED", fetchedExport.getStatus());
+        assertEquals("FLAGGED_FOR_HUMAN_REVIEW", fetchedExport.getStatus());
         assertEquals(stuckSubjectId, fetchedExport.getSubjectId());
-        assertTrue(fetchedExport.getNotes().contains("Resolved stuck subject with orphaned dependency 168a6edf"));
+        assertTrue(fetchedExport.getNotes().contains("Flagged for human review"));
 
         DataErasureJob fetchedErasure = erasureJobRepository.findById(erasureRequestId).orElseThrow();
-        assertEquals("RESOLVED", fetchedErasure.getStatus());
+        assertEquals("FLAGGED_FOR_HUMAN_REVIEW", fetchedErasure.getStatus());
         assertEquals(stuckSubjectId, fetchedErasure.getSubjectId());
-        assertTrue(fetchedErasure.getReason().contains("Resolved stuck subject with orphaned dependency 168a6edf"));
+        assertTrue(fetchedErasure.getReason().contains("Flagged for human review"));
     }
 
     @Test
