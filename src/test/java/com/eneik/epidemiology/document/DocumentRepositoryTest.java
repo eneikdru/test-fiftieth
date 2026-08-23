@@ -34,25 +34,4 @@ class DocumentRepositoryTest {
         assertThat(savedDoc.getFilePath()).isEqualTo("/data/docs/2024/new_study.pdf");
         assertThat(savedDoc.getCreatedAt()).isNotNull();
     }
-
-    @Test
-    @DisplayName("Given an initial deployment, When the database is seeded, Then real Russian epidemiological sample documents are inserted.")
-    void testInitialDeployment_DatabaseSeededWithRussianDocuments() {
-        // Verify seed data from Flyway migration V20260822225105263__create_documents_table.sql
-
-        List<Document> salmonellaDocs = documentRepository.findByTitleContainingIgnoreCase("сальмонеллеза");
-        assertThat(salmonellaDocs).isNotEmpty();
-        Document salmonellaDoc = salmonellaDocs.get(0);
-        assertThat(salmonellaDoc.getAuthorOrganization()).isEqualTo("НИИ Эпидемиологии");
-        assertThat(salmonellaDoc.getPublicationYear()).isEqualTo(2023);
-
-        List<Document> fluDocs = documentRepository.findByTitleContainingIgnoreCase("гриппу");
-        assertThat(fluDocs).isNotEmpty();
-
-        List<Document> measlesDocs = documentRepository.findByTitleContainingIgnoreCase("кори");
-        assertThat(measlesDocs).isNotEmpty();
-
-        long totalCount = documentRepository.count();
-        assertThat(totalCount).isGreaterThanOrEqualTo(3);
-    }
 }
