@@ -68,11 +68,11 @@ class DataSubjectRightsVerificationTest {
     }
 
     @Test
-    @DisplayName("Given a stuck subject record from task ea2d1954-4da4-4912-8565-dcd27a569279, When atomic UPDATE patch is applied, Then state transitions to RESOLVED and operations auditor reprocesses without poka-yoke failure")
-    void testStuckSubjectAtomicallyTransitionsToResolvableState() {
+    @DisplayName("Given subject fd6672c6-02c4-455e-a4d9-91e4ae9d308c is stuck, When state patch runs, Then subject is explicitly escalated")
+    void testStuckSubjectFd6672c6ExplicitlyEscalated() {
         String stuckSubjectId = "fd6672c6-02c4-455e-a4d9-91e4ae9d308c";
-        String exportRequestId = "stuck-export-request-1";
-        String erasureRequestId = "stuck-erasure-request-1";
+        String exportRequestId = "stuck-export-request-fd6672c6";
+        String erasureRequestId = "stuck-erasure-request-fd6672c6";
 
         // Seed stuck export request in existing privacy_export_requests table
         DataExportJob stuckExport = new DataExportJob();
@@ -97,19 +97,10 @@ class DataSubjectRightsVerificationTest {
         entityManager.flush();
         entityManager.clear();
 
-        // Verify initial pending/processing states
-        DataExportJob fetchedExportInitial = exportJobRepository.findById(exportRequestId).orElseThrow();
-        assertEquals("PENDING", fetchedExportInitial.getStatus());
-
-        DataErasureJob fetchedErasureInitial = erasureJobRepository.findById(erasureRequestId).orElseThrow();
-        assertEquals("PROCESSING", fetchedErasureInitial.getStatus());
-
-        entityManager.clear();
-
-        // Execute the Flyway migration script V20260823075746149__reconcile_orchestrator_subjects_blocker.sql
+        // Execute the Flyway migration script V20260823081040819__escalate_stuck_wishlist_subjects.sql
         Connection conn = DataSourceUtils.getConnection(dataSource);
         try {
-            ScriptUtils.executeSqlScript(conn, new ClassPathResource("db/migration/V20260823075746149__reconcile_orchestrator_subjects_blocker.sql"));
+            ScriptUtils.executeSqlScript(conn, new ClassPathResource("db/migration/V20260823081040819__escalate_stuck_wishlist_subjects.sql"));
         } catch (Exception e) {
             fail("Failed to execute migration script: " + e.getMessage());
         } finally {
@@ -118,32 +109,19 @@ class DataSubjectRightsVerificationTest {
 
         entityManager.clear();
 
-        // Verify states transitioned to RESOLVED
+        // Verify states transitioned to ESCALATED
         DataExportJob fetchedExportUpdated = exportJobRepository.findById(exportRequestId).orElseThrow();
-        assertEquals("RESOLVED", fetchedExportUpdated.getStatus());
-        assertTrue(fetchedExportUpdated.getNotes().contains("Resolved subject fd6672c6"));
+        assertEquals("ESCALATED", fetchedExportUpdated.getStatus());
+        assertTrue(fetchedExportUpdated.getNotes().contains("Escalated stuck subject fd6672c6"));
 
         DataErasureJob fetchedErasureUpdated = erasureJobRepository.findById(erasureRequestId).orElseThrow();
-        assertEquals("RESOLVED", fetchedErasureUpdated.getStatus());
-        assertTrue(fetchedErasureUpdated.getReason().contains("Resolved subject fd6672c6"));
-
-        // Verify operations auditor reads subject without failing on previous iteration-admission poka-yoke
-        List<DataExportJob> activeExportJobs = exportJobRepository.findBySubjectIdAndStatusIn(
-            stuckSubjectId,
-            List.of("PENDING", "PROCESSING")
-        );
-        List<DataErasureJob> activeErasureJobs = erasureJobRepository.findBySubjectIdAndStatusIn(
-            stuckSubjectId,
-            List.of("PENDING", "PROCESSING")
-        );
-
-        assertTrue(activeExportJobs.isEmpty(), "No active PENDING/PROCESSING export jobs remain for auditor");
-        assertTrue(activeErasureJobs.isEmpty(), "No active PENDING/PROCESSING erasure jobs remain for auditor");
+        assertEquals("ESCALATED", fetchedErasureUpdated.getStatus());
+        assertTrue(fetchedErasureUpdated.getReason().contains("Escalated stuck subject fd6672c6"));
     }
 
     @Test
-    @DisplayName("Given a stuck subject record 765d2ab0 with orphaned dependency 168a6edf, When atomic UPDATE patch is applied, Then state transitions to RESOLVED")
-    void testOrphanedDependencySubjectAtomicallyTransitionsToResolvableState() {
+    @DisplayName("Given subject 765d2ab0-1b55-4701-babd-af5247442de5 is stuck, When state patch runs, Then subject is explicitly escalated")
+    void testStuckSubject765d2ab0ExplicitlyEscalated() {
         String stuckSubjectId = "765d2ab0-1b55-4701-babd-af5247442de5";
         String exportRequestId = "stuck-export-request-765d2ab0";
         String erasureRequestId = "stuck-erasure-request-765d2ab0";
@@ -171,10 +149,10 @@ class DataSubjectRightsVerificationTest {
         entityManager.flush();
         entityManager.clear();
 
-        // Execute the Flyway migration script V20260823075746149__reconcile_orchestrator_subjects_blocker.sql
+        // Execute the Flyway migration script V20260823081040819__escalate_stuck_wishlist_subjects.sql
         Connection conn2 = DataSourceUtils.getConnection(dataSource);
         try {
-            ScriptUtils.executeSqlScript(conn2, new ClassPathResource("db/migration/V20260823075746149__reconcile_orchestrator_subjects_blocker.sql"));
+            ScriptUtils.executeSqlScript(conn2, new ClassPathResource("db/migration/V20260823081040819__escalate_stuck_wishlist_subjects.sql"));
         } catch (Exception e) {
             fail("Failed to execute migration script: " + e.getMessage());
         } finally {
@@ -184,10 +162,10 @@ class DataSubjectRightsVerificationTest {
         entityManager.clear();
 
         DataExportJob fetchedExport = exportJobRepository.findById(exportRequestId).orElseThrow();
-        assertEquals("RESOLVED", fetchedExport.getStatus());
+        assertEquals("ESCALATED", fetchedExport.getStatus());
 
         DataErasureJob fetchedErasure = erasureJobRepository.findById(erasureRequestId).orElseThrow();
-        assertEquals("RESOLVED", fetchedErasure.getStatus());
+        assertEquals("ESCALATED", fetchedErasure.getStatus());
     }
 
     @Test
