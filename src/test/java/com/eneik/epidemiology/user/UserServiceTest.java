@@ -14,7 +14,11 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import com.eneik.epidemiology.PostgresTestContainerInitializer;
+import org.springframework.test.context.ContextConfiguration;
+
 @SpringBootTest
+@ContextConfiguration(initializers = PostgresTestContainerInitializer.class)
 @Transactional
 class UserServiceTest {
 

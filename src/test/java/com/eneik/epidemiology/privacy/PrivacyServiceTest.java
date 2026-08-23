@@ -1,4 +1,6 @@
 package com.eneik.epidemiology.privacy;
+import org.springframework.test.context.ContextConfiguration;
+import com.eneik.epidemiology.PostgresTestContainerInitializer;
 
 import com.eneik.epidemiology.user.User;
 import com.eneik.epidemiology.user.UserRepository;
@@ -18,6 +20,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
+@ContextConfiguration(initializers = PostgresTestContainerInitializer.class)
 @Transactional
 class PrivacyServiceTest {
 

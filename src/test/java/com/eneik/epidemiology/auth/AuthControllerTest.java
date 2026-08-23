@@ -1,4 +1,6 @@
 package com.eneik.epidemiology.auth;
+import org.springframework.test.context.ContextConfiguration;
+import com.eneik.epidemiology.PostgresTestContainerInitializer;
 
 import com.eneik.epidemiology.security.JwtTokenProvider;
 import com.eneik.epidemiology.user.User;
@@ -30,6 +32,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
+@ContextConfiguration(initializers = PostgresTestContainerInitializer.class)
 @AutoConfigureMockMvc
 @Transactional
 class AuthControllerTest {

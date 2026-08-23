@@ -1,4 +1,6 @@
 package com.eneik.epidemiology.health;
+import org.springframework.test.context.ContextConfiguration;
+import com.eneik.epidemiology.PostgresTestContainerInitializer;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -12,6 +14,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
+@ContextConfiguration(initializers = PostgresTestContainerInitializer.class)
 @AutoConfigureMockMvc
 class HealthControllerTest {
 

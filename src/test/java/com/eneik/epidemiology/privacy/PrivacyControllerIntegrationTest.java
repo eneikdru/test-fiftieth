@@ -1,4 +1,6 @@
 package com.eneik.epidemiology.privacy;
+import org.springframework.test.context.ContextConfiguration;
+import com.eneik.epidemiology.PostgresTestContainerInitializer;
 
 import com.eneik.epidemiology.security.JwtTokenProvider;
 import com.eneik.epidemiology.user.User;
@@ -20,6 +22,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
+@ContextConfiguration(initializers = PostgresTestContainerInitializer.class)
 @AutoConfigureMockMvc
 @Transactional
 class PrivacyControllerIntegrationTest {

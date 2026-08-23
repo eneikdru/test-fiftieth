@@ -1,4 +1,6 @@
 package com.eneik.epidemiology.security;
+import org.springframework.test.context.ContextConfiguration;
+import com.eneik.epidemiology.PostgresTestContainerInitializer;
 
 import com.eneik.epidemiology.user.User;
 import com.eneik.epidemiology.user.UserRepository;
@@ -18,6 +20,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
+@ContextConfiguration(initializers = PostgresTestContainerInitializer.class)
 @AutoConfigureMockMvc
 @Transactional
 class DocumentSecurityTest {

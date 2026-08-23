@@ -10,8 +10,12 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.eneik.epidemiology.PostgresTestContainerInitializer;
+import org.springframework.test.context.ContextConfiguration;
+
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
+@ContextConfiguration(initializers = PostgresTestContainerInitializer.class)
 class DocumentRepositoryTest {
 
     @Autowired
