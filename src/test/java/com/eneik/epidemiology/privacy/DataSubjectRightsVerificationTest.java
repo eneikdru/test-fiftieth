@@ -106,10 +106,10 @@ class DataSubjectRightsVerificationTest {
 
         entityManager.clear();
 
-        // Execute the Flyway migration script V20260823075746149__reconcile_orchestrator_subjects_blocker.sql
+        // Execute the Flyway migration script V20260823065127618__unblock_stuck_subjects.sql
         Connection conn = DataSourceUtils.getConnection(dataSource);
         try {
-            ScriptUtils.executeSqlScript(conn, new ClassPathResource("db/migration/V20260823075746149__reconcile_orchestrator_subjects_blocker.sql"));
+            ScriptUtils.executeSqlScript(conn, new ClassPathResource("db/migration/V20260823065127618__unblock_stuck_subjects.sql"));
         } catch (Exception e) {
             fail("Failed to execute migration script: " + e.getMessage());
         } finally {
@@ -118,14 +118,16 @@ class DataSubjectRightsVerificationTest {
 
         entityManager.clear();
 
-        // Verify states transitioned to RESOLVED
+        // Verify states transitioned to RESOLVED and UPDATE matched specific stuck subject rows
         DataExportJob fetchedExportUpdated = exportJobRepository.findById(exportRequestId).orElseThrow();
         assertEquals("RESOLVED", fetchedExportUpdated.getStatus());
-        assertTrue(fetchedExportUpdated.getNotes().contains("Resolved subject fd6672c6"));
+        assertEquals(stuckSubjectId, fetchedExportUpdated.getSubjectId());
+        assertTrue(fetchedExportUpdated.getNotes().contains("Resolved stuck subject from iteration-admission poka-yoke failure"));
 
         DataErasureJob fetchedErasureUpdated = erasureJobRepository.findById(erasureRequestId).orElseThrow();
         assertEquals("RESOLVED", fetchedErasureUpdated.getStatus());
-        assertTrue(fetchedErasureUpdated.getReason().contains("Resolved subject fd6672c6"));
+        assertEquals(stuckSubjectId, fetchedErasureUpdated.getSubjectId());
+        assertTrue(fetchedErasureUpdated.getReason().contains("Resolved stuck subject from iteration-admission poka-yoke failure"));
 
         // Verify operations auditor reads subject without failing on previous iteration-admission poka-yoke
         List<DataExportJob> activeExportJobs = exportJobRepository.findBySubjectIdAndStatusIn(
@@ -171,10 +173,10 @@ class DataSubjectRightsVerificationTest {
         entityManager.flush();
         entityManager.clear();
 
-        // Execute the Flyway migration script V20260823075746149__reconcile_orchestrator_subjects_blocker.sql
+        // Execute the Flyway migration script V20260823065127618__unblock_stuck_subjects.sql
         Connection conn2 = DataSourceUtils.getConnection(dataSource);
         try {
-            ScriptUtils.executeSqlScript(conn2, new ClassPathResource("db/migration/V20260823075746149__reconcile_orchestrator_subjects_blocker.sql"));
+            ScriptUtils.executeSqlScript(conn2, new ClassPathResource("db/migration/V20260823065127618__unblock_stuck_subjects.sql"));
         } catch (Exception e) {
             fail("Failed to execute migration script: " + e.getMessage());
         } finally {
@@ -183,11 +185,16 @@ class DataSubjectRightsVerificationTest {
 
         entityManager.clear();
 
+        // Verify states transitioned to RESOLVED and UPDATE matched specific stuck subject rows
         DataExportJob fetchedExport = exportJobRepository.findById(exportRequestId).orElseThrow();
         assertEquals("RESOLVED", fetchedExport.getStatus());
+        assertEquals(stuckSubjectId, fetchedExport.getSubjectId());
+        assertTrue(fetchedExport.getNotes().contains("Resolved stuck subject with orphaned dependency 168a6edf"));
 
         DataErasureJob fetchedErasure = erasureJobRepository.findById(erasureRequestId).orElseThrow();
         assertEquals("RESOLVED", fetchedErasure.getStatus());
+        assertEquals(stuckSubjectId, fetchedErasure.getSubjectId());
+        assertTrue(fetchedErasure.getReason().contains("Resolved stuck subject with orphaned dependency 168a6edf"));
     }
 
     @Test
