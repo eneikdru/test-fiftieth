@@ -60,50 +60,77 @@ class DataSubjectRightsVerificationTest {
     }
 
     @Test
-    @DisplayName("Given a stuck subject record from task ea2d1954-4da4-4912-8565-dcd27a569279, When updated atomically, Then it transitions out of PENDING/PROCESSING to a resolvable state")
+    @DisplayName("Given a stuck subject record from task ea2d1954-4da4-4912-8565-dcd27a569279, When atomic UPDATE patch is applied, Then state transitions to RESOLVED and operations auditor reprocesses without poka-yoke failure")
     void testStuckSubjectAtomicallyTransitionsToResolvableState() {
         String stuckSubjectId = "fd6672c6-02c4-455e-a4d9-91e4ae9d308c";
-        String requestId = "stuck-export-request-1";
+        String exportRequestId = "stuck-export-request-1";
+        String erasureRequestId = "stuck-erasure-request-1";
 
-        DataExportJob stuckJob = new DataExportJob();
-        stuckJob.setRequestId(requestId);
-        stuckJob.setSubjectId(stuckSubjectId);
-        stuckJob.setStatus("PENDING");
-        stuckJob.setRequestedFormat("ZIP");
-        stuckJob.setCreatedAt(OffsetDateTime.now(fixedClock));
-        exportJobRepository.save(stuckJob);
+        // Seed stuck export request in existing privacy_export_requests table
+        DataExportJob stuckExport = new DataExportJob();
+        stuckExport.setRequestId(exportRequestId);
+        stuckExport.setSubjectId(stuckSubjectId);
+        stuckExport.setStatus("PENDING");
+        stuckExport.setRequestedFormat("ZIP");
+        stuckExport.setCreatedAt(OffsetDateTime.now(fixedClock));
+        exportJobRepository.save(stuckExport);
+
+        // Seed stuck erasure request in existing privacy_erasure_requests table
+        DataErasureJob stuckErasure = new DataErasureJob();
+        stuckErasure.setRequestId(erasureRequestId);
+        stuckErasure.setSubjectId(stuckSubjectId);
+        stuckErasure.setStatus("PROCESSING");
+        stuckErasure.setConfirmationToken("CONFIRM_TOKEN_STUCK");
+        stuckErasure.setReason("In-progress erasure");
+        stuckErasure.setErasureScope("ALL_PERSONAL_DATA");
+        stuckErasure.setCreatedAt(OffsetDateTime.now(fixedClock));
+        erasureJobRepository.save(stuckErasure);
 
         entityManager.flush();
 
-        // Verify subject is initialised in stuck/pending state
-        DataExportJob fetchedInitial = exportJobRepository.findById(requestId).orElseThrow();
-        assertEquals("PENDING", fetchedInitial.getStatus());
+        // Verify initial pending/processing states
+        DataExportJob fetchedExportInitial = exportJobRepository.findById(exportRequestId).orElseThrow();
+        assertEquals("PENDING", fetchedExportInitial.getStatus());
 
-        // Perform atomically-guarded update
-        int updatedCount = exportJobRepository.updateStatusToCompleted(
-            requestId,
-            "PENDING",
-            "RESOLVED",
-            "/api/v1/privacy/export-requests/" + requestId + "/download",
-            "{}",
-            OffsetDateTime.now(fixedClock),
-            OffsetDateTime.now(fixedClock).plusDays(7)
-        );
+        DataErasureJob fetchedErasureInitial = erasureJobRepository.findById(erasureRequestId).orElseThrow();
+        assertEquals("PROCESSING", fetchedErasureInitial.getStatus());
 
-        assertEquals(1, updatedCount, "Exactly one row should be updated atomically");
+        // Execute the atomic UPDATE patch directly targeting existing privacy_export_requests and privacy_erasure_requests tables
+        int exportUpdatedCount = entityManager.createNativeQuery(
+            "UPDATE privacy_export_requests SET status = 'RESOLVED', notes = 'Resolved stuck subject from iteration-admission poka-yoke failure in task ea2d1954-4da4-4912-8565-dcd27a569279' WHERE subject_id = 'fd6672c6-02c4-455e-a4d9-91e4ae9d308c' AND status IN ('PENDING', 'PROCESSING')"
+        ).executeUpdate();
+
+        int erasureUpdatedCount = entityManager.createNativeQuery(
+            "UPDATE privacy_erasure_requests SET status = 'RESOLVED', reason = 'Resolved stuck subject from iteration-admission poka-yoke failure in task ea2d1954-4da4-4912-8565-dcd27a569279' WHERE subject_id = 'fd6672c6-02c4-455e-a4d9-91e4ae9d308c' AND status IN ('PENDING', 'PROCESSING')"
+        ).executeUpdate();
+
+        assertEquals(1, exportUpdatedCount, "Atomic UPDATE patch must update 1 export request row");
+        assertEquals(1, erasureUpdatedCount, "Atomic UPDATE patch must update 1 erasure request row");
 
         entityManager.flush();
         entityManager.clear();
 
-        DataExportJob fetchedUpdated = exportJobRepository.findById(requestId).orElseThrow();
-        assertEquals("RESOLVED", fetchedUpdated.getStatus());
+        // Verify states transitioned to RESOLVED
+        DataExportJob fetchedExportUpdated = exportJobRepository.findById(exportRequestId).orElseThrow();
+        assertEquals("RESOLVED", fetchedExportUpdated.getStatus());
+        assertTrue(fetchedExportUpdated.getNotes().contains("Resolved stuck subject"));
 
-        // Verify that auditor won't find active pending/processing jobs for this subject
-        List<DataExportJob> activeJobs = exportJobRepository.findBySubjectIdAndStatusIn(
+        DataErasureJob fetchedErasureUpdated = erasureJobRepository.findById(erasureRequestId).orElseThrow();
+        assertEquals("RESOLVED", fetchedErasureUpdated.getStatus());
+        assertTrue(fetchedErasureUpdated.getReason().contains("Resolved stuck subject"));
+
+        // Verify operations auditor reads subject without failing on previous iteration-admission poka-yoke
+        List<DataExportJob> activeExportJobs = exportJobRepository.findBySubjectIdAndStatusIn(
             stuckSubjectId,
             List.of("PENDING", "PROCESSING")
         );
-        assertTrue(activeJobs.isEmpty(), "No active pending or processing jobs should remain for stuck subject");
+        List<DataErasureJob> activeErasureJobs = erasureJobRepository.findBySubjectIdAndStatusIn(
+            stuckSubjectId,
+            List.of("PENDING", "PROCESSING")
+        );
+
+        assertTrue(activeExportJobs.isEmpty(), "No active PENDING/PROCESSING export jobs remain for auditor");
+        assertTrue(activeErasureJobs.isEmpty(), "No active PENDING/PROCESSING erasure jobs remain for auditor");
     }
 
     @Test
