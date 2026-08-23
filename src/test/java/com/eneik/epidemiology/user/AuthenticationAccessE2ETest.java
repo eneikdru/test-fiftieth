@@ -21,14 +21,14 @@ class AuthenticationAccessE2ETest {
     private UserRepository userRepository;
 
     @Autowired
-    private UserService.SecurityConfig securityConfig;
+    private UserService.PasswordEncoderConfig passwordEncoderConfig;
 
     @Test
     @DisplayName("Given an employee user, When role is queried, Then role is confirmed as RESEARCHER and upload permissions are denied")
     void testEmployeeAccessRestrictions() {
         Instant fixedInstant = Instant.parse("2026-08-22T12:00:00Z");
         Clock fixedClock = Clock.fixed(fixedInstant, ZoneId.of("UTC"));
-        UserService userService = new UserService(userRepository, securityConfig.passwordEncoder(), fixedClock);
+        UserService userService = new UserService(userRepository, passwordEncoderConfig.passwordEncoder(), fixedClock);
 
         User employee = userService.createUser("employee_user", "EmpPass123!", "RESEARCHER");
 
@@ -47,14 +47,14 @@ class AuthenticationAccessE2ETest {
     void testSelfServiceRecoveryFlow() {
         Instant fixedInstant = Instant.parse("2026-08-22T12:30:00Z");
         Clock fixedClock = Clock.fixed(fixedInstant, ZoneId.of("UTC"));
-        UserService userService = new UserService(userRepository, securityConfig.passwordEncoder(), fixedClock);
+        UserService userService = new UserService(userRepository, passwordEncoderConfig.passwordEncoder(), fixedClock);
 
         // Seed user needing password recovery
         User user = userService.createUser("locked_researcher", "OldSecret456!", "RESEARCHER");
 
         // Simulate password recovery reset
         String newPassword = "RestoredPass789!";
-        user.setPasswordHash(securityConfig.passwordEncoder().encode(newPassword));
+        user.setPasswordHash(passwordEncoderConfig.passwordEncoder().encode(newPassword));
         userRepository.save(user);
 
         // Verify restored access
