@@ -1,0 +1,118 @@
+{
+  "epics": [
+    {
+      "existingEpicId": null,
+      "title": "Remove tracked target build artifacts",
+      "jtbd": "When maintaining the project repository, I want build artifacts removed from version control, so that the repository contains only valid source and config files.",
+      "kanoClass": "Must-Be",
+      "cynefinDomain": "clear",
+      "sixSigmaMetric": "Reduce tracked build artifact files to 0%",
+      "tocConstraintRef": "Repository storage cleanliness",
+      "sourceIndex": 0,
+      "requirements": [
+        "R1: Remove the target/classes/db/migration/V20260823090157407__flag_stuck_subjects_for_human_review.sql file from git tracking.",
+        "R2: Remove all target/surefire-reports/TEST-*.xml files from git tracking."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Remove target artifacts from git",
+          "roleTag": "BARCAN-TAG-05",
+          "jtbd": "When implementing the cleanup for this epic, I want to remove the specific target files from git tracking, so that the repository contains only necessary files.",
+          "acceptanceCriteria": "Given the repository tracks target/classes/db/migration/V20260823090157407__flag_stuck_subjects_for_human_review.sql, When the untracking action is performed, Then the file is removed from git tracking.\nGiven the repository tracks target/surefire-reports/TEST-*.xml files, When the untracking action is performed, Then the XML reports are removed from git tracking.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "Repository cleanliness",
+          "sixSigmaMetric": "Reduce tracked target files to 0%",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1",
+            "R2"
+          ]
+        }
+      ]
+    },
+    {
+      "existingEpicId": "6cecb483-5ee0-4b71-9d6d-1d088c8eb3b1",
+      "title": null,
+      "jtbd": null,
+      "kanoClass": null,
+      "cynefinDomain": null,
+      "sixSigmaMetric": null,
+      "tocConstraintRef": null,
+      "sourceIndex": 0,
+      "requirements": [
+        "R1: Save the delivery plan 47e5dfd1.json within the .eneik/ directory.",
+        "R2: Restore the record of the blocker note regarding the .eneik/ boundary conflict."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Relocate delivery plan and restore note",
+          "roleTag": "BARCAN-TAG-05",
+          "jtbd": "When implementing the relocation for this epic, I want to save the delivery plan in .eneik/ and restore the blocker note, so that the orchestration state is complete.",
+          "acceptanceCriteria": "Given the missing delivery plan 47e5dfd1.json, When the relocation is applied, Then it is successfully saved inside the .eneik/ directory.\nGiven the missing blocker note, When the restoration is applied, Then the note about the .eneik/ boundary conflict is restored.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "Orchestration state management",
+          "sixSigmaMetric": "Reduce missing critical orchestrator files to 0%",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1",
+            "R2"
+          ]
+        }
+      ]
+    },
+    {
+      "existingEpicId": "605751e6-3d11-491f-af31-8d96d2c7f5bb",
+      "title": null,
+      "jtbd": null,
+      "kanoClass": null,
+      "cynefinDomain": null,
+      "sixSigmaMetric": null,
+      "tocConstraintRef": null,
+      "sourceIndex": 1,
+      "requirements": [
+        "R1: Escalate subject ae8e1efb-88e8-4a17-83fb-942e06d65d53 for human adjudication instead of dismissing it.",
+        "R2: Escalate subject a567a371-3dc4-490a-9a4b-bed7e9348f16 for human adjudication due to PR closed without merge.",
+        "R3: Keep subject c4904e50-85af-4e98-8cef-f6cf92d74c30 active until the targeted recovery task's outcome is known."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Unblock auditor subjects via database updates",
+          "roleTag": "BARCAN-TAG-08",
+          "jtbd": "When implementing the resolution for this epic, I want to update the status of the three stuck subjects in the database, so that the operations auditor is unblocked.",
+          "acceptanceCriteria": "Given subject ae8e1efb-88e8-4a17-83fb-942e06d65d53 is stuck, When the atomically-guarded update runs, Then it is flagged for human adjudication.\nGiven subject a567a371-3dc4-490a-9a4b-bed7e9348f16 is stuck, When the atomically-guarded update runs, Then it is flagged for human adjudication.\nGiven subject c4904e50-85af-4e98-8cef-f6cf92d74c30 is stuck, When the atomically-guarded update runs, Then it is kept active pending the recovery task.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "Operations auditor processing",
+          "sixSigmaMetric": "Reduce stuck operations auditor subjects from 3 to 0",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1",
+            "R2",
+            "R3"
+          ]
+        },
+        {
+          "title": "Verify unblocking of auditor subjects",
+          "roleTag": "BARCAN-TAG-06",
+          "jtbd": "When verifying the resolution for this epic, I want to ensure the stuck subjects are correctly flagged for human adjudication in the database, so that the unblocking mechanism works correctly end-to-end.",
+          "acceptanceCriteria": "Given subject ae8e1efb-88e8-4a17-83fb-942e06d65d53 is stuck, When the atomically-guarded update is verified, Then it is confirmed to be flagged for human adjudication.\nGiven subject a567a371-3dc4-490a-9a4b-bed7e9348f16 is stuck, When the atomically-guarded update is verified, Then it is confirmed to be flagged for human adjudication.\nGiven subject c4904e50-85af-4e98-8cef-f6cf92d74c30 is stuck, When the atomically-guarded update is verified, Then it is confirmed to be kept active.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "Operations auditor processing",
+          "sixSigmaMetric": "Reduce unverified stuck subject escalations to 0%",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1",
+            "R2",
+            "R3"
+          ]
+        }
+      ]
+    }
+  ]
+}
