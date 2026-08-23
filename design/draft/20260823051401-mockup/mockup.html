@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Legacy Fallback State</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:ital,wght@0,100..900;1,100..900&amp;family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface-container-lowest": "#060e20",
+                      "surface-container-low": "#131b2e",
+                      "on-background": "#dae2fd",
+                      "error-container": "#93000a",
+                      "on-primary-fixed-variant": "#00530e",
+                      "on-error": "#690005",
+                      "surface-container": "#171f33",
+                      "surface-container-high": "#222a3d",
+                      "on-secondary-fixed-variant": "#38485d",
+                      "on-surface": "#dae2fd",
+                      "inverse-on-surface": "#283044",
+                      "on-secondary-fixed": "#0b1c30",
+                      "tertiary": "#fff7f6",
+                      "background": "#0b1326",
+                      "on-tertiary-fixed-variant": "#930013",
+                      "inverse-surface": "#dae2fd",
+                      "surface": "#0b1326",
+                      "inverse-primary": "#006e16",
+                      "surface-bright": "#31394d",
+                      "surface-tint": "#00e639",
+                      "tertiary-fixed-dim": "#ffb3ad",
+                      "outline-variant": "#3b4b37",
+                      "secondary-container": "#3a4a5f",
+                      "on-tertiary-container": "#bd1d26",
+                      "on-surface-variant": "#b9ccb2",
+                      "on-primary-fixed": "#002203",
+                      "surface-container-highest": "#2d3449",
+                      "on-secondary-container": "#a9bad3",
+                      "tertiary-fixed": "#ffdad7",
+                      "secondary": "#b7c8e1",
+                      "on-primary": "#003907",
+                      "on-error-container": "#ffdad6",
+                      "error": "#ffb4ab",
+                      "outline": "#84967e",
+                      "on-tertiary": "#68000a",
+                      "secondary-fixed": "#d3e4fe",
+                      "on-primary-container": "#007117",
+                      "on-secondary": "#213145",
+                      "tertiary-container": "#ffd2ce",
+                      "primary-fixed-dim": "#00e639",
+                      "on-tertiary-fixed": "#410004",
+                      "primary-container": "#00ff41",
+                      "primary": "#ebffe2",
+                      "secondary-fixed-dim": "#b7c8e1",
+                      "surface-variant": "#2d3449",
+                      "primary-fixed": "#72ff70",
+                      "surface-dim": "#0b1326"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "container-max": "1440px",
+                      "gutter": "16px",
+                      "margin": "24px",
+                      "unit": "4px"
+              },
+              "fontFamily": {
+                      "code-md": [
+                              "JetBrains Mono"
+                      ],
+                      "headline-lg": [
+                              "Hanken Grotesk"
+                      ],
+                      "body-md": [
+                              "Hanken Grotesk"
+                      ],
+                      "label-sm": [
+                              "JetBrains Mono"
+                      ],
+                      "headline-lg-mobile": [
+                              "Hanken Grotesk"
+                      ],
+                      "headline-md": [
+                              "Hanken Grotesk"
+                      ]
+              },
+              "fontSize": {
+                      "code-md": [
+                              "14px",
+                              {
+                                      "lineHeight": "1.4",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "headline-lg": [
+                              "32px",
+                              {
+                                      "lineHeight": "1.2",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "body-md": [
+                              "16px",
+                              {
+                                      "lineHeight": "1.5",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "label-sm": [
+                              "12px",
+                              {
+                                      "lineHeight": "1.2",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-lg-mobile": [
+                              "24px",
+                              {
+                                      "lineHeight": "1.2",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "headline-md": [
+                              "24px",
+                              {
+                                      "lineHeight": "1.2",
+                                      "fontWeight": "600"
+                              }
+                      ]
+              }
+            },
+          },
+        }
+      </script>
+<style>
+        body {
+            background-color: theme('colors.background');
+            color: theme('colors.on-background');
+            background-image: radial-gradient(theme('colors.surface-container-high') 1px, transparent 1px);
+            background-size: 16px 16px;
+        }
+        
+        .glitch-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            background: repeating-linear-gradient(
+                0deg,
+                rgba(255, 0, 0, 0.05),
+                rgba(255, 0, 0, 0.05) 1px,
+                transparent 1px,
+                transparent 2px
+            );
+            z-index: 50;
+            opacity: 0.3;
+        }
+
+        .scrolling-text {
+            animation: scroll 20s linear infinite;
+        }
+
+        @keyframes scroll {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-100%); }
+        }
+      </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="flex h-screen overflow-hidden antialiased">
+<div class="glitch-overlay"></div>
+<!-- Navigation Drawer -->
+<nav class="bg-surface-container-low dark:bg-surface-container-low h-screen w-[280px] border-r border-outline-variant flex flex-col pt-16 transition-all duration-150 ease-in-out flex-shrink-0 relative z-10 hidden md:flex">
+<div class="px-margin mb-8">
+<h2 class="font-headline-md text-headline-md text-on-surface">CORE_ENGINE</h2>
+</div>
+<ul class="flex flex-col flex-grow font-code-md text-code-md text-primary-fixed-dim dark:text-primary-fixed-dim">
+<li class="w-full">
+<a class="flex items-center px-margin py-3 text-on-surface-variant opacity-70 hover:bg-surface-container-high hover:opacity-100 transition-colors" href="#">
+<span class="material-symbols-outlined mr-4" data-icon="dashboard">dashboard</span>
+                    DASHBOARD
+                </a>
+</li>
+<li class="w-full">
+<a class="flex items-center px-margin py-3 text-on-surface-variant opacity-70 hover:bg-surface-container-high hover:opacity-100 transition-colors" href="#">
+<span class="material-symbols-outlined mr-4" data-icon="account_tree">account_tree</span>
+                    ARTIFACTS
+                </a>
+</li>
+<li class="w-full">
+<a class="flex items-center px-margin py-3 text-on-surface-variant opacity-70 hover:bg-surface-container-high hover:opacity-100 transition-colors" href="#">
+<span class="material-symbols-outlined mr-4" data-icon="compare_arrows">compare_arrows</span>
+                    STATE_DIFF
+                </a>
+</li>
+<li class="w-full">
+<a class="flex items-center px-margin py-3 bg-error-container text-on-error-container border-l-4 border-error font-bold transition-colors" href="#">
+<span class="material-symbols-outlined mr-4" data-icon="verified_user">error_outline</span>
+                    LEGACY_FALLBACK
+                </a>
+</li>
+<li class="w-full">
+<a class="flex items-center px-margin py-3 text-on-surface-variant opacity-70 hover:bg-surface-container-high hover:opacity-100 transition-colors" href="#">
+<span class="material-symbols-outlined mr-4" data-icon="settings">settings</span>
+                    SETTINGS
+                </a>
+</li>
+</ul>
+<div class="px-margin py-4 border-t border-outline-variant mt-auto text-error text-xs font-code-md flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">warning</span>
+            SYSTEM_UNSTABLE
+        </div>
+</nav>
+<!-- Main Content Area -->
+<div class="flex-grow flex flex-col h-screen overflow-hidden relative z-0">
+<!-- Top App Bar -->
+<header class="bg-surface-container dark:bg-surface-container w-full top-0 border-b border-error flex justify-between items-center px-margin py-unit flex-shrink-0 z-20 h-16">
+<div class="flex items-center gap-4 cursor-pointer active:opacity-80">
+<span class="material-symbols-outlined text-error" data-icon="terminal">terminal</span>
+<h1 class="font-headline-md text-headline-md text-error tracking-tighter">LEGACY_FALLBACK_STATE</h1>
+</div>
+<button class="flex items-center gap-2 px-4 py-2 bg-error-container text-on-error-container border border-error hover:bg-error hover:text-on-error transition-colors font-code-md text-code-md">
+<span class="material-symbols-outlined text-sm" data-icon="sync_problem">sync_problem</span>
+                DETERMINISTIC_SYNC_FAILED
+            </button>
+</header>
+<!-- Canvas -->
+<main class="flex-grow p-gutter md:p-margin overflow-auto grid grid-cols-1 md:grid-cols-12 gap-gutter">
+<!-- Critical Leak Panel (Span 12 on mobile, 8 on desktop) -->
+<section class="col-span-1 md:col-span-8 bg-surface border border-error relative overflow-hidden flex flex-col min-h-[400px]">
+<div class="bg-error-container border-b border-error px-4 py-2 flex justify-between items-center z-10">
+<span class="font-code-md text-code-md text-error flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">leak_add</span>
+                        CRITICAL_LEAK: Nondeterministic_Fallback_Key
+                    </span>
+<span class="font-label-sm text-label-sm text-on-error bg-error px-2 py-0.5 animate-pulse">0xFAIL</span>
+</div>
+<div class="p-4 flex-grow relative overflow-hidden font-code-md text-code-md text-on-error-container leading-relaxed">
+<div class="absolute inset-0 opacity-20 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4IiBoZWlnaHQ9IjgiPjxyZWN0IHdpZHRoPSI4IiBoZWlnaHQ9IjgiIGZpbGw9IiM5MzAwMGEiIGZpbGwtb3BhY2l0eT0iMC4xIi8+PHBhdGggZD0iTTAgMEw4IDhaTTAgOEw4IDBaIiBzdHJva2U9IiNmZmI0YWIiIHN0cm9rZS13aWR0aD0iMSIvPjwvc3ZnPg==')] z-0"></div>
+<div class="relative z-10 h-full overflow-hidden flex flex-col">
+<div class="text-error mb-4 border-b border-error/30 pb-2">
+                            [SYS.ERR] Invalid state transition detected at memory offset 0x7FFA89.
+                            <br/>
+                            Attempting to parse unformatted stream...
+                        </div>
+<div class="flex-grow overflow-hidden relative">
+<div class="scrolling-text opacity-70 text-error-container text-xs break-all">
+                                01010111 01100001 01110010 01101110 01101001 01101110 01100111 00100000 01000110 01100001 01110100 01100001 01101100 00100000 01000101 01110010 01110010 01101111 01110010
+                                NULL_POINTER_EXCEPTION at 0x0000000000000000
+                                DATA_CORRUPTION_DETECTED in Block 4A9F
+                                UNEXPECTED_TOKEN in JSON stream: ''
+                                SEGMENTATION FAULT (core dumped)
+                                01010111 01100001 01110010 01101110 01101001 01101110 01100111 00100000 01000110 01100001 01110100 01100001 01101100 00100000 01000101 01110010 01110010 01101111 01110010
+                                NULL_POINTER_EXCEPTION at 0x0000000000000000
+                                DATA_CORRUPTION_DETECTED in Block 4A9F
+                                UNEXPECTED_TOKEN in JSON stream: ''
+                                SEGMENTATION FAULT (core dumped)
+                                01010111 01100001 01110010 01101110 01101001 01101110 01100111 00100000 01000110 01100001 01110100 01100001 01101100 00100000 01000101 01110010 01110010 01101111 01110010
+                            </div>
+</div>
+</div>
+</div>
+<div class="absolute bottom-4 right-4 bg-error text-on-error px-3 py-1 font-label-sm text-label-sm border border-on-error/50">
+                    RAW_DUMP_ACTIVE
+                </div>
+</section>
+<!-- Target Artifacts (Span 12 on mobile, 4 on desktop) -->
+<section class="col-span-1 md:col-span-4 flex flex-col gap-gutter">
+<div class="bg-surface-container border-2 border-dashed border-error p-4 flex flex-col gap-4">
+<div class="flex justify-between items-center border-b border-error/50 pb-2">
+<h3 class="font-label-sm text-label-sm text-error flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">broken_image</span>
+                            TARGET_ARTIFACTS (INVALID)
+                        </h3>
+<span class="text-error-container text-xs font-code-md">3 ERRORS</span>
+</div>
+<ul class="flex flex-col gap-2 font-code-md text-code-md">
+<li class="border border-error/50 p-2 flex justify-between items-center bg-error-container/20 text-error">
+<span class="truncate">ui_model_v4.json</span>
+<span class="material-symbols-outlined text-sm">close</span>
+</li>
+<li class="border border-error/50 p-2 flex justify-between items-center bg-error-container/20 text-error">
+<span class="truncate">auth_token_cache.bin</span>
+<span class="material-symbols-outlined text-sm">close</span>
+</li>
+<li class="border border-error/50 p-2 flex justify-between items-center bg-error-container/20 text-error">
+<span class="truncate">user_preferences.yml</span>
+<span class="material-symbols-outlined text-sm">close</span>
+</li>
+</ul>
+</div>
+<!-- Invalid Mockups -->
+<div class="bg-surface border border-outline-variant p-4 flex-grow flex flex-col relative group">
+<div class="absolute inset-0 border-2 border-error opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
+<div class="flex justify-between items-center border-b border-outline-variant pb-2 mb-4">
+<h3 class="font-label-sm text-label-sm text-on-surface-variant flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">layers_clear</span>
+                            INVALID_MOCKUPS
+                        </h3>
+</div>
+<div class="grid grid-cols-2 gap-2 flex-grow">
+<div class="border border-error/30 bg-surface-container-high relative overflow-hidden group/mockup">
+<div class="absolute inset-0 bg-error/10 flex items-center justify-center opacity-0 group-hover/mockup:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-error text-3xl">block</span>
+</div>
+<!-- Placeholder for corrupted image -->
+<div class="w-full h-full min-h-[100px] flex items-center justify-center font-code-md text-xs text-error/50">
+                                NO_DATA
+                            </div>
+</div>
+<div class="border border-error/30 bg-surface-container-high relative overflow-hidden group/mockup">
+<div class="absolute inset-0 bg-error/10 flex items-center justify-center opacity-0 group-hover/mockup:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-error text-3xl">block</span>
+</div>
+<div class="w-full h-full min-h-[100px] flex items-center justify-center font-code-md text-xs text-error/50">
+                                NO_DATA
+                            </div>
+</div>
+<div class="border border-error/30 bg-surface-container-high relative overflow-hidden group/mockup col-span-2">
+<div class="absolute inset-0 bg-error/10 flex items-center justify-center opacity-0 group-hover/mockup:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-error text-3xl">block</span>
+</div>
+<div class="w-full h-full min-h-[100px] flex items-center justify-center font-code-md text-xs text-error/50">
+                                RENDER_FAIL
+                            </div>
+</div>
+</div>
+</div>
+</section>
+</main>
+</div>
+</body></html>
