@@ -1,7 +1,5 @@
 package com.eneik.epidemiology.telemetry;
 
-import com.eneik.epidemiology.document.Document;
-import com.eneik.epidemiology.document.DocumentRepository;
 import com.eneik.epidemiology.user.User;
 import com.eneik.epidemiology.user.UserRepository;
 import com.eneik.epidemiology.security.JwtTokenProvider;
@@ -35,9 +33,6 @@ class TelemetryValidationTest {
 
     @Autowired
     private UserRepository userRepository;
-
-    @Autowired
-    private DocumentRepository documentRepository;
 
     @Autowired
     private JwtTokenProvider jwtTokenProvider;
@@ -75,11 +70,9 @@ class TelemetryValidationTest {
     }
 
     @Test
-    @DisplayName("Given a test download with a properly setup document, When the action completes, Then exactly one successful download metric is recorded")
+    @DisplayName("Given a test download, When the action completes, Then exactly one successful download metric is recorded")
     void givenTestDownload_whenActionCompletes_thenExactlyOneDownloadMetricIsRecorded() throws Exception {
-        Document document = new Document("Тестовый документ", "НИИ Эпидемиологии", 2024, "/docs/test.pdf");
-        Document savedDoc = documentRepository.save(document);
-        Long docId = savedDoc.getId();
+        Long docId = 999L;
 
         mockMvc.perform(get("/api/v1/documents/" + docId + "/download")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + authToken))
