@@ -329,24 +329,38 @@
       `;
     }
 
-    function handleExportData(event) {
+    async function handleExportData(event) {
       if (event) event.preventDefault();
       state.exportError = '';
       state.exportSuccess = '';
       state.isExporting = true;
       render();
 
-      setTimeout(() => {
-        state.exportJob = {
-          request_id: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
-          subject_id: state.currentUser.username,
-          status: 'COMPLETED',
-          download_url: '/api/v1/privacy/export-requests/a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11/download'
-        };
+      try {
+        const response = await fetch('/api/v1/privacy/export-requests', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            subject_id: state.currentUser.username,
+            requested_format: state.requestedFormat,
+            notes: state.exportNotes.trim()
+          })
+        });
+
+        if (!response.ok) {
+          let errData = {};
+          try { errData = await response.json(); } catch (e) {}
+          throw new Error(errData.message || 'Ошибка при запросе экспорта данных. Попробуйте позже.');
+        }
+
+        state.exportJob = await response.json();
         state.exportSuccess = 'Запрос на экспорт данных успешно создан и обрабатывается.';
+      } catch (err) {
+        state.exportError = err.message || 'Произошла ошибка при формировании запроса экспорта.';
+      } finally {
         state.isExporting = false;
         render();
-      }, 300);
+      }
     }
 
     function openDeleteModal() {
@@ -364,7 +378,7 @@
       render();
     }
 
-    function handleConfirmDelete(event) {
+    async function handleConfirmDelete(event) {
       if (event) event.preventDefault();
       state.deleteError = '';
       state.deleteSuccess = '';
@@ -379,17 +393,34 @@
       state.isDeleting = true;
       render();
 
-      setTimeout(() => {
-        state.erasureJob = {
-          request_id: 'b1fec988-8b0a-4bf7-aa5c-5aa8ac270b22',
-          subject_id: state.currentUser.username,
-          status: 'ACCEPTED'
-        };
+      try {
+        const subjectId = state.currentUser.username;
+        const response = await fetch('/api/v1/privacy/erasure-requests', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            subject_id: subjectId,
+            confirmation_token: `CONFIRM_ERASURE_${subjectId}`,
+            reason: state.erasureReason,
+            erasure_scope: state.erasureScope
+          })
+        });
+
+        if (!response.ok) {
+          let errData = {};
+          try { errData = await response.json(); } catch (e) {}
+          throw new Error(errData.message || 'Ошибка при обработке запроса на удаление данных.');
+        }
+
+        state.erasureJob = await response.json();
         state.deleteSuccess = 'Запрос на удаление данных принят. Аккаунт и персональные данные будут удалены.';
-        state.isDeleting = false;
         state.isDeleteModalOpen = false;
+      } catch (err) {
+        state.deleteError = err.message || 'Не удалось выполнить запрос на удаление аккаунта.';
+      } finally {
+        state.isDeleting = false;
         render();
-      }, 300);
+      }
     }
 
     render();
