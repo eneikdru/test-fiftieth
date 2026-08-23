@@ -1,6 +1,9 @@
 package com.eneik.epidemiology.document;
 
 import com.eneik.epidemiology.telemetry.TelemetryService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -118,20 +121,26 @@ public class DocumentController {
     public ResponseEntity<?> searchDocuments(
             @RequestParam(name = "query", required = false) String query,
             @RequestParam(name = "author", required = false) String author,
-            @RequestParam(name = "year", required = false) Integer year) {
+            @RequestParam(name = "year", required = false) Integer year,
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "size", defaultValue = "10") int size) {
 
         String normalizedQuery = (query != null && !query.trim().isEmpty()) ? query.trim() : null;
         String normalizedAuthor = (author != null && !author.trim().isEmpty()) ? author.trim() : null;
 
-        List<Document> results = documentRepository.searchDocuments(normalizedQuery, normalizedAuthor, year);
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Document> resultPage = documentRepository.searchDocuments(normalizedQuery, normalizedAuthor, year, pageable);
 
         String telemetryQuery = query != null ? query : (author != null ? author : "");
-        telemetryService.recordSearchTelemetry(telemetryQuery, results.size());
+        telemetryService.recordSearchTelemetry(telemetryQuery, resultPage.getContent().size());
 
         return ResponseEntity.ok(Map.of(
                 "query", telemetryQuery,
-                "count", results.size(),
-                "results", results
+                "count", resultPage.getContent().size(),
+                "results", resultPage.getContent(),
+                "totalPages", resultPage.getTotalPages(),
+                "totalElements", resultPage.getTotalElements(),
+                "currentPage", resultPage.getNumber()
         ));
     }
 

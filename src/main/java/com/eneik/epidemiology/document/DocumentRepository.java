@@ -2,6 +2,8 @@ package com.eneik.epidemiology.document;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
@@ -17,7 +19,8 @@ public interface DocumentRepository extends JpaRepository<Document, Long> {
            "(:query IS NULL OR LOWER(d.title) LIKE LOWER(CONCAT('%', :query, '%'))) AND " +
            "(:author IS NULL OR LOWER(d.authorOrganization) LIKE LOWER(CONCAT('%', :author, '%'))) AND " +
            "(:year IS NULL OR d.publicationYear = :year)")
-    List<Document> searchDocuments(@Param("query") String query,
+    Page<Document> searchDocuments(@Param("query") String query,
                                    @Param("author") String author,
-                                   @Param("year") Integer year);
+                                   @Param("year") Integer year,
+                                   Pageable pageable);
 }
