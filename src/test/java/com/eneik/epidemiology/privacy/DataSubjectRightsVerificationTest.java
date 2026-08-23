@@ -110,6 +110,7 @@ class DataSubjectRightsVerificationTest {
         Connection conn = DataSourceUtils.getConnection(dataSource);
         try {
             ScriptUtils.executeSqlScript(conn, new ClassPathResource("db/migration/V20260823081040819__escalate_stuck_subjects.sql"));
+            ScriptUtils.executeSqlScript(conn, new ClassPathResource("db/migration/V20260823065127618__unblock_stuck_subjects.sql"));
         } catch (Exception e) {
             fail("Failed to execute migration script: " + e.getMessage());
         } finally {
@@ -121,6 +122,7 @@ class DataSubjectRightsVerificationTest {
         // Verify states transitioned to ESCALATED and UPDATE matched specific stuck subject rows
         DataExportJob fetchedExportUpdated = exportJobRepository.findById(exportRequestId).orElseThrow();
         assertEquals("ESCALATED", fetchedExportUpdated.getStatus());
+        assertEquals(stuckSubjectId, fetchedExportUpdated.getSubjectId(), "UPDATE must match specific stuck subject ID fd6672c6");
         assertEquals(stuckSubjectId, fetchedExportUpdated.getSubjectId());
         assertTrue(fetchedExportUpdated.getNotes().contains("Escalated stuck subject"));
 
@@ -177,6 +179,7 @@ class DataSubjectRightsVerificationTest {
         Connection conn2 = DataSourceUtils.getConnection(dataSource);
         try {
             ScriptUtils.executeSqlScript(conn2, new ClassPathResource("db/migration/V20260823081040819__escalate_stuck_subjects.sql"));
+            ScriptUtils.executeSqlScript(conn2, new ClassPathResource("db/migration/V20260823065127618__unblock_stuck_subjects.sql"));
         } catch (Exception e) {
             fail("Failed to execute migration script: " + e.getMessage());
         } finally {
@@ -188,6 +191,7 @@ class DataSubjectRightsVerificationTest {
         // Verify states transitioned to ESCALATED and UPDATE matched specific stuck subject rows
         DataExportJob fetchedExport = exportJobRepository.findById(exportRequestId).orElseThrow();
         assertEquals("ESCALATED", fetchedExport.getStatus());
+        assertEquals(stuckSubjectId, fetchedExport.getSubjectId(), "UPDATE must match specific stuck subject ID 765d2ab0");
         assertEquals(stuckSubjectId, fetchedExport.getSubjectId());
         assertTrue(fetchedExport.getNotes().contains("Escalated stuck subject"));
 
