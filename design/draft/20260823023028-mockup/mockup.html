@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>IAM Security Enforcement</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary": "#bec6e0",
+                        "tertiary-container": "#001d07",
+                        "surface-dim": "#051424",
+                        "inverse-on-surface": "#233143",
+                        "inverse-primary": "#565e74",
+                        "tertiary-fixed-dim": "#4ae176",
+                        "on-secondary-fixed-variant": "#004c69",
+                        "on-tertiary-fixed": "#002109",
+                        "error-container": "#93000a",
+                        "on-primary-fixed-variant": "#3f465c",
+                        "primary-container": "#0f172a",
+                        "on-secondary-container": "#00374d",
+                        "on-primary-fixed": "#131b2e",
+                        "on-primary-container": "#798098",
+                        "on-primary": "#283044",
+                        "secondary-container": "#00a6e0",
+                        "surface-variant": "#273647",
+                        "surface-container-highest": "#273647",
+                        "on-tertiary": "#003915",
+                        "surface-container-lowest": "#010f1f",
+                        "inverse-surface": "#d4e4fa",
+                        "on-surface": "#d4e4fa",
+                        "outline-variant": "#45464d",
+                        "on-background": "#d4e4fa",
+                        "surface-container-high": "#1c2b3c",
+                        "secondary-fixed": "#c4e7ff",
+                        "secondary-fixed-dim": "#7bd0ff",
+                        "on-error": "#690005",
+                        "surface": "#051424",
+                        "primary-fixed-dim": "#bec6e0",
+                        "on-tertiary-fixed-variant": "#005321",
+                        "secondary": "#7bd0ff",
+                        "tertiary-fixed": "#6bff8f",
+                        "on-tertiary-container": "#009542",
+                        "on-secondary-fixed": "#001e2c",
+                        "tertiary": "#4ae176",
+                        "on-surface-variant": "#c6c6cd",
+                        "background": "#051424",
+                        "on-error-container": "#ffdad6",
+                        "surface-bright": "#2c3a4c",
+                        "primary-fixed": "#dae2fd",
+                        "error": "#ffb4ab",
+                        "outline": "#909097",
+                        "on-secondary": "#00354a",
+                        "surface-container-low": "#0d1c2d",
+                        "surface-container": "#122131",
+                        "surface-tint": "#bec6e0"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "unit": "4px",
+                        "stack-md": "16px",
+                        "stack-sm": "8px",
+                        "container-padding": "24px",
+                        "gutter": "16px",
+                        "stack-lg": "32px"
+                    },
+                    "fontFamily": {
+                        "headline-md": ["Inter"],
+                        "body-sm": ["Inter"],
+                        "body-md": ["Inter"],
+                        "code-md": ["JetBrains Mono"],
+                        "label-caps": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "display-lg": ["Inter"]
+                    },
+                    "fontSize": {
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "code-md": ["14px", { "lineHeight": "20px", "fontWeight": "500" }],
+                        "label-caps": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .radial-progress {
+            background: conic-gradient(var(--tw-colors-tertiary-fixed) var(--progress), var(--tw-colors-surface-variant) 0);
+        }
+        .glow-text {
+            text-shadow: 0 0 10px rgba(107, 255, 143, 0.5);
+        }
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--tw-colors-outline-variant);
+        }
+        /* Custom scrollbar for logs */
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+        .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background font-body-md min-h-screen flex flex-col items-center">
+<!-- TopAppBar (From JSON) -->
+<header class="bg-surface-container-highest dark:bg-surface-container-highest flex justify-between items-center w-full px-container-padding h-16 docked full-width top-0 sticky z-50 border-b border-outline-variant">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary dark:text-secondary-fixed-dim" style="font-variation-settings: 'FILL' 1;">shield_lock</span>
+<h1 class="font-headline-lg text-headline-lg font-bold text-secondary dark:text-secondary-fixed-dim">Sentinel IAM</h1>
+</div>
+<div class="w-8 h-8 rounded-full bg-surface-variant flex items-center justify-center border border-outline-variant overflow-hidden">
+<span class="material-symbols-outlined text-on-surface-variant text-sm">person</span>
+</div>
+</header>
+<!-- Main Content Area -->
+<main class="w-full max-w-[480px] flex-grow flex flex-col p-container-padding gap-stack-lg pb-32">
+<!-- Header -->
+<div class="flex flex-col gap-unit">
+<h2 class="font-headline-md text-headline-md text-on-background">IAM Security Enforcement</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Authentic Implementation Status</p>
+</div>
+<!-- Central Gauge Panel -->
+<div class="glass-panel rounded-xl p-container-padding flex flex-col items-center justify-center relative">
+<div class="absolute top-4 right-4 flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-tertiary shadow-[0_0_8px_4px_rgba(74,225,118,0.3)]"></div>
+<span class="font-label-caps text-label-caps text-tertiary">HEALTHY</span>
+</div>
+<div class="relative w-48 h-48 rounded-full flex items-center justify-center border border-outline-variant bg-surface-dim">
+<div class="absolute inset-0 rounded-full radial-progress" style="--progress: 100%; mask: radial-gradient(transparent 55%, black 56%); -webkit-mask: radial-gradient(transparent 55%, black 56%);"></div>
+<div class="flex flex-col items-center z-10">
+<span class="font-display-lg text-display-lg text-tertiary glow-text">100<span class="text-2xl">%</span></span>
+<span class="font-label-caps text-label-caps text-on-surface-variant mt-1">ENFORCEMENT</span>
+</div>
+</div>
+</div>
+<!-- Active Merge Epic -->
+<div class="flex flex-col gap-stack-md">
+<div class="flex items-center justify-between border-b border-outline-variant pb-2">
+<h3 class="font-body-lg text-body-lg text-on-background">Active Merge Epic: IAM Patch</h3>
+<span class="material-symbols-outlined text-secondary">merge</span>
+</div>
+<div class="flex flex-col gap-unit">
+<!-- Control 1 -->
+<div class="bg-primary-container border border-outline-variant rounded-lg p-stack-sm flex items-center justify-between">
+<div class="flex flex-col">
+<span class="font-body-md text-body-md text-on-background">RBAC Validation</span>
+</div>
+<div class="flex items-center gap-1 bg-tertiary-container px-2 py-1 rounded border border-on-tertiary-container">
+<span class="material-symbols-outlined text-tertiary-fixed text-[14px]">verified</span>
+<span class="font-label-caps text-label-caps text-tertiary-fixed">VERIFIED &amp; ENFORCED</span>
+</div>
+</div>
+<!-- Control 2 -->
+<div class="bg-primary-container border border-outline-variant rounded-lg p-stack-sm flex items-center justify-between">
+<div class="flex flex-col">
+<span class="font-body-md text-body-md text-on-background">MFA Enforcement</span>
+</div>
+<div class="flex items-center gap-1 bg-tertiary-container px-2 py-1 rounded border border-on-tertiary-container">
+<span class="material-symbols-outlined text-tertiary-fixed text-[14px]">verified</span>
+<span class="font-label-caps text-label-caps text-tertiary-fixed">VERIFIED &amp; ENFORCED</span>
+</div>
+</div>
+<!-- Control 3 -->
+<div class="bg-primary-container border border-outline-variant rounded-lg p-stack-sm flex items-center justify-between">
+<div class="flex flex-col">
+<span class="font-body-md text-body-md text-on-background">Token Rotation</span>
+</div>
+<div class="flex items-center gap-1 bg-tertiary-container px-2 py-1 rounded border border-on-tertiary-container">
+<span class="material-symbols-outlined text-tertiary-fixed text-[14px]">verified</span>
+<span class="font-label-caps text-label-caps text-tertiary-fixed">VERIFIED &amp; ENFORCED</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Audit Log -->
+<div class="flex flex-col gap-stack-sm">
+<h3 class="font-label-caps text-label-caps text-on-surface-variant tracking-wider">REAL-TIME AUDIT LOG</h3>
+<div class="bg-surface border border-outline-variant rounded-lg p-stack-sm h-32 overflow-y-auto scrollbar-hide font-code-md text-code-md text-on-surface-variant flex flex-col gap-1">
+<div class="flex gap-2"><span class="text-tertiary">[2023-10-27 14:02:11]</span> <span class="text-secondary">SYSTEM</span> <span>Policy Validation Passed: RBAC_STRICT</span></div>
+<div class="flex gap-2"><span class="text-tertiary">[2023-10-27 14:02:15]</span> <span class="text-secondary">SYSTEM</span> <span>MFA_ENFORCE rule active on all nodes</span></div>
+<div class="flex gap-2"><span class="text-tertiary">[2023-10-27 14:02:22]</span> <span class="text-secondary">SYSTEM</span> <span>Token rotation schedule synchronized</span></div>
+<div class="flex gap-2"><span class="text-tertiary">[2023-10-27 14:02:30]</span> <span class="text-secondary">MERGE_BOT</span> <span class="text-on-background font-bold">IAM Merge Patch Applied Successfully</span></div>
+<div class="flex gap-2"><span class="text-tertiary">[2023-10-27 14:02:31]</span> <span class="text-secondary">SYSTEM</span> <span>Broadcasting status to Sentinel core...</span></div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar (From JSON) -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center h-16 bg-surface-container-lowest border-t border-outline-variant flat no shadows md:hidden">
+<!-- Dashboard (Active) -->
+<div class="flex flex-col items-center justify-center bg-secondary-container text-on-secondary-container rounded-full px-4 py-1 transition-all duration-200 ease-in-out cursor-pointer">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+<span class="font-label-caps text-label-caps">Dashboard</span>
+</div>
+<!-- Users -->
+<div class="flex flex-col items-center justify-center text-on-surface-variant hover:text-secondary transition-all duration-200 ease-in-out cursor-pointer">
+<span class="material-symbols-outlined">group</span>
+<span class="font-label-caps text-label-caps">Users</span>
+</div>
+<!-- Policies -->
+<div class="flex flex-col items-center justify-center text-on-surface-variant hover:text-secondary transition-all duration-200 ease-in-out cursor-pointer">
+<span class="material-symbols-outlined">policy</span>
+<span class="font-label-caps text-label-caps">Policies</span>
+</div>
+<!-- Audit -->
+<div class="flex flex-col items-center justify-center text-on-surface-variant hover:text-secondary transition-all duration-200 ease-in-out cursor-pointer">
+<span class="material-symbols-outlined">verified_user</span>
+<span class="font-label-caps text-label-caps">Audit</span>
+</div>
+</nav>
+</body></html>
