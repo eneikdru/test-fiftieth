@@ -1,0 +1,34 @@
+{
+  "epics": [
+    {
+      "existingEpicId": null,
+      "title": "Unblock stuck operations auditor subject",
+      "jtbd": "When operating the platform, I want stuck subjects to be resolved by overriding mechanical retirement, so that the operations auditor can resume processing valid requirements.",
+      "kanoClass": "Must-Be",
+      "cynefinDomain": "clear",
+      "sixSigmaMetric": "Reduce blocked operations auditor tasks to 0%",
+      "tocConstraintRef": "Iteration-admission poka-yoke blocker",
+      "sourceIndex": 0,
+      "requirements": [
+        "R1: Move subject fd6672c6-02c4-455e-a4d9-91e4ae9d308c out of the stuck state using an atomically-guarded database update that bypasses the poka-yoke blocker (ea2d1954-4da4-4912-8565-dcd27a569279)."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Resolve stuck subject via atomic update",
+          "roleTag": "BARCAN-TAG-02",
+          "jtbd": "When implementing this patch for this epic, I want to execute an atomically-guarded update on subject fd6672c6-02c4-455e-a4d9-91e4ae9d308c, so that the operations auditor can resume processing without manual intervention.",
+          "acceptanceCriteria": "Given a database record for subject fd6672c6-02c4-455e-a4d9-91e4ae9d308c stuck by task ea2d1954-4da4-4912-8565-dcd27a569279, When the atomic UPDATE patch is applied, Then the state transitions to a resolvable state.\nGiven the subject is updated, When the operations auditor reads the subject, Then it correctly processes it without failing on the previous iteration-admission poka-yoke.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "Database query block",
+          "sixSigmaMetric": "Achieve 100% success rate on the subject patch migration",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1"
+          ]
+        }
+      ]
+    }
+  ]
+}
