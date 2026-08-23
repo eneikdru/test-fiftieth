@@ -1,7 +1,6 @@
 import { test, expect } from '@playwright/test';
-import path from 'path';
 
-const harnessPath = 'file://' + path.resolve(process.cwd(), '../frontend/test-harness.html');
+const harnessPath = new URL('../test-harness.html?mode=login', import.meta.url).href;
 
 test.describe('Authentication, Role Access, and Recovery E2E Tests', () => {
 

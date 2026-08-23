@@ -2,9 +2,77 @@ import { test, expect } from '@playwright/test';
 import path from 'path';
 import fs from 'fs';
 
-const harnessPath = 'file://' + path.resolve(process.cwd(), 'frontend/test-harness.html');
+const harnessPath = new URL('../test-harness.html', import.meta.url).href;
 
 test.describe('Catalog Search and Document Management E2E Tests', () => {
+
+  test('Given a fresh deployment with sample data, When the E2E test searches for a known document and downloads it, Then the file is successfully retrieved', async ({ page }) => {
+    // Intercept download request for document file
+    await page.route('**/api/v1/documents/*/download', async route => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/pdf',
+        headers: {
+          'Content-Disposition': 'attachment; filename="salmonella_outbreak.pdf"'
+        },
+        body: Buffer.from('Содержимое документа: Протокол эпидемиологического расследования вспышки сальмонеллеза')
+      });
+    });
+
+    await page.goto(harnessPath);
+
+    // Search for known sample document
+    await page.fill('#search-query-input', 'сальмонеллеза');
+    await page.click('#search-submit-btn');
+
+    // Confirm matching document is found and displayed
+    const docTitle = page.locator('.doc-title').first();
+    await expect(docTitle).toBeVisible();
+    await expect(docTitle).toContainText('сальмонеллеза');
+
+    // Trigger download and verify file retrieval
+    const downloadPromise = page.waitForEvent('download');
+    await page.locator('.download-btn').first().click();
+    const download = await downloadPromise;
+
+    expect(download.suggestedFilename()).toBe('salmonella_outbreak.pdf');
+    const readStream = await download.createReadStream();
+    expect(readStream).not.toBeNull();
+  });
+
+  test('Given an admin user, When the test uploads and then deletes a document, Then the catalog accurately reflects the changes without errors', async ({ page }) => {
+    await page.goto(harnessPath);
+
+    // Open upload modal as Admin
+    await page.click('#open-upload-modal-btn');
+    await expect(page.locator('#upload-modal')).toBeVisible();
+
+    const uploadTitle = 'Экспериментальный протокол эпиднадзора 2024';
+    const uploadAuthor = 'Филиал НИИ Эпидемиологии';
+    const uploadYear = '2024';
+    const uploadDesc = 'Новый оперативный документ для верификации каталога.';
+
+    // Fill upload form fields
+    await page.fill('#upload-title-input', uploadTitle);
+    await page.fill('#upload-author-input', uploadAuthor);
+    await page.fill('#upload-year-input', uploadYear);
+    await page.fill('#upload-description-input', uploadDesc);
+
+    // Submit upload form
+    await page.click('#upload-submit-btn');
+
+    // Verify modal closes and document is listed in catalog
+    await expect(page.locator('#upload-modal')).not.toBeVisible();
+    const documentGrid = page.locator('#document-grid');
+    await expect(documentGrid).toContainText(uploadTitle);
+
+    // Locate delete button for uploaded document and click it
+    const deleteButton = page.locator('.delete-btn').first();
+    await deleteButton.click();
+
+    // Verify catalog accurately reflects deletion
+    await expect(documentGrid).not.toContainText(uploadTitle);
+  });
 
   test('Given a user submits a search with no matches, When the UI updates, Then an explicit "нет материалов" message is shown in Russian', async ({ page }) => {
     await page.goto(harnessPath);
