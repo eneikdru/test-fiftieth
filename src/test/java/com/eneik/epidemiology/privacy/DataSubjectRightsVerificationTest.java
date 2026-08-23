@@ -134,6 +134,57 @@ class DataSubjectRightsVerificationTest {
     }
 
     @Test
+    @DisplayName("Given a stuck subject record 765d2ab0 with orphaned dependency 168a6edf, When atomic UPDATE patch is applied, Then state transitions to RESOLVED")
+    void testOrphanedDependencySubjectAtomicallyTransitionsToResolvableState() {
+        String stuckSubjectId = "765d2ab0-1b55-4701-babd-af5247442de5";
+        String exportRequestId = "stuck-export-request-765d2ab0";
+        String erasureRequestId = "stuck-erasure-request-765d2ab0";
+
+        // Seed stuck export request in existing privacy_export_requests table
+        DataExportJob stuckExport = new DataExportJob();
+        stuckExport.setRequestId(exportRequestId);
+        stuckExport.setSubjectId(stuckSubjectId);
+        stuckExport.setStatus("PENDING");
+        stuckExport.setRequestedFormat("ZIP");
+        stuckExport.setCreatedAt(OffsetDateTime.now(fixedClock));
+        exportJobRepository.save(stuckExport);
+
+        // Seed stuck erasure request in existing privacy_erasure_requests table
+        DataErasureJob stuckErasure = new DataErasureJob();
+        stuckErasure.setRequestId(erasureRequestId);
+        stuckErasure.setSubjectId(stuckSubjectId);
+        stuckErasure.setStatus("PROCESSING");
+        stuckErasure.setConfirmationToken("CONFIRM_TOKEN_765D2AB0");
+        stuckErasure.setReason("In-progress erasure");
+        stuckErasure.setErasureScope("ALL_PERSONAL_DATA");
+        stuckErasure.setCreatedAt(OffsetDateTime.now(fixedClock));
+        erasureJobRepository.save(stuckErasure);
+
+        entityManager.flush();
+
+        // Execute the atomic UPDATE patch
+        int exportUpdatedCount = entityManager.createNativeQuery(
+            "UPDATE privacy_export_requests SET status = 'RESOLVED', notes = 'Resolved stuck subject with orphaned dependency 168a6edf-53fa-48b4-8226-9fcd0528efd2' WHERE subject_id = '765d2ab0-1b55-4701-babd-af5247442de5' AND status IN ('PENDING', 'PROCESSING')"
+        ).executeUpdate();
+
+        int erasureUpdatedCount = entityManager.createNativeQuery(
+            "UPDATE privacy_erasure_requests SET status = 'RESOLVED', reason = 'Resolved stuck subject with orphaned dependency 168a6edf-53fa-48b4-8226-9fcd0528efd2' WHERE subject_id = '765d2ab0-1b55-4701-babd-af5247442de5' AND status IN ('PENDING', 'PROCESSING')"
+        ).executeUpdate();
+
+        assertEquals(1, exportUpdatedCount);
+        assertEquals(1, erasureUpdatedCount);
+
+        entityManager.flush();
+        entityManager.clear();
+
+        DataExportJob fetchedExport = exportJobRepository.findById(exportRequestId).orElseThrow();
+        assertEquals("RESOLVED", fetchedExport.getStatus());
+
+        DataErasureJob fetchedErasure = erasureJobRepository.findById(erasureRequestId).orElseThrow();
+        assertEquals("RESOLVED", fetchedErasure.getStatus());
+    }
+
+    @Test
     @DisplayName("Given a test user requests erasure, When the process finishes, Then subsequent database queries confirm the data is gone")
     void testUserErasureDataIsGoneFromDatabase() {
         User user = new User("rights_erasure_user", "hashed_pwd_999", "RESEARCHER");
