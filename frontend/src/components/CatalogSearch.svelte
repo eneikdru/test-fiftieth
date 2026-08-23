@@ -1,5 +1,5 @@
 <script>
-  import { createEventDispatcher } from 'svelte';
+  import { onMount, createEventDispatcher } from 'svelte';
 
   const dispatch = createEventDispatcher();
 
@@ -23,39 +23,10 @@
   let selectedYear = '';
   let isSearchSubmitted = false;
 
-  // Document catalog sample data
-  let documents = [
-    {
-      id: 'doc-1',
-      title: 'Протокол расследования вспышки гриппа A(H3N2)',
-      author: 'НИИ Эпидемиологии',
-      year: 2023,
-      docType: 'Протокол расследования',
-      fileName: 'protocol_influenza_2023.pdf',
-      fileSize: '2.4 МБ',
-      description: 'Материалы эпидемиологического расследования вспышки гриппа в Северо-Западном регионе.'
-    },
-    {
-      id: 'doc-2',
-      title: 'Отчёт эпиднадзора за острыми респираторными инфекциями',
-      author: 'Центр гигиены и эпидемиологии',
-      year: 2022,
-      docType: 'Отчёт эпиднадзора',
-      fileName: 'surveillance_report_2022.pdf',
-      fileSize: '4.1 МБ',
-      description: 'Годовой статистический и аналитический отчет по заболеваемости ОРВИ.'
-    },
-    {
-      id: 'doc-3',
-      title: 'Методическое руководство по генотипированию штаммов',
-      author: 'НИИ Эпидемиологии',
-      year: 2021,
-      docType: 'Методическое руководство',
-      fileName: 'methodology_genotyping.docx',
-      fileSize: '1.8 МБ',
-      description: 'Практические рекомендации по лабораторому анализу и идентификации штаммов.'
-    }
-  ];
+  // Document catalog state (no hardcoded fake records)
+  let documents = [];
+  let isLoading = false;
+  let fetchError = '';
 
   // Upload modal / form states
   let isUploadModalOpen = false;
@@ -71,24 +42,61 @@
   let uploadError = '';
   let uploadSuccess = '';
 
-  // Filtered documents reactive computation
-  $: filteredDocuments = documents.filter(doc => {
-    const matchesQuery = !searchQuery.trim() ||
-      doc.title.toLowerCase().includes(searchQuery.trim().toLowerCase()) ||
-      doc.description.toLowerCase().includes(searchQuery.trim().toLowerCase());
+  async function fetchDocuments() {
+    isLoading = true;
+    fetchError = '';
 
-    const matchesAuthor = !selectedAuthor ||
-      doc.author.toLowerCase().includes(selectedAuthor.toLowerCase());
+    try {
+      const params = new URLSearchParams();
+      if (searchQuery.trim()) {
+        params.append('title', searchQuery.trim());
+        params.append('query', searchQuery.trim());
+      }
+      if (selectedAuthor.trim()) {
+        params.append('author_organization', selectedAuthor.trim());
+        params.append('author', selectedAuthor.trim());
+      }
+      if (selectedYear) {
+        params.append('publication_year', selectedYear.toString());
+        params.append('year', selectedYear.toString());
+      }
 
-    const matchesYear = !selectedYear ||
-      doc.year.toString() === selectedYear.toString();
+      const queryString = params.toString() ? `?${params.toString()}` : '';
+      const response = await fetch(`${getApiBaseUrl()}/documents${queryString}`);
 
-    return matchesQuery && matchesAuthor && matchesYear;
+      if (!response.ok) {
+        throw new Error(`Ошибка загрузки данных (${response.status})`);
+      }
+
+      const data = await response.json();
+      const rawList = Array.isArray(data) ? data : (data.results || []);
+
+      documents = rawList.map(doc => ({
+        id: doc.id || `doc-${Math.random()}`,
+        title: doc.title || 'Без названия',
+        author: doc.author_organization || doc.authorOrganization || doc.author || 'Неизвестная организация',
+        year: doc.publication_year || doc.publicationYear || doc.year || '—',
+        docType: doc.docType || doc.doc_type || 'Документ',
+        fileName: doc.fileName || doc.file_name || `document_${doc.id || 'file'}.pdf`,
+        fileSize: doc.fileSize || doc.file_size || 'PDF',
+        description: doc.description || doc.summary || 'Описание отсутствует'
+      }));
+    } catch (err) {
+      fetchError = 'Не удалось загрузить каталог материалов. Проверьте подключение к серверу.';
+      documents = [];
+    } finally {
+      isLoading = false;
+    }
+  }
+
+  onMount(() => {
+    fetchDocuments();
   });
 
   function handleSearchSubmit(event) {
     if (event) event.preventDefault();
     isSearchSubmitted = true;
+    fetchDocuments();
   }
 
   function handleResetSearch() {
@@ -96,6 +104,7 @@
     selectedAuthor = '';
     selectedYear = '';
     isSearchSubmitted = false;
+    fetchDocuments();
   }
 
   function openUploadModal() {
@@ -156,7 +165,18 @@
       }
 
       const newDoc = await response.json();
-      documents = [newDoc, ...documents];
+      const mappedNewDoc = {
+        id: newDoc.id || `doc-${Date.now()}`,
+        title: newDoc.title || uploadTitle.trim(),
+        author: newDoc.author_organization || newDoc.authorOrganization || uploadAuthor.trim(),
+        year: newDoc.publication_year || newDoc.publicationYear || uploadYear,
+        docType: uploadDocType,
+        fileName: uploadFileName || 'document.pdf',
+        fileSize: '1.2 МБ',
+        description: uploadDescription.trim() || 'Описание отсутствует'
+      };
+
+      documents = [mappedNewDoc, ...documents];
       uploadSuccess = 'Документ успешно загружен в каталог.';
 
       // Reset form fields on success only
@@ -215,8 +235,9 @@
       {#if isAdmin}
         <button
           type="button"
+          id="open-upload-modal-btn"
           on:click={openUploadModal}
-          class="ml-2 px-3 py-2 bg-[#003f87] hover:bg-[#002b5e] text-white rounded-md text-xs font-medium transition-colors flex items-center gap-1.5 shadow-sm"
+          class="ml-2 px-3 py-2 bg-[#003f87] hover:bg-[#002b5e] text-white rounded-md text-xs font-medium transition-colors flex items-center gap-1.5 shadow-sm focus:outline-none focus:ring-2 focus:ring-[#003f87] focus:ring-offset-2"
         >
           <span>+ Загрузить документ</span>
         </button>
@@ -241,7 +262,7 @@
           type="text"
           bind:value={searchQuery}
           placeholder="Например: грипп, протокол, генотипирование..."
-          class="w-full h-11 px-3.5 bg-[#f7f9fb] border border-[#c2c6d4] rounded-lg text-sm text-[#191c1e] focus:outline-none focus:ring-2 focus:ring-[#003f87]/30 focus:border-[#003f87]"
+          class="w-full h-11 px-3.5 bg-[#f7f9fb] border border-[#c2c6d4] rounded-lg text-sm text-[#191c1e] focus:outline-none focus:ring-2 focus:ring-[#003f87]/40 focus:border-[#003f87]"
         />
       </div>
 
@@ -255,7 +276,7 @@
           type="text"
           bind:value={selectedAuthor}
           placeholder="НИИ Эпидемиологии"
-          class="w-full h-11 px-3.5 bg-[#f7f9fb] border border-[#c2c6d4] rounded-lg text-sm text-[#191c1e] focus:outline-none focus:ring-2 focus:ring-[#003f87]/30 focus:border-[#003f87]"
+          class="w-full h-11 px-3.5 bg-[#f7f9fb] border border-[#c2c6d4] rounded-lg text-sm text-[#191c1e] focus:outline-none focus:ring-2 focus:ring-[#003f87]/40 focus:border-[#003f87]"
         />
       </div>
 
@@ -267,7 +288,7 @@
         <select
           id="search-year-input"
           bind:value={selectedYear}
-          class="w-full h-11 px-3 bg-[#f7f9fb] border border-[#c2c6d4] rounded-lg text-sm text-[#191c1e] focus:outline-none focus:ring-2 focus:ring-[#003f87]/30 focus:border-[#003f87]"
+          class="w-full h-11 px-3 bg-[#f7f9fb] border border-[#c2c6d4] rounded-lg text-sm text-[#191c1e] focus:outline-none focus:ring-2 focus:ring-[#003f87]/40 focus:border-[#003f87]"
         >
           <option value="">Все года</option>
           <option value="2024">2024</option>
@@ -283,7 +304,7 @@
         <button
           type="submit"
           id="search-submit-btn"
-          class="flex-1 h-11 bg-[#003f87] hover:bg-[#002b5e] text-white font-medium text-sm rounded-lg transition-colors flex items-center justify-center shadow-sm"
+          class="flex-1 h-11 bg-[#003f87] hover:bg-[#002b5e] text-white font-medium text-sm rounded-lg transition-colors flex items-center justify-center shadow-sm focus:outline-none focus:ring-2 focus:ring-[#003f87] focus:ring-offset-2"
         >
           Найти
         </button>
@@ -292,7 +313,7 @@
             type="button"
             id="search-reset-btn"
             on:click={handleResetSearch}
-            class="h-11 px-3 border border-[#c2c6d4] text-[#424752] hover:bg-[#eceef0] text-xs font-medium rounded-lg transition-colors"
+            class="h-11 px-3 border border-[#c2c6d4] text-[#424752] hover:bg-[#eceef0] text-xs font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[#003f87] focus:ring-offset-2"
             title="Сбросить фильтры"
           >
             Сброс
@@ -306,12 +327,45 @@
   <main>
     <div class="flex items-center justify-between mb-4">
       <h2 class="text-xl font-bold text-[#191c1e]">
-        Результаты поиска <span class="text-sm font-normal text-[#424752]">({filteredDocuments.length})</span>
+        Результаты поиска <span class="text-sm font-normal text-[#424752]">({documents.length})</span>
       </h2>
     </div>
 
-    <!-- Empty State (When search query yields no matches) -->
-    {#if filteredDocuments.length === 0}
+    <!-- State 1: Loading State -->
+    {#if isLoading}
+      <div
+        id="catalog-loading-indicator"
+        role="status"
+        aria-live="polite"
+        class="bg-white border border-[#e0e3e5] rounded-xl p-12 text-center space-y-4 shadow-sm my-6"
+      >
+        <div class="inline-block animate-spin rounded-full h-9 w-9 border-4 border-[#003f87] border-t-transparent mx-auto"></div>
+        <p class="text-sm font-medium text-[#424752]">Загрузка материалов каталога...</p>
+      </div>
+
+    <!-- State 2: Error State -->
+    {:else if fetchError}
+      <div
+        id="catalog-error-message"
+        role="alert"
+        class="bg-white border border-[#ba1a1a] rounded-xl p-8 text-center space-y-3 shadow-sm my-6"
+      >
+        <div class="w-12 h-12 bg-[#ffdad6] text-[#ba1a1a] rounded-full flex items-center justify-center mx-auto text-xl font-bold">
+          ⚠
+        </div>
+        <h3 class="text-lg font-bold text-[#93000a]">Ошибка загрузки данных</h3>
+        <p class="text-sm text-[#424752] max-w-md mx-auto">{fetchError}</p>
+        <button
+          type="button"
+          on:click={fetchDocuments}
+          class="px-4 py-2 bg-[#003f87] hover:bg-[#002b5e] text-white rounded-lg text-xs font-semibold transition-colors mt-2 focus:outline-none focus:ring-2 focus:ring-[#003f87] focus:ring-offset-2"
+        >
+          Повторить попытку
+        </button>
+      </div>
+
+    <!-- State 3: Empty State (When search query or backend yields 0 rows) -->
+    {:else if documents.length === 0}
       <div
         id="empty-catalog-message"
         role="status"
@@ -324,18 +378,22 @@
         <p class="text-sm text-[#424752] max-w-md mx-auto">
           По вашему запросу не найдено ни одного документа. Проверьте правильность фильтров или сбросьте параметры поиска.
         </p>
-        <button
-          type="button"
-          on:click={handleResetSearch}
-          class="px-4 py-2 border border-[#003f87] text-[#003f87] hover:bg-[#003f87]/5 rounded-lg text-xs font-semibold transition-colors mt-2"
-        >
-          Показать все материалы
-        </button>
+        {#if searchQuery || selectedAuthor || selectedYear}
+          <button
+            type="button"
+            on:click={handleResetSearch}
+            class="px-4 py-2 border border-[#003f87] text-[#003f87] hover:bg-[#003f87]/5 rounded-lg text-xs font-semibold transition-colors mt-2 focus:outline-none focus:ring-2 focus:ring-[#003f87] focus:ring-offset-2"
+          >
+            Сбросить параметры поиска
+          </button>
+        {/if}
       </div>
+
+    <!-- State 4: Present State -->
     {:else}
       <!-- Document Grid / List -->
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-        {#each filteredDocuments as doc (doc.id)}
+        {#each documents as doc (doc.id)}
           <article class="bg-white border border-[#e0e3e5] rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between">
             <div>
               <div class="flex items-start justify-between gap-2 mb-2">
@@ -369,7 +427,7 @@
               <button
                 type="button"
                 on:click={() => handleDownload(doc)}
-                class="flex-1 py-2 px-3 bg-[#003f87] hover:bg-[#002b5e] text-white text-xs font-medium rounded-md transition-colors flex items-center justify-center gap-1 shadow-sm"
+                class="flex-1 py-2 px-3 bg-[#003f87] hover:bg-[#002b5e] text-white text-xs font-medium rounded-md transition-colors flex items-center justify-center gap-1 shadow-sm focus:outline-none focus:ring-2 focus:ring-[#003f87] focus:ring-offset-1"
               >
                 <span>Скачать</span>
               </button>
@@ -378,7 +436,7 @@
                 <button
                   type="button"
                   on:click={() => handleDeleteDocument(doc.id)}
-                  class="py-2 px-3 border border-[#ba1a1a] text-[#ba1a1a] hover:bg-[#ffdad6] text-xs font-medium rounded-md transition-colors"
+                  class="py-2 px-3 border border-[#ba1a1a] text-[#ba1a1a] hover:bg-[#ffdad6] text-xs font-medium rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-[#ba1a1a] focus:ring-offset-1"
                   title="Удалить документ"
                 >
                   Удалить
@@ -393,32 +451,38 @@
 
   <!-- Admin Document Upload Modal -->
   {#if isUploadModalOpen}
-    <div class="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+    <div
+      id="upload-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="upload-modal-title"
+      class="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto"
+    >
       <div class="bg-white rounded-xl border border-[#e0e3e5] max-w-lg w-full p-6 shadow-xl my-8">
         <div class="flex items-center justify-between pb-3 border-b border-[#e0e3e5] mb-4">
-          <h3 class="text-lg font-bold text-[#191c1e]">Загрузка документа в каталог</h3>
+          <h3 id="upload-modal-title" class="text-lg font-bold text-[#191c1e]">Загрузка документа в каталог</h3>
           <button
             type="button"
             on:click={closeUploadModal}
-            class="text-[#727784] hover:text-[#191c1e] text-xl font-bold p-1 rounded-full"
+            class="text-[#727784] hover:text-[#191c1e] text-xl font-bold p-1 rounded-full focus:outline-none focus:ring-2 focus:ring-[#003f87]"
           >
             ✕
           </button>
         </div>
 
         {#if uploadError}
-          <div role="alert" class="mb-4 p-3.5 rounded-lg bg-[#ffdad6] text-[#93000a] text-xs font-medium border border-[#ba1a1a]/30">
+          <div id="upload-error-alert" role="alert" class="mb-4 p-3.5 rounded-lg bg-[#ffdad6] text-[#93000a] text-xs font-medium border border-[#ba1a1a]/30">
             ⚠ {uploadError}
           </div>
         {/if}
 
         {#if uploadSuccess}
-          <div role="status" class="mb-4 p-3.5 rounded-lg bg-[#d9e3f1] text-[#001a40] text-xs font-medium border border-[#003f87]/30">
+          <div id="upload-success-alert" role="status" class="mb-4 p-3.5 rounded-lg bg-[#d9e3f1] text-[#001a40] text-xs font-medium border border-[#003f87]/30">
             ✓ {uploadSuccess}
           </div>
         {/if}
 
-        <form on:submit={handleUploadSubmit} class="space-y-4" novalidate>
+        <form id="upload-document-form" on:submit={handleUploadSubmit} class="space-y-4" novalidate>
           <div>
             <label for="upload-title-input" class="block text-xs font-semibold text-[#191c1e] mb-1">
               Название документа *
@@ -429,7 +493,7 @@
               bind:value={uploadTitle}
               placeholder="Введите полное название"
               required
-              class="w-full h-10 px-3 bg-[#f7f9fb] border border-[#c2c6d4] rounded-md text-sm text-[#191c1e] focus:outline-none focus:border-[#003f87]"
+              class="w-full h-10 px-3 bg-[#f7f9fb] border border-[#c2c6d4] rounded-md text-sm text-[#191c1e] focus:outline-none focus:ring-2 focus:ring-[#003f87]/40 focus:border-[#003f87]"
             />
           </div>
 
@@ -444,7 +508,7 @@
                 bind:value={uploadAuthor}
                 placeholder="НИИ Эпидемиологии"
                 required
-                class="w-full h-10 px-3 bg-[#f7f9fb] border border-[#c2c6d4] rounded-md text-sm text-[#191c1e] focus:outline-none focus:border-[#003f87]"
+                class="w-full h-10 px-3 bg-[#f7f9fb] border border-[#c2c6d4] rounded-md text-sm text-[#191c1e] focus:outline-none focus:ring-2 focus:ring-[#003f87]/40 focus:border-[#003f87]"
               />
             </div>
 
@@ -459,7 +523,7 @@
                 min="1990"
                 max="2030"
                 required
-                class="w-full h-10 px-3 bg-[#f7f9fb] border border-[#c2c6d4] rounded-md text-sm text-[#191c1e] focus:outline-none focus:border-[#003f87]"
+                class="w-full h-10 px-3 bg-[#f7f9fb] border border-[#c2c6d4] rounded-md text-sm text-[#191c1e] focus:outline-none focus:ring-2 focus:ring-[#003f87]/40 focus:border-[#003f87]"
               />
             </div>
           </div>
@@ -471,7 +535,7 @@
             <select
               id="upload-doctype-select"
               bind:value={uploadDocType}
-              class="w-full h-10 px-3 bg-[#f7f9fb] border border-[#c2c6d4] rounded-md text-sm text-[#191c1e] focus:outline-none focus:border-[#003f87]"
+              class="w-full h-10 px-3 bg-[#f7f9fb] border border-[#c2c6d4] rounded-md text-sm text-[#191c1e] focus:outline-none focus:ring-2 focus:ring-[#003f87]/40 focus:border-[#003f87]"
             >
               <option value="Протокол расследования">Протокол расследования</option>
               <option value="Отчёт эпиднадзора">Отчёт эпиднадзора</option>
@@ -489,7 +553,7 @@
               bind:value={uploadDescription}
               rows="3"
               placeholder="Краткая аннотация или описание документа"
-              class="w-full p-3 bg-[#f7f9fb] border border-[#c2c6d4] rounded-md text-sm text-[#191c1e] focus:outline-none focus:border-[#003f87]"
+              class="w-full p-3 bg-[#f7f9fb] border border-[#c2c6d4] rounded-md text-sm text-[#191c1e] focus:outline-none focus:ring-2 focus:ring-[#003f87]/40 focus:border-[#003f87]"
             ></textarea>
           </div>
 
@@ -523,7 +587,7 @@
             <button
               type="button"
               on:click={closeUploadModal}
-              class="px-4 py-2 border border-[#c2c6d4] text-[#424752] hover:bg-[#eceef0] text-xs font-medium rounded-md transition-colors"
+              class="px-4 py-2 border border-[#c2c6d4] text-[#424752] hover:bg-[#eceef0] text-xs font-medium rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-[#003f87]"
             >
               Отмена
             </button>
@@ -531,7 +595,7 @@
               type="submit"
               id="upload-submit-btn"
               disabled={isUploading}
-              class="px-4 py-2 bg-[#003f87] hover:bg-[#002b5e] text-white text-xs font-medium rounded-md transition-colors disabled:opacity-60 shadow-sm"
+              class="px-4 py-2 bg-[#003f87] hover:bg-[#002b5e] text-white text-xs font-medium rounded-md transition-colors disabled:opacity-60 shadow-sm focus:outline-none focus:ring-2 focus:ring-[#003f87] focus:ring-offset-2"
             >
               {isUploading ? 'Загрузка...' : 'Сохранить и загрузить'}
             </button>

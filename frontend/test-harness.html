@@ -44,15 +44,9 @@
   <div id="app"></div>
 
   <script>
-    // State matching LoginRecovery and CatalogSearch components
+    // State matching CatalogSearch component
     let state = {
-      mode: 'catalog', // 'login' | 'recovery' | 'recovery_sent' | 'catalog'
-      username: '',
-      password: '',
-      recoveryIdentity: '',
-      isLoading: false,
-      errorMessage: '',
-      successMessage: '',
+      mode: 'catalog',
       currentUser: {
         id: 101,
         username: 'admin_user',
@@ -66,39 +60,10 @@
       selectedAuthor: '',
       selectedYear: '',
 
-      // Sample documents
-      documents: [
-        {
-          id: 'doc-1',
-          title: 'Протокол расследования вспышки гриппа A(H3N2)',
-          author: 'НИИ Эпидемиологии',
-          year: 2023,
-          docType: 'Протокол расследования',
-          fileName: 'protocol_influenza_2023.pdf',
-          fileSize: '2.4 МБ',
-          description: 'Материалы эпидемиологического расследования вспышки гриппа в Северо-Западном регионе.'
-        },
-        {
-          id: 'doc-2',
-          title: 'Отчёт эпиднадзора за острыми респираторными инфекциями',
-          author: 'Центр гигиены и эпидемиологии',
-          year: 2022,
-          docType: 'Отчёт эпиднадзора',
-          fileName: 'surveillance_report_2022.pdf',
-          fileSize: '4.1 МБ',
-          description: 'Годовой статистический и аналитический отчет по заболеваемости ОРВИ.'
-        },
-        {
-          id: 'doc-3',
-          title: 'Методическое руководство по генотипированию штаммов',
-          author: 'НИИ Эпидемиологии',
-          year: 2021,
-          docType: 'Методическое руководство',
-          fileName: 'methodology_genotyping.docx',
-          fileSize: '1.8 МБ',
-          description: 'Практические рекомендации по лабораторному анализу и идентификации штаммов.'
-        }
-      ],
+      // Document catalog data initialized to empty (or dynamic fetched from server)
+      documents: [],
+      isLoading: false,
+      fetchError: '',
 
       // Upload modal states
       isUploadModalOpen: false,
@@ -174,7 +139,7 @@
                       id="open-upload-modal-btn"
                       type="button"
                       onclick="openUploadModal()"
-                      class="px-3 py-2 bg-[#003f87] hover:bg-[#002b5e] text-white rounded-md text-xs font-medium transition-colors flex items-center gap-1.5 shadow-sm"
+                      class="px-3 py-2 bg-[#003f87] hover:bg-[#002b5e] text-white rounded-md text-xs font-medium transition-colors flex items-center gap-1.5 shadow-sm focus:outline-none focus:ring-2 focus:ring-[#003f87]"
                     >
                       <span>+ Загрузить документ</span>
                     </button>
@@ -209,7 +174,7 @@
                     value="${state.searchQuery}"
                     oninput="state.searchQuery = this.value"
                     placeholder="Например: грипп, протокол, генотипирование..."
-                    class="w-full h-11 px-3.5 bg-[#f7f9fb] border border-[#c2c6d4] rounded-lg text-sm text-[#191c1e] focus:outline-none focus:ring-2 focus:ring-[#003f87]/30 focus:border-[#003f87]"
+                    class="w-full h-11 px-3.5 bg-[#f7f9fb] border border-[#c2c6d4] rounded-lg text-sm text-[#191c1e] focus:outline-none focus:ring-2 focus:ring-[#003f87]/40 focus:border-[#003f87]"
                   />
                 </div>
 
@@ -224,7 +189,7 @@
                     value="${state.selectedAuthor}"
                     oninput="state.selectedAuthor = this.value"
                     placeholder="НИИ Эпидемиологии"
-                    class="w-full h-11 px-3.5 bg-[#f7f9fb] border border-[#c2c6d4] rounded-lg text-sm text-[#191c1e] focus:outline-none focus:ring-2 focus:ring-[#003f87]/30 focus:border-[#003f87]"
+                    class="w-full h-11 px-3.5 bg-[#f7f9fb] border border-[#c2c6d4] rounded-lg text-sm text-[#191c1e] focus:outline-none focus:ring-2 focus:ring-[#003f87]/40 focus:border-[#003f87]"
                   />
                 </div>
 
@@ -236,7 +201,7 @@
                   <select
                     id="search-year-input"
                     onchange="state.selectedYear = this.value"
-                    class="w-full h-11 px-3 bg-[#f7f9fb] border border-[#c2c6d4] rounded-lg text-sm text-[#191c1e] focus:outline-none focus:ring-2 focus:ring-[#003f87]/30 focus:border-[#003f87]"
+                    class="w-full h-11 px-3 bg-[#f7f9fb] border border-[#c2c6d4] rounded-lg text-sm text-[#191c1e] focus:outline-none focus:ring-2 focus:ring-[#003f87]/40 focus:border-[#003f87]"
                   >
                     <option value="" ${state.selectedYear === '' ? 'selected' : ''}>Все года</option>
                     <option value="2024" ${state.selectedYear === '2024' ? 'selected' : ''}>2024</option>
@@ -252,7 +217,7 @@
                   <button
                     type="submit"
                     id="search-submit-btn"
-                    class="flex-1 h-11 bg-[#003f87] hover:bg-[#002b5e] text-white font-medium text-sm rounded-lg transition-colors flex items-center justify-center shadow-sm"
+                    class="flex-1 h-11 bg-[#003f87] hover:bg-[#002b5e] text-white font-medium text-sm rounded-lg transition-colors flex items-center justify-center shadow-sm focus:outline-none focus:ring-2 focus:ring-[#003f87]"
                   >
                     Найти
                   </button>
@@ -261,7 +226,7 @@
                       type="button"
                       id="search-reset-btn"
                       onclick="handleResetSearch()"
-                      class="h-11 px-3 border border-[#c2c6d4] text-[#424752] hover:bg-[#eceef0] text-xs font-medium rounded-lg transition-colors"
+                      class="h-11 px-3 border border-[#c2c6d4] text-[#424752] hover:bg-[#eceef0] text-xs font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[#003f87]"
                       title="Сбросить фильтры"
                     >
                       Сброс
@@ -279,7 +244,18 @@
                 </h2>
               </div>
 
-              ${filteredDocs.length === 0 ? `
+              ${state.isLoading ? `
+                <div id="catalog-loading-indicator" role="status" aria-live="polite" class="bg-white border border-[#e0e3e5] rounded-xl p-12 text-center space-y-4 shadow-sm my-6">
+                  <div class="inline-block animate-spin rounded-full h-9 w-9 border-4 border-[#003f87] border-t-transparent mx-auto"></div>
+                  <p class="text-sm font-medium text-[#424752]">Загрузка материалов каталога...</p>
+                </div>
+              ` : state.fetchError ? `
+                <div id="catalog-error-message" role="alert" class="bg-white border border-[#ba1a1a] rounded-xl p-8 text-center space-y-3 shadow-sm my-6">
+                  <div class="w-12 h-12 bg-[#ffdad6] text-[#ba1a1a] rounded-full flex items-center justify-center mx-auto text-xl font-bold">⚠</div>
+                  <h3 class="text-lg font-bold text-[#93000a]">Ошибка загрузки данных</h3>
+                  <p class="text-sm text-[#424752] max-w-md mx-auto">${state.fetchError}</p>
+                </div>
+              ` : filteredDocs.length === 0 ? `
                 <!-- Explicit Empty State Message AC Required -->
                 <div
                   id="empty-catalog-message"
@@ -361,7 +337,7 @@
 
             <!-- Admin Upload Modal -->
             ${state.isUploadModalOpen ? `
-              <div id="upload-modal" class="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+              <div id="upload-modal" role="dialog" aria-modal="true" class="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
                 <div class="bg-white rounded-xl border border-[#e0e3e5] max-w-lg w-full p-6 shadow-xl my-8">
                   <div class="flex items-center justify-between pb-3 border-b border-[#e0e3e5] mb-4">
                     <h3 class="text-lg font-bold text-[#191c1e]">Загрузка документа в каталог</h3>
@@ -570,7 +546,7 @@
       setTimeout(() => {
         if (state.simulateNetworkError) {
           // KEY AC: On network failure, error is shown, but state metadata remains INTACT in the form!
-          state.uploadError = ' Ошибка сети при загрузке документа. Попробуйте еще раз.';
+          state.uploadError = 'Ошибка сети при загрузке документа. Попробуйте еще раз.';
           state.isUploading = false;
           render();
           return;
