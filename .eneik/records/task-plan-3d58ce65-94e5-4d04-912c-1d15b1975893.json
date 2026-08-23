@@ -1,0 +1,70 @@
+{
+  "epics": [
+    {
+      "existingEpicId": "7e24dafe-61b2-42ec-ac6c-5745b4049cd2",
+      "title": null,
+      "jtbd": null,
+      "kanoClass": null,
+      "cynefinDomain": null,
+      "sixSigmaMetric": null,
+      "tocConstraintRef": null,
+      "sourceIndex": 0,
+      "requirements": [
+        "R1: Remove the incorrectly committed design check mockups and build artifacts under the target directory from the codebase",
+        "R2: Replace the nondeterministic Math.random() fallback key in the CatalogSearch.svelte frontend component with a deterministic identifier"
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Clean incorrectly committed artifacts and fix CatalogSearch nondeterministic key",
+          "roleTag": "BARCAN-TAG-11",
+          "jtbd": "When implementing this patch for this epic, I want to remove the invalid mockups and target artifacts and replace the nondeterministic fallback key, so that the PR hygiene is restored and the frontend is deterministic.",
+          "acceptanceCriteria": "Given the codebase has committed mockups in .eneik/records and target build artifacts, When the patch is applied, Then these invalid files are removed from the repository.\nGiven the CatalogSearch.svelte component assigns fallback keys, When a search result lacks an ID, Then a deterministic identifier is used instead of Math.random().\nGiven the changes are complete, When all relevant tests are executed, Then the system behaves correctly and QA coverage passes.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "Frontend component rendering predictability",
+          "sixSigmaMetric": "Reduce nondeterministic fallback key usage to 0%",
+          "hasUi": true,
+          "requirementRefs": [
+            "R1",
+            "R2"
+          ]
+        }
+      ]
+    },
+    {
+      "existingEpicId": "d4d13690-c8a5-48de-9129-5052a4d6586a",
+      "title": null,
+      "jtbd": null,
+      "kanoClass": null,
+      "cynefinDomain": null,
+      "sixSigmaMetric": null,
+      "tocConstraintRef": null,
+      "sourceIndex": 0,
+      "requirements": [
+        "R1: Configure the server explicitly to bind to port 18080 via a server port property or application argument",
+        "R2: Serve a 200 OK status on the /health path by mapping a controller or modifying the actuator base path",
+        "R3: Add a verification command, script, or test to confirm the application binds to the port and the health endpoint returns a successful response"
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Fix launch port configuration and health endpoint response",
+          "roleTag": "BARCAN-TAG-02",
+          "jtbd": "When implementing this patch for this epic, I want to explicitly set the server port to 18080 and serve the /health endpoint, so that the application container starts cleanly and health checks pass.",
+          "acceptanceCriteria": "Given the service container starts, When the port is explicitly configured, Then the application binds correctly to port 18080.\nGiven a request is made to /health, When the application processes it, Then a 200 OK status is returned.\nGiven the configuration is complete, When the verification command runs, Then the deployment is verified successfully without errors.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "Container application launch reliability",
+          "sixSigmaMetric": "Increase health check pass rate on startup to 100%",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1",
+            "R2",
+            "R3"
+          ]
+        }
+      ]
+    }
+  ]
+}
