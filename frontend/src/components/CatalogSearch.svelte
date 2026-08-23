@@ -191,6 +191,15 @@
       alert(`Загрузка документа: ${doc.fileName || doc.title}`);
     }
   }
+
+  export function getDocKey(doc, index = 0) {
+    if (doc && doc.id != null && doc.id !== '') {
+      return String(doc.id);
+    }
+    const titlePart = (doc && doc.title) ? String(doc.title).trim().toLowerCase().replace(/\s+/g, '-') : 'untitled';
+    const yearPart = (doc && (doc.year || doc.publicationYear || doc.publication_year)) ? String(doc.year || doc.publicationYear || doc.publication_year) : '0';
+    return `doc-${titlePart}-${yearPart}-${index}`;
+  }
 </script>
 
 <div class="catalog-container max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-6 font-sans text-[#191c1e] bg-[#f7f9fb] min-h-screen">
@@ -371,7 +380,7 @@
     {:else}
       <!-- Document Grid / List -->
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-        {#each documents as doc (doc.id || doc.title)}
+        {#each documents as doc, index (getDocKey(doc, index))}
           <article class="bg-white border border-[#e0e3e5] rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between">
             <div>
               <div class="flex items-start justify-between gap-2 mb-2">
