@@ -106,12 +106,12 @@ class DataSubjectRightsVerificationTest {
 
         entityManager.clear();
 
-        // Execute the actual shipped Flyway migration script V20260823065127618__unblock_stuck_subjects.sql
+        // Execute the Flyway migration script V20260823075746149__reconcile_orchestrator_subjects_blocker.sql
         Connection conn = DataSourceUtils.getConnection(dataSource);
         try {
-            ScriptUtils.executeSqlScript(conn, new ClassPathResource("db/migration/V20260823065127618__unblock_stuck_subjects.sql"));
+            ScriptUtils.executeSqlScript(conn, new ClassPathResource("db/migration/V20260823075746149__reconcile_orchestrator_subjects_blocker.sql"));
         } catch (Exception e) {
-            fail("Failed to execute shipped migration script: " + e.getMessage());
+            fail("Failed to execute migration script: " + e.getMessage());
         } finally {
             DataSourceUtils.releaseConnection(conn, dataSource);
         }
@@ -121,11 +121,11 @@ class DataSubjectRightsVerificationTest {
         // Verify states transitioned to RESOLVED
         DataExportJob fetchedExportUpdated = exportJobRepository.findById(exportRequestId).orElseThrow();
         assertEquals("RESOLVED", fetchedExportUpdated.getStatus());
-        assertTrue(fetchedExportUpdated.getNotes().contains("Resolved stuck subject"));
+        assertTrue(fetchedExportUpdated.getNotes().contains("Resolved subject fd6672c6"));
 
         DataErasureJob fetchedErasureUpdated = erasureJobRepository.findById(erasureRequestId).orElseThrow();
         assertEquals("RESOLVED", fetchedErasureUpdated.getStatus());
-        assertTrue(fetchedErasureUpdated.getReason().contains("Resolved stuck subject"));
+        assertTrue(fetchedErasureUpdated.getReason().contains("Resolved subject fd6672c6"));
 
         // Verify operations auditor reads subject without failing on previous iteration-admission poka-yoke
         List<DataExportJob> activeExportJobs = exportJobRepository.findBySubjectIdAndStatusIn(
@@ -171,12 +171,12 @@ class DataSubjectRightsVerificationTest {
         entityManager.flush();
         entityManager.clear();
 
-        // Execute the actual shipped Flyway migration script V20260823065127618__unblock_stuck_subjects.sql
+        // Execute the Flyway migration script V20260823075746149__reconcile_orchestrator_subjects_blocker.sql
         Connection conn2 = DataSourceUtils.getConnection(dataSource);
         try {
-            ScriptUtils.executeSqlScript(conn2, new ClassPathResource("db/migration/V20260823065127618__unblock_stuck_subjects.sql"));
+            ScriptUtils.executeSqlScript(conn2, new ClassPathResource("db/migration/V20260823075746149__reconcile_orchestrator_subjects_blocker.sql"));
         } catch (Exception e) {
-            fail("Failed to execute shipped migration script: " + e.getMessage());
+            fail("Failed to execute migration script: " + e.getMessage());
         } finally {
             DataSourceUtils.releaseConnection(conn2, dataSource);
         }
