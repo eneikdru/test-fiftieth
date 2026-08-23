@@ -10,9 +10,14 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.jdbc.datasource.DataSourceUtils;
+import org.springframework.jdbc.datasource.init.ScriptUtils;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.sql.DataSource;
 import java.io.ByteArrayInputStream;
+import java.sql.Connection;
 import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.time.Instant;
@@ -44,6 +49,9 @@ class DataSubjectRightsVerificationTest {
 
     @Autowired
     private EntityManager entityManager;
+
+    @Autowired
+    private DataSource dataSource;
 
     private PrivacyService privacyService;
     private final Clock fixedClock = Clock.fixed(Instant.parse("2026-08-22T15:00:00Z"), ZoneId.of("UTC"));
@@ -87,6 +95,7 @@ class DataSubjectRightsVerificationTest {
         erasureJobRepository.save(stuckErasure);
 
         entityManager.flush();
+        entityManager.clear();
 
         // Verify initial pending/processing states
         DataExportJob fetchedExportInitial = exportJobRepository.findById(exportRequestId).orElseThrow();
@@ -95,19 +104,18 @@ class DataSubjectRightsVerificationTest {
         DataErasureJob fetchedErasureInitial = erasureJobRepository.findById(erasureRequestId).orElseThrow();
         assertEquals("PROCESSING", fetchedErasureInitial.getStatus());
 
-        // Execute the atomic UPDATE patch directly targeting existing privacy_export_requests and privacy_erasure_requests tables
-        int exportUpdatedCount = entityManager.createNativeQuery(
-            "UPDATE privacy_export_requests SET status = 'RESOLVED', notes = 'Resolved stuck subject from iteration-admission poka-yoke failure in task ea2d1954-4da4-4912-8565-dcd27a569279' WHERE subject_id = 'fd6672c6-02c4-455e-a4d9-91e4ae9d308c' AND status IN ('PENDING', 'PROCESSING')"
-        ).executeUpdate();
+        entityManager.clear();
 
-        int erasureUpdatedCount = entityManager.createNativeQuery(
-            "UPDATE privacy_erasure_requests SET status = 'RESOLVED', reason = 'Resolved stuck subject from iteration-admission poka-yoke failure in task ea2d1954-4da4-4912-8565-dcd27a569279' WHERE subject_id = 'fd6672c6-02c4-455e-a4d9-91e4ae9d308c' AND status IN ('PENDING', 'PROCESSING')"
-        ).executeUpdate();
+        // Execute the actual shipped Flyway migration script V20260823065127618__unblock_stuck_subjects.sql
+        Connection conn = DataSourceUtils.getConnection(dataSource);
+        try {
+            ScriptUtils.executeSqlScript(conn, new ClassPathResource("db/migration/V20260823065127618__unblock_stuck_subjects.sql"));
+        } catch (Exception e) {
+            fail("Failed to execute shipped migration script: " + e.getMessage());
+        } finally {
+            DataSourceUtils.releaseConnection(conn, dataSource);
+        }
 
-        assertEquals(1, exportUpdatedCount, "Atomic UPDATE patch must update 1 export request row");
-        assertEquals(1, erasureUpdatedCount, "Atomic UPDATE patch must update 1 erasure request row");
-
-        entityManager.flush();
         entityManager.clear();
 
         // Verify states transitioned to RESOLVED
@@ -161,20 +169,18 @@ class DataSubjectRightsVerificationTest {
         erasureJobRepository.save(stuckErasure);
 
         entityManager.flush();
+        entityManager.clear();
 
-        // Execute the atomic UPDATE patch
-        int exportUpdatedCount = entityManager.createNativeQuery(
-            "UPDATE privacy_export_requests SET status = 'RESOLVED', notes = 'Resolved stuck subject with orphaned dependency 168a6edf-53fa-48b4-8226-9fcd0528efd2' WHERE subject_id = '765d2ab0-1b55-4701-babd-af5247442de5' AND status IN ('PENDING', 'PROCESSING')"
-        ).executeUpdate();
+        // Execute the actual shipped Flyway migration script V20260823065127618__unblock_stuck_subjects.sql
+        Connection conn2 = DataSourceUtils.getConnection(dataSource);
+        try {
+            ScriptUtils.executeSqlScript(conn2, new ClassPathResource("db/migration/V20260823065127618__unblock_stuck_subjects.sql"));
+        } catch (Exception e) {
+            fail("Failed to execute shipped migration script: " + e.getMessage());
+        } finally {
+            DataSourceUtils.releaseConnection(conn2, dataSource);
+        }
 
-        int erasureUpdatedCount = entityManager.createNativeQuery(
-            "UPDATE privacy_erasure_requests SET status = 'RESOLVED', reason = 'Resolved stuck subject with orphaned dependency 168a6edf-53fa-48b4-8226-9fcd0528efd2' WHERE subject_id = '765d2ab0-1b55-4701-babd-af5247442de5' AND status IN ('PENDING', 'PROCESSING')"
-        ).executeUpdate();
-
-        assertEquals(1, exportUpdatedCount);
-        assertEquals(1, erasureUpdatedCount);
-
-        entityManager.flush();
         entityManager.clear();
 
         DataExportJob fetchedExport = exportJobRepository.findById(exportRequestId).orElseThrow();
