@@ -8,6 +8,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.security.SecureRandom;
 import java.time.Clock;
 import java.time.OffsetDateTime;
 import java.util.Random;
@@ -15,6 +19,8 @@ import java.util.UUID;
 
 @Service
 public class PasswordRecoveryService {
+
+    private static final Logger log = LoggerFactory.getLogger(PasswordRecoveryService.class);
 
     private final UserRepository userRepository;
     private final PasswordRecoveryTokenRepository recoveryTokenRepository;
@@ -29,7 +35,7 @@ public class PasswordRecoveryService {
             PasswordRecoveryTokenRepository recoveryTokenRepository,
             PasswordEncoder passwordEncoder,
             @Value("${app.recovery.base-url:http://localhost:8080}") String baseUrl) {
-        this(userRepository, recoveryTokenRepository, passwordEncoder, Clock.systemUTC(), new Random(), baseUrl);
+        this(userRepository, recoveryTokenRepository, passwordEncoder, Clock.systemUTC(), new SecureRandom(), baseUrl);
     }
 
     public PasswordRecoveryService(
@@ -43,7 +49,7 @@ public class PasswordRecoveryService {
         this.recoveryTokenRepository = recoveryTokenRepository;
         this.passwordEncoder = passwordEncoder;
         this.clock = clock;
-        this.random = random;
+        this.random = random != null ? random : new SecureRandom();
         this.baseUrl = baseUrl;
     }
 
@@ -67,6 +73,9 @@ public class PasswordRecoveryService {
 
         String recoveryLink = baseUrl + "/reset-password?token=" + tokenValue;
         UUID recoveryId = UUID.nameUUIDFromBytes(tokenValue.getBytes());
+
+        // Outbound notification channel simulation (e.g. email/SMS dispatcher)
+        log.info("[OUTBOUND NOTIFICATION CHANNEL] Sent recovery link '{}' to identity '{}'", recoveryLink, identity);
 
         String message = "Инструкции по восстановлению пароля отправлены на ваш электронный адрес.";
 
