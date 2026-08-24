@@ -1,0 +1,211 @@
+{
+  "epics": [
+    {
+      "existingEpicId": null,
+      "title": "Employee Document Dossier and Report Generation",
+      "jtbd": "When reviewing an employee's history, I want to find all their related documents and generate a summary report, so that I have a complete view of their activity and status.",
+      "kanoClass": "Performance",
+      "cynefinDomain": "complicated",
+      "sixSigmaMetric": "reduce time spent assembling an employee dossier from manual search time to under 10 seconds",
+      "tocConstraintRef": "administrative overhead in HR document aggregation",
+      "sourceIndex": 0,
+      "requirements": [
+        "R1: Filter existing documents (orders, academic council extracts, reports, exams) by specific employee or surname.",
+        "R2: Display a consolidated list of the filtered documents for viewing.",
+        "R3: Generate a unified summary report based on a predefined template for the selected employee.",
+        "R4: Display clear error feedback if report generation fails, allowing the user to retry or adjust the query.",
+        "R5: Provide initial sample content with at least one employee and related documents to exercise the path on a fresh install."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Data schema for employee document aggregation",
+          "roleTag": "BARCAN-TAG-08",
+          "jtbd": "When implementing the data layer for this epic, I want to define the schema and queries to group disparate documents by employee, so that the dossier generation has a unified data source.",
+          "acceptanceCriteria": "Given an employee ID, when querying for related documents, then the system returns a unified set of orders, reports, and exams.\nGiven a missing employee, when querying, then it returns an empty set.",
+          "leanValue": "essential",
+          "cynefinDomain": "complicated",
+          "tocConstraintRef": "document querying fragmentation",
+          "sixSigmaMetric": "reduce document aggregation query latency to under 200ms",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1",
+            "R2"
+          ]
+        },
+        {
+          "title": "API contract for dossier search and report generation",
+          "roleTag": "BARCAN-TAG-12",
+          "jtbd": "When implementing the shared API for this epic, I want to define the contract for searching documents and requesting reports, so that frontend and backend can be built in parallel.",
+          "acceptanceCriteria": "Given the API contract requirement, when the definition is completed, then an OpenAPI spec is committed detailing the search and report endpoints.\nGiven the payload definitions, when validated, then they cover all required fields for document lists.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "frontend/backend integration bottlenecks",
+          "sixSigmaMetric": "reduce contract-related integration defects to zero",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1",
+            "R2",
+            "R3"
+          ]
+        },
+        {
+          "title": "Backend API for dossier search and report generation",
+          "roleTag": "BARCAN-TAG-02",
+          "jtbd": "When implementing the backend for this epic, I want to expose endpoints to fetch documents and generate summary reports, so that the frontend can consume them.",
+          "acceptanceCriteria": "Given the API contract, when a search request is made, then the backend returns the correct document list.\nGiven a report generation request, when processed, then the backend successfully generates and returns the report file.\nGiven the acceptance floor, when the system starts, then initial sample content for employees and documents is populated.",
+          "leanValue": "essential",
+          "cynefinDomain": "complicated",
+          "tocConstraintRef": "manual report compilation logic",
+          "sixSigmaMetric": "ensure report generation succeeds in >99% of valid requests",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1",
+            "R2",
+            "R3",
+            "R4",
+            "R5"
+          ]
+        },
+        {
+          "title": "Frontend interface for employee dossier and reports",
+          "roleTag": "BARCAN-TAG-11",
+          "jtbd": "When implementing the UI for this epic, I want to build a search interface and document list, so that users can view dossiers and download reports.",
+          "acceptanceCriteria": "Given a user on a mobile or desktop device, when they search for an employee, then they see a list of documents and their typed search term survives.\nGiven the document list, when they click generate report, then they see visible loading feedback until the report is downloaded.",
+          "leanValue": "essential",
+          "cynefinDomain": "complicated",
+          "tocConstraintRef": "user friction in finding and compiling employee info",
+          "sixSigmaMetric": "reduce time to visually locate and download an employee report to under 5 seconds",
+          "hasUi": true,
+          "requirementRefs": [
+            "R1",
+            "R2",
+            "R3",
+            "R4"
+          ]
+        },
+        {
+          "title": "QA coverage for employee dossier and report generation",
+          "roleTag": "BARCAN-TAG-06",
+          "jtbd": "When implementing QA for this epic, I want to write E2E and integration tests, so that the dossier and report generation features are verified against regressions.",
+          "acceptanceCriteria": "Given the test suite, when the E2E tests run, then they verify that an employee can be searched and their documents displayed.\nGiven the report endpoint, when tested, then it verifies a report is generated successfully based on the initial sample content.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "regression risks in report generation",
+          "sixSigmaMetric": "achieve 100% automated test coverage of the dossier search and report critical paths",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1",
+            "R2",
+            "R3",
+            "R4",
+            "R5"
+          ]
+        }
+      ]
+    },
+    {
+      "existingEpicId": "6d755ce0-537f-427b-a705-20eae216f1ee",
+      "title": null,
+      "jtbd": null,
+      "kanoClass": null,
+      "cynefinDomain": null,
+      "sixSigmaMetric": "increase successful registration and first-login completion rate from unknown to 95%",
+      "tocConstraintRef": "friction in onboarding new employees blocking their system access",
+      "sourceIndex": 1,
+      "requirements": [
+        "R1: Provide a clear registration form for new employees.",
+        "R2: Place an obvious and accessible login link in the system header.",
+        "R3: Implement a smooth user onboarding flow for newly registered users.",
+        "R4: Provide a self-service recovery path for locked-out accounts."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "UI/UX Design for registration, login, and onboarding",
+          "roleTag": "BARCAN-TAG-03",
+          "jtbd": "When implementing design for this epic, I want to create clear mockups for registration, login, and recovery, so that the engineering team has a verified blueprint.",
+          "acceptanceCriteria": "Given the need for a registration flow, when the design is completed, then an HTML/CSS mockup is committed showing clear registration, login header, and onboarding.\nGiven the quality floor, when reviewed, then the design includes mobile layouts and visible feedback states for all actions.",
+          "leanValue": "essential",
+          "cynefinDomain": "complicated",
+          "tocConstraintRef": "unclear user flows causing drop-offs",
+          "sixSigmaMetric": "ensure 100% of critical auth paths are covered in the mockup",
+          "hasUi": true,
+          "requirementRefs": [
+            "R1",
+            "R2",
+            "R3",
+            "R4"
+          ]
+        },
+        {
+          "title": "API contract for authentication and onboarding",
+          "roleTag": "BARCAN-TAG-12",
+          "jtbd": "When implementing the shared API for this epic, I want to define the contract for registration, login, and account recovery, so that backend and frontend can develop concurrently.",
+          "acceptanceCriteria": "Given the design mockups, when the API is designed, then the contract defines endpoints for registration, login, and password recovery.\nGiven the contract, when validated, then both frontend and backend teams agree on the payload structures.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "frontend/backend auth integration delays",
+          "sixSigmaMetric": "reduce contract-related integration defects to zero",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1",
+            "R2",
+            "R4"
+          ]
+        },
+        {
+          "title": "Backend API for registration, login, and recovery",
+          "roleTag": "BARCAN-TAG-02",
+          "jtbd": "When implementing the backend for this epic, I want to build the auth and recovery endpoints, so that users can securely register and log in.",
+          "acceptanceCriteria": "Given the API contract, when a valid registration is submitted, then a new user is created securely.\nGiven an account recovery request, when submitted, then the backend initiates a secure self-service recovery flow.",
+          "leanValue": "essential",
+          "cynefinDomain": "complicated",
+          "tocConstraintRef": "security and state management in auth",
+          "sixSigmaMetric": "ensure 100% of successful registrations are securely hashed and stored",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1",
+            "R2",
+            "R3",
+            "R4"
+          ]
+        },
+        {
+          "title": "Frontend interface for registration and onboarding",
+          "roleTag": "BARCAN-TAG-11",
+          "jtbd": "When implementing the UI for this epic, I want to build the registration form, header link, and onboarding steps, so that users have a smooth entry into the system.",
+          "acceptanceCriteria": "Given the login header and registration form, when a user interacts with them on mobile, then they provide visible feedback and preserve typed input on error.\nGiven a newly registered user, when they log in, then they are guided through a smooth onboarding flow.",
+          "leanValue": "essential",
+          "cynefinDomain": "complicated",
+          "tocConstraintRef": "user drop-off during registration and first login",
+          "sixSigmaMetric": "reduce time to complete registration and onboarding to under 2 minutes",
+          "hasUi": true,
+          "requirementRefs": [
+            "R1",
+            "R2",
+            "R3",
+            "R4"
+          ]
+        },
+        {
+          "title": "QA coverage for registration and onboarding",
+          "roleTag": "BARCAN-TAG-06",
+          "jtbd": "When implementing QA for this epic, I want to write tests for the auth and onboarding flows, so that users can reliably access the system.",
+          "acceptanceCriteria": "Given the test suite, when the E2E tests run, then they verify a user can register, see the onboarding flow, and log out.\nGiven the recovery feature, when tested, then it verifies a locked-out account can successfully be recovered.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "regression risks in authentication flows",
+          "sixSigmaMetric": "achieve 100% automated test coverage of the registration and recovery critical paths",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1",
+            "R2",
+            "R3",
+            "R4"
+          ]
+        }
+      ]
+    }
+  ]
+}
