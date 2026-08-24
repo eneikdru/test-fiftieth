@@ -14,7 +14,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.http.MediaType;
-import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
 
 import static org.hamcrest.Matchers.*;
@@ -24,7 +23,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
-
 @AutoConfigureMockMvc
 @Transactional
 class DocumentControllerTest {
@@ -59,6 +57,48 @@ class DocumentControllerTest {
     }
 
     @Test
+    @DisplayName("Given a full-text search query for surname, When requested, Then returns matching documents with highlighted text within 200ms")
+    void testFullTextSearchBySurname_ReturnsMatchingDocumentsWithHighlightsWithin200ms() throws Exception {
+        long startTime = System.currentTimeMillis();
+
+        mockMvc.perform(get("/api/v1/documents/search")
+                        .param("q", "Иванов")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + researcherToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.total_elements", greaterThanOrEqualTo(1)))
+                .andExpect(jsonPath("$.items[0].document_id").exists())
+                .andExpect(jsonPath("$.items[0].title").exists())
+                .andExpect(jsonPath("$.items[0].doc_type").exists())
+                .andExpect(jsonPath("$.items[0].highlights[0]", containsString("<em>Иванов</em>")));
+
+        long durationMs = System.currentTimeMillis() - startTime;
+        assertTrue(durationMs < 200, "Full-text search query for surname must execute within 200ms (took " + durationMs + "ms)");
+    }
+
+    @Test
+    @DisplayName("Given a full-text search with doc_type filter, When requested, Then returns filtered documents")
+    void testFullTextSearchWithDocType_ReturnsFilteredDocuments() throws Exception {
+        mockMvc.perform(get("/api/v1/documents/search")
+                        .param("q", "Иванов")
+                        .param("doc_type", "REPORT")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + researcherToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.total_elements", is(1)))
+                .andExpect(jsonPath("$.items[0].doc_type", is("REPORT")));
+    }
+
+    @Test
+    @DisplayName("Given an empty search query 'q', When requested, Then returns 400 Bad Request")
+    void testFullTextSearchEmptyQuery_ReturnsBadRequest() throws Exception {
+        mockMvc.perform(get("/api/v1/documents/search")
+                        .param("q", "   ")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + researcherToken))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error_code", is("INVALID_SEARCH_QUERY")))
+                .andExpect(jsonPath("$.message", containsString("Поисковый запрос не должен быть пустым")));
+    }
+
+    @Test
     @DisplayName("Given a search query for an author, When the backend processes it, Then it returns the matching documents within 200ms")
     void testSearchByAuthor_ReturnsMatchingDocumentsWithin200ms() throws Exception {
         long startTime = System.currentTimeMillis();
@@ -80,7 +120,6 @@ class DocumentControllerTest {
         Document doc = documentRepository.findAll().get(0);
         Long docId = doc.getId();
 
-        // Let's use a dummy file in the current directory and mock it by modifying the document object
         java.nio.file.Path testFilePath = java.nio.file.Paths.get("data/docs/uploads").resolve("test_" + docId + ".pdf");
         doc.setFilePath("data/docs/uploads/test_" + docId + ".pdf");
         documentRepository.save(doc);
