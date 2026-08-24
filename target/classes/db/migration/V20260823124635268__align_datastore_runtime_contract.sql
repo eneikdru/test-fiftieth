@@ -1,5 +1,5 @@
--- Flyway Migration V20260824004538228: Datastore Runtime Contract 9b58412d patch alignment
--- Mandatory Flyway version: V20260824004538228
+-- Flyway Migration V20260823124635268: Datastore Runtime Contract 9b58412d patch alignment
+-- Mandatory Flyway version: V20260823124635268
 
 DO $$
 BEGIN

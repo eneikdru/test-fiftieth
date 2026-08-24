@@ -6,11 +6,14 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DataSourceUtils;
 import org.springframework.jdbc.datasource.init.ScriptUtils;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StreamUtils;
 
 import javax.sql.DataSource;
+import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.time.OffsetDateTime;
 
@@ -32,6 +35,9 @@ class MigrationEndToEndVerificationTest {
 
     @Autowired
     private DataSource dataSource;
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
 
     @Test
     @DisplayName("Given full migration chain runs, When end-to-end check executes, Then test asserts terminal ESCALATED state for recovery subjects")
@@ -87,8 +93,11 @@ class MigrationEndToEndVerificationTest {
             ScriptUtils.executeSqlScript(conn, new ClassPathResource("db/migration/V20260823075746149__reconcile_orchestrator_subjects_blocker.sql"));
             ScriptUtils.executeSqlScript(conn, new ClassPathResource("db/migration/V20260823081040819__escalate_stuck_subjects.sql"));
             ScriptUtils.executeSqlScript(conn, new ClassPathResource("db/migration/V20260823090157407__flag_stuck_subjects_for_human_review.sql"));
-            // Execute the new patch migration
-            ScriptUtils.executeSqlScript(conn, new ClassPathResource("db/migration/V20260823204720699__unblock_stuck_auditor_subjects_and_escalate.sql"));
+
+            // Execute V20260823204720699 using JdbcTemplate (to handle PL/pgSQL DO $$ block)
+            ClassPathResource resource = new ClassPathResource("db/migration/V20260823204720699__unblock_stuck_auditor_subjects_and_escalate.sql");
+            String sql = StreamUtils.copyToString(resource.getInputStream(), StandardCharsets.UTF_8);
+            jdbcTemplate.execute(sql);
         } catch (Exception e) {
             fail("Failed executing migration chain: " + e.getMessage());
         } finally {

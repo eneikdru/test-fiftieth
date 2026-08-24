@@ -33,12 +33,12 @@ class TaskPlanValidationRulePatchTest {
     private JdbcTemplate jdbcTemplate;
 
     @Test
-    @DisplayName("Given unhandled uncategorized task plan pattern triggers review concerns, When mandatory Flyway migration V20260824004540925 executes, Then pending privacy requests are resolved without failing validation")
+    @DisplayName("Given unhandled uncategorized task plan pattern triggers review concerns, When mandatory Flyway migration V20260823204739819 executes, Then pending privacy requests are resolved without failing validation")
     void testValidationRulePatchMigrationExecutesCleanlyAndResolvesPendingRequests() {
         // Seed test pending export and erasure requests
         DataExportJob exportJob = new DataExportJob();
         exportJob.setRequestId("test-patch-exp-1");
-        exportJob.setSubjectId("test-subject-605eeda9");
+        exportJob.setSubjectId("8bd0dbae-41f6-466a-95a7-aff680ed0866");
         exportJob.setStatus("PENDING");
         exportJob.setRequestedFormat("ZIP");
         exportJob.setCreatedAt(OffsetDateTime.now());
@@ -46,7 +46,7 @@ class TaskPlanValidationRulePatchTest {
 
         DataErasureJob erasureJob = new DataErasureJob();
         erasureJob.setRequestId("test-patch-era-1");
-        erasureJob.setSubjectId("test-subject-605eeda9");
+        erasureJob.setSubjectId("8bd0dbae-41f6-466a-95a7-aff680ed0866");
         erasureJob.setStatus("PROCESSING");
         erasureJob.setConfirmationToken("CONFIRM_PATCH");
         erasureJob.setReason("Review concerns test");
@@ -58,11 +58,11 @@ class TaskPlanValidationRulePatchTest {
 
         // Execute mandatory Flyway migration script cleanly as a block
         try {
-            ClassPathResource resource = new ClassPathResource("db/migration/V20260824004540925__patch_validation_rule_review_concerns.sql");
+            ClassPathResource resource = new ClassPathResource("db/migration/V20260823204739819__align_datastore_runtime_contract.sql");
             String sql = StreamUtils.copyToString(resource.getInputStream(), StandardCharsets.UTF_8);
             jdbcTemplate.execute(sql);
         } catch (Exception e) {
-            fail("Migration V20260824004540925 execution failed: " + e.getMessage());
+            fail("Migration V20260823204739819 execution failed: " + e.getMessage());
         }
 
         entityManager.clear();
@@ -70,14 +70,14 @@ class TaskPlanValidationRulePatchTest {
         // Assert that the pending/processing requests were transitioned to RESOLVED
         DataExportJob updatedExport = exportJobRepository.findById("test-patch-exp-1").orElseThrow();
         assertEquals("RESOLVED", updatedExport.getStatus());
-        assertTrue(updatedExport.getNotes().contains("Direct validation rule patch applied"));
+        assertTrue(updatedExport.getNotes().contains("Resolved runtime contract discrepancy"));
 
         DataErasureJob updatedErasure = erasureJobRepository.findById("test-patch-era-1").orElseThrow();
         assertEquals("RESOLVED", updatedErasure.getStatus());
-        assertTrue(updatedErasure.getReason().contains("Direct validation rule patch applied"));
+        assertTrue(updatedErasure.getReason().contains("Resolved runtime contract discrepancy"));
 
         // Verify no pending/processing requests remain
-        List<DataExportJob> pendingExports = exportJobRepository.findBySubjectIdAndStatusIn("test-subject-605eeda9", List.of("PENDING", "PROCESSING"));
+        List<DataExportJob> pendingExports = exportJobRepository.findBySubjectIdAndStatusIn("8bd0dbae-41f6-466a-95a7-aff680ed0866", List.of("PENDING", "PROCESSING"));
         assertTrue(pendingExports.isEmpty(), "No pending or processing export requests should remain");
     }
 }
