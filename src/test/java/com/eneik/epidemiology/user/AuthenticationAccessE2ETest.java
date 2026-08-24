@@ -1,11 +1,14 @@
 package com.eneik.epidemiology.user;
 
+import com.eneik.epidemiology.auth.PasswordRecoveryService;
+import com.eneik.epidemiology.auth.PasswordRecoveryTokenRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.security.SecureRandom;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneId;
@@ -14,12 +17,14 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
-
 @Transactional
 class AuthenticationAccessE2ETest {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private PasswordRecoveryTokenRepository recoveryTokenRepository;
 
     @Autowired
     private UserService.PasswordEncoderConfig passwordEncoderConfig;
@@ -53,10 +58,24 @@ class AuthenticationAccessE2ETest {
         // Seed user needing password recovery
         User user = userService.createUser("locked_researcher", "OldSecret456!", "RESEARCHER");
 
-        // Simulate password recovery reset
+        // Create recovery service and initiate self-service recovery flow through actual business logic
+        PasswordRecoveryService recoveryService = new PasswordRecoveryService(
+                userRepository,
+                recoveryTokenRepository,
+                passwordEncoderConfig.passwordEncoder(),
+                fixedClock,
+                new SecureRandom(),
+                "http://localhost:8080"
+        );
+
+        // Exercise recovery code path directly
+        PasswordRecoveryService.RecoveryResponse recoveryResponse = recoveryService.initiateRecovery("locked_researcher");
+        assertNotNull(recoveryResponse.recoveryToken(), "Recovery token must be generated");
+        assertTrue(recoveryResponse.recoveryLink().contains(recoveryResponse.recoveryToken()));
+
+        // Perform password reset using generated recovery token
         String newPassword = "RestoredPass789!";
-        user.setPasswordHash(passwordEncoderConfig.passwordEncoder().encode(newPassword));
-        userRepository.save(user);
+        recoveryService.confirmReset(recoveryResponse.recoveryToken(), newPassword);
 
         // Verify restored access
         Optional<User> restoredUserOpt = userService.findByUsername("locked_researcher");
