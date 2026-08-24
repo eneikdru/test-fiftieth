@@ -23,6 +23,9 @@ public class Document {
     @Column(name = "file_path", nullable = false, length = 500)
     private String filePath;
 
+    @Column(name = "text_content", columnDefinition = "TEXT")
+    private String textContent;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;
 
@@ -81,6 +84,14 @@ public class Document {
 
     public void setFilePath(String filePath) {
         this.filePath = filePath;
+    }
+
+    public String getTextContent() {
+        return textContent;
+    }
+
+    public void setTextContent(String textContent) {
+        this.textContent = textContent;
     }
 
     public OffsetDateTime getCreatedAt() {

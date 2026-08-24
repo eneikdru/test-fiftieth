@@ -36,6 +36,20 @@ class DocumentRepositoryTest {
     }
 
     @Test
+    @DisplayName("Given a document with extracted text, When it is saved, Then the text content is correctly persisted.")
+    void testSaveDocument_TextContentIsPersisted() {
+        // Given
+        Document doc = new Document("Test Text Extraction", "Lab", 2024, "/path/doc.pdf");
+        doc.setTextContent("Извлеченный текст для тестирования полнотекстового поиска.");
+
+        // When
+        Document savedDoc = documentRepository.saveAndFlush(doc);
+
+        // Then
+        assertThat(savedDoc.getTextContent()).isEqualTo("Извлеченный текст для тестирования полнотекстового поиска.");
+    }
+
+    @Test
     @DisplayName("Given an initial deployment, When the database is seeded, Then real Russian epidemiological sample documents are inserted.")
     void testInitialDeployment_DatabaseSeededWithRussianDocuments() {
         // Verify seed data from Flyway migration V20260822225105263__create_documents_table.sql
