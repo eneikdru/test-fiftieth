@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.support.EncodedResource;
 import org.springframework.jdbc.datasource.DataSourceUtils;
 import org.springframework.jdbc.datasource.init.ScriptUtils;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,7 +28,16 @@ class RuntimeContractVerificationTest {
         assertDoesNotThrow(() -> {
             Connection conn = DataSourceUtils.getConnection(dataSource);
             try {
-                ScriptUtils.executeSqlScript(conn, new ClassPathResource("db/migration/V20260824023801052__align_datastore_runtime_contract.sql"));
+                ScriptUtils.executeSqlScript(
+                    conn,
+                    new EncodedResource(new ClassPathResource("db/migration/V20260824023801052__align_datastore_runtime_contract.sql")),
+                    false,
+                    false,
+                    ScriptUtils.DEFAULT_COMMENT_PREFIX,
+                    ScriptUtils.EOF_STATEMENT_SEPARATOR,
+                    ScriptUtils.DEFAULT_BLOCK_COMMENT_START_DELIMITER,
+                    ScriptUtils.DEFAULT_BLOCK_COMMENT_END_DELIMITER
+                );
             } finally {
                 DataSourceUtils.releaseConnection(conn, dataSource);
             }
