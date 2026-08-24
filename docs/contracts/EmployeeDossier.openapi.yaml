@@ -1,0 +1,349 @@
+openapi: 3.0.3
+info:
+  title: API Сводных Досье и Отчетов по Сотрудникам
+  description: Контракт API для отбора связанных документов сотрудников (приказы, выписки, отчеты, экзамены) и генерации итоговых сводных справок по шаблону.
+  version: 1.0.0
+servers:
+  - url: /api/v1
+    description: Основной сервер API
+paths:
+  /dossier/documents:
+    get:
+      summary: Поиск и отбор документов сотрудника
+      description: Возвращает список документов досье сотрудника (приказы, выписки из ученого совета, отчеты, экзамены), отфильтрованных по идентификатору сотрудника, типу документа или ключевым словам.
+      operationId: searchEmployeeDocuments
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: employee_id
+          in: query
+          description: Идентификатор сотрудника / табельный номер
+          required: true
+          schema:
+            type: string
+            example: "EMP-001"
+        - name: doc_type
+          in: query
+          description: Фильтр по типу документа (например, ORDER, REPORT, EXAM, EXTRACT)
+          required: false
+          schema:
+            type: string
+            example: "ORDER"
+        - name: query
+          in: query
+          description: Поисковый запрос по названию или деталям документа
+          required: false
+          schema:
+            type: string
+            example: "грипп"
+        - name: from_date
+          in: query
+          description: Начальная дата периода публикации/издания документа
+          required: false
+          schema:
+            type: string
+            format: date
+            example: "2023-01-01"
+        - name: to_date
+          in: query
+          description: Конечная дата периода публикации/издания документа
+          required: false
+          schema:
+            type: string
+            format: date
+            example: "2023-12-31"
+      responses:
+        '200':
+          description: Успешный выбор документов досье
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EmployeeDocumentResponse'
+        '400':
+          description: Некорректные параметры запроса
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Пользователь не авторизован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /dossier/reports:
+    post:
+      summary: Запрос на генерацию сводной справки по досье сотрудника
+      description: Формирует итоговую сводную справку по персоналии/сотруднику на основе выбранных документов и указанного шаблона.
+      operationId: generateDossierReport
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DossierReportRequest'
+      responses:
+        '201':
+          description: Запрос на генерацию справки успешно создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DossierReportResponse'
+        '400':
+          description: Ошибка валидации данных запроса
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Пользователь не авторизован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Внутренняя ошибка генерации отчета
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /dossier/reports/{id}:
+    get:
+      summary: Получение статуса и метаданных сформированной справки
+      description: Возвращает текущий статус генерации и информацию об итоговой сводной справке.
+      operationId: getDossierReportStatus
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Уникальный идентификатор отчета
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Метаданные и статус справки
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DossierReportResponse'
+        '401':
+          description: Пользователь не авторизован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Справка не найдена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /dossier/reports/{id}/download:
+    get:
+      summary: Скачивание итоговой сводной справки
+      description: Возвращает сгенерированный файл справки в формате PDF или DOCX.
+      operationId: downloadDossierReport
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Уникальный идентификатор отчета
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Файл сводной справки
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+            application/vnd.openxmlformats-officedocument.wordprocessingml.document:
+              schema:
+                type: string
+                format: binary
+        '401':
+          description: Пользователь не авторизован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Файл справки не найден или еще не сгенерирован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    EmployeeDocumentResponse:
+      type: object
+      required:
+        - id
+        - employee_id
+        - doc_type
+        - title
+        - doc_date
+        - created_at
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: Уникальный идентификатор документа сотрудника
+          example: 1
+        employee_id:
+          type: string
+          description: Идентификатор / табельный номер сотрудника
+          example: "EMP-001"
+        doc_type:
+          type: string
+          description: Тип документа (например, ORDER, REPORT, EXAM, EXTRACT)
+          example: "ORDER"
+        title:
+          type: string
+          description: Название документа
+          example: "Приказ о назначении старшим научным сотрудником"
+        doc_date:
+          type: string
+          format: date
+          description: Дата документа
+          example: "2023-01-15"
+        details:
+          type: string
+          nullable: true
+          description: Дополнительное описание или выдержка из документа
+          example: "Приказ №42-к о кадровом перемещении"
+        created_at:
+          type: string
+          format: date-time
+          description: Дата и время внесения записи в систему
+
+    DossierReportRequest:
+      type: object
+      required:
+        - employee_id
+        - template_type
+      properties:
+        employee_id:
+          type: string
+          description: Идентификатор сотрудника, по которому формируется справка
+          example: "EMP-001"
+        template_type:
+          type: string
+          description: Код шаблона справки (например, SUMMARY_STANDARD, SCIENTIFIC_ACTIVITY, FULL_DOSSIER)
+          example: "SUMMARY_STANDARD"
+        document_ids:
+          type: array
+          items:
+            type: integer
+            format: int64
+          nullable: true
+          description: Список конкретных ID документов для включения в справку (если пуст, включаются все)
+        include_doc_types:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Список типов документов для фильтрации в справке
+          example: ["ORDER", "REPORT", "EXAM"]
+        notes:
+          type: string
+          nullable: true
+          description: Дополнительные примечания или комментарии к формируемой справке
+
+    DossierReportResponse:
+      type: object
+      required:
+        - id
+        - employee_id
+        - template_type
+        - status
+        - created_at
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: Идентификатор сгенерированного отчета
+          example: 101
+        employee_id:
+          type: string
+          description: Идентификатор сотрудника
+          example: "EMP-001"
+        template_type:
+          type: string
+          description: Выбранный шаблон справки
+          example: "SUMMARY_STANDARD"
+        status:
+          type: string
+          enum: [PENDING, PROCESSING, COMPLETED, FAILED]
+          description: Статус генерации отчета
+          example: "COMPLETED"
+        summary_text:
+          type: string
+          nullable: true
+          description: Краткое текстовое резюме сформированной справки
+          example: "Сводная справка по сотруднику EMP-001: 5 документов (2 приказа, 1 отчет, 1 экзамен, 1 выписка)."
+        document_count:
+          type: integer
+          description: Количество вошедших в справку документов
+          example: 5
+        download_url:
+          type: string
+          nullable: true
+          description: Относительный URL для скачивания готового файла справки
+          example: "/api/v1/dossier/reports/101/download"
+        created_at:
+          type: string
+          format: date-time
+          description: Время создания запроса на отчет
+
+    ErrorResponse:
+      type: object
+      required:
+        - error_code
+        - message
+        - timestamp
+      properties:
+        error_code:
+          type: string
+          description: Машинно-читаемый код ошибки
+          example: "VALIDATION_ERROR"
+        message:
+          type: string
+          description: Сообщение об ошибке на русском языке
+          example: "Не указан обязательный параметр employee_id."
+        details:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Дополнительные детали ошибки
+        timestamp:
+          type: string
+          format: date-time
+          description: Временная метка ошибки
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
