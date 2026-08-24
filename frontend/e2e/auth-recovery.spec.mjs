@@ -50,4 +50,14 @@ test.describe('Authentication, Role Access, and Recovery E2E Tests', () => {
     await page.click('button:has-text("Вернуться ко входу")');
     await expect(page.locator('h2')).toHaveText('Вход в систему');
   });
+
+  test('Given a logged-in user, When they click logout, Then they are logged out successfully', async ({ page }) => {
+    await page.goto(harnessPath);
+    await page.fill('#username-input', 'employee_user');
+    await page.fill('#password-input', 'EmployeeSecret123!');
+    await page.click('button[type="submit"]');
+    await expect(page.locator('main')).toContainText('Роль: RESEARCHER');
+    await page.click('button:has-text("Выйти из системы")');
+    await expect(page.locator('h2')).toHaveText('Вход в систему');
+  });
 });
