@@ -1,5 +1,5 @@
--- Flyway Migration V20260824035457854: Patch validation rule and update pending privacy requests to RESOLVED for reviewConcerns stream
--- Mandatory version: V20260824035457854
+-- Flyway Migration V20260824095559759: Patch validation rule and update pending privacy requests to RESOLVED for reviewConcerns stream
+-- Mandatory version: V20260824095559759
 
 UPDATE privacy_export_requests
 SET status = 'RESOLVED',
