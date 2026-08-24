@@ -1,1 +1,1 @@
-git checkout -b feature/api-auth-registration && git add docs/contracts/Auth.openapi.yaml && git commit -m "feat(api): add registration endpoint to auth contract" && git push origin feature/api-auth-registration
+git checkout -b task-plan-165890cd && git commit -m "add task plan" && git push origin task-plan-165890cd
