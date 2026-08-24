@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.support.EncodedResource;
 import org.springframework.jdbc.datasource.DataSourceUtils;
 import org.springframework.jdbc.datasource.init.ScriptUtils;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,6 +33,19 @@ class MigrationEndToEndVerificationTest {
 
     @Autowired
     private DataSource dataSource;
+
+    private void runScript(Connection conn, String path) {
+        ScriptUtils.executeSqlScript(
+            conn,
+            new EncodedResource(new ClassPathResource(path)),
+            false,
+            false,
+            ScriptUtils.DEFAULT_COMMENT_PREFIX,
+            ScriptUtils.EOF_STATEMENT_SEPARATOR,
+            ScriptUtils.DEFAULT_BLOCK_COMMENT_START_DELIMITER,
+            ScriptUtils.DEFAULT_BLOCK_COMMENT_END_DELIMITER
+        );
+    }
 
     @Test
     @DisplayName("Given full migration chain runs, When end-to-end check executes, Then test asserts terminal ESCALATED state for recovery subjects")
@@ -81,14 +95,14 @@ class MigrationEndToEndVerificationTest {
         // Run previous conflicting migrations to simulate full ordered migration chain
         Connection conn = DataSourceUtils.getConnection(dataSource);
         try {
-            ScriptUtils.executeSqlScript(conn, new ClassPathResource("db/migration/V20260823055044137__resolve_stuck_subject_fd6672c6.sql"));
-            ScriptUtils.executeSqlScript(conn, new ClassPathResource("db/migration/V20260823065127618__unblock_stuck_subjects.sql"));
-            ScriptUtils.executeSqlScript(conn, new ClassPathResource("db/migration/V20260823075743029__resolve_stuck_operations_auditor_subjects.sql"));
-            ScriptUtils.executeSqlScript(conn, new ClassPathResource("db/migration/V20260823075746149__reconcile_orchestrator_subjects_blocker.sql"));
-            ScriptUtils.executeSqlScript(conn, new ClassPathResource("db/migration/V20260823081040819__escalate_stuck_subjects.sql"));
-            ScriptUtils.executeSqlScript(conn, new ClassPathResource("db/migration/V20260823090157407__flag_stuck_subjects_for_human_review.sql"));
+            runScript(conn, "db/migration/V20260823055044137__resolve_stuck_subject_fd6672c6.sql");
+            runScript(conn, "db/migration/V20260823065127618__unblock_stuck_subjects.sql");
+            runScript(conn, "db/migration/V20260823075743029__resolve_stuck_operations_auditor_subjects.sql");
+            runScript(conn, "db/migration/V20260823075746149__reconcile_orchestrator_subjects_blocker.sql");
+            runScript(conn, "db/migration/V20260823081040819__escalate_stuck_subjects.sql");
+            runScript(conn, "db/migration/V20260823090157407__flag_stuck_subjects_for_human_review.sql");
             // Execute the new patch migration
-            ScriptUtils.executeSqlScript(conn, new ClassPathResource("db/migration/V20260823204720699__unblock_stuck_auditor_subjects_and_escalate.sql"));
+            runScript(conn, "db/migration/V20260823204720699__unblock_stuck_auditor_subjects_and_escalate.sql");
         } catch (Exception e) {
             fail("Failed executing migration chain: " + e.getMessage());
         } finally {
