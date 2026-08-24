@@ -8,6 +8,37 @@ servers:
     description: Primary API endpoint base path
 
 paths:
+  /auth/register:
+    post:
+      summary: User registration
+      description: Registers a new employee account in the system.
+      operationId: registerUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegistrationRequest'
+      responses:
+        '201':
+          description: User successfully registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegistrationResponse'
+        '400':
+          description: Invalid request parameters or validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Username or email already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
   /auth/login:
     post:
       summary: User authentication
@@ -173,6 +204,50 @@ paths:
 
 components:
   schemas:
+    RegistrationRequest:
+      type: object
+      required:
+        - username
+        - password
+        - email
+        - full_name
+      properties:
+        username:
+          type: string
+          description: Desired username for the new employee
+          example: "ivanov_ii"
+        password:
+          type: string
+          format: password
+          description: Strong password for the new account
+          example: "StrongP@ssword2026!"
+        email:
+          type: string
+          format: email
+          description: Official email address of the employee
+          example: "ivanov@epidemiology-inst.ru"
+        full_name:
+          type: string
+          description: Full name of the institute employee
+          example: "Иванов Иван Иванович"
+
+    RegistrationResponse:
+      type: object
+      required:
+        - success
+        - message
+        - user
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          description: Registration outcome message in Russian
+          example: "Регистрация успешно завершена."
+        user:
+          $ref: '#/components/schemas/UserInfo'
+
     LoginRequest:
       type: object
       required:
