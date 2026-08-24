@@ -27,14 +27,15 @@ public class EmployeeDossierController {
 
     @GetMapping("/documents")
     public ResponseEntity<?> searchEmployeeDocuments(
-            @RequestParam("employee_id") String employeeId,
+            @RequestParam(value = "employee_id", required = false) String employeeId,
+            @RequestParam(value = "employee_surname", required = false) String employeeSurname,
             @RequestParam(value = "doc_type", required = false) String docType,
             @RequestParam(value = "query", required = false) String query,
             @RequestParam(value = "from_date", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
             @RequestParam(value = "to_date", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate) {
 
         List<EmployeeDocument> documents = employeeDocumentRepository.searchEmployeeDocuments(
-                employeeId, docType, query, fromDate, toDate
+                employeeId, employeeSurname, docType, query, fromDate, toDate
         );
         return ResponseEntity.ok(documents);
     }

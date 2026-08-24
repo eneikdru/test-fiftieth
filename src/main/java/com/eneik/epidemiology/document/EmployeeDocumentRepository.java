@@ -17,7 +17,8 @@ public interface EmployeeDocumentRepository extends JpaRepository<EmployeeDocume
     @Query("SELECT d FROM EmployeeDocument d WHERE d.employeeId = :employeeId ORDER BY d.docDate DESC")
     List<EmployeeDocument> findUnifiedEmployeeDossier(@Param("employeeId") String employeeId);
 
-    @Query("SELECT d FROM EmployeeDocument d WHERE d.employeeId = :employeeId " +
+    @Query("SELECT d FROM EmployeeDocument d WHERE (:employeeId IS NULL OR d.employeeId = :employeeId) " +
+           "AND (:employeeSurname IS NULL OR d.employeeSurname = :employeeSurname) " +
            "AND (:docType IS NULL OR d.docType = :docType) " +
            "AND (:query IS NULL OR LOWER(d.title) LIKE LOWER(CONCAT('%', :query, '%')) OR LOWER(d.details) LIKE LOWER(CONCAT('%', :query, '%'))) " +
            "AND (cast(:fromDate as date) IS NULL OR d.docDate >= :fromDate) " +
@@ -25,6 +26,7 @@ public interface EmployeeDocumentRepository extends JpaRepository<EmployeeDocume
            "ORDER BY d.docDate DESC")
     List<EmployeeDocument> searchEmployeeDocuments(
             @Param("employeeId") String employeeId,
+            @Param("employeeSurname") String employeeSurname,
             @Param("docType") String docType,
             @Param("query") String query,
             @Param("fromDate") java.time.LocalDate fromDate,
