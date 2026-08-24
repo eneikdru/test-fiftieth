@@ -30,8 +30,8 @@ public interface DocumentRepository extends JpaRepository<Document, Long> {
            " LOWER(CAST(d.authorOrganization AS java.lang.String)) LIKE LOWER(CONCAT('%', CAST(:q AS java.lang.String), '%')) OR " +
            " (d.textContent IS NOT NULL AND LOWER(CAST(d.textContent AS java.lang.String)) LIKE LOWER(CONCAT('%', CAST(:q AS java.lang.String), '%')))) AND " +
            "(:docType IS NULL OR d.docType = :docType) AND " +
-           "(:fromDate IS NULL OR d.publicationDate >= :fromDate) AND " +
-           "(:toDate IS NULL OR d.publicationDate <= :toDate)")
+           "(CAST(:fromDate AS java.time.LocalDate) IS NULL OR d.publicationDate >= :fromDate) AND " +
+           "(CAST(:toDate AS java.time.LocalDate) IS NULL OR d.publicationDate <= :toDate)")
     Page<Document> fullTextSearch(@Param("q") String q,
                                  @Param("docType") String docType,
                                  @Param("fromDate") LocalDate fromDate,
