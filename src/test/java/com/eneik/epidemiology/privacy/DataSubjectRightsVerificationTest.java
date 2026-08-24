@@ -11,13 +11,12 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.io.ClassPathResource;
-import org.springframework.jdbc.datasource.DataSourceUtils;
+import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 import org.springframework.jdbc.datasource.init.ScriptUtils;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.sql.DataSource;
 import java.io.ByteArrayInputStream;
-import java.sql.Connection;
 import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.time.Instant;
@@ -67,6 +66,12 @@ class DataSubjectRightsVerificationTest {
         );
     }
 
+    private void runScript(String scriptPath) {
+        ResourceDatabasePopulator populator = new ResourceDatabasePopulator(new ClassPathResource(scriptPath));
+        populator.setSeparator(ScriptUtils.EOF_STATEMENT_SEPARATOR);
+        populator.execute(dataSource);
+    }
+
     @Test
     @DisplayName("Given a stuck subject record from task ea2d1954-4da4-4912-8565-dcd27a569279, When atomic UPDATE patch is applied, Then state transitions to ESCALATED and operations auditor reprocesses without poka-yoke failure")
     void testStuckSubjectAtomicallyTransitionsToResolvableState() {
@@ -107,14 +112,11 @@ class DataSubjectRightsVerificationTest {
         entityManager.clear();
 
         // Execute the Flyway migration script V20260823081040819__escalate_stuck_subjects.sql
-        Connection conn = DataSourceUtils.getConnection(dataSource);
         try {
-            ScriptUtils.executeSqlScript(conn, new ClassPathResource("db/migration/V20260823081040819__escalate_stuck_subjects.sql"));
-            ScriptUtils.executeSqlScript(conn, new ClassPathResource("db/migration/V20260823065127618__unblock_stuck_subjects.sql"));
+            runScript("db/migration/V20260823081040819__escalate_stuck_subjects.sql");
+            runScript("db/migration/V20260823065127618__unblock_stuck_subjects.sql");
         } catch (Exception e) {
             fail("Failed to execute migration script: " + e.getMessage());
-        } finally {
-            DataSourceUtils.releaseConnection(conn, dataSource);
         }
 
         entityManager.clear();
@@ -176,14 +178,11 @@ class DataSubjectRightsVerificationTest {
         entityManager.clear();
 
         // Execute the Flyway migration script V20260823081040819__escalate_stuck_subjects.sql
-        Connection conn2 = DataSourceUtils.getConnection(dataSource);
         try {
-            ScriptUtils.executeSqlScript(conn2, new ClassPathResource("db/migration/V20260823081040819__escalate_stuck_subjects.sql"));
-            ScriptUtils.executeSqlScript(conn2, new ClassPathResource("db/migration/V20260823065127618__unblock_stuck_subjects.sql"));
+            runScript("db/migration/V20260823081040819__escalate_stuck_subjects.sql");
+            runScript("db/migration/V20260823065127618__unblock_stuck_subjects.sql");
         } catch (Exception e) {
             fail("Failed to execute migration script: " + e.getMessage());
-        } finally {
-            DataSourceUtils.releaseConnection(conn2, dataSource);
         }
 
         entityManager.clear();
