@@ -30,7 +30,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
-
 @AutoConfigureMockMvc
 @Transactional
 class AuthControllerTest {
@@ -63,9 +62,116 @@ class AuthControllerTest {
     }
 
     @Test
+    @DisplayName("Given valid registration request, When register endpoint called, Then user is created and 201 response returned")
+    void testRegisterUser_Success() throws Exception {
+        String regBody = "{" +
+                "\"username\":\"ivanov_ii\"," +
+                "\"password\":\"StrongP@ssword2026!\"," +
+                "\"email\":\"ivanov@epidemiology-inst.ru\"," +
+                "\"full_name\":\"Иванов Иван Иванович\"" +
+                "}";
+
+        mockMvc.perform(post("/api/v1/auth/register")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(regBody))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.success", is(true)))
+                .andExpect(jsonPath("$.message", is("Регистрация успешно завершена.")))
+                .andExpect(jsonPath("$.user.username", is("ivanov_ii")))
+                .andExpect(jsonPath("$.user.email", is("ivanov@epidemiology-inst.ru")))
+                .andExpect(jsonPath("$.user.full_name", is("Иванов Иван Иванович")))
+                .andExpect(jsonPath("$.user.role", is("USER")));
+
+        User created = userService.findByUsername("ivanov_ii").orElseThrow();
+        assert userService.verifyPassword("StrongP@ssword2026!", created.getPasswordHash());
+    }
+
+    @Test
+    @DisplayName("Given existing username or email, When register endpoint called with duplicate, Then returns 409 Conflict")
+    void testRegisterUser_DuplicateUsernameOrEmail_ReturnsConflict() throws Exception {
+        userService.createUser("ivanov_ii", "Pass123!", "ivanov@epidemiology-inst.ru", "Иванов Иван", "USER");
+
+        String duplicateBody = "{" +
+                "\"username\":\"ivanov_ii\"," +
+                "\"password\":\"StrongP@ss2026!\"," +
+                "\"email\":\"newemail@epidemiology-inst.ru\"," +
+                "\"full_name\":\"Иванов Иван Второй\"" +
+                "}";
+
+        mockMvc.perform(post("/api/v1/auth/register")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(duplicateBody))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.error_code", is("USER_ALREADY_EXISTS")))
+                .andExpect(jsonPath("$.message", is("Пользователь с таким именем или email уже существует.")));
+    }
+
+    @Test
+    @DisplayName("Given missing registration parameters, When register endpoint called, Then returns 400 Bad Request")
+    void testRegisterUser_MissingFields_ReturnsBadRequest() throws Exception {
+        String invalidBody = "{\"username\":\"incomplete_user\"}";
+
+        mockMvc.perform(post("/api/v1/auth/register")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(invalidBody))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error_code", is("INVALID_REQUEST")));
+    }
+
+    @Test
+    @DisplayName("Given valid login credentials with email, When login endpoint called, Then returns JWT tokens and user info")
+    void testLogin_ByEmail_ReturnsAuthTokens() throws Exception {
+        userService.createUser("katya_exp", "KatyaPass123!", "katya@inst.ru", "Екатерина Сергеевна", "RESEARCHER");
+
+        String loginBody = "{\"username\":\"katya@inst.ru\",\"password\":\"KatyaPass123!\"}";
+
+        mockMvc.perform(post("/api/v1/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(loginBody))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.access_token", notNullValue()))
+                .andExpect(jsonPath("$.refresh_token", notNullValue()))
+                .andExpect(jsonPath("$.token_type", is("Bearer")))
+                .andExpect(jsonPath("$.user.username", is("katya_exp")))
+                .andExpect(jsonPath("$.user.email", is("katya@inst.ru")))
+                .andExpect(jsonPath("$.user.full_name", is("Екатерина Сергеевна")))
+                .andExpect(jsonPath("$.user.role", is("RESEARCHER")));
+    }
+
+    @Test
+    @DisplayName("Given valid refresh token, When refresh endpoint called, Then issues new token pair")
+    void testRefreshToken_Success() throws Exception {
+        userService.createUser("refresh_user", "RefPass123!", "USER");
+        String refreshToken = "ref_refresh_user_" + System.currentTimeMillis();
+
+        String refreshBody = String.format("{\"refresh_token\":\"%s\"}", refreshToken);
+
+        mockMvc.perform(post("/api/v1/auth/refresh")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(refreshBody))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.access_token", notNullValue()))
+                .andExpect(jsonPath("$.refresh_token", notNullValue()))
+                .andExpect(jsonPath("$.user.username", is("refresh_user")));
+    }
+
+    @Test
+    @DisplayName("Given valid logout request, When logout endpoint called, Then invalidates session and returns success")
+    void testLogout_Success() throws Exception {
+        String logoutBody = "{\"refresh_token\":\"ref_user1_12345\"}";
+
+        mockMvc.perform(post("/api/v1/auth/logout")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(logoutBody))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success", is(true)))
+                .andExpect(jsonPath("$.message", is("Успешный выход из системы.")));
+    }
+
+    @Test
     @DisplayName("Given a user requests password reset with valid identity, When recovery endpoint is called, Then secure recovery link is generated and sent")
     void testRequestPasswordRecovery_GeneratesSecureRecoveryLink() throws Exception {
-        User user = userService.createUser("petrov_sm", "Pass12345!", "RESEARCHER");
+        User user = userService.createUser("petrov_sm", "Pass12345!", "petrov@inst.ru", "Петров С.М.", "RESEARCHER");
 
         // Verify service logic with explicit fixed clock and seedable random
         Instant fixedInstant = Instant.parse("2026-08-22T12:00:00Z");
@@ -81,13 +187,13 @@ class AuthControllerTest {
                 "http://localhost:8080"
         );
 
-        PasswordRecoveryService.RecoveryResponse response = customRecoveryService.initiateRecovery("petrov_sm");
+        PasswordRecoveryService.RecoveryResponse response = customRecoveryService.initiateRecovery("petrov@inst.ru");
 
         assert response.recoveryLink().contains("/reset-password?token=rec_tok_");
         assert response.message().equals("Инструкции по восстановлению пароля отправлены на ваш электронный адрес.");
 
-        // Execute via MockMvc
-        String requestBody = "{\"identity\":\"petrov_sm\"}";
+        // Execute via MockMvc with email identity
+        String requestBody = "{\"identity\":\"petrov@inst.ru\"}";
 
         mockMvc.perform(post("/api/v1/auth/recovery/request")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -130,23 +236,5 @@ class AuthControllerTest {
 
         User updatedUser = userService.findByUsername("sidorov_v").orElseThrow();
         assert userService.verifyPassword("NewStrongPass2026!", updatedUser.getPasswordHash());
-    }
-
-    @Test
-    @DisplayName("Given valid login credentials, When login endpoint called, Then returns JWT tokens and user info")
-    void testLogin_ReturnsAuthTokens() throws Exception {
-        userService.createUser("katya_exp", "KatyaPass123!", "RESEARCHER");
-
-        String loginBody = "{\"username\":\"katya_exp\",\"password\":\"KatyaPass123!\"}";
-
-        mockMvc.perform(post("/api/v1/auth/login")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(loginBody))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.access_token", notNullValue()))
-                .andExpect(jsonPath("$.refresh_token", notNullValue()))
-                .andExpect(jsonPath("$.token_type", is("Bearer")))
-                .andExpect(jsonPath("$.user.username", is("katya_exp")))
-                .andExpect(jsonPath("$.user.role", is("RESEARCHER")));
     }
 }

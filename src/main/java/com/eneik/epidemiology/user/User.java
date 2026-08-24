@@ -20,6 +20,12 @@ public class User {
     @Column(nullable = false, length = 50)
     private String role;
 
+    @Column(length = 255)
+    private String email;
+
+    @Column(name = "full_name", length = 255)
+    private String fullName;
+
     @Column(name = "created_at", nullable = false)
     private OffsetDateTime createdAt;
 
@@ -30,6 +36,15 @@ public class User {
         this.username = username;
         this.passwordHash = passwordHash;
         this.role = role;
+        this.createdAt = OffsetDateTime.now();
+    }
+
+    public User(String username, String passwordHash, String role, String email, String fullName) {
+        this.username = username;
+        this.passwordHash = passwordHash;
+        this.role = role;
+        this.email = email;
+        this.fullName = fullName;
         this.createdAt = OffsetDateTime.now();
     }
 
@@ -71,6 +86,22 @@ public class User {
 
     public void setRole(String role) {
         this.role = role;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public String getFullName() {
+        return fullName;
+    }
+
+    public void setFullName(String fullName) {
+        this.fullName = fullName;
     }
 
     public OffsetDateTime getCreatedAt() {

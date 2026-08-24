@@ -70,4 +70,23 @@ class UserServiceTest {
             userService.createUser("user_unique", "AnotherPass!", "ADMIN");
         });
     }
+
+    @Test
+    @DisplayName("Given user with email and full name, When creating user, Then user is saved and lookup by email or username works")
+    void testCreateUser_WithEmailAndFullName() {
+        UserService userService = new UserService(userRepository, passwordEncoderConfig.passwordEncoder());
+        User user = userService.createUser("ivanov_ii", "Pass12345!", "ivanov@epidemiology-inst.ru", "Иванов Иван Иванович", "RESEARCHER");
+
+        assertNotNull(user.getId());
+        assertEquals("ivanov@epidemiology-inst.ru", user.getEmail());
+        assertEquals("Иванов Иван Иванович", user.getFullName());
+
+        Optional<User> foundByEmail = userService.findByUsernameOrEmail("ivanov@epidemiology-inst.ru");
+        assertTrue(foundByEmail.isPresent());
+        assertEquals("ivanov_ii", foundByEmail.get().getUsername());
+
+        Optional<User> foundByUsername = userService.findByUsernameOrEmail("ivanov_ii");
+        assertTrue(foundByUsername.isPresent());
+        assertEquals("ivanov@epidemiology-inst.ru", foundByUsername.get().getEmail());
+    }
 }
