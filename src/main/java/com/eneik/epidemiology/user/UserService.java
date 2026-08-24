@@ -32,14 +32,24 @@ public class UserService {
 
     @Transactional
     public User createUser(String username, String rawPassword, String role) {
-        if (userRepository.findByUsername(username).isPresent()) {
+        return createUser(username, rawPassword, null, null, role);
+    }
+
+    @Transactional
+    public User createUser(String username, String rawPassword, String email, String fullName, String role) {
+        if (userRepository.existsByUsername(username)) {
             throw new IllegalArgumentException("Пользователь с таким именем уже существует");
+        }
+        if (email != null && !email.trim().isEmpty() && userRepository.existsByEmail(email.trim())) {
+            throw new IllegalArgumentException("Пользователь с таким email уже существует");
         }
         String hashedPassword = passwordEncoder.encode(rawPassword);
         User user = new User();
         user.setUsername(username);
         user.setPasswordHash(hashedPassword);
-        user.setRole(role);
+        user.setRole(role != null ? role : "USER");
+        user.setEmail(email != null ? email.trim() : null);
+        user.setFullName(fullName != null ? fullName.trim() : null);
         user.setCreatedAt(OffsetDateTime.now(clock));
         return userRepository.save(user);
     }
@@ -57,6 +67,25 @@ public class UserService {
     @Transactional(readOnly = true)
     public Optional<User> findByUsername(String username) {
         return userRepository.findByUsername(username);
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<User> findByUsernameOrEmail(String identity) {
+        if (identity == null || identity.trim().isEmpty()) {
+            return Optional.empty();
+        }
+        String trimmed = identity.trim();
+        return userRepository.findByUsernameOrEmail(trimmed, trimmed);
+    }
+
+    @Transactional(readOnly = true)
+    public boolean existsByUsername(String username) {
+        return userRepository.existsByUsername(username);
+    }
+
+    @Transactional(readOnly = true)
+    public boolean existsByEmail(String email) {
+        return userRepository.existsByEmail(email);
     }
 
     public boolean verifyPassword(String rawPassword, String encodedPassword) {

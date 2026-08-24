@@ -57,7 +57,7 @@ public class PasswordRecoveryService {
 
     @Transactional
     public RecoveryResponse initiateRecovery(String identity) {
-        User user = userRepository.findByUsername(identity)
+        User user = userRepository.findByUsernameOrEmail(identity, identity)
                 .orElseThrow(() -> new IllegalArgumentException("Пользователь с указанными данными не найден"));
 
         // Deterministic token string using seedable Random instance
