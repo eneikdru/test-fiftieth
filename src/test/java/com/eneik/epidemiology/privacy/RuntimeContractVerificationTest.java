@@ -23,7 +23,7 @@ class RuntimeContractVerificationTest {
     private DataSource dataSource;
 
     @Test
-    @DisplayName("Given mandatory Flyway migration V20260823204739819, When executed against datastore, Then patch completes cleanly")
+    @DisplayName("Given mandatory Flyway migration V20260824053157128, When executed against datastore, Then patch completes cleanly")
     void testRuntimeContractPatchMigrationExecutesCleanly() {
         assertDoesNotThrow(() -> {
             Connection conn = DataSourceUtils.getConnection(dataSource);
@@ -31,6 +31,16 @@ class RuntimeContractVerificationTest {
                 ScriptUtils.executeSqlScript(
                     conn,
                     new EncodedResource(new ClassPathResource("db/migration/V20260823204739819__align_datastore_runtime_contract.sql")),
+                    false,
+                    false,
+                    ScriptUtils.DEFAULT_COMMENT_PREFIX,
+                    ScriptUtils.EOF_STATEMENT_SEPARATOR,
+                    ScriptUtils.DEFAULT_BLOCK_COMMENT_START_DELIMITER,
+                    ScriptUtils.DEFAULT_BLOCK_COMMENT_END_DELIMITER
+                );
+                ScriptUtils.executeSqlScript(
+                    conn,
+                    new EncodedResource(new ClassPathResource("db/migration/V20260824053157128__align_datastore_runtime_contract.sql")),
                     false,
                     false,
                     ScriptUtils.DEFAULT_COMMENT_PREFIX,
