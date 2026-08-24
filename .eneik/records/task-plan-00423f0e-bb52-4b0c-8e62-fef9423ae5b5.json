@@ -1,0 +1,160 @@
+{
+  "epics": [
+    {
+      "existingEpicId": "9779de58-29a0-40c9-b5bf-ffe5640fbad7",
+      "title": null,
+      "jtbd": null,
+      "kanoClass": null,
+      "cynefinDomain": null,
+      "sixSigmaMetric": "Reduce out of control data points to 0",
+      "tocConstraintRef": "Design review consistency",
+      "sourceIndex": 0,
+      "requirements": [
+        "R1: Patch the existing code directly to resolve the missing rootCausePatternId for the reviewConcerns invariant pattern."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Resolve invariant patterns for review concerns",
+          "roleTag": "BARCAN-TAG-02",
+          "jtbd": "When implementing the fix for this epic, I want to patch the invariant pattern definitions, so that the out of control u-chart is stabilized",
+          "acceptanceCriteria": "Given the u-chart for review concerns is out of control\nWhen the system evaluates the invariant patterns\nThen the defect event must carry a valid rootCausePatternId",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "Design review consistency",
+          "sixSigmaMetric": "Reduce defect event rate without rootCausePatternId to 0",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1"
+          ]
+        }
+      ]
+    },
+    {
+      "existingEpicId": "a26b51a4-6b52-497d-bce6-689ddb0bca03",
+      "title": null,
+      "jtbd": null,
+      "kanoClass": null,
+      "cynefinDomain": null,
+      "sixSigmaMetric": "Ensure 100% presence of delivered code on main",
+      "tocConstraintRef": "Code delivery reliability",
+      "sourceIndex": 1,
+      "requirements": [
+        "R1: Re-implement and merge the code changes for the closed task 8bd0dbae-41f6-466a-95a7-aff680ed0866 directly into main."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Deliver missing runtime contract implementation",
+          "roleTag": "BARCAN-TAG-02",
+          "jtbd": "When implementing the missing contract for this epic, I want to commit the actual code to main, so that the datastore behaves as tested",
+          "acceptanceCriteria": "Given task 8bd0dbae is marked done but missing on main\nWhen the patch is applied directly to the codebase\nThen the missing runtime contract logic must be present and executable",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "Code delivery reliability",
+          "sixSigmaMetric": "Reduce missing code incidents to 0",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1"
+          ]
+        }
+      ]
+    },
+    {
+      "existingEpicId": "7e24dafe-61b2-42ec-ac6c-5745b4049cd2",
+      "title": null,
+      "jtbd": null,
+      "kanoClass": null,
+      "cynefinDomain": null,
+      "sixSigmaMetric": "Increase successful document search rate by 40%",
+      "tocConstraintRef": "Document discoverability",
+      "sourceIndex": 2,
+      "requirements": [
+        "R1: Extract and index full text from uploaded PDF files (orders, extracts, reports).",
+        "R2: Expose a search interface capable of searching by text occurrence (e.g., surname) inside the document content.",
+        "R3: Provide visual feedback on search progress and empty states.",
+        "R4: Ensure the interface meets WCAG 2.1 AA accessibility standards."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Define PDF search API contract",
+          "roleTag": "BARCAN-TAG-12",
+          "jtbd": "When implementing the search contract for this epic, I want to define the request and response shapes, so that backend and frontend can be built in parallel",
+          "acceptanceCriteria": "Given a search query parameter\nWhen the client calls the endpoint\nThen it receives a structured list of document matches",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "Document discoverability",
+          "sixSigmaMetric": "Reduce integration errors between frontend and backend to 0",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1",
+            "R2"
+          ]
+        },
+        {
+          "title": "Implement PDF text extraction and indexing schema",
+          "roleTag": "BARCAN-TAG-08",
+          "jtbd": "When implementing indexing for this epic, I want to create the database schema for full-text search, so that documents can be queried efficiently",
+          "acceptanceCriteria": "Given a PDF file is uploaded\nWhen the system processes it\nThen the text content is extracted and stored in a full-text searchable column",
+          "leanValue": "essential",
+          "cynefinDomain": "complicated",
+          "tocConstraintRef": "Document discoverability",
+          "sixSigmaMetric": "Achieve 99% extraction accuracy for text-based PDFs",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1"
+          ]
+        },
+        {
+          "title": "Implement search API endpoint",
+          "roleTag": "BARCAN-TAG-02",
+          "jtbd": "When implementing the backend for this epic, I want to expose the full-text search query logic, so that clients can retrieve matching documents",
+          "acceptanceCriteria": "Given an indexed set of documents\nWhen a search request is made for a surname\nThen the endpoint returns the correct matching documents within 200ms",
+          "leanValue": "essential",
+          "cynefinDomain": "complicated",
+          "tocConstraintRef": "Document discoverability",
+          "sixSigmaMetric": "Ensure 95th percentile response time is under 200ms",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1",
+            "R2"
+          ]
+        },
+        {
+          "title": "Implement search UI",
+          "roleTag": "BARCAN-TAG-11",
+          "jtbd": "When implementing the UI for this epic, I want to build the search input and results view, so that users can visually find documents",
+          "acceptanceCriteria": "Given the user is on the knowledge base page\nWhen they enter a surname and search\nThen they see a list of documents, with visible feedback during loading, and the UI is keyboard navigable per WCAG 2.1 AA\nGiven a fresh install, initialize 3 sample PDF records (Order, Report, Exam) to demonstrate search functionality",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "Document discoverability",
+          "sixSigmaMetric": "Achieve 100% WCAG AA compliance on search screens",
+          "hasUi": true,
+          "requirementRefs": [
+            "R2",
+            "R3",
+            "R4"
+          ]
+        },
+        {
+          "title": "Quality Assurance for PDF Search",
+          "roleTag": "BARCAN-TAG-06",
+          "jtbd": "When testing the search feature for this epic, I want to verify the entire flow from PDF indexing to UI results, so that the functionality is guaranteed",
+          "acceptanceCriteria": "Given a test suite for the search functionality\nWhen unit, integration, and E2E tests are executed\nThen the text extraction, API responses, and UI interactions all pass successfully",
+          "leanValue": "essential",
+          "cynefinDomain": "complicated",
+          "tocConstraintRef": "Document discoverability",
+          "sixSigmaMetric": "Achieve 100% test pass rate across the test pyramid",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1",
+            "R2",
+            "R3",
+            "R4"
+          ]
+        }
+      ]
+    }
+  ]
+}
