@@ -1,0 +1,61 @@
+package com.eneik.epidemiology.categorization;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+
+import java.math.BigDecimal;
+import java.time.OffsetDateTime;
+import java.util.List;
+import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.*;
+
+class RootCauseCategorizationServiceTest {
+
+    private RootCausePatternRepository patternRepository;
+    private DesignReviewConcernRepository concernRepository;
+    private RootCauseCategorizationService service;
+
+    @BeforeEach
+    void setUp() {
+        patternRepository = mock(RootCausePatternRepository.class);
+        concernRepository = mock(DesignReviewConcernRepository.class);
+        service = new RootCauseCategorizationService(patternRepository, concernRepository);
+    }
+
+    @Test
+    @DisplayName("Given uncategorized design review concerns, When categorizeReviewConcerns is called, Then assigns invariant rootCausePatternId atomically")
+    void testCategorizeReviewConcerns() {
+        RootCausePattern pattern = new RootCausePattern(
+            "RCP-001",
+            "Review Concerns Out of Control - 8 Consecutive Same Side",
+            "reviewConcerns",
+            "WESTERN_ELECTRIC_8_CONSECUTIVE_SAME_SIDE",
+            "RCP-REVIEW-CONCERNS-001",
+            OffsetDateTime.now()
+        );
+
+        when(patternRepository.findByStreamName("reviewConcerns")).thenReturn(Optional.of(pattern));
+
+        DesignReviewConcern concern1 = new DesignReviewConcern(
+            "CONCERN-1", "reviewConcerns", 9, new BigDecimal("0.0000"), null, "UNCATEGORIZED", OffsetDateTime.now()
+        );
+        DesignReviewConcern concern2 = new DesignReviewConcern(
+            "CONCERN-2", "reviewConcerns", 10, new BigDecimal("0.0000"), null, "UNCATEGORIZED", OffsetDateTime.now()
+        );
+
+        when(concernRepository.findByStreamNameAndRootCausePatternIdIsNull("reviewConcerns"))
+            .thenReturn(List.of(concern1, concern2));
+
+        when(concernRepository.categorizeConcernAtomically("CONCERN-1", "RCP-REVIEW-CONCERNS-001")).thenReturn(1);
+        when(concernRepository.categorizeConcernAtomically("CONCERN-2", "RCP-REVIEW-CONCERNS-001")).thenReturn(1);
+
+        int count = service.categorizeReviewConcerns("reviewConcerns");
+
+        assertEquals(2, count);
+        verify(concernRepository, times(1)).categorizeConcernAtomically("CONCERN-1", "RCP-REVIEW-CONCERNS-001");
+        verify(concernRepository, times(1)).categorizeConcernAtomically("CONCERN-2", "RCP-REVIEW-CONCERNS-001");
+    }
+}
