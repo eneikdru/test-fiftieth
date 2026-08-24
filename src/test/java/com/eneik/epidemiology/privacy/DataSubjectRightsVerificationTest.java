@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.support.EncodedResource;
 import org.springframework.jdbc.datasource.DataSourceUtils;
 import org.springframework.jdbc.datasource.init.ScriptUtils;
 import org.springframework.transaction.annotation.Transactional;
@@ -55,6 +56,19 @@ class DataSubjectRightsVerificationTest {
 
     private PrivacyService privacyService;
     private final Clock fixedClock = Clock.fixed(Instant.parse("2026-08-22T15:00:00Z"), ZoneId.of("UTC"));
+
+    private void executeSqlScriptSafely(Connection conn, String scriptPath) {
+        ScriptUtils.executeSqlScript(
+            conn,
+            new EncodedResource(new ClassPathResource(scriptPath)),
+            false,
+            false,
+            ScriptUtils.DEFAULT_COMMENT_PREFIX,
+            ScriptUtils.EOF_STATEMENT_SEPARATOR,
+            ScriptUtils.DEFAULT_BLOCK_COMMENT_START_DELIMITER,
+            ScriptUtils.DEFAULT_BLOCK_COMMENT_END_DELIMITER
+        );
+    }
 
     @BeforeEach
     void setUp() {
@@ -109,8 +123,8 @@ class DataSubjectRightsVerificationTest {
         // Execute the Flyway migration script V20260823081040819__escalate_stuck_subjects.sql
         Connection conn = DataSourceUtils.getConnection(dataSource);
         try {
-            ScriptUtils.executeSqlScript(conn, new ClassPathResource("db/migration/V20260823081040819__escalate_stuck_subjects.sql"));
-            ScriptUtils.executeSqlScript(conn, new ClassPathResource("db/migration/V20260823065127618__unblock_stuck_subjects.sql"));
+            executeSqlScriptSafely(conn, "db/migration/V20260823081040819__escalate_stuck_subjects.sql");
+            executeSqlScriptSafely(conn, "db/migration/V20260823065127618__unblock_stuck_subjects.sql");
         } catch (Exception e) {
             fail("Failed to execute migration script: " + e.getMessage());
         } finally {
@@ -178,8 +192,8 @@ class DataSubjectRightsVerificationTest {
         // Execute the Flyway migration script V20260823081040819__escalate_stuck_subjects.sql
         Connection conn2 = DataSourceUtils.getConnection(dataSource);
         try {
-            ScriptUtils.executeSqlScript(conn2, new ClassPathResource("db/migration/V20260823081040819__escalate_stuck_subjects.sql"));
-            ScriptUtils.executeSqlScript(conn2, new ClassPathResource("db/migration/V20260823065127618__unblock_stuck_subjects.sql"));
+            executeSqlScriptSafely(conn2, "db/migration/V20260823081040819__escalate_stuck_subjects.sql");
+            executeSqlScriptSafely(conn2, "db/migration/V20260823065127618__unblock_stuck_subjects.sql");
         } catch (Exception e) {
             fail("Failed to execute migration script: " + e.getMessage());
         } finally {
