@@ -1,1 +1,1 @@
-git checkout -b feature/api-auth-registration && git add docs/contracts/Auth.openapi.yaml && git commit -m "feat(api): add registration endpoint to auth contract" && git push origin feature/api-auth-registration
+git commit -m "feat(design): Update registration mockup to meet Fitts Law and WCAG standards"
