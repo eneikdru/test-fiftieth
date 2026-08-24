@@ -1,0 +1,100 @@
+{
+  "critiques": [
+    {
+      "roleTag": "BARCAN-TAG-00",
+      "philosopher": "Майкл Дамит",
+      "worldview": "Verificationist Theory of Meaning, Truth and Other Enigmas",
+      "critique": "The frontend components lack verification boundaries and mock the API integration instead of verifying it against the runtime.",
+      "proposal": "Implement actual backend calls in the UI and verify them with end-to-end tests.",
+      "dislike": "Empty tests or mocked state without verifiable truth conditions.",
+      "kanoClass": "Must-Be",
+      "confidence": "high",
+      "evidence": "frontend/e2e/catalog-search.spec.mjs tests the API endpoint using a configured Playwright baseURL.",
+      "screenshotFile": ""
+    },
+    {
+      "roleTag": "BARCAN-TAG-01",
+      "philosopher": "Рут Баркан Маркус",
+      "worldview": "Quantified Modal Logic - works only with actual entities.",
+      "critique": "The API returns 401 Unauthorized for the frontend HTML files, meaning the frontend has no actual existence within the deployed backend system. The UI is a hypothetical entity that the user cannot reach.",
+      "proposal": "Package and serve the static frontend resources via Spring Boot, or configure the web server/reverse proxy to serve them.",
+      "dislike": "The existence of static HTML in the codebase that never gets deployed to users.",
+      "kanoClass": "Reverse",
+      "confidence": "high",
+      "evidence": "curl -I http://localhost:18080/registration-harness.html returns 401 Unauthorized because of SecurityConfig.java.",
+      "screenshotFile": ""
+    },
+    {
+      "roleTag": "BARCAN-TAG-09",
+      "philosopher": "Ричард Рорти",
+      "worldview": "Neopragmatism - ruthless elimination of waste and focusing only on what achieves lean value.",
+      "critique": "The product includes non-essential telemetry and privacy components that add complexity but the core functionality of serving the UI is broken.",
+      "proposal": "Eliminate the non-functional static file separation and ensure the core product actually runs for the user.",
+      "dislike": "Building advanced backend features while the main path for the user is broken.",
+      "kanoClass": "Must-Be",
+      "confidence": "high",
+      "evidence": "The backend defines complex TelemetryService and PrivacyController, but the user cannot access the frontend due to 401 errors.",
+      "screenshotFile": ""
+    },
+    {
+      "roleTag": "BARCAN-TAG-02",
+      "philosopher": "Джон Перри",
+      "worldview": "Indexicals and Self-Locating - Sense Reference Split.",
+      "critique": "The login and authentication mechanisms conflate identity and reference, and the registration UI allows mismatched passwords without proper backend feedback.",
+      "proposal": "Ensure identity is clearly traced back to the indexical reference context in all auth requests.",
+      "dislike": "Unclear references to user state.",
+      "kanoClass": "Performance",
+      "confidence": "high",
+      "evidence": "src/main/java/com/eneik/epidemiology/auth/AuthController.java",
+      "screenshotFile": ""
+    },
+    {
+      "roleTag": "BARCAN-TAG-00",
+      "philosopher": "Гилберт Райл",
+      "worldview": "Knowing How Versus Knowing That.",
+      "critique": "The registration form UI knows 'how' to look like a form but lacks 'knowing that' it communicates with the server.",
+      "proposal": "Bridge the gap between frontend state and backend API integration.",
+      "dislike": "A disconnected UI component.",
+      "kanoClass": "Performance",
+      "confidence": "high",
+      "evidence": "frontend/src/components/RegistrationForm.svelte",
+      "screenshotFile": ""
+    },
+    {
+      "roleTag": "BARCAN-TAG-09",
+      "philosopher": "Уиллард Куайн",
+      "worldview": "Architectural holism - any feature changes the entire system.",
+      "critique": "The introduction of the new SecurityConfig has holistically broken the entire system's ability to serve the UI, proving that security cannot be evaluated in isolation.",
+      "proposal": "Modify the SecurityFilterChain to permit unauthenticated access to the static frontend files.",
+      "dislike": "Security rules that isolate the backend from the frontend's necessity.",
+      "kanoClass": "Must-Be",
+      "confidence": "high",
+      "evidence": "src/main/java/com/eneik/epidemiology/security/SecurityConfig.java explicitly blocking static assets.",
+      "screenshotFile": ""
+    },
+    {
+      "roleTag": "BARCAN-TAG-09",
+      "philosopher": "Роберт Брэндом",
+      "worldview": "Normative inferentialism - code is valuable for its consequences.",
+      "critique": "The user is forced to encounter a complete lack of response confirmation during certain flows, making the action's consequence unknowable.",
+      "proposal": "Implement explicit success and failure confirmations across all main paths.",
+      "dislike": "Silent failures in the UI.",
+      "kanoClass": "Must-Be",
+      "confidence": "high",
+      "evidence": "Step 1b: action with no confirmation.",
+      "screenshotFile": ""
+    },
+    {
+      "roleTag": "BARCAN-TAG-00",
+      "philosopher": "Нельсон Гудман",
+      "worldview": "Worldmaking and Projectibility - Token Trace Unity.",
+      "critique": "The application lacks an imprint (Impressum) reachable from every page, which is a mandatory legal obligation for the German market, violating the token trace unity of legal accountability.",
+      "proposal": "Add an Imprint link in the footer of the UI.",
+      "dislike": "Missing legal disclosures.",
+      "kanoClass": "Must-Be",
+      "confidence": "high",
+      "evidence": "German market legal obligation (Impressum).",
+      "screenshotFile": ""
+    }
+  ]
+}
