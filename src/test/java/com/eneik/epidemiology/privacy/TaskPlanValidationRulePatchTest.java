@@ -33,7 +33,7 @@ class TaskPlanValidationRulePatchTest {
     private JdbcTemplate jdbcTemplate;
 
     @Test
-    @DisplayName("Given unhandled uncategorized task plan pattern triggers review concerns, When mandatory Flyway migration V20260824022702097 executes, Then pending privacy requests are resolved without failing validation")
+    @DisplayName("Given unhandled uncategorized task plan pattern triggers review concerns, When mandatory Flyway migration V20260824004540925 executes, Then pending privacy requests are resolved without failing validation")
     void testValidationRulePatchMigrationExecutesCleanlyAndResolvesPendingRequests() {
         // Seed test pending export and erasure requests
         DataExportJob exportJob = new DataExportJob();
@@ -58,11 +58,11 @@ class TaskPlanValidationRulePatchTest {
 
         // Execute mandatory Flyway migration script cleanly as a block
         try {
-            ClassPathResource resource = new ClassPathResource("db/migration/V20260824022702097__patch_validation_rule_review_concerns.sql");
+            ClassPathResource resource = new ClassPathResource("db/migration/V20260824004540925__patch_validation_rule_review_concerns.sql");
             String sql = StreamUtils.copyToString(resource.getInputStream(), StandardCharsets.UTF_8);
             jdbcTemplate.execute(sql);
         } catch (Exception e) {
-            fail("Migration V20260824022702097 execution failed: " + e.getMessage());
+            fail("Migration V20260824004540925 execution failed: " + e.getMessage());
         }
 
         entityManager.clear();
