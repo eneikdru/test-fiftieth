@@ -15,6 +15,9 @@ public class EmployeeDocument {
     @Column(name = "employee_id", nullable = false, length = 100)
     private String employeeId;
 
+    @Column(name = "employee_surname", length = 255)
+    private String employeeSurname;
+
     @Column(name = "doc_type", nullable = false, length = 50)
     private String docType;
 
@@ -35,6 +38,15 @@ public class EmployeeDocument {
 
     public EmployeeDocument(String employeeId, String docType, String title, LocalDate docDate, String details) {
         this.employeeId = employeeId;
+        this.docType = docType;
+        this.title = title;
+        this.docDate = docDate;
+        this.details = details;
+    }
+
+    public EmployeeDocument(String employeeId, String employeeSurname, String docType, String title, LocalDate docDate, String details) {
+        this.employeeId = employeeId;
+        this.employeeSurname = employeeSurname;
         this.docType = docType;
         this.title = title;
         this.docDate = docDate;
@@ -62,6 +74,14 @@ public class EmployeeDocument {
 
     public void setEmployeeId(String employeeId) {
         this.employeeId = employeeId;
+    }
+
+    public String getEmployeeSurname() {
+        return employeeSurname;
+    }
+
+    public void setEmployeeSurname(String employeeSurname) {
+        this.employeeSurname = employeeSurname;
     }
 
     public String getDocType() {
