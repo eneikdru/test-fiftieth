@@ -24,7 +24,9 @@ it is the referent every later artifact is checked against.
    
    6. Доступ: просмотр и поиск — для всех сотрудников, загрузка и удаление — только для администратора.
 
+2. Полнотекстовый поиск внутри самих PDF-файлов и документов. Возможность находить документы по вхождению текста внутри файлов (например, поиск по фамилии для приказов, выписок с учёного совета, отчётов и результатов экзаменов).
+
 ---
 
-Entries: 1. Anything this product claims - a page
+Entries: 2. Anything this product claims - a page
 heading, a filter, a capability - must trace to one of them or to a declared route.
