@@ -1,1 +1,0 @@
-git checkout -b test-coverage-238c4189 && git commit -m "Test Coverage 238c4189" -m "BLOCKER: Test execution fails due to intractable testcontainers/Docker issue. In addition, the prompt contains a concrete contradiction regarding .eneik/ vs mandatory verification JSON record generation." && git push origin test-coverage-238c4189

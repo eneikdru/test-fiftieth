@@ -1,0 +1,54 @@
+openapi: 3.0.3
+info:
+  title: Runtime Contract API
+  version: 1.0.0
+paths:
+  /api/runtime-contracts/{id}:
+    get:
+      summary: Get a runtime contract by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RuntimeContractDto'
+        '404':
+          description: Contract not found
+  /api/runtime-contracts:
+    post:
+      summary: Create or update a runtime contract
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RuntimeContractDto'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RuntimeContractDto'
+components:
+  schemas:
+    RuntimeContractDto:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        isActive:
+          type: boolean
+      required:
+        - id
+        - name
+        - isActive
