@@ -1,6 +1,7 @@
 package com.eneik.epidemiology.document;
 
 import jakarta.persistence.*;
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 
 @Entity
@@ -14,11 +15,17 @@ public class Document {
     @Column(nullable = false, length = 255)
     private String title;
 
+    @Column(name = "doc_type", length = 50)
+    private String docType;
+
     @Column(name = "author_organization", nullable = false, length = 255)
     private String authorOrganization;
 
     @Column(name = "publication_year", nullable = false)
     private Integer publicationYear;
+
+    @Column(name = "publication_date")
+    private LocalDate publicationDate;
 
     @Column(name = "file_path", nullable = false, length = 500)
     private String filePath;
@@ -62,6 +69,14 @@ public class Document {
         this.title = title;
     }
 
+    public String getDocType() {
+        return docType;
+    }
+
+    public void setDocType(String docType) {
+        this.docType = docType;
+    }
+
     public String getAuthorOrganization() {
         return authorOrganization;
     }
@@ -76,6 +91,14 @@ public class Document {
 
     public void setPublicationYear(Integer publicationYear) {
         this.publicationYear = publicationYear;
+    }
+
+    public LocalDate getPublicationDate() {
+        return publicationDate;
+    }
+
+    public void setPublicationDate(LocalDate publicationDate) {
+        this.publicationDate = publicationDate;
     }
 
     public String getFilePath() {

@@ -16,11 +16,11 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.time.format.DateTimeParseException;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/v1/documents")
@@ -119,12 +119,72 @@ public class DocumentController {
 
     @GetMapping("/search")
     public ResponseEntity<?> searchDocuments(
+            @RequestParam(name = "q", required = false) String q,
             @RequestParam(name = "query", required = false) String query,
             @RequestParam(name = "author", required = false) String author,
             @RequestParam(name = "year", required = false) Integer year,
+            @RequestParam(name = "doc_type", required = false) String docType,
+            @RequestParam(name = "from_date", required = false) String fromDateStr,
+            @RequestParam(name = "to_date", required = false) String toDateStr,
             @RequestParam(name = "page", defaultValue = "0") int page,
-            @RequestParam(name = "size", defaultValue = "10") int size) {
+            @RequestParam(name = "size", defaultValue = "20") int size) {
 
+        boolean isFullTextSearchRequest = (q != null || docType != null || fromDateStr != null || toDateStr != null);
+
+        if (isFullTextSearchRequest) {
+            if (q != null && q.trim().isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of(
+                        "error_code", "INVALID_SEARCH_QUERY",
+                        "message", "Поисковый запрос не должен быть пустым.",
+                        "timestamp", OffsetDateTime.now().toString()
+                ));
+            }
+
+            LocalDate fromDate = parseDate(fromDateStr);
+            LocalDate toDate = parseDate(toDateStr);
+
+            Pageable pageable = PageRequest.of(page, size);
+            Page<Document> resultPage = documentRepository.fullTextSearch(
+                    (q != null && !q.trim().isEmpty()) ? q.trim() : null,
+                    (docType != null && !docType.trim().isEmpty()) ? docType.trim() : null,
+                    fromDate,
+                    toDate,
+                    pageable
+            );
+
+            telemetryService.recordSearchTelemetry(q != null ? q : "", resultPage.getContent().size());
+
+            List<Map<String, Object>> items = resultPage.getContent().stream().map(doc -> {
+                Map<String, Object> item = new LinkedHashMap<>();
+                item.put("document_id", doc.getId());
+                item.put("title", doc.getTitle());
+                item.put("doc_type", doc.getDocType() != null ? doc.getDocType() : "DOCUMENT");
+                item.put("author_organization", doc.getAuthorOrganization());
+
+                String pubDateStr = null;
+                if (doc.getPublicationDate() != null) {
+                    pubDateStr = doc.getPublicationDate().toString();
+                } else if (doc.getPublicationYear() != null) {
+                    pubDateStr = doc.getPublicationYear() + "-01-01";
+                }
+                item.put("publication_date", pubDateStr);
+
+                item.put("highlights", buildHighlights(doc, q));
+                item.put("matched_pages", List.of(1));
+                item.put("relevance_score", 1.0);
+                return item;
+            }).collect(Collectors.toList());
+
+            Map<String, Object> response = new LinkedHashMap<>();
+            response.put("items", items);
+            response.put("total_elements", resultPage.getTotalElements());
+            response.put("page", resultPage.getNumber());
+            response.put("size", resultPage.getSize());
+
+            return ResponseEntity.ok(response);
+        }
+
+        // Legacy search compatibility
         String normalizedQuery = (query != null && !query.trim().isEmpty()) ? query.trim() : null;
         String normalizedAuthor = (author != null && !author.trim().isEmpty()) ? author.trim() : null;
 
@@ -144,6 +204,49 @@ public class DocumentController {
         ));
     }
 
+    private LocalDate parseDate(String dateStr) {
+        if (dateStr == null || dateStr.trim().isEmpty()) {
+            return null;
+        }
+        try {
+            return LocalDate.parse(dateStr.trim());
+        } catch (DateTimeParseException e) {
+            return null;
+        }
+    }
+
+    private List<String> buildHighlights(Document doc, String q) {
+        if (q == null || q.isBlank()) {
+            return Collections.emptyList();
+        }
+        String text = doc.getTextContent();
+        if (text == null || text.isBlank()) {
+            text = doc.getTitle();
+        }
+        if (text == null || text.isBlank()) {
+            return Collections.emptyList();
+        }
+
+        String lowerText = text.toLowerCase();
+        String lowerQ = q.toLowerCase();
+        int index = lowerText.indexOf(lowerQ);
+
+        if (index != -1) {
+            int start = Math.max(0, index - 40);
+            int end = Math.min(text.length(), index + q.length() + 40);
+            String snippet = text.substring(start, end);
+
+            String matchedWord = text.substring(index, index + q.length());
+            String highlightedSnippet = snippet.replace(matchedWord, "<em>" + matchedWord + "</em>");
+            if (start > 0) highlightedSnippet = "..." + highlightedSnippet;
+            if (end < text.length()) highlightedSnippet = highlightedSnippet + "...";
+
+            return List.of(highlightedSnippet);
+        } else {
+            return List.of(text);
+        }
+    }
+
     @GetMapping("/{id}/view")
     public ResponseEntity<?> viewDocument(@PathVariable("id") Long id) {
         telemetryService.recordDownloadTelemetry(id);
@@ -156,11 +259,9 @@ public class DocumentController {
                     }
 
                     try {
-                        // Prevent path traversal
                         Path basePath = Paths.get("data/docs/uploads").toAbsolutePath().normalize();
                         String normalizedDbPath = doc.getFilePath();
 
-                        // The file paths might start with a slash depending on how they are saved in tests or prod
                         if (normalizedDbPath.startsWith("/")) {
                             normalizedDbPath = normalizedDbPath.substring(1);
                         }
@@ -177,7 +278,6 @@ public class DocumentController {
                             return ResponseEntity.status(HttpStatus.NOT_FOUND).body((Object) "Document file not found on disk");
                         }
 
-                        // Streaming the response to avoid OOM for large files
                         Object body = new org.springframework.core.io.FileSystemResource(resolvedPath.toFile());
 
                         MediaType mediaType = MediaType.APPLICATION_PDF;
