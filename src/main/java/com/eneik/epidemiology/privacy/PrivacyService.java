@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.dao.OptimisticLockingFailureException;
 
 import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
@@ -93,17 +94,21 @@ public class PrivacyService {
             String downloadUrl = "/api/v1/privacy/export-requests/" + job.getRequestId() + "/download";
             OffsetDateTime now = OffsetDateTime.now(clock);
 
-            job.setStatus("COMPLETED");
-            job.setDownloadUrl(downloadUrl);
-            job.setExportPayload(payloadJson);
-            job.setCompletedAt(now);
-            job.setExpiresAt(now.plusDays(7));
-            return exportJobRepository.save(job);
+            int rowsUpdated = exportJobRepository.updateStatusToCompleted(
+                job.getRequestId(), "PENDING", "COMPLETED", downloadUrl, payloadJson, now, now.plusDays(7)
+            );
+            if (rowsUpdated == 0) {
+                throw new OptimisticLockingFailureException("Export job status was modified concurrently");
+            }
+            return exportJobRepository.findById(job.getRequestId()).orElseThrow();
         } catch (Exception e) {
-            job.setStatus("FAILED");
-            job.setErrorCode("EXPORT_PROCESSING_ERROR");
-            job.setErrorMessage("Ошибка при формировании экспортного пакета данных.");
-            return exportJobRepository.save(job);
+            int rowsUpdated = exportJobRepository.updateStatusToFailed(
+                job.getRequestId(), "PENDING", "FAILED", "EXPORT_PROCESSING_ERROR", "Ошибка при формировании экспортного пакета данных."
+            );
+            if (rowsUpdated == 0) {
+                throw new OptimisticLockingFailureException("Export job status was modified concurrently");
+            }
+            return exportJobRepository.findById(job.getRequestId()).orElseThrow();
         }
     }
 
@@ -190,11 +195,13 @@ public class PrivacyService {
         // Execute permanent removal of identifiable user data from database
         userRepository.delete(user);
 
-        job.setStatus("COMPLETED");
-        job.setRecordsErasedCount(1);
-        job.setCompletedAt(OffsetDateTime.now(clock));
-
-        return erasureJobRepository.save(job);
+        int rowsUpdated = erasureJobRepository.updateStatusToCompleted(
+            job.getRequestId(), "PENDING", "COMPLETED", 1, OffsetDateTime.now(clock)
+        );
+        if (rowsUpdated == 0) {
+            throw new OptimisticLockingFailureException("Erasure job status was modified concurrently");
+        }
+        return erasureJobRepository.findById(job.getRequestId()).orElseThrow();
     }
 
     @Transactional(readOnly = true)

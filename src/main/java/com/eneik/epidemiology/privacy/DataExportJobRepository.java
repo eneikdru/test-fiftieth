@@ -14,7 +14,7 @@ public interface DataExportJobRepository extends JpaRepository<DataExportJob, St
 
     List<DataExportJob> findBySubjectIdAndStatusIn(String subjectId, List<String> statuses);
 
-    @Modifying
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("UPDATE DataExportJob j SET j.status = :newStatus, j.downloadUrl = :downloadUrl, j.exportPayload = :exportPayload, j.completedAt = :completedAt, j.expiresAt = :expiresAt WHERE j.requestId = :requestId AND j.status = :expectedStatus")
     int updateStatusToCompleted(
         @Param("requestId") String requestId,
@@ -24,5 +24,15 @@ public interface DataExportJobRepository extends JpaRepository<DataExportJob, St
         @Param("exportPayload") String exportPayload,
         @Param("completedAt") OffsetDateTime completedAt,
         @Param("expiresAt") OffsetDateTime expiresAt
+    );
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("UPDATE DataExportJob j SET j.status = :newStatus, j.errorCode = :errorCode, j.errorMessage = :errorMessage WHERE j.requestId = :requestId AND j.status = :expectedStatus")
+    int updateStatusToFailed(
+        @Param("requestId") String requestId,
+        @Param("expectedStatus") String expectedStatus,
+        @Param("newStatus") String newStatus,
+        @Param("errorCode") String errorCode,
+        @Param("errorMessage") String errorMessage
     );
 }

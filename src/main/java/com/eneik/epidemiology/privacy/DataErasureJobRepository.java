@@ -14,7 +14,7 @@ public interface DataErasureJobRepository extends JpaRepository<DataErasureJob, 
 
     List<DataErasureJob> findBySubjectIdAndStatusIn(String subjectId, List<String> statuses);
 
-    @Modifying
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("UPDATE DataErasureJob j SET j.status = :newStatus, j.recordsErasedCount = :recordsErasedCount, j.completedAt = :completedAt WHERE j.requestId = :requestId AND j.status = :expectedStatus")
     int updateStatusToCompleted(
         @Param("requestId") String requestId,
