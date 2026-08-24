@@ -53,12 +53,12 @@ class AutomatedResolutionPatchTest {
         erasureJobRepository.saveAndFlush(erasureJob);
 
         int exportUpdated = jdbcTemplate.update(
-            "UPDATE privacy_export_requests SET status = 'RESOLVED', notes = 'Automated patch: Resolved stuck subject without human intervention due to missing human in loop.' WHERE subject_id = ? AND status IN ('PENDING', 'PROCESSING', 'FLAGGED_FOR_HUMAN_REVIEW')",
+            "UPDATE privacy_export_requests SET status = 'RESOLVED', notes = 'Automated patch: Resolved stuck operations auditor subjects' WHERE subject_id = ? AND status IN ('PENDING', 'PROCESSING', 'FLAGGED_FOR_HUMAN_REVIEW')",
             subjectId
         );
 
         int erasureUpdated = jdbcTemplate.update(
-            "UPDATE privacy_erasure_requests SET status = 'RESOLVED', reason = 'Automated patch: Resolved stuck subject without human intervention due to missing human in loop.' WHERE subject_id = ? AND status IN ('PENDING', 'PROCESSING', 'FLAGGED_FOR_HUMAN_REVIEW')",
+            "UPDATE privacy_erasure_requests SET status = 'RESOLVED', reason = 'Automated patch: Resolved stuck operations auditor subjects' WHERE subject_id = ? AND status IN ('PENDING', 'PROCESSING', 'FLAGGED_FOR_HUMAN_REVIEW')",
             subjectId
         );
 
@@ -88,7 +88,7 @@ class AutomatedResolutionPatchTest {
         exportJobRepository.saveAndFlush(exportJob);
 
         int exportUpdated = jdbcTemplate.update(
-            "UPDATE privacy_export_requests SET status = 'RESOLVED', notes = 'Automated patch: Resolved stuck subject without human intervention due to missing human in loop.' WHERE subject_id = ? AND status IN ('PENDING', 'PROCESSING', 'FLAGGED_FOR_HUMAN_REVIEW')",
+            "UPDATE privacy_export_requests SET status = 'RESOLVED', notes = 'Automated patch: Resolved stuck operations auditor subjects' WHERE subject_id = ? AND status IN ('PENDING', 'PROCESSING', 'FLAGGED_FOR_HUMAN_REVIEW')",
             subjectId
         );
 
@@ -116,7 +116,7 @@ class AutomatedResolutionPatchTest {
         erasureJobRepository.saveAndFlush(erasureJob);
 
         int erasureUpdated = jdbcTemplate.update(
-            "UPDATE privacy_erasure_requests SET status = 'RESOLVED', reason = 'Automated patch: Resolved stuck subject without human intervention due to missing human in loop.' WHERE subject_id = ? AND status IN ('PENDING', 'PROCESSING', 'FLAGGED_FOR_HUMAN_REVIEW')",
+            "UPDATE privacy_erasure_requests SET status = 'RESOLVED', reason = 'Automated patch: Resolved stuck operations auditor subjects' WHERE subject_id = ? AND status IN ('PENDING', 'PROCESSING', 'FLAGGED_FOR_HUMAN_REVIEW')",
             subjectId
         );
 
@@ -142,7 +142,7 @@ class AutomatedResolutionPatchTest {
         exportJobRepository.saveAndFlush(exportJob);
 
         int exportUpdated = jdbcTemplate.update(
-            "UPDATE privacy_export_requests SET status = 'RESOLVED', notes = 'Automated patch: Resolved stuck subject without human intervention due to missing human in loop.' WHERE subject_id = ? AND status IN ('PENDING', 'PROCESSING', 'FLAGGED_FOR_HUMAN_REVIEW')",
+            "UPDATE privacy_export_requests SET status = 'RESOLVED', notes = 'Automated patch: Resolved stuck operations auditor subjects' WHERE subject_id = ? AND status IN ('PENDING', 'PROCESSING', 'FLAGGED_FOR_HUMAN_REVIEW')",
             subjectId
         );
 
@@ -170,7 +170,7 @@ class AutomatedResolutionPatchTest {
         erasureJobRepository.saveAndFlush(erasureJob);
 
         int erasureUpdated = jdbcTemplate.update(
-            "UPDATE privacy_erasure_requests SET status = 'RESOLVED', reason = 'Automated patch: Resolved stuck subject without human intervention due to missing human in loop.' WHERE subject_id = ? AND status IN ('PENDING', 'PROCESSING', 'FLAGGED_FOR_HUMAN_REVIEW')",
+            "UPDATE privacy_erasure_requests SET status = 'RESOLVED', reason = 'Automated patch: Resolved stuck operations auditor subjects' WHERE subject_id = ? AND status IN ('PENDING', 'PROCESSING', 'FLAGGED_FOR_HUMAN_REVIEW')",
             subjectId
         );
 
@@ -206,12 +206,12 @@ class AutomatedResolutionPatchTest {
         erasureJobRepository.saveAndFlush(erasureJob);
 
         int exportUpdated = jdbcTemplate.update(
-            "UPDATE privacy_export_requests SET status = 'RESOLVED', notes = 'Automated patch: Resolved stuck subject without human intervention due to missing human in loop.' WHERE subject_id = ? AND status IN ('PENDING', 'PROCESSING', 'FLAGGED_FOR_HUMAN_REVIEW')",
+            "UPDATE privacy_export_requests SET status = 'RESOLVED', notes = 'Automated patch: Resolved stuck operations auditor subjects' WHERE subject_id = ? AND status IN ('PENDING', 'PROCESSING', 'FLAGGED_FOR_HUMAN_REVIEW')",
             subjectId
         );
 
         int erasureUpdated = jdbcTemplate.update(
-            "UPDATE privacy_erasure_requests SET status = 'RESOLVED', reason = 'Automated patch: Resolved stuck subject without human intervention due to missing human in loop.' WHERE subject_id = ? AND status IN ('PENDING', 'PROCESSING', 'FLAGGED_FOR_HUMAN_REVIEW')",
+            "UPDATE privacy_erasure_requests SET status = 'RESOLVED', reason = 'Automated patch: Resolved stuck operations auditor subjects' WHERE subject_id = ? AND status IN ('PENDING', 'PROCESSING', 'FLAGGED_FOR_HUMAN_REVIEW')",
             subjectId
         );
 
