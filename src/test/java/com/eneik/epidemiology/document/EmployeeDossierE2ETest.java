@@ -10,6 +10,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.security.test.context.support.WithMockUser;
 import com.eneik.epidemiology.EpidemiologyApplication;
 
 import java.time.LocalDate;
@@ -51,6 +52,7 @@ public class EmployeeDossierE2ETest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     @DisplayName("Given the test suite, when the E2E tests run, then they verify that an employee can be searched and their documents displayed")
     void verifyEmployeeSearchAndDisplayDocuments() throws Exception {
         mockMvc.perform(get("/api/v1/dossier/documents")
@@ -62,6 +64,7 @@ public class EmployeeDossierE2ETest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     @DisplayName("Given the report endpoint, when tested, then it verifies a report is generated successfully based on the initial sample content")
     void verifyReportGeneration() throws Exception {
         Map<String, Object> request = Map.of(
