@@ -10,6 +10,12 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import com.eneik.epidemiology.telemetry.TelemetryService;
+import static org.mockito.Mockito.verify;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.times;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -36,6 +42,9 @@ class EmployeeDossierControllerTest {
 
     @Autowired
     private DossierReportRepository dossierReportRepository;
+
+    @MockBean
+    private TelemetryService telemetryService;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -89,6 +98,8 @@ class EmployeeDossierControllerTest {
                 .andExpect(jsonPath("$.status").value("COMPLETED"))
                 .andExpect(jsonPath("$.document_count").value(2))
                 .andExpect(jsonPath("$.employee_id").value("EMP-999"));
+
+        verify(telemetryService, times(1)).recordDossierGenerationTelemetry(anyLong(), eq(true));
     }
 
     @Test
