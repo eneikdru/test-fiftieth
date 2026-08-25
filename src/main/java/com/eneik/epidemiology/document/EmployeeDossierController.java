@@ -7,6 +7,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
+import com.eneik.epidemiology.telemetry.TelemetryService;
 
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
@@ -19,10 +20,12 @@ public class EmployeeDossierController {
 
     private final EmployeeDocumentRepository employeeDocumentRepository;
     private final DossierReportRepository dossierReportRepository;
+    private final TelemetryService telemetryService;
 
-    public EmployeeDossierController(EmployeeDocumentRepository employeeDocumentRepository, DossierReportRepository dossierReportRepository) {
+    public EmployeeDossierController(EmployeeDocumentRepository employeeDocumentRepository, DossierReportRepository dossierReportRepository, TelemetryService telemetryService) {
         this.employeeDocumentRepository = employeeDocumentRepository;
         this.dossierReportRepository = dossierReportRepository;
+        this.telemetryService = telemetryService;
     }
 
     @GetMapping("/documents")
@@ -53,47 +56,57 @@ public class EmployeeDossierController {
         String employeeId = (String) requestBody.get("employee_id");
         String templateType = (String) requestBody.get("template_type");
 
-        List<EmployeeDocument> documents;
+        long startTime = System.currentTimeMillis();
+        boolean success = false;
+        DossierReport report = null;
 
-        if (requestBody.containsKey("document_ids") && requestBody.get("document_ids") != null) {
-            List<Number> docIdsNum = (List<Number>) requestBody.get("document_ids");
-            List<Long> docIds = docIdsNum.stream().map(Number::longValue).toList();
-            documents = employeeDocumentRepository.findAllById(docIds);
+        try {
+            List<EmployeeDocument> documents;
 
-            // Only include documents belonging to the specified employee
-            documents = documents.stream().filter(d -> d.getEmployeeId().equals(employeeId)).toList();
-        } else {
-             documents = employeeDocumentRepository.findUnifiedEmployeeDossier(employeeId);
-        }
+            if (requestBody.containsKey("document_ids") && requestBody.get("document_ids") != null) {
+                List<Number> docIdsNum = (List<Number>) requestBody.get("document_ids");
+                List<Long> docIds = docIdsNum.stream().map(Number::longValue).toList();
+                documents = employeeDocumentRepository.findAllById(docIds);
 
-        if (requestBody.containsKey("include_doc_types") && requestBody.get("include_doc_types") != null) {
-             List<String> docTypes = (List<String>) requestBody.get("include_doc_types");
-             documents = documents.stream().filter(d -> docTypes.contains(d.getDocType())).toList();
-        }
+                // Only include documents belonging to the specified employee
+                documents = documents.stream().filter(d -> d.getEmployeeId().equals(employeeId)).toList();
+            } else {
+                 documents = employeeDocumentRepository.findUnifiedEmployeeDossier(employeeId);
+            }
 
-        String summaryText = "Сводная справка по сотруднику " + employeeId + ": " + documents.size() + " документов.";
+            if (requestBody.containsKey("include_doc_types") && requestBody.get("include_doc_types") != null) {
+                 List<String> docTypes = (List<String>) requestBody.get("include_doc_types");
+                 documents = documents.stream().filter(d -> docTypes.contains(d.getDocType())).toList();
+            }
 
-        DossierReport report = new DossierReport(
-                employeeId,
-                templateType,
-                "PENDING",
-                null,
-                documents.size(),
-                null
-        );
-        report = dossierReportRepository.save(report);
+            String summaryText = "Сводная справка по сотруднику " + employeeId + ": " + documents.size() + " документов.";
 
-        // Simulating immediate generation as a single atomic operation for now (satisfies complicated cynefin probe)
-        int updatedCount = dossierReportRepository.updateStatus(report.getId(), "PENDING", "COMPLETED");
-        if (updatedCount > 0) {
-            report.setStatus("COMPLETED");
-            report.setSummaryText(summaryText);
-            report.setDownloadUrl("/api/v1/dossier/reports/" + report.getId() + "/download");
-            report = dossierReportRepository.save(report); // update remaining fields
+            report = new DossierReport(
+                    employeeId,
+                    templateType,
+                    "PENDING",
+                    null,
+                    documents.size(),
+                    null
+            );
+            report = dossierReportRepository.save(report);
+
+            // Simulating immediate generation as a single atomic operation for now (satisfies complicated cynefin probe)
+            int updatedCount = dossierReportRepository.updateStatus(report.getId(), "PENDING", "COMPLETED");
+            if (updatedCount > 0) {
+                report.setStatus("COMPLETED");
+                report.setSummaryText(summaryText);
+                report.setDownloadUrl("/api/v1/dossier/reports/" + report.getId() + "/download");
+                report = dossierReportRepository.save(report); // update remaining fields
+                success = true;
+            }
+        } finally {
+            long processingTime = System.currentTimeMillis() - startTime;
+            telemetryService.recordDossierGenerationTelemetry(processingTime, success);
         }
 
         return ResponseEntity.status(HttpStatus.CREATED).body(Map.of(
-                "id", report.getId(),
+                "id", report != null ? report.getId() : null,
                 "employee_id", report.getEmployeeId(),
                 "template_type", report.getTemplateType(),
                 "status", report.getStatus(),

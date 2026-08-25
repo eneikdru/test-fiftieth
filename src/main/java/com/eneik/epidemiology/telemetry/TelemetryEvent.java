@@ -23,6 +23,9 @@ public class TelemetryEvent {
     @Column(name = "results_count")
     private Integer resultsCount;
 
+    @Column(name = "processing_time_ms")
+    private Long processingTimeMs;
+
     @Column(name = "created_at", nullable = false)
     private OffsetDateTime createdAt;
 
@@ -34,6 +37,15 @@ public class TelemetryEvent {
         this.queryTerm = queryTerm;
         this.documentId = documentId;
         this.resultsCount = resultsCount;
+        this.createdAt = createdAt;
+    }
+
+    public TelemetryEvent(String eventType, String queryTerm, Long documentId, Integer resultsCount, Long processingTimeMs, OffsetDateTime createdAt) {
+        this.eventType = eventType;
+        this.queryTerm = queryTerm;
+        this.documentId = documentId;
+        this.resultsCount = resultsCount;
+        this.processingTimeMs = processingTimeMs;
         this.createdAt = createdAt;
     }
 
@@ -83,5 +95,13 @@ public class TelemetryEvent {
 
     public void setCreatedAt(OffsetDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public Long getProcessingTimeMs() {
+        return processingTimeMs;
+    }
+
+    public void setProcessingTimeMs(Long processingTimeMs) {
+        this.processingTimeMs = processingTimeMs;
     }
 }

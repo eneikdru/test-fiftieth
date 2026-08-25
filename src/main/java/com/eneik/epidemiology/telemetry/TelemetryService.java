@@ -13,6 +13,8 @@ public class TelemetryService {
 
     public static final String EVENT_ZERO_RESULTS = "ZERO_RESULTS";
     public static final String EVENT_DOWNLOAD_SUCCESS = "DOWNLOAD_SUCCESS";
+    public static final String EVENT_DOSSIER_GENERATED = "DOSSIER_GENERATED";
+    public static final String EVENT_DOSSIER_FAILED = "DOSSIER_FAILED";
 
     private final TelemetryEventRepository telemetryEventRepository;
     private final Clock clock;
@@ -49,6 +51,19 @@ public class TelemetryService {
                 null,
                 documentId,
                 null,
+                OffsetDateTime.now(clock)
+        );
+        return telemetryEventRepository.save(event);
+    }
+
+    @Transactional
+    public TelemetryEvent recordDossierGenerationTelemetry(long processingTimeMs, boolean success) {
+        TelemetryEvent event = new TelemetryEvent(
+                success ? EVENT_DOSSIER_GENERATED : EVENT_DOSSIER_FAILED,
+                null,
+                null,
+                null,
+                processingTimeMs,
                 OffsetDateTime.now(clock)
         );
         return telemetryEventRepository.save(event);

@@ -77,4 +77,42 @@ class TelemetryServiceTest {
 
         verify(telemetryEventRepository, times(1)).save(any(TelemetryEvent.class));
     }
+
+    @Test
+    @DisplayName("Given a dossier generation, When generation telemetry is recorded, Then a DOSSIER_GENERATED event is stored with processing time")
+    void testRecordDossierGenerationTelemetry() {
+        when(telemetryEventRepository.save(any(TelemetryEvent.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        TelemetryEvent event = telemetryService.recordDossierGenerationTelemetry(1500L, true);
+
+        assertNotNull(event);
+        assertEquals(TelemetryService.EVENT_DOSSIER_GENERATED, event.getEventType());
+        assertEquals(1500L, event.getProcessingTimeMs());
+        assertNull(event.getDocumentId());
+        assertNull(event.getQueryTerm());
+        assertNull(event.getResultsCount());
+        assertEquals(Instant.parse("2026-08-22T15:00:00Z"), event.getCreatedAt().toInstant());
+
+        verify(telemetryEventRepository, times(1)).save(any(TelemetryEvent.class));
+    }
+
+    @Test
+    @DisplayName("Given a failed dossier generation, When generation telemetry is recorded, Then a DOSSIER_FAILED event is stored with processing time")
+    void testRecordDossierGenerationFailureTelemetry() {
+        when(telemetryEventRepository.save(any(TelemetryEvent.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        TelemetryEvent event = telemetryService.recordDossierGenerationTelemetry(300L, false);
+
+        assertNotNull(event);
+        assertEquals(TelemetryService.EVENT_DOSSIER_FAILED, event.getEventType());
+        assertEquals(300L, event.getProcessingTimeMs());
+        assertNull(event.getDocumentId());
+        assertNull(event.getQueryTerm());
+        assertNull(event.getResultsCount());
+        assertEquals(Instant.parse("2026-08-22T15:00:00Z"), event.getCreatedAt().toInstant());
+
+        verify(telemetryEventRepository, times(1)).save(any(TelemetryEvent.class));
+    }
 }
