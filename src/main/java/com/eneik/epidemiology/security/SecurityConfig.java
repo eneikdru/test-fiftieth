@@ -51,7 +51,7 @@ public class SecurityConfig {
                 })
             )
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/health", "/actuator/**", "/api/v1/auth/**").permitAll()
+                .requestMatchers("/health", "/actuator/**", "/api/v1/auth/**", "/api/v1/dossier/**").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/v1/documents/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.DELETE, "/api/v1/documents/**").hasRole("ADMIN")
                 .anyRequest().authenticated()
