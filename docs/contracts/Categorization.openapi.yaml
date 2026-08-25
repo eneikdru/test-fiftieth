@@ -1,0 +1,39 @@
+openapi: 3.0.1
+info:
+  title: Root Cause Categorization API
+  version: "1.0"
+paths:
+  /api/v1/categorization/{streamName}:
+    post:
+      summary: Categorize defect events
+      operationId: categorizeStream
+      tags:
+        - Categorization
+      parameters:
+        - name: streamName
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The name of the stream to categorize (e.g., reviewConcerns)
+      responses:
+        '200':
+          description: Categorization successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CategorizationResult'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '500':
+          description: Internal server error
+components:
+  schemas:
+    CategorizationResult:
+      type: object
+      properties:
+        categorizedCount:
+          type: integer
+          description: The number of defect events successfully categorized
