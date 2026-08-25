@@ -1,5 +1,6 @@
 <script>
   import { createEventDispatcher } from 'svelte';
+  import ImprintModal from './ImprintModal.svelte';
 
   const dispatch = createEventDispatcher();
 
@@ -17,6 +18,7 @@
   let errorMessage = '';
   let successMessage = '';
   let currentUser = null; // { id, username, role, full_name, email }
+  let showImprint = false;
 
   // Admin status helper
   $: isAdmin = currentUser && currentUser.role === 'ADMIN';
@@ -385,8 +387,22 @@
     {/if}
   </main>
 
+  {#if showImprint}
+    <ImprintModal on:close={() => showImprint = false} />
+  {/if}
+
   <!-- Footer -->
-  <footer class="w-full py-4 text-center text-xs text-[#737685] border-t border-[#eeeef0]">
+  <footer class="w-full py-4 text-center text-xs text-[#737685] border-t border-[#eeeef0] flex flex-col sm:flex-row items-center justify-between gap-2 px-6">
     <p>Российский научно-исследовательский институт эпидемиологии</p>
+    <div>
+      <button
+        type="button"
+        id="imprint-link-login"
+        on:click={() => showImprint = true}
+        class="text-[#00328a] hover:underline focus:outline-none focus:ring-2 focus:ring-[#00328a]/50 rounded px-1 font-semibold"
+      >
+        Выходные данные (Imprint / Impressum)
+      </button>
+    </div>
   </footer>
 </div>

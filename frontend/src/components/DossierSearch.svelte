@@ -2,6 +2,7 @@
     let surname = "";
     let documents = [];
     let loading = false;
+    let feedback = "";
 
     function searchDossier() {
         if (!surname.trim()) return;
@@ -14,8 +15,10 @@
 
     function generateReport() {
         loading = true;
+        feedback = "";
         setTimeout(() => {
             loading = false;
+            feedback = "✓ Итоговая справка успешно сформирована.";
         }, 1000);
     }
 </script>
@@ -46,7 +49,19 @@
                 {/if}
             </button>
         </div>
+        {#if feedback}
+            <div role="status" aria-live="polite" class="feedback-notice">
+                {feedback}
+            </div>
+        {/if}
     {/if}
+
+    <footer class="dossier-footer">
+        <span>Российский научно-исследовательский институт эпидемиологии</span>
+        <button on:click={() => alert('Выходные данные (Imprint / Impressum):\nФБУН «НИИ Эпидемиологии»\nг. Москва, ул. Новогиреевская, 3А')} class="imprint-btn">
+            Выходные данные (Imprint / Impressum)
+        </button>
+    </footer>
 </div>
 
 <style>
@@ -58,4 +73,7 @@
     .document-list { list-style: none; padding: 0; margin-bottom: 20px; }
     .document-list li { padding: 8px; border-bottom: 1px solid #eee; }
     .report-section { display: flex; align-items: center; }
+    .feedback-notice { margin-top: 15px; padding: 10px; background-color: #d9e3f1; color: #001a40; border-radius: 4px; font-size: 14px; border: 1px solid #003f87; }
+    .dossier-footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; text-align: center; font-size: 12px; color: #666; display: flex; justify-content: space-between; align-items: center; }
+    .imprint-btn { background: none; border: none; color: #007bff; text-decoration: underline; cursor: pointer; padding: 0; }
 </style>
