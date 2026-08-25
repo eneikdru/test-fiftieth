@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Dossier Builder</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "secondary-fixed-dim": "#adc6ff",
+                        "primary-fixed-dim": "#bec6e0",
+                        "on-primary": "#ffffff",
+                        "on-error-container": "#93000a",
+                        "primary": "#000000",
+                        "on-surface": "#0b1c30",
+                        "tertiary-fixed": "#e0e3e5",
+                        "surface-container-low": "#eff4ff",
+                        "on-primary-fixed-variant": "#3f465c",
+                        "surface-tint": "#565e74",
+                        "inverse-surface": "#213145",
+                        "on-surface-variant": "#45464d",
+                        "tertiary-container": "#191c1e",
+                        "secondary": "#0058be",
+                        "secondary-container": "#2170e4",
+                        "surface-container-lowest": "#ffffff",
+                        "on-primary-container": "#7c839b",
+                        "primary-container": "#131b2e",
+                        "surface-container": "#e5eeff",
+                        "surface-container-high": "#dce9ff",
+                        "on-tertiary": "#ffffff",
+                        "surface-bright": "#f8f9ff",
+                        "inverse-primary": "#bec6e0",
+                        "on-secondary-fixed": "#001a42",
+                        "on-secondary-container": "#fefcff",
+                        "background": "#f8f9ff",
+                        "surface-dim": "#cbdbf5",
+                        "on-tertiary-fixed": "#191c1e",
+                        "outline": "#76777d",
+                        "tertiary-fixed-dim": "#c4c7c9",
+                        "on-tertiary-container": "#818486",
+                        "surface-container-highest": "#d3e4fe",
+                        "on-background": "#0b1c30",
+                        "secondary-fixed": "#d8e2ff",
+                        "on-secondary-fixed-variant": "#004395",
+                        "primary-fixed": "#dae2fd",
+                        "inverse-on-surface": "#eaf1ff",
+                        "on-primary-fixed": "#131b2e",
+                        "error": "#ba1a1a",
+                        "error-container": "#ffdad6",
+                        "on-tertiary-fixed-variant": "#444749",
+                        "surface-variant": "#d3e4fe",
+                        "on-error": "#ffffff",
+                        "on-secondary": "#ffffff",
+                        "outline-variant": "#c6c6cd",
+                        "surface": "#f8f9ff",
+                        "tertiary": "#000000"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "container-margin": "16px",
+                        "stack-md": "16px",
+                        "unit": "4px",
+                        "gutter": "12px",
+                        "stack-lg": "24px",
+                        "stack-sm": "8px"
+                    },
+                    "fontFamily": {
+                        "display-lg": ["Hanken Grotesk"],
+                        "data-point": ["Hanken Grotesk"],
+                        "headline-md": ["Hanken Grotesk"],
+                        "headline-sm": ["Hanken Grotesk"],
+                        "body-lg": ["Hanken Grotesk"],
+                        "body-md": ["Hanken Grotesk"],
+                        "label-mono": ["JetBrains Mono"]
+                    },
+                    "fontSize": {
+                        "display-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "data-point": ["18px", { "lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "label-mono": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background font-body-lg min-h-screen pb-[100px]">
+<!-- TopAppBar -->
+<header class="bg-surface dark:bg-background border-b border-outline-variant dark:border-outline flat no shadows w-full top-0 flex items-center justify-between px-container-margin h-16 transition-colors duration-200 ease-in-out sticky z-40">
+<div class="flex items-center gap-4">
+<div class="w-8 h-8 rounded-full bg-surface-container-highest overflow-hidden cursor-pointer hover:opacity-80 transition-opacity">
+<img class="w-full h-full object-cover" data-alt="A professional corporate headshot of an executive in a modern office environment, with soft natural lighting and a minimalist background. High-resolution, sharp focus, professional business attire." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAlXp7W0gcEi17_GT25kiG2ySwK65T6vfuJ6GWHAIGqvZfOB4u8hjNiBhBGM5aNjJdpn3rgHtXeqC2o_-yLim9mAwZWXqdJoFsfDBlGNKn0lc1oe6lds-LHdHwjPifBcnMv-KxkHSJkJRCEvFPsbMvF0jcc2UBA8eWyXWxGwA3oZwXi3ztjXyeHhpaqvNt_n3zabB_YsfS282i7ORpoBvZZhMj8u9g1CFCALxGGHet7bHJBd5ZJhUF4o4XyTW8mG0Quhix8AR7Lwn1Q"/>
+</div>
+<h1 class="font-headline-sm text-headline-sm text-primary dark:text-primary-fixed-dim">Dossier Builder</h1>
+</div>
+<button class="p-2 text-on-surface-variant hover:bg-surface-container-high rounded-full transition-colors">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+</header>
+<!-- Main Content -->
+<main class="px-container-margin py-stack-md flex flex-col gap-stack-lg">
+<!-- Search & Filter Controls -->
+<section class="flex flex-col gap-stack-sm">
+<div class="relative w-full">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline" data-icon="search">search</span>
+<input class="w-full h-12 pl-10 pr-4 bg-surface rounded-DEFAULT border border-outline-variant focus:border-secondary focus:ring-1 focus:ring-secondary outline-none transition-all font-body-md text-on-surface placeholder:text-outline" placeholder="Search dossier..." type="text"/>
+</div>
+<div class="flex items-center gap-gutter">
+<button class="flex items-center justify-center gap-2 px-4 h-9 bg-surface rounded-DEFAULT border border-outline-variant text-on-surface hover:bg-surface-container-low transition-colors whitespace-nowrap font-body-md shrink-0">
+<span class="material-symbols-outlined text-[18px]" data-icon="tune">tune</span>
+                    Filters
+                </button>
+<div class="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+<div class="flex items-center gap-1 px-3 py-1 bg-surface-container-low rounded-full border border-outline-variant whitespace-nowrap text-on-surface-variant font-label-mono text-label-mono">
+                        Date: Last 30 Days
+                        <span class="material-symbols-outlined text-[14px] cursor-pointer hover:text-error" data-icon="close">close</span>
+</div>
+<div class="flex items-center gap-1 px-3 py-1 bg-surface-container-low rounded-full border border-outline-variant whitespace-nowrap text-on-surface-variant font-label-mono text-label-mono">
+                        Region: EMEA
+                        <span class="material-symbols-outlined text-[14px] cursor-pointer hover:text-error" data-icon="close">close</span>
+</div>
+<div class="flex items-center gap-1 px-3 py-1 bg-surface-container-low rounded-full border border-outline-variant whitespace-nowrap text-on-surface-variant font-label-mono text-label-mono">
+                        Status: Approved
+                        <span class="material-symbols-outlined text-[14px] cursor-pointer hover:text-error" data-icon="close">close</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Data Cards Grid -->
+<section class="grid grid-cols-1 md:grid-cols-2 gap-gutter">
+<!-- Card 1 -->
+<article class="bg-surface border border-outline-variant rounded-DEFAULT p-stack-md flex flex-col gap-stack-sm hover:shadow-md transition-shadow">
+<div class="flex justify-between items-start">
+<h3 class="font-headline-sm text-headline-sm text-primary">Q3 Performance Overview</h3>
+<span class="px-2 py-0.5 bg-[#e6f4ea] text-[#137333] font-label-mono text-label-mono rounded-full border border-[#ceead6]">Approved</span>
+</div>
+<p class="font-body-md text-on-surface-variant">Comprehensive analysis of regional sales targets vs actuals for Q3, including breakdown by product category.</p>
+<div class="flex items-center gap-4 mt-2 border-t border-outline-variant pt-2">
+<div class="flex items-center gap-1 text-outline font-label-mono text-label-mono">
+<span class="material-symbols-outlined text-[16px]" data-icon="calendar_today">calendar_today</span> Oct 12
+                    </div>
+<div class="flex items-center gap-1 text-outline font-label-mono text-label-mono">
+<span class="material-symbols-outlined text-[16px]" data-icon="person">person</span> A. Smith
+                    </div>
+</div>
+</article>
+<!-- Card 2 -->
+<article class="bg-surface border border-outline-variant rounded-DEFAULT p-stack-md flex flex-col gap-stack-sm hover:shadow-md transition-shadow">
+<div class="flex justify-between items-start">
+<h3 class="font-headline-sm text-headline-sm text-primary">EMEA Market Entry</h3>
+<span class="px-2 py-0.5 bg-[#fef7e0] text-[#b06000] font-label-mono text-label-mono rounded-full border border-[#fce8b2]">Draft</span>
+</div>
+<p class="font-body-md text-on-surface-variant">Strategic review of competitor positioning and market saturation in key European metropolitan areas.</p>
+<div class="flex items-center gap-4 mt-2 border-t border-outline-variant pt-2">
+<div class="flex items-center gap-1 text-outline font-label-mono text-label-mono">
+<span class="material-symbols-outlined text-[16px]" data-icon="calendar_today">calendar_today</span> Oct 10
+                    </div>
+<div class="flex items-center gap-1 text-outline font-label-mono text-label-mono">
+<span class="material-symbols-outlined text-[16px]" data-icon="person">person</span> M. Jones
+                    </div>
+</div>
+</article>
+<!-- Card 3 -->
+<article class="bg-surface border border-outline-variant rounded-DEFAULT p-stack-md flex flex-col gap-stack-sm hover:shadow-md transition-shadow">
+<div class="flex justify-between items-start">
+<h3 class="font-headline-sm text-headline-sm text-primary">Compliance Audit 2023</h3>
+<span class="px-2 py-0.5 bg-[#e6f4ea] text-[#137333] font-label-mono text-label-mono rounded-full border border-[#ceead6]">Approved</span>
+</div>
+<p class="font-body-md text-on-surface-variant">Annual internal audit findings covering data privacy protocols and financial reporting standards.</p>
+<div class="flex items-center gap-4 mt-2 border-t border-outline-variant pt-2">
+<div class="flex items-center gap-1 text-outline font-label-mono text-label-mono">
+<span class="material-symbols-outlined text-[16px]" data-icon="calendar_today">calendar_today</span> Sep 28
+                    </div>
+<div class="flex items-center gap-1 text-outline font-label-mono text-label-mono">
+<span class="material-symbols-outlined text-[16px]" data-icon="person">person</span> Legal Team
+                    </div>
+</div>
+</article>
+</section>
+</main>
+<!-- Floating Action Button for Export -->
+<div class="fixed bottom-24 right-container-margin z-50 md:hidden">
+<button class="bg-secondary text-on-primary w-14 h-14 rounded-full flex items-center justify-center shadow-lg hover:bg-secondary-container transition-colors active:scale-95">
+<span class="material-symbols-outlined text-[24px]" data-icon="download">download</span>
+</button>
+</div>
+<!-- Export Button (Desktop/Tablet) -->
+<div class="hidden md:flex justify-end px-container-margin pb-stack-lg">
+<button class="bg-secondary text-on-primary font-body-md font-bold px-6 py-3 rounded-DEFAULT flex items-center gap-2 hover:bg-secondary-container transition-colors">
+<span class="material-symbols-outlined" data-icon="download">download</span>
+            Export Dossier
+        </button>
+</div>
+<!-- BottomNavBar -->
+<nav class="bg-surface-container-lowest dark:bg-primary-container border-t border-outline-variant dark:border-outline shadow-md fixed bottom-0 left-0 w-full flex justify-around items-center h-20 pb-safe px-2 z-50 md:hidden transition-transform">
+<button class="flex flex-col items-center justify-center text-secondary dark:text-secondary-fixed-dim bg-surface-container dark:bg-secondary-container rounded-full px-4 py-1 hover:opacity-80 active:scale-95 transition-transform group">
+<span class="material-symbols-outlined group-hover:text-secondary" data-icon="folder_open" data-weight="fill">folder_open</span>
+<span class="font-label-mono text-label-mono mt-1">Dossier</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-primary-container hover:opacity-80 active:scale-95 transition-transform group">
+<span class="material-symbols-outlined" data-icon="insert_chart">insert_chart</span>
+<span class="font-label-mono text-label-mono mt-1 group-hover:text-primary transition-colors">Analytics</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-primary-container hover:opacity-80 active:scale-95 transition-transform group">
+<span class="material-symbols-outlined" data-icon="filter_list">filter_list</span>
+<span class="font-label-mono text-label-mono mt-1 group-hover:text-primary transition-colors">Filters</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-primary-container hover:opacity-80 active:scale-95 transition-transform group">
+<span class="material-symbols-outlined" data-icon="ios_share">ios_share</span>
+<span class="font-label-mono text-label-mono mt-1 group-hover:text-primary transition-colors">Export</span>
+</button>
+</nav>
+</body></html>
