@@ -1,5 +1,6 @@
 <script>
   import { createEventDispatcher } from 'svelte';
+  import ImprintModal from './ImprintModal.svelte';
 
   const dispatch = createEventDispatcher();
 
@@ -33,6 +34,7 @@
   let deleteError = '';
   let deleteSuccess = '';
   let erasureJob = null;
+  let showImprint = false;
 
   // Confirmation token expected for destructive action
   $: expectedConfirmationToken = `УДАЛИТЬ ${currentUser?.username || 'АККАУНТ'}`;
@@ -378,4 +380,22 @@
       </div>
     </div>
   {/if}
+
+  {#if showImprint}
+    <ImprintModal on:close={() => showImprint = false} />
+  {/if}
+
+  <footer class="w-full py-6 mt-12 text-center text-xs text-[#727784] border-t border-[#e0e3e5] flex flex-col sm:flex-row items-center justify-between gap-2">
+    <p>Российский научно-исследовательский институт эпидемиологии</p>
+    <div>
+      <button
+        type="button"
+        id="imprint-link-privacy"
+        on:click={() => showImprint = true}
+        class="text-[#003f87] hover:underline focus:outline-none focus:ring-2 focus:ring-[#003f87]/50 rounded px-1 font-semibold"
+      >
+        Выходные данные (Imprint / Impressum)
+      </button>
+    </div>
+  </footer>
 </div>

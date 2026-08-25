@@ -1,6 +1,7 @@
 <script>
   import { createEventDispatcher, onMount } from 'svelte';
   import DocumentViewer from './DocumentViewer.svelte';
+  import ImprintModal from './ImprintModal.svelte';
 
   const dispatch = createEventDispatcher();
 
@@ -57,6 +58,9 @@
   let isUploading = false;
   let uploadError = '';
   let uploadSuccess = '';
+
+  let showImprint = false;
+  let feedbackNotice = null; // { type: 'success' | 'error', message: string }
 
   // Fetch documents from real backend endpoint /api/v1/documents/search
   async function fetchDocuments(pageIndex = 0, isPageChange = false) {
@@ -247,6 +251,7 @@
       uploadDescription = '';
       uploadFileName = '';
       isUploadModalOpen = false;
+      feedbackNotice = { type: 'success', message: 'Документ успешно загружен в каталог.' };
     } catch (err) {
       // Key AC Requirement: Entered metadata remains intact in the form!
       uploadError = err.message || 'Ошибка сети при загрузке документа. Попробуйте еще раз.';
@@ -264,17 +269,17 @@
         throw new Error('Не удалось удалить документ.');
       }
       documents = documents.filter(doc => doc.id !== id && doc.id !== String(id));
+      feedbackNotice = { type: 'success', message: 'Документ успешно удален из каталога.' };
     } catch (err) {
-      alert(err.message || 'Ошибка при удалении документа');
+      feedbackNotice = { type: 'error', message: err.message || 'Ошибка при удалении документа' };
     }
   }
 
   function handleDownload(doc) {
     dispatch('download', { document: doc });
+    feedbackNotice = { type: 'success', message: `Начато скачивание документа "${doc.title || doc.fileName}".` };
     if (doc.id) {
       window.open(`${getApiBaseUrl()}/documents/${doc.id}/download`, '_blank');
-    } else {
-      alert(`Загрузка документа: ${doc.fileName || doc.title}`);
     }
   }
 
@@ -341,6 +346,26 @@
       {/if}
     </div>
   </header>
+
+  {#if feedbackNotice}
+    <div
+      role={feedbackNotice.type === 'error' ? 'alert' : 'status'}
+      aria-live="polite"
+      class="mb-6 p-4 rounded-xl border flex items-center justify-between shadow-sm transition-all {feedbackNotice.type === 'error' ? 'bg-[#ffdad6] text-[#93000a] border-[#ba1a1a]/30' : 'bg-[#d9e3f1] text-[#001a40] border-[#003f87]/30'}"
+    >
+      <div class="flex items-center gap-2">
+        <span class="text-lg">{feedbackNotice.type === 'error' ? '⚠️' : '✓'}</span>
+        <span class="text-sm font-medium">{feedbackNotice.message}</span>
+      </div>
+      <button
+        type="button"
+        on:click={() => feedbackNotice = null}
+        class="text-xs underline font-semibold ml-4 hover:opacity-80"
+      >
+        Закрыть
+      </button>
+    </div>
+  {/if}
 
   <!-- Search & Filter Controls -->
   <section class="bg-white p-5 rounded-xl border border-[#e0e3e5] shadow-sm mb-8">
@@ -600,6 +625,10 @@
     />
   {/if}
 
+  {#if showImprint}
+    <ImprintModal on:close={() => showImprint = false} />
+  {/if}
+
   <!-- Admin Document Upload Modal -->
   {#if isUploadModalOpen}
     <div class="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
@@ -749,4 +778,19 @@
       </div>
     </div>
   {/if}
+
+  <!-- Footer with Imprint / Impressum Link -->
+  <footer class="w-full py-6 mt-12 text-center text-xs text-[#727784] border-t border-[#e0e3e5] flex flex-col sm:flex-row items-center justify-between gap-2">
+    <p>Российский научно-исследовательский институт эпидемиологии</p>
+    <div>
+      <button
+        type="button"
+        id="imprint-link"
+        on:click={() => showImprint = true}
+        class="text-[#003f87] hover:underline focus:outline-none focus:ring-2 focus:ring-[#003f87]/50 rounded px-1 font-semibold"
+      >
+        Выходные данные (Imprint / Impressum)
+      </button>
+    </div>
+  </footer>
 </div>
