@@ -30,6 +30,9 @@ public class EmployeeDocument {
     @Column(columnDefinition = "TEXT")
     private String details;
 
+    @Column(name = "scientific_direction", length = 255)
+    private String scientificDirection;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;
 
@@ -44,6 +47,15 @@ public class EmployeeDocument {
         this.details = details;
     }
 
+    public EmployeeDocument(String employeeId, String docType, String title, LocalDate docDate, String details, String scientificDirection) {
+        this.employeeId = employeeId;
+        this.docType = docType;
+        this.title = title;
+        this.docDate = docDate;
+        this.details = details;
+        this.scientificDirection = scientificDirection;
+    }
+
     public EmployeeDocument(String employeeId, String employeeSurname, String docType, String title, LocalDate docDate, String details) {
         this.employeeId = employeeId;
         this.employeeSurname = employeeSurname;
@@ -51,6 +63,16 @@ public class EmployeeDocument {
         this.title = title;
         this.docDate = docDate;
         this.details = details;
+    }
+
+    public EmployeeDocument(String employeeId, String employeeSurname, String docType, String title, LocalDate docDate, String details, String scientificDirection) {
+        this.employeeId = employeeId;
+        this.employeeSurname = employeeSurname;
+        this.docType = docType;
+        this.title = title;
+        this.docDate = docDate;
+        this.details = details;
+        this.scientificDirection = scientificDirection;
     }
 
     @PrePersist
@@ -114,6 +136,14 @@ public class EmployeeDocument {
 
     public void setDetails(String details) {
         this.details = details;
+    }
+
+    public String getScientificDirection() {
+        return scientificDirection;
+    }
+
+    public void setScientificDirection(String scientificDirection) {
+        this.scientificDirection = scientificDirection;
     }
 
     public OffsetDateTime getCreatedAt() {
