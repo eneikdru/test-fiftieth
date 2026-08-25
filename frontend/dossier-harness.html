@@ -1,60 +1,50 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dossier Search Mock</title>
+    <title>Поиск досье сотрудника</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script src="https://unpkg.com/svelte@3.59.2/compiler.js"></script>
     <style>
-        .dossier-container { padding: 20px; font-family: sans-serif; }
-        .search-section { margin-bottom: 20px; display: flex; gap: 10px; }
-        input { padding: 8px; flex-grow: 1; border: 1px solid #ccc; border-radius: 4px; }
-        button { padding: 8px 16px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
-        button:disabled { background-color: #a0c4ff; cursor: not-allowed; }
-        .document-list { list-style: none; padding: 0; margin-bottom: 20px; }
-        .document-list li { padding: 8px; border-bottom: 1px solid #eee; }
-        .report-section { display: flex; align-items: center; }
+        body { background-color: #f7f9fb; }
     </style>
 </head>
 <body>
-    <div id="app">
-        <div class="dossier-container">
-            <div class="search-section">
-                <input type="text" id="search-query-input" placeholder="Фамилия сотрудника" />
-                <button id="search-button">Поиск</button>
-            </div>
-            <div id="results-container" style="display: none;">
-                <ul class="document-list" id="document-list"></ul>
-                <div class="report-section">
-                    <button id="generate-report-button">Сформировать итоговую справку</button>
-                </div>
-            </div>
-        </div>
-    </div>
-    <script>
-        const searchButton = document.getElementById('search-button');
-        const searchInput = document.getElementById('search-query-input');
-        const resultsContainer = document.getElementById('results-container');
-        const documentList = document.getElementById('document-list');
-        const generateReportButton = document.getElementById('generate-report-button');
+    <div id="app"></div>
 
-        searchButton.addEventListener('click', () => {
-            if (!searchInput.value.trim()) return;
-            documentList.innerHTML = `
-                <li>Приказ о назначении №42</li>
-                <li>Выписка из учёного совета от 12.05.2023</li>
-                <li>Отчёт о командировке (Самара)</li>
-            `;
-            resultsContainer.style.display = 'block';
-        });
+    <script type="module">
+        import * as svelteInternal from 'https://unpkg.com/svelte@3.59.2/internal/index.mjs';
 
-        generateReportButton.addEventListener('click', () => {
-            generateReportButton.disabled = true;
-            generateReportButton.innerHTML = '<span id="loading-spinner">Загрузка...</span>';
-            setTimeout(() => {
-                generateReportButton.disabled = false;
-                generateReportButton.innerHTML = 'Сформировать итоговую справку';
-            }, 1000);
-        });
+        async function loadComponent() {
+            try {
+                const response = await fetch('http://localhost/src/components/DossierSearch.svelte');
+                const source = await response.text();
+
+                const { js } = window.svelte.compile(source, {
+                    format: 'esm',
+                    name: 'DossierSearch',
+                    sveltePath: 'svelte'
+                });
+
+                const codeWithMjs = js.code.replace(/from "svelte\/internal"/g, `from "https://unpkg.com/svelte@3.59.2/internal/index.mjs"`);
+
+                const blob = new Blob([codeWithMjs], { type: 'application/javascript' });
+                const blobUrl = URL.createObjectURL(blob);
+
+                const module = await import(blobUrl);
+                const DossierSearch = module.default;
+
+                new DossierSearch({
+                    target: document.getElementById('app'),
+                    props: { apiBaseUrl: 'http://localhost/api/v1/dossier' }
+                });
+            } catch (err) {
+                console.error('Error loading DossierSearch component:', err);
+                document.getElementById('app').innerHTML = `<h1 class="error">Error loading component: ${err.message}</h1>`;
+            }
+        }
+        loadComponent();
     </script>
 </body>
 </html>
