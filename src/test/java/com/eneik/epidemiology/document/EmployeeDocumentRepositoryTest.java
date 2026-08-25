@@ -105,4 +105,25 @@ class EmployeeDocumentRepositoryTest {
         assertThat(results.get(0).getTitle()).isEqualTo("Новый приказ");
         assertThat(results.get(1).getTitle()).isEqualTo("Старый приказ");
     }
+
+    @Test
+    @DisplayName("Given employee documents with scientific directions, when queried by scientific direction, then it filters correctly.")
+    void testSearchEmployeeDocuments_ByScientificDirection() {
+        // Given
+        String employeeId = "EMP-TEST-300";
+        EmployeeDocument virologyDoc = new EmployeeDocument(employeeId, "REPORT", "Отчет по вирусологии", LocalDate.of(2023, 5, 10), "Детали", "Вирусология");
+        EmployeeDocument bacteriologyDoc = new EmployeeDocument(employeeId, "PUBLICATION", "Статья по бактериологии", LocalDate.of(2023, 6, 15), "Детали", "Бактериология");
+
+        employeeDocumentRepository.save(virologyDoc);
+        employeeDocumentRepository.save(bacteriologyDoc);
+
+        // When
+        List<EmployeeDocument> virologyResults = employeeDocumentRepository.searchEmployeeDocuments(
+                employeeId, null, null, "Вирусология", null, null, null
+        );
+
+        // Then
+        assertThat(virologyResults).hasSize(1);
+        assertThat(virologyResults.get(0).getScientificDirection()).isEqualTo("Вирусология");
+    }
 }
