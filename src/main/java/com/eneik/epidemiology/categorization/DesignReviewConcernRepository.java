@@ -13,7 +13,7 @@ public interface DesignReviewConcernRepository extends JpaRepository<DesignRevie
 
     List<DesignReviewConcern> findByStreamNameAndRootCausePatternIdIsNull(String streamName);
 
-    @Modifying
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("UPDATE DesignReviewConcern c SET c.rootCausePatternId = :patternId, c.status = 'CATEGORIZED' WHERE c.id = :id AND c.rootCausePatternId IS NULL")
     int categorizeConcernAtomically(@Param("id") String id, @Param("patternId") String patternId);
 }

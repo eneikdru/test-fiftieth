@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 import com.eneik.epidemiology.EpidemiologyApplication;
@@ -51,6 +52,7 @@ public class EmployeeDossierE2ETest {
     }
 
     @Test
+    @WithMockUser(roles = "USER")
     @DisplayName("Given the test suite, when the E2E tests run, then they verify that an employee can be searched and their documents displayed")
     void verifyEmployeeSearchAndDisplayDocuments() throws Exception {
         mockMvc.perform(get("/api/v1/dossier/documents")
@@ -62,6 +64,7 @@ public class EmployeeDossierE2ETest {
     }
 
     @Test
+    @WithMockUser(roles = "USER")
     @DisplayName("Given the report endpoint, when tested, then it verifies a report is generated successfully based on the initial sample content")
     void verifyReportGeneration() throws Exception {
         Map<String, Object> request = Map.of(

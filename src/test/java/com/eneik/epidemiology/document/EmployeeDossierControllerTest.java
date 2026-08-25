@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -63,6 +64,7 @@ class EmployeeDossierControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "USER")
     @DisplayName("Given the API contract, when a search request is made, then the backend returns the correct document list.")
     void testSearchEmployeeDocuments() throws Exception {
         mockMvc.perform(get("/api/v1/dossier/documents")
@@ -74,6 +76,7 @@ class EmployeeDossierControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "USER")
     @DisplayName("Given an employee surname, when a search request is made, then the backend returns the documents associated with that surname.")
     void testSearchEmployeeDocumentsBySurname() throws Exception {
         mockMvc.perform(get("/api/v1/dossier/documents")
@@ -84,6 +87,7 @@ class EmployeeDossierControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "USER")
     @DisplayName("Given a report generation request, when processed, then the backend successfully generates and returns the report file metadata.")
     void testGenerateDossierReport() throws Exception {
         Map<String, Object> request = Map.of(
@@ -103,6 +107,7 @@ class EmployeeDossierControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "USER")
     @DisplayName("Given a completed report, when downloaded, then returns file content.")
     void testDownloadDossierReport() throws Exception {
         DossierReport report = new DossierReport("EMP-777", "FULL", "COMPLETED", "Test summary", 1, "/api/v1/dossier/reports/1/download");
