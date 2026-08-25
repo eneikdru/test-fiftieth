@@ -1,0 +1,286 @@
+openapi: 3.0.3
+info:
+  title: API Аналитических Справок по Сотрудникам
+  description: Контракт API для отбора связанных документов сотрудников (приказы, выписки, отчеты, экзамены), генерации итоговых сводных справок по периодам и направлениям, а также расчета статистических метрик.
+  version: 1.0.0
+servers:
+  - url: /api/v1
+    description: Основной сервер API
+paths:
+  /dossier/analytics/documents:
+    get:
+      summary: Поиск и фильтрация документов досье сотрудника
+      description: Возвращает список документов досье, отфильтрованных по идентификатору сотрудника, произвольному периоду, типу документа и научному направлению.
+      operationId: filterAnalyticsDocuments
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: employee_id
+          in: query
+          description: Идентификатор сотрудника / табельный номер
+          required: true
+          schema:
+            type: string
+            example: "EMP-001"
+        - name: doc_type
+          in: query
+          description: Фильтр по типу документа (например, ORDER, REPORT, EXAM, EXTRACT)
+          required: false
+          schema:
+            type: string
+            example: "REPORT"
+        - name: scientific_direction
+          in: query
+          description: Фильтр по научному направлению (например, VIRUSOLOGY, BACTERIOLOGY, SURVEILLANCE, VACCINOLOGY)
+          required: false
+          schema:
+            type: string
+            example: "VIRUSOLOGY"
+        - name: from_date
+          in: query
+          description: Начальная дата произвольного периода фильтрации
+          required: false
+          schema:
+            type: string
+            format: date
+            example: "2023-01-01"
+        - name: to_date
+          in: query
+          description: Конечная дата произвольного периода фильтрации
+          required: false
+          schema:
+            type: string
+            format: date
+            example: "2023-12-31"
+      responses:
+        '200':
+          description: Успешный выбор отфильтрованных документов
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AnalyticsDocumentResponse'
+        '400':
+          description: Некорректные параметры запроса
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /dossier/analytics/export:
+    post:
+      summary: Экспорт сводной справки в PDF
+      description: Формирует единый PDF-файл сводной справки на основе переданных параметров фильтрации и возвращает идентификатор задачи/отчета.
+      operationId: exportAnalyticsPdf
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnalyticsExportRequest'
+      responses:
+        '201':
+          description: Запрос на экспорт успешно создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalyticsExportResponse'
+        '400':
+          description: Ошибка валидации данных запроса
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /dossier/analytics/metrics:
+    get:
+      summary: Расчет статистических метрик по досье
+      description: Возвращает расчетные статистические метрики по документам досье (например, доля публикаций определенного типа), включая знаменатель и доверительные границы для статистических расчетов.
+      operationId: getAnalyticsMetrics
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: employee_id
+          in: query
+          description: Идентификатор сотрудника
+          required: true
+          schema:
+            type: string
+            example: "EMP-001"
+        - name: scientific_direction
+          in: query
+          description: Научное направление
+          required: false
+          schema:
+            type: string
+            example: "VIRUSOLOGY"
+      responses:
+        '200':
+          description: Статистические метрики успешно рассчитаны
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalyticsMetricsResponse'
+        '400':
+          description: Ошибка параметров
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    AnalyticsDocumentResponse:
+      type: object
+      required:
+        - id
+        - employee_id
+        - doc_type
+        - title
+        - doc_date
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: Уникальный идентификатор документа
+          example: 10
+        employee_id:
+          type: string
+          description: Идентификатор сотрудника
+          example: "EMP-001"
+        employee_surname:
+          type: string
+          description: Фамилия сотрудника
+          nullable: true
+          example: "Иванов"
+        doc_type:
+          type: string
+          description: Тип документа
+          example: "REPORT"
+        scientific_direction:
+          type: string
+          nullable: true
+          description: Научное направление документа
+          example: "VIRUSOLOGY"
+        title:
+          type: string
+          description: Название документа
+          example: "Годовой отчет по вирусологии"
+        doc_date:
+          type: string
+          format: date
+          description: Дата документа
+          example: "2023-12-15"
+
+    AnalyticsExportRequest:
+      type: object
+      required:
+        - employee_id
+      properties:
+        employee_id:
+          type: string
+          description: Идентификатор сотрудника
+          example: "EMP-001"
+        from_date:
+          type: string
+          format: date
+          nullable: true
+          description: Начальная дата периода
+        to_date:
+          type: string
+          format: date
+          nullable: true
+          description: Конечная дата периода
+        doc_types:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Фильтр по типам документов для включения в справку
+        scientific_direction:
+          type: string
+          nullable: true
+          description: Фильтр по научному направлению
+          example: "BACTERIOLOGY"
+
+    AnalyticsExportResponse:
+      type: object
+      required:
+        - export_id
+        - status
+        - download_url
+      properties:
+        export_id:
+          type: integer
+          format: int64
+          description: Идентификатор задачи экспорта
+          example: 205
+        status:
+          type: string
+          enum: [PENDING, PROCESSING, COMPLETED, FAILED]
+          description: Текущий статус экспорта
+          example: "PENDING"
+        download_url:
+          type: string
+          description: URL для скачивания сформированного PDF файла
+          example: "/api/v1/dossier/reports/205/download"
+
+    AnalyticsMetricsResponse:
+      type: object
+      required:
+        - employee_id
+        - metric_name
+        - value
+        - denominator
+        - lower_bound
+        - upper_bound
+      properties:
+        employee_id:
+          type: string
+          description: Идентификатор сотрудника
+          example: "EMP-001"
+        metric_name:
+          type: string
+          description: Название рассчитываемой метрики
+          example: "Доля научных отчетов в общем объеме документов"
+        value:
+          type: number
+          format: double
+          description: Рассчитанное значение метрики (числитель / знаменатель)
+          example: 0.25
+        denominator:
+          type: integer
+          description: Знаменатель для статистического расчета (например, общее количество документов в популяции/периоде)
+          example: 100
+        lower_bound:
+          type: number
+          format: double
+          description: Нижняя граница доверительного интервала для метрики
+          example: 0.15
+        upper_bound:
+          type: number
+          format: double
+          description: Верхняя граница доверительного интервала для метрики
+          example: 0.35
+
+    ErrorResponse:
+      type: object
+      required:
+        - error_code
+        - message
+      properties:
+        error_code:
+          type: string
+          example: "INVALID_PARAM"
+        message:
+          type: string
+          example: "Формат даты неверен"
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
