@@ -7,9 +7,10 @@ import org.junit.jupiter.api.Test;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 class RootCauseCategorizationServiceTest {
@@ -57,5 +58,69 @@ class RootCauseCategorizationServiceTest {
         assertEquals(2, count);
         verify(concernRepository, times(1)).categorizeConcernAtomically("CONCERN-1", "RCP-REVIEW-CONCERNS-001");
         verify(concernRepository, times(1)).categorizeConcernAtomically("CONCERN-2", "RCP-REVIEW-CONCERNS-001");
+    }
+
+    @Test
+    @DisplayName("Given a concern missing rootCausePatternId, When categorizeConcernInMemory is called, Then assigns category in-memory")
+    void testCategorizeConcernInMemory() {
+        DesignReviewConcern concern = new DesignReviewConcern(
+            "CONCERN-IN-MEMORY-1", "reviewConcerns", 14, new BigDecimal("0.0000"), null, "UNCATEGORIZED", OffsetDateTime.now()
+        );
+
+        RootCausePattern pattern = new RootCausePattern(
+            "RCP-001", "Review Concerns Out of Control", "reviewConcerns",
+            "WESTERN_ELECTRIC_8_CONSECUTIVE_SAME_SIDE", "RCP-REVIEW-CONCERNS-001", OffsetDateTime.now()
+        );
+
+        when(patternRepository.findByStreamName("reviewConcerns")).thenReturn(Optional.of(pattern));
+
+        boolean updated = service.categorizeConcernInMemory(concern);
+
+        assertTrue(updated);
+        assertEquals("RCP-REVIEW-CONCERNS-001", concern.getRootCausePatternId());
+        assertEquals("CATEGORIZED", concern.getStatus());
+    }
+
+    @Test
+    @DisplayName("Given a concern already having rootCausePatternId, When categorizeConcernInMemory is called, Then skips categorization")
+    void testCategorizeConcernInMemoryAlreadyCategorized() {
+        DesignReviewConcern concern = new DesignReviewConcern(
+            "CONCERN-IN-MEMORY-2", "reviewConcerns", 14, new BigDecimal("0.0000"), "EXISTING-RCP-ID", "CATEGORIZED", OffsetDateTime.now()
+        );
+
+        boolean updated = service.categorizeConcernInMemory(concern);
+
+        assertFalse(updated);
+        assertEquals("EXISTING-RCP-ID", concern.getRootCausePatternId());
+    }
+
+    @Test
+    @DisplayName("Given a supported external schema event, When evaluateExternalSchemaEvent is called, Then evaluates successfully")
+    void testEvaluateSupportedExternalSchemaEvent() {
+        ExternalSchemaEvent event = new ExternalSchemaEvent(
+            "EVT-001", "reviewConcerns", "v1", Map.of("epicSequence", 14)
+        );
+
+        boolean result = service.evaluateExternalSchemaEvent(event);
+
+        assertTrue(result);
+    }
+
+    @Test
+    @DisplayName("Given an unsupported external schema event, When evaluateExternalSchemaEvent is called, Then logs mismatch and bypasses categorization")
+    void testEvaluateUnsupportedExternalSchemaEvent() {
+        ExternalSchemaEvent unsupportedVersionEvent = new ExternalSchemaEvent(
+            "EVT-002", "reviewConcerns", "v99-unsupported", Map.of("epicSequence", 14)
+        );
+
+        boolean resultVersion = service.evaluateExternalSchemaEvent(unsupportedVersionEvent);
+        assertFalse(resultVersion, "Should bypass categorization for unsupported schema version");
+
+        ExternalSchemaEvent unsupportedStreamEvent = new ExternalSchemaEvent(
+            "EVT-003", "unknownStream", "v1", Map.of("epicSequence", 14)
+        );
+
+        boolean resultStream = service.evaluateExternalSchemaEvent(unsupportedStreamEvent);
+        assertFalse(resultStream, "Should bypass categorization for unsupported stream");
     }
 }
