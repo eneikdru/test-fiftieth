@@ -75,4 +75,17 @@ test.describe('SPA Navigation Hub and Tab Routing E2E Tests', () => {
     }
   });
 
+
+  test('Given the SPA application is running, When tested via headless Playwright, Then desktop at 1440px and mobile at 375px screenshots are generated and saved', async ({ page }) => {
+    // Desktop screenshot
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto('/');
+    await page.screenshot({ path: '../.eneik/records/screenshot-1440px.png', fullPage: true });
+
+    // Mobile screenshot
+    await page.setViewportSize({ width: 375, height: 812 });
+    await page.goto('/');
+    await page.screenshot({ path: '../.eneik/records/screenshot-375px.png', fullPage: true });
+  });
+
 });
