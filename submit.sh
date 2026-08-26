@@ -1,1 +1,1 @@
-git checkout -b feature/analytical-reports-export-deletion-api && git add docs/contracts/AnalyticalReportExportAndDeletion.openapi.yaml && git commit -m "feat: define analytical reports export and deletion API contract"
+git checkout -b feature/privacy-settings-ui && git add frontend/ && git commit -m "feat: Add accessible export and delete buttons for Privacy UI"
