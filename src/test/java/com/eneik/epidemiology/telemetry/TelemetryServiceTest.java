@@ -115,4 +115,40 @@ class TelemetryServiceTest {
 
         verify(telemetryEventRepository, times(1)).save(any(TelemetryEvent.class));
     }
+
+    @Test
+    @DisplayName("Given a matched PR reconciliation, When telemetry is recorded, Then PR_RECONCILIATION_MATCHED event is stored with count 1")
+    void testRecordReconciliationTelemetryMatched() {
+        when(telemetryEventRepository.save(any(TelemetryEvent.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        TelemetryEvent event = telemetryService.recordReconciliationTelemetry("PR-101", true);
+
+        assertNotNull(event);
+        assertEquals(TelemetryService.EVENT_PR_RECONCILIATION_MATCHED, event.getEventType());
+        assertEquals("PR-101", event.getQueryTerm());
+        assertEquals(1, event.getResultsCount());
+        assertNull(event.getDocumentId());
+        assertEquals(Instant.parse("2026-08-22T15:00:00Z"), event.getCreatedAt().toInstant());
+
+        verify(telemetryEventRepository, times(1)).save(any(TelemetryEvent.class));
+    }
+
+    @Test
+    @DisplayName("Given an unmatched PR reconciliation, When telemetry is recorded, Then PR_RECONCILIATION_UNMATCHED event is stored with count 0")
+    void testRecordReconciliationTelemetryUnmatched() {
+        when(telemetryEventRepository.save(any(TelemetryEvent.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        TelemetryEvent event = telemetryService.recordReconciliationTelemetry("PR-102", false);
+
+        assertNotNull(event);
+        assertEquals(TelemetryService.EVENT_PR_RECONCILIATION_UNMATCHED, event.getEventType());
+        assertEquals("PR-102", event.getQueryTerm());
+        assertEquals(0, event.getResultsCount());
+        assertNull(event.getDocumentId());
+        assertEquals(Instant.parse("2026-08-22T15:00:00Z"), event.getCreatedAt().toInstant());
+
+        verify(telemetryEventRepository, times(1)).save(any(TelemetryEvent.class));
+    }
 }
