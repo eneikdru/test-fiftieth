@@ -2,6 +2,7 @@ package com.eneik.epidemiology.categorization;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.eneik.epidemiology.telemetry.TelemetryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,14 +22,24 @@ public class RootCauseCategorizationService {
 
     private final RootCausePatternRepository patternRepository;
     private final DesignReviewConcernRepository concernRepository;
+    private final TelemetryService telemetryService;
 
-    @Autowired
     public RootCauseCategorizationService(
         RootCausePatternRepository patternRepository,
         DesignReviewConcernRepository concernRepository
     ) {
+        this(patternRepository, concernRepository, null);
+    }
+
+    @Autowired
+    public RootCauseCategorizationService(
+        RootCausePatternRepository patternRepository,
+        DesignReviewConcernRepository concernRepository,
+        TelemetryService telemetryService
+    ) {
         this.patternRepository = patternRepository;
         this.concernRepository = concernRepository;
+        this.telemetryService = telemetryService;
     }
 
     public boolean categorizeConcernInMemory(DesignReviewConcern concern) {
@@ -114,5 +125,19 @@ public class RootCauseCategorizationService {
         }
 
         return updatedCount;
+    }
+
+    @Transactional(readOnly = true)
+    public CategorizationCoverageResponse calculateCoverage(String streamName) {
+        String stream = (streamName != null && !streamName.isBlank()) ? streamName : "reviewConcerns";
+        long total = concernRepository.countByStreamName(stream);
+        long categorized = concernRepository.countByStreamNameAndRootCausePatternIdIsNotNull(stream);
+        double coverageRate = total == 0 ? 100.0 : ((double) categorized / total) * 100.0;
+
+        if (telemetryService != null) {
+            telemetryService.recordCategorizationCoverageTelemetry(stream, total, categorized, coverageRate);
+        }
+
+        return new CategorizationCoverageResponse(stream, total, categorized, coverageRate);
     }
 }

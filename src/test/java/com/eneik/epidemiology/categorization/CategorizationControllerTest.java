@@ -12,6 +12,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -24,6 +25,24 @@ class CategorizationControllerTest {
 
     @MockBean
     private RootCauseCategorizationService categorizationService;
+
+    @Test
+    @DisplayName("Given an authenticated user, When GET /api/v1/categorization/coverage, Then returns categorization coverage metric")
+    @WithMockUser(username = "admin", roles = {"ADMIN"})
+    void testGetCategorizationCoverage() throws Exception {
+        CategorizationCoverageResponse coverage = new CategorizationCoverageResponse("reviewConcerns", 10L, 8L, 80.0);
+        when(categorizationService.calculateCoverage("reviewConcerns")).thenReturn(coverage);
+
+        mockMvc.perform(get("/api/v1/categorization/coverage")
+                        .param("streamName", "reviewConcerns"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.streamName").value("reviewConcerns"))
+                .andExpect(jsonPath("$.totalConcerns").value(10))
+                .andExpect(jsonPath("$.categorizedConcerns").value(8))
+                .andExpect(jsonPath("$.coverageRate").value(80.0));
+
+        verify(categorizationService, times(1)).calculateCoverage("reviewConcerns");
+    }
 
     @Test
     @DisplayName("Given an authenticated user, When POST /api/v1/categorization/{streamName}, Then invokes service and returns categorized count")

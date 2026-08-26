@@ -10,6 +10,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import com.eneik.epidemiology.telemetry.TelemetryService;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -17,13 +19,15 @@ class RootCauseCategorizationServiceTest {
 
     private RootCausePatternRepository patternRepository;
     private DesignReviewConcernRepository concernRepository;
+    private TelemetryService telemetryService;
     private RootCauseCategorizationService service;
 
     @BeforeEach
     void setUp() {
         patternRepository = mock(RootCausePatternRepository.class);
         concernRepository = mock(DesignReviewConcernRepository.class);
-        service = new RootCauseCategorizationService(patternRepository, concernRepository);
+        telemetryService = mock(TelemetryService.class);
+        service = new RootCauseCategorizationService(patternRepository, concernRepository, telemetryService);
     }
 
     @Test
@@ -121,6 +125,37 @@ class RootCauseCategorizationServiceTest {
         boolean result = service.evaluateExternalSchemaEvent(event);
 
         assertTrue(result);
+    }
+
+    @Test
+    @DisplayName("Given out-of-control concerns, When calculateCoverage is called, Then calculates rate and records telemetry")
+    void testCalculateCoverageTelemetry() {
+        when(concernRepository.countByStreamName("reviewConcerns")).thenReturn(10L);
+        when(concernRepository.countByStreamNameAndRootCausePatternIdIsNotNull("reviewConcerns")).thenReturn(8L);
+
+        CategorizationCoverageResponse response = service.calculateCoverage("reviewConcerns");
+
+        assertEquals("reviewConcerns", response.getStreamName());
+        assertEquals(10L, response.getTotalConcerns());
+        assertEquals(8L, response.getCategorizedConcerns());
+        assertEquals(80.0, response.getCoverageRate(), 0.001);
+
+        verify(telemetryService, times(1)).recordCategorizationCoverageTelemetry("reviewConcerns", 10L, 8L, 80.0);
+    }
+
+    @Test
+    @DisplayName("Given zero out-of-control concerns, When calculateCoverage is called, Then returns 100% coverage rate without division error")
+    void testCalculateCoverageZeroConcerns() {
+        when(concernRepository.countByStreamName("reviewConcerns")).thenReturn(0L);
+        when(concernRepository.countByStreamNameAndRootCausePatternIdIsNotNull("reviewConcerns")).thenReturn(0L);
+
+        CategorizationCoverageResponse response = service.calculateCoverage("reviewConcerns");
+
+        assertEquals(0L, response.getTotalConcerns());
+        assertEquals(0L, response.getCategorizedConcerns());
+        assertEquals(100.0, response.getCoverageRate(), 0.001);
+
+        verify(telemetryService, times(1)).recordCategorizationCoverageTelemetry("reviewConcerns", 0L, 0L, 100.0);
     }
 
     @Test

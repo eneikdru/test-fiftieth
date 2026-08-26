@@ -15,6 +15,7 @@ public class TelemetryService {
     public static final String EVENT_DOWNLOAD_SUCCESS = "DOWNLOAD_SUCCESS";
     public static final String EVENT_DOSSIER_GENERATED = "DOSSIER_GENERATED";
     public static final String EVENT_DOSSIER_FAILED = "DOSSIER_FAILED";
+    public static final String EVENT_CATEGORIZATION_COVERAGE_MEASURED = "CATEGORIZATION_COVERAGE_MEASURED";
 
     private final TelemetryEventRepository telemetryEventRepository;
     private final Clock clock;
@@ -51,6 +52,18 @@ public class TelemetryService {
                 null,
                 documentId,
                 null,
+                OffsetDateTime.now(clock)
+        );
+        return telemetryEventRepository.save(event);
+    }
+
+    @Transactional
+    public TelemetryEvent recordCategorizationCoverageTelemetry(String streamName, long totalConcerns, long categorizedConcerns, double coverageRate) {
+        TelemetryEvent event = new TelemetryEvent(
+                EVENT_CATEGORIZATION_COVERAGE_MEASURED,
+                streamName,
+                null,
+                (int) categorizedConcerns,
                 OffsetDateTime.now(clock)
         );
         return telemetryEventRepository.save(event);

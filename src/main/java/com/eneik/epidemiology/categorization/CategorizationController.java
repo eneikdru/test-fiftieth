@@ -17,6 +17,13 @@ public class CategorizationController {
         this.categorizationService = categorizationService;
     }
 
+    @GetMapping("/coverage")
+    public ResponseEntity<CategorizationCoverageResponse> getCategorizationCoverage(
+            @RequestParam(name = "streamName", required = false, defaultValue = "reviewConcerns") String streamName) {
+        CategorizationCoverageResponse coverage = categorizationService.calculateCoverage(streamName);
+        return ResponseEntity.ok(coverage);
+    }
+
     @PostMapping("/{streamName}")
     public ResponseEntity<CategorizationResult> categorizeStream(@PathVariable String streamName) {
         int count = categorizationService.categorizeReviewConcerns(streamName);
