@@ -109,6 +109,29 @@ class RootCauseCategorizationIntegrationTest {
     }
 
     @Test
+    @DisplayName("Given an uncategorized design review concern event from stream reviewConcerns at epic 15, When categorized in DB, Then assigns specific rootCausePatternId")
+    void testEndToEndCategorizationEpic15() {
+        DesignReviewConcern concern = new DesignReviewConcern();
+        concern.setId("test-concern-epic-15");
+        concern.setStreamName("reviewConcerns");
+        concern.setEpicSequence(15);
+        concern.setuValue(new BigDecimal("0.0000"));
+        concern.setRootCausePatternId(null);
+        concern.setStatus("UNCATEGORIZED");
+        concern.setCreatedAt(OffsetDateTime.parse("2026-08-26T00:00:00Z"));
+
+        concernRepository.save(concern);
+
+        int count = service.categorizeReviewConcerns("reviewConcerns");
+
+        assertTrue(count >= 1, "Epic 15 concern should have been categorized");
+
+        DesignReviewConcern updated = concernRepository.findById("test-concern-epic-15").orElseThrow();
+        assertEquals("RCP-REVIEW-CONCERNS-001", updated.getRootCausePatternId());
+        assertEquals("CATEGORIZED", updated.getStatus());
+    }
+
+    @Test
     @DisplayName("Given local concern missing rootCausePatternId, When categorizeConcernInMemory is called, Then assigns rootCausePatternId in-memory")
     void testLocalInMemoryCategorization() {
         DesignReviewConcern concern = new DesignReviewConcern(

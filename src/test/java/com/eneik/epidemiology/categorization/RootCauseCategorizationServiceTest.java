@@ -87,6 +87,28 @@ class RootCauseCategorizationServiceTest {
     }
 
     @Test
+    @DisplayName("Given an uncategorized design review concern event from stream reviewConcerns at epic 15, When categorizeConcernInMemory is called, Then assigns rootCausePatternId locally")
+    void testCategorizeConcernInMemoryEpic15() {
+        OffsetDateTime fixedTime = OffsetDateTime.parse("2026-08-26T00:00:00Z");
+        DesignReviewConcern concern = new DesignReviewConcern(
+            "CONCERN-EPIC-15", "reviewConcerns", 15, new BigDecimal("0.0000"), null, "UNCATEGORIZED", fixedTime
+        );
+
+        RootCausePattern pattern = new RootCausePattern(
+            "RCP-001", "Review Concerns Out of Control - 8 Consecutive Same Side", "reviewConcerns",
+            "WESTERN_ELECTRIC_8_CONSECUTIVE_SAME_SIDE", "RCP-REVIEW-CONCERNS-001", fixedTime
+        );
+
+        when(patternRepository.findByStreamName("reviewConcerns")).thenReturn(Optional.of(pattern));
+
+        boolean updated = service.categorizeConcernInMemory(concern);
+
+        assertTrue(updated);
+        assertEquals("RCP-REVIEW-CONCERNS-001", concern.getRootCausePatternId());
+        assertEquals("CATEGORIZED", concern.getStatus());
+    }
+
+    @Test
     @DisplayName("Given a concern missing rootCausePatternId, When categorizeConcernInMemory is called, Then assigns category in-memory")
     void testCategorizeConcernInMemory() {
         DesignReviewConcern concern = new DesignReviewConcern(
