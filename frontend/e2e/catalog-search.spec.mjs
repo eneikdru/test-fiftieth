@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 import path from 'path';
 import fs from 'fs';
 
-const harnessPath = new URL('../test-harness.html', import.meta.url).href;
+const harnessPath = '/test-harness.html';
 
 test.describe('Catalog Search and Document Management E2E Tests', () => {
 

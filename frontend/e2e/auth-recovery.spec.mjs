@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-const harnessPath = new URL('../test-harness.html?mode=login', import.meta.url).href;
+const harnessPath = '/test-harness.html?mode=login';
 
 test.describe('Authentication, Role Access, and Recovery E2E Tests', () => {
 
