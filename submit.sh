@@ -1,1 +1,1 @@
-git checkout -b feature/dossier-analytics && git commit -m "feat(document): Add EmployeeDossierAnalytics API"
+git checkout -b feature/analytical-reports-export-deletion-api && git add docs/contracts/AnalyticalReportExportAndDeletion.openapi.yaml && git commit -m "feat: define analytical reports export and deletion API contract"

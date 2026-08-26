@@ -1,0 +1,148 @@
+openapi: 3.0.3
+info:
+  title: Analytical Reports Export and Deletion API Contract
+  description: Shared API contract defining the privacy-compliant endpoints for requesting the export of summary and analytical reports (PDFs) and subsequently triggering their deletion.
+  version: 1.0.0
+servers:
+  - url: /api/v1
+    description: Primary API endpoint base path
+
+paths:
+  /dossier/analytics/export:
+    post:
+      summary: Initiate Analytical Report Export
+      description: Submits a request to generate and export an analytical report as a PDF, filtered by employee, period, document types, and scientific direction.
+      operationId: exportAnalyticsPdf
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnalyticsExportRequest'
+      responses:
+        '201':
+          description: Export request accepted and processing initiated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalyticsExportResponse'
+        '400':
+          description: Invalid request parameters (e.g. invalid date format)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /dossier/reports/{id}:
+    delete:
+      summary: Trigger Analytical Report Deletion
+      description: Submits a request to delete a previously generated analytical report to comply with privacy and data deletion requirements.
+      operationId: deleteAnalyticsReport
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Unique identifier of the generated report
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: Report successfully deleted
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Report not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    AnalyticsExportRequest:
+      type: object
+      properties:
+        employee_id:
+          type: string
+          nullable: true
+          description: Employee ID for whom the report is generated. If null, generates a company-wide report for the selected period.
+          example: "EMP-001"
+        scientific_direction:
+          type: string
+          nullable: true
+          description: Filter by scientific direction
+          example: "VIRUSOLOGY"
+        from_date:
+          type: string
+          format: date
+          nullable: true
+          description: Start date for arbitrary period filtering
+          example: "2023-01-01"
+        to_date:
+          type: string
+          format: date
+          nullable: true
+          description: End date for arbitrary period filtering
+          example: "2023-12-31"
+        doc_types:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Filter by specific document types
+
+    AnalyticsExportResponse:
+      type: object
+      required:
+        - export_id
+        - status
+        - download_url
+      properties:
+        export_id:
+          type: integer
+          format: int64
+          description: Identifier of the export task/report
+          example: 205
+        status:
+          type: string
+          description: Current status of the export (e.g., PENDING, COMPLETED)
+          example: "PENDING"
+        download_url:
+          type: string
+          description: URL to download the generated PDF
+          example: "/api/v1/dossier/reports/205/download"
+
+    ErrorResponse:
+      type: object
+      required:
+        - error_code
+        - message
+      properties:
+        error_code:
+          type: string
+          example: "INVALID_PARAM"
+        message:
+          type: string
+          description: Human-readable error message
+          example: "Invalid parameter provided."
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
