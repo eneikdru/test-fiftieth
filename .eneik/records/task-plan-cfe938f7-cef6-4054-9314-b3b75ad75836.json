@@ -1,0 +1,140 @@
+{
+  "epics": [
+    {
+      "existingEpicId": "0d1d0121-19eb-41c5-aeb8-d7cb924d1aad",
+      "sourceIndex": 0,
+      "requirements": [
+        "R1: Fix SixSigmaAuditService calculateFullSixSigmaAudit to bypass project coercion."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Fix SixSigmaAuditService Null Coercion",
+          "roleTag": "BARCAN-TAG-02",
+          "jtbd": "When implementing the SixSigmaAuditService fix for this epic, I want to remove the invalid null coercion, so that the endpoint functions correctly.",
+          "acceptanceCriteria": "Given the SixSigmaAuditService is called with a null context,\nWhen calculateFullSixSigmaAudit is invoked,\nThen it delegates to calculateSixSigmaAuditInternal(null) without project coercion.\nGiven the patch is applied, When the test suite runs, Then Unit and E2E tests thoroughly verify the SixSigmaAuditService logic.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "Audit Calculation Bottleneck",
+          "sixSigmaMetric": "Reduce calculation unhandled exceptions by 100%",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1"
+          ]
+        }
+      ]
+    },
+    {
+      "existingEpicId": "9a48cb89-5b92-4009-8c41-621a44ce3034",
+      "sourceIndex": 0,
+      "requirements": [
+        "R1: Update AutoMergeService to match PRs even if session PR URL is null."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Fix AutoMergeService PR Reconciliation",
+          "roleTag": "BARCAN-TAG-02",
+          "jtbd": "When implementing the reconciliation fix for this epic, I want to match PRs accurately without session URL, so that successfully delivered work is correctly recorded as merged.",
+          "acceptanceCriteria": "Given a merged PR event where session PR URL is null,\nWhen AutoMergeService processes the event,\nThen it successfully reconciles the PR to its task using origin_feature_id.\nGiven the patch is applied, When the test suite runs, Then Unit and E2E tests thoroughly verify the reconciliation logic.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "PR Merge Pipeline",
+          "sixSigmaMetric": "Increase reconciliation success rate to 100%",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1"
+          ]
+        }
+      ]
+    },
+    {
+      "existingEpicId": null,
+      "title": "System Measurement (GQM) for Follow-up Patches",
+      "jtbd": "When operating the knowledge base with new patches, I want to measure calculation and reconciliation success rates (Question 1: Are SixSigma audits succeeding? Question 2: Are PRs matching?), so that I know the patches resolved the issues.",
+      "kanoClass": "Must-Be",
+      "cynefinDomain": "clear",
+      "sixSigmaMetric": "Decrease unmonitored failures by 100%",
+      "tocConstraintRef": "System Observability",
+      "sourceIndex": 0,
+      "requirements": [
+        "R1: Measure successful SixSigma calculation events.",
+        "R2: Measure successful PR reconciliation events."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Implement Telemetry for Follow-up Patches",
+          "roleTag": "BARCAN-TAG-02",
+          "jtbd": "When implementing telemetry for this epic, I want to record successful calculations and reconciliations, so that the patches are measured effectively.",
+          "acceptanceCriteria": "Given the patched services,\nWhen operations succeed,\nThen successful events are logged.\nGiven the telemetry logic is added, When the test suite runs, Then Unit and E2E tests thoroughly verify the metrics.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "System Observability",
+          "sixSigmaMetric": "Achieve 100% telemetry coverage for patches",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1",
+            "R2"
+          ]
+        }
+      ]
+    },
+    {
+      "existingEpicId": "f9bb100f-dbf7-4200-b57e-6e03d0a2f85e",
+      "sourceIndex": 1,
+      "requirements": [
+        "R1: Implement SPA Navigation Hub layout and Tab Routing.",
+        "R2: Ensure WCAG 2.1 AA accessibility for navigation elements."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Implement SPA Navigation Hub",
+          "roleTag": "BARCAN-TAG-11",
+          "jtbd": "When implementing the navigation hub for this epic, I want to enable seamless tab switching, so that employees have a unified workflow.",
+          "acceptanceCriteria": "Given a user on the SPA Navigation Hub,\nWhen they click a tab,\nThen the content switches without a page reload and the URL updates.\nGiven the mobile view is active, When tested via Playwright, Then interactive zones are at least 44x44px and valid 1440px and 375px PNG screenshots are saved at precise designated .eneik/records/ paths.\nGiven the UI is updated, When the HTML harness is checked, Then Svelte component changes are manually mirrored in the corresponding standalone HTML harness file.\nGiven the implementation is complete, When the test suite runs, Then Unit and E2E tests thoroughly verify the SPA navigation.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "Frontend Navigation",
+          "sixSigmaMetric": "Reduce page load time between sections by 80%",
+          "hasUi": true,
+          "requirementRefs": [
+            "R1",
+            "R2"
+          ]
+        }
+      ]
+    },
+    {
+      "existingEpicId": null,
+      "title": "System Measurement (GQM) for SPA Navigation",
+      "jtbd": "When accessing the platform, I want to measure navigation success rates and times (Question 1: Are users successfully navigating between tabs without reloads? Question 2: Is navigation time under 100ms?), so that I know the SPA workflow is efficient.",
+      "kanoClass": "Must-Be",
+      "cynefinDomain": "clear",
+      "sixSigmaMetric": "Decrease navigation load time by 50%",
+      "tocConstraintRef": "Frontend Performance",
+      "sourceIndex": 1,
+      "requirements": [
+        "R1: Measure SPA tab transition times and counts."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Implement SPA Telemetry",
+          "roleTag": "BARCAN-TAG-11",
+          "jtbd": "When implementing telemetry for this epic, I want to record transition times, so that navigation efficiency is measured.",
+          "acceptanceCriteria": "Given a user navigating the SPA,\nWhen a tab switch occurs,\nThen the transition time is recorded in frontend telemetry.\nGiven the frontend telemetry is implemented, When the test suite runs, Then Unit and E2E tests thoroughly verify the telemetry.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "Frontend Telemetry",
+          "sixSigmaMetric": "Achieve 100% telemetry coverage for tab switches",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1"
+          ]
+        }
+      ]
+    }
+  ]
+}
