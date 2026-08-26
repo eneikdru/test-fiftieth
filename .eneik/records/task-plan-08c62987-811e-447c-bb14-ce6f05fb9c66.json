@@ -1,0 +1,237 @@
+{
+  "epics": [
+    {
+      "existingEpicId": "15bccd3e-7105-45b6-a135-f842615ef4c8",
+      "title": "Root Cause Categorization for Design Review Concerns",
+      "jtbd": "When analyzing design review concerns, I want to categorize them by root cause pattern, so that repeating invariant patterns can be addressed systemically.",
+      "kanoClass": "Must-Be",
+      "cynefinDomain": "clear",
+      "sixSigmaMetric": "Increase categorization rate of out-of-control review concerns to 100%",
+      "tocConstraintRef": "TOC-Review-0",
+      "sourceIndex": 0,
+      "requirements": [
+        "R1: Assign the uncategorized design review concern event (stream 'reviewConcerns', u=0.0000 outside limits at epic sequence #13) a specific rootCausePatternId by implementing the categorization logic locally in a Java Service and Event class."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Implement local categorization logic",
+          "roleTag": "BARCAN-TAG-02",
+          "jtbd": "When implementing the categorization logic for this epic, I want to assign a specific rootCausePatternId to uncategorized concern events, so that the repeating invariant pattern is systemically addressed.",
+          "acceptanceCriteria": "Given an uncategorized design review concern event from stream reviewConcerns at epic 13\nWhen the categorization logic executes\nThen a specific rootCausePatternId is successfully assigned locally\nGiven the implementation is completed\nWhen verified by QA\nThen Unit and E2E tests thoroughly verify the assignment logic and correctness",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "TOC-Review-0-Task",
+          "sixSigmaMetric": "100% of targeted uncategorized events are correctly assigned a rootCausePatternId",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1"
+          ]
+        }
+      ]
+    },
+    {
+      "existingEpicId": null,
+      "title": "Measurement (GQM) for Root Cause Categorization",
+      "jtbd": "When analyzing design review concerns, I want to measure the categorization coverage rate (Question 1: Are 100% of out-of-control review concerns successfully assigned a rootCausePatternId?), so that repeating invariant patterns are reliably identified.",
+      "kanoClass": "Must-Be",
+      "cynefinDomain": "clear",
+      "sixSigmaMetric": "Increase categorization coverage from 0% to 100%",
+      "tocConstraintRef": "TOC-Measurement-0",
+      "sourceIndex": 0,
+      "requirements": [
+        "R1: Track the percentage of out-of-control design review concerns that have a non-null rootCausePatternId."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Implement categorization telemetry",
+          "roleTag": "BARCAN-TAG-02",
+          "jtbd": "When implementing measurement for this epic, I want to track the categorization coverage rate, so that the measurement floor goal is achieved.",
+          "acceptanceCriteria": "Given the categorization logic is running\nWhen telemetry is collected\nThen the percentage of out-of-control concerns with a non-null rootCausePatternId is measured\nGiven the telemetry implementation is complete\nWhen verified by QA\nThen Unit and E2E tests thoroughly verify the correct tracking of the metric",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "TOC-Measurement-0-Task",
+          "sixSigmaMetric": "100% accuracy in tracking categorization coverage",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1"
+          ]
+        }
+      ]
+    },
+    {
+      "existingEpicId": null,
+      "title": "Unified SPA Navigation Hub",
+      "jtbd": "When an employee accesses the platform, I want to navigate between the catalog, dossier analytics, root cause categorization, and GDPR settings from a single page without reloads, so that I have a unified and efficient workflow.",
+      "kanoClass": "Performance",
+      "cynefinDomain": "complicated",
+      "sixSigmaMetric": "Reduce navigation distance from index to any functional module to <= 1 click",
+      "tocConstraintRef": "TOC-SPA-Navigation",
+      "sourceIndex": 1,
+      "requirements": [
+        "R1: Create a unified header on the main page (index.html) with navigation tabs for Catalog, Dossier Analytics, Root Cause Categorization, and GDPR/Privacy.",
+        "R2: Implement SPA client routing to switch tabs without page reloads.",
+        "R3: Integrate existing components (DossierBuilder.svelte, RootCauseService, PrivacySettings.svelte) into the tabs.",
+        "R4: Mask technical logs and isolate service files."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Implement SPA Navigation and Tab Routing",
+          "roleTag": "BARCAN-TAG-11",
+          "jtbd": "When implementing the SPA navigation hub for this epic, I want to create a unified header and tab routing, so that users can navigate modules without page reloads.",
+          "acceptanceCriteria": "Given the main index.html page is loaded\nWhen the user clicks the '#tab-dossier' or '#tab-privacy' tabs\nThen the corresponding functional module is displayed without page reload\nGiven the UI is rendered\nWhen evaluated for accessibility and design laws\nThen it meets WCAG 2.1 level AA contrast, Fitts's Law minimum 44x44px interactive zones, and Miller's Law max 9 blocks",
+          "leanValue": "essential",
+          "cynefinDomain": "complicated",
+          "tocConstraintRef": "TOC-SPA-Navigation-UI",
+          "sixSigmaMetric": "100% successful loading of functional modules within 1 click",
+          "hasUi": true,
+          "requirementRefs": [
+            "R1",
+            "R2",
+            "R3",
+            "R4"
+          ]
+        },
+        {
+          "title": "Verify SPA Hub Navigational Connectivity",
+          "roleTag": "BARCAN-TAG-06",
+          "jtbd": "When verifying the SPA navigation hub for this epic, I want to confirm module reachability, so that the unified workflow functions reliably end-to-end.",
+          "acceptanceCriteria": "Given the fully integrated SPA application\nWhen a user navigates from the main page to any functional module\nThen the navigation distance is <= 1 click\nGiven the SPA application is running\nWhen tested via headless Playwright\nThen desktop at 1440px and mobile at 375px screenshots are generated and saved at precise designated .eneik/records/ paths",
+          "leanValue": "essential",
+          "cynefinDomain": "complicated",
+          "tocConstraintRef": "TOC-SPA-Navigation-QA",
+          "sixSigmaMetric": "100% test coverage for SPA tab routing transitions",
+          "hasUi": true,
+          "requirementRefs": [
+            "R1",
+            "R2",
+            "R3",
+            "R4"
+          ]
+        }
+      ]
+    },
+    {
+      "existingEpicId": null,
+      "title": "Measurement (GQM) for SPA Hub Integration",
+      "jtbd": "When operating the unified portal, I want to measure the average click distance and successful tab load rates (Question 1: Is the navigation distance from index to any functional module <= 1 click? Question 2: Do tabs load without errors?), so that I know the consolidation reduces Lean waste.",
+      "kanoClass": "Must-Be",
+      "cynefinDomain": "clear",
+      "sixSigmaMetric": "100% of tabs load successfully within <= 1 click",
+      "tocConstraintRef": "TOC-Measurement-1",
+      "sourceIndex": 1,
+      "requirements": [
+        "R1: Measure the click distance to functional modules and track tab load success rates."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Instrument SPA Navigation Telemetry",
+          "roleTag": "BARCAN-TAG-11",
+          "jtbd": "When implementing measurement for this epic, I want to track click distance and tab load successes, so that the consolidation's effectiveness is proven.",
+          "acceptanceCriteria": "Given the SPA application is actively used\nWhen a user navigates between tabs\nThen the click distance and load success rate are recorded\nGiven the measurement instrumentation is complete\nWhen verified by QA\nThen Unit and E2E tests thoroughly verify the correct tracking of telemetry metrics",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "TOC-Measurement-1-Task",
+          "sixSigmaMetric": "100% accuracy in telemetry reporting for SPA routing",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1"
+          ]
+        }
+      ]
+    },
+    {
+      "existingEpicId": "0d1d0121-19eb-41c5-aeb8-d7cb924d1aad",
+      "title": "Deliver Missing API Slice D3a7a0f6",
+      "jtbd": "When deploying the API, I want all committed code to be present on main, so that the endpoint functions correctly.",
+      "kanoClass": "Must-Be",
+      "cynefinDomain": "clear",
+      "sixSigmaMetric": "100% execution success of SixSigmaAuditService",
+      "tocConstraintRef": "TOC-Delivery-0",
+      "sourceIndex": 2,
+      "requirements": [
+        "R1: Fix SixSigmaAuditService.calculateFullSixSigmaAudit() to directly call calculateSixSigmaAuditInternal(null) bypassing project ID coercion, and introduce calculateFeatureSixSigmaAudit / calculateProductLayerSixSigmaAudit."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Implement missing SixSigmaAuditService fix",
+          "roleTag": "BARCAN-TAG-02",
+          "jtbd": "When restoring the missing fix for this epic, I want to correct the SixSigmaAuditService logic, so that cross-project audits run without null coercion errors.",
+          "acceptanceCriteria": "Given calculateFullSixSigmaAudit is invoked\nWhen cross-project logic executes\nThen calculateSixSigmaAuditInternal(null) is called directly without project ID coercion\nGiven the missing implementation is restored\nWhen verified by QA\nThen Unit and E2E tests thoroughly verify that the calculations succeed",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "TOC-Delivery-0-Task",
+          "sixSigmaMetric": "100% of SixSigmaAuditService tests pass without null coercion errors",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1"
+          ]
+        }
+      ]
+    },
+    {
+      "existingEpicId": "9a48cb89-5b92-4009-8c41-621a44ce3034",
+      "title": "Fix AutoMergeService Runtime Contract GitHub PR Reconciliation",
+      "jtbd": "When the orchestrator automatically merges PRs, I want the system to accurately match the PR to its task even if the session PR URL is null, so that successfully delivered work is correctly recorded as merged.",
+      "kanoClass": "Must-Be",
+      "cynefinDomain": "clear",
+      "sixSigmaMetric": "100% successful reconciliation of merged PRs to tasks",
+      "tocConstraintRef": "TOC-Delivery-1",
+      "sourceIndex": 2,
+      "requirements": [
+        "R1: Update AutoMergeService.reconcileMergedGitHubPullRequests() to reconcile merged PRs robustly, without relying solely on an exact match of session.getPrUrl()."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Implement missing AutoMergeService fix",
+          "roleTag": "BARCAN-TAG-02",
+          "jtbd": "When restoring the missing fix for this epic, I want to robustly reconcile PRs, so that tasks with null session PR URLs are correctly matched.",
+          "acceptanceCriteria": "Given a merged GitHub PR and a task with a null session PR URL\nWhen reconcileMergedGitHubPullRequests is executed\nThen the PR is accurately matched to its task\nGiven the missing implementation is restored\nWhen verified by QA\nThen Unit and E2E tests thoroughly verify successful PR reconciliation",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "TOC-Delivery-1-Task",
+          "sixSigmaMetric": "100% of AutoMergeService PR reconciliation tests pass",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1"
+          ]
+        }
+      ]
+    },
+    {
+      "existingEpicId": null,
+      "title": "Measurement (GQM) for Missing Delivered Work",
+      "jtbd": "When operating the system, I want to measure the error rates of restored logic (Question 1: Are cross-project audits calculating without null coercion errors? Question 2: Are merged PRs correctly reconciled to tasks?), so that I know the previously missing logic is fully operational.",
+      "kanoClass": "Must-Be",
+      "cynefinDomain": "clear",
+      "sixSigmaMetric": "100% operational success for restored backend tasks",
+      "tocConstraintRef": "TOC-Measurement-2",
+      "sourceIndex": 2,
+      "requirements": [
+        "R1: Monitor error rates for SixSigmaAuditService calculations and PR reconciliation success rates for AutoMergeService."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Instrument backend operations telemetry",
+          "roleTag": "BARCAN-TAG-02",
+          "jtbd": "When implementing measurement for this epic, I want to track error rates and PR reconciliation success, so that the missing features' stability is confirmed.",
+          "acceptanceCriteria": "Given the backend services are processing requests\nWhen measurement data is captured\nThen error rates and reconciliation successes are accurately recorded\nGiven the measurement implementation is complete\nWhen verified by QA\nThen Unit and E2E tests thoroughly verify the correct tracking of metrics",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "TOC-Measurement-2-Task",
+          "sixSigmaMetric": "100% accuracy in telemetry tracking for restored logic",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1"
+          ]
+        }
+      ]
+    }
+  ]
+}
