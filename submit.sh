@@ -1,1 +1,2 @@
-git checkout -b feature/dossier-analytics && git commit -m "feat(document): Add EmployeeDossierAnalytics API"
+git checkout -b feature/dossier-builder-ui
+git commit -m "feat: implement Employee Dossier Frontend UI slice"
