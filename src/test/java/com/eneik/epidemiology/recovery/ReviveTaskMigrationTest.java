@@ -24,7 +24,7 @@ class ReviveTaskMigrationTest {
 
     @Test
     @DisplayName("Given stuck task 8bd0dbae-41f6-466a-95a7-aff680ed0866 in FAILED or CLOSED state, When resumeTask is invoked with REVIVE_FAILED_TASK, Then task status is updated to IN_PROGRESS via atomic CAS update")
-    void testResumeStuckTask() {
+    void testResumeStuckTask8bd0dbae() {
         UUID taskId = UUID.fromString("8bd0dbae-41f6-466a-95a7-aff680ed0866");
 
         jdbcTemplate.execute("CREATE TABLE IF NOT EXISTS tasks (id VARCHAR(255) PRIMARY KEY, status VARCHAR(255))");
@@ -34,6 +34,23 @@ class ReviveTaskMigrationTest {
         boolean revived = plannedWorkRecoveryService.resumeTask(taskId, OperationalAction.REVIVE_FAILED_TASK);
 
         assertTrue(revived, "Task 8bd0dbae-41f6-466a-95a7-aff680ed0866 should be revived");
+
+        String status = jdbcTemplate.queryForObject("SELECT status FROM tasks WHERE id = ?", String.class, taskId.toString());
+        assertEquals("IN_PROGRESS", status);
+    }
+
+    @Test
+    @DisplayName("Given stuck task 5421d1f0-ec82-43a9-ad0c-9a94345450af in FAILED or CLOSED state, When resumeTask is invoked with REVIVE_FAILED_TASK, Then task status is updated to IN_PROGRESS via atomic CAS update")
+    void testResumeStuckTask5421d1f0() {
+        UUID taskId = UUID.fromString("5421d1f0-ec82-43a9-ad0c-9a94345450af");
+
+        jdbcTemplate.execute("CREATE TABLE IF NOT EXISTS tasks (id VARCHAR(255) PRIMARY KEY, status VARCHAR(255))");
+        jdbcTemplate.update("DELETE FROM tasks WHERE id = ?", taskId.toString());
+        jdbcTemplate.update("INSERT INTO tasks (id, status) VALUES (?, ?)", taskId.toString(), "CLOSED");
+
+        boolean revived = plannedWorkRecoveryService.resumeTask(taskId, OperationalAction.REVIVE_FAILED_TASK);
+
+        assertTrue(revived, "Task 5421d1f0-ec82-43a9-ad0c-9a94345450af should be revived");
 
         String status = jdbcTemplate.queryForObject("SELECT status FROM tasks WHERE id = ?", String.class, taskId.toString());
         assertEquals("IN_PROGRESS", status);
