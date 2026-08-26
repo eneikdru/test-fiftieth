@@ -82,6 +82,23 @@ class RootCauseCategorizationServiceTest {
     }
 
     @Test
+    @DisplayName("Given an uncategorized concern with null stream, When categorizeConcernInMemory is called, Then assigns default invariant pattern in application code")
+    void testCategorizeConcernInMemoryWithNullStream() {
+        OffsetDateTime fixedTimestamp = OffsetDateTime.parse("2026-08-26T00:00:00Z");
+        DesignReviewConcern concern = new DesignReviewConcern(
+            "CONCERN-IN-MEMORY-NULL-STREAM", null, 12, new BigDecimal("0.0000"), null, "UNCATEGORIZED", fixedTimestamp
+        );
+
+        when(patternRepository.findByStreamName("reviewConcerns")).thenReturn(Optional.empty());
+
+        boolean updated = service.categorizeConcernInMemory(concern);
+
+        assertTrue(updated);
+        assertEquals("RCP-REVIEW-CONCERNS-001", concern.getRootCausePatternId());
+        assertEquals("CATEGORIZED", concern.getStatus());
+    }
+
+    @Test
     @DisplayName("Given a concern already having rootCausePatternId, When categorizeConcernInMemory is called, Then skips categorization")
     void testCategorizeConcernInMemoryAlreadyCategorized() {
         DesignReviewConcern concern = new DesignReviewConcern(
