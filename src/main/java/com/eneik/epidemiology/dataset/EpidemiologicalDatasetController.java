@@ -1,4 +1,4 @@
-package com.eneik.epidemiology.feature;
+package com.eneik.epidemiology.dataset;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

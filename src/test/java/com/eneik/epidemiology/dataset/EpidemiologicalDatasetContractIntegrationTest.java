@@ -1,4 +1,4 @@
-package com.eneik.epidemiology.feature;
+package com.eneik.epidemiology.dataset;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

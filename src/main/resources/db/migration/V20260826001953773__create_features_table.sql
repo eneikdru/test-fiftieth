@@ -1,3 +1,3 @@
-ALTER TABLE features
-ADD COLUMN IF NOT EXISTS dismissed_at TIMESTAMP WITH TIME ZONE,
-ADD COLUMN IF NOT EXISTS valueless BOOLEAN NOT NULL DEFAULT FALSE;
+-- Flyway Migration V20260826001953773: Structural alignment
+-- Domain: Schema Baseline
+SELECT 1;
