@@ -1,0 +1,52 @@
+openapi: 3.0.1
+info:
+  title: Planned Work Recovery API Contract
+  version: "1.0"
+  description: Shared API contract for resuming blocked or failed orchestrated tasks.
+paths:
+  /api/v1/recovery/tasks/{taskId}/resume:
+    post:
+      summary: Resume a failed or closed task
+      operationId: resumeTask
+      tags:
+        - Recovery
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: The UUID of the task to revive
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                action:
+                  type: string
+                  enum: [REVIVE_FAILED_TASK]
+                  description: The operational action authorizing the revival
+      responses:
+        '200':
+          description: Task successfully revived
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: IN_PROGRESS
+                  message:
+                    type: string
+        '400':
+          description: Invalid request parameters or action
+        '409':
+          description: Task could not be revived due to state conflict
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
