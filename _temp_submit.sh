@@ -1,1 +1,1 @@
-git checkout -b fix/architectural-blocker && git commit --allow-empty -m "Blocker: Architectural contradiction regarding orchestrator changes in client repository"
+git checkout -b blocker-automerge-contradiction && git commit --allow-empty -m "Blocker: Architectural Contradiction"
