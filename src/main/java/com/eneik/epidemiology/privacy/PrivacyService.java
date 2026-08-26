@@ -1,5 +1,9 @@
 package com.eneik.epidemiology.privacy;
 
+import com.eneik.epidemiology.document.DossierReport;
+import com.eneik.epidemiology.document.DossierReportRepository;
+import com.eneik.epidemiology.document.EmployeeDocument;
+import com.eneik.epidemiology.document.EmployeeDocumentRepository;
 import com.eneik.epidemiology.user.User;
 import com.eneik.epidemiology.user.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -21,6 +25,8 @@ public class PrivacyService {
     private final DataExportJobRepository exportJobRepository;
     private final DataErasureJobRepository erasureJobRepository;
     private final UserRepository userRepository;
+    private final EmployeeDocumentRepository employeeDocumentRepository;
+    private final DossierReportRepository dossierReportRepository;
     private final ObjectMapper objectMapper;
     private final Clock clock;
 
@@ -29,9 +35,11 @@ public class PrivacyService {
         DataExportJobRepository exportJobRepository,
         DataErasureJobRepository erasureJobRepository,
         UserRepository userRepository,
+        EmployeeDocumentRepository employeeDocumentRepository,
+        DossierReportRepository dossierReportRepository,
         ObjectMapper objectMapper
     ) {
-        this(exportJobRepository, erasureJobRepository, userRepository, objectMapper, Clock.systemUTC());
+        this(exportJobRepository, erasureJobRepository, userRepository, employeeDocumentRepository, dossierReportRepository, objectMapper, Clock.systemUTC());
     }
 
     public PrivacyService(
@@ -41,9 +49,23 @@ public class PrivacyService {
         ObjectMapper objectMapper,
         Clock clock
     ) {
+        this(exportJobRepository, erasureJobRepository, userRepository, null, null, objectMapper, clock);
+    }
+
+    public PrivacyService(
+        DataExportJobRepository exportJobRepository,
+        DataErasureJobRepository erasureJobRepository,
+        UserRepository userRepository,
+        EmployeeDocumentRepository employeeDocumentRepository,
+        DossierReportRepository dossierReportRepository,
+        ObjectMapper objectMapper,
+        Clock clock
+    ) {
         this.exportJobRepository = exportJobRepository;
         this.erasureJobRepository = erasureJobRepository;
         this.userRepository = userRepository;
+        this.employeeDocumentRepository = employeeDocumentRepository;
+        this.dossierReportRepository = dossierReportRepository;
         this.objectMapper = objectMapper;
         this.clock = clock;
     }
@@ -88,6 +110,43 @@ public class PrivacyService {
             userDataMap.put("username", user.getUsername());
             userDataMap.put("role", user.getRole());
             userDataMap.put("created_at", user.getCreatedAt() != null ? user.getCreatedAt().toString() : null);
+
+            if (employeeDocumentRepository != null) {
+                List<EmployeeDocument> docs = employeeDocumentRepository.findByEmployeeIdOrderByDocDateDesc(user.getUsername());
+                List<Map<String, Object>> docList = new ArrayList<>();
+                for (EmployeeDocument doc : docs) {
+                    Map<String, Object> docMap = new LinkedHashMap<>();
+                    docMap.put("id", doc.getId());
+                    docMap.put("employee_id", doc.getEmployeeId());
+                    docMap.put("employee_surname", doc.getEmployeeSurname());
+                    docMap.put("doc_type", doc.getDocType());
+                    docMap.put("title", doc.getTitle());
+                    docMap.put("doc_date", doc.getDocDate() != null ? doc.getDocDate().toString() : null);
+                    docMap.put("details", doc.getDetails());
+                    docMap.put("scientific_direction", doc.getScientificDirection());
+                    docMap.put("created_at", doc.getCreatedAt() != null ? doc.getCreatedAt().toString() : null);
+                    docList.add(docMap);
+                }
+                userDataMap.put("dossier_documents", docList);
+            }
+
+            if (dossierReportRepository != null) {
+                List<DossierReport> reports = dossierReportRepository.findByEmployeeId(user.getUsername());
+                List<Map<String, Object>> reportList = new ArrayList<>();
+                for (DossierReport r : reports) {
+                    Map<String, Object> rMap = new LinkedHashMap<>();
+                    rMap.put("id", r.getId());
+                    rMap.put("employee_id", r.getEmployeeId());
+                    rMap.put("template_type", r.getTemplateType());
+                    rMap.put("status", r.getStatus());
+                    rMap.put("summary_text", r.getSummaryText());
+                    rMap.put("document_count", r.getDocumentCount());
+                    rMap.put("download_url", r.getDownloadUrl());
+                    rMap.put("created_at", r.getCreatedAt() != null ? r.getCreatedAt().toString() : null);
+                    reportList.add(rMap);
+                }
+                userDataMap.put("dossier_reports", reportList);
+            }
 
             String payloadJson = objectMapper.writeValueAsString(userDataMap);
             String downloadUrl = "/api/v1/privacy/export-requests/" + job.getRequestId() + "/download";
@@ -187,11 +246,29 @@ public class PrivacyService {
 
         erasureJobRepository.save(job);
 
+        int totalErased = 1; // user account
+
+        if (employeeDocumentRepository != null) {
+            List<EmployeeDocument> docs = employeeDocumentRepository.findByEmployeeIdOrderByDocDateDesc(user.getUsername());
+            if (!docs.isEmpty()) {
+                totalErased += docs.size();
+                employeeDocumentRepository.deleteAll(docs);
+            }
+        }
+
+        if (dossierReportRepository != null) {
+            List<DossierReport> reports = dossierReportRepository.findByEmployeeId(user.getUsername());
+            if (!reports.isEmpty()) {
+                totalErased += reports.size();
+                dossierReportRepository.deleteAll(reports);
+            }
+        }
+
         // Execute permanent removal of identifiable user data from database
         userRepository.delete(user);
 
         job.setStatus("COMPLETED");
-        job.setRecordsErasedCount(1);
+        job.setRecordsErasedCount(totalErased);
         job.setCompletedAt(OffsetDateTime.now(clock));
 
         return erasureJobRepository.save(job);
