@@ -14,7 +14,7 @@ test.describe('Registration and Onboarding Flow', () => {
   test('Mobile interaction - Validation and preservation of input', async ({ page }) => {
     // Mobile viewport
     await page.setViewportSize({ width: 375, height: 667 });
-    await page.goto('http://localhost:18080/registration-harness.html');
+    await page.goto('/registration-harness.html');
 
     // Wait for Svelte app to mount
     await page.waitForTimeout(1000);
@@ -55,7 +55,7 @@ test.describe('Registration and Onboarding Flow', () => {
   test('Desktop interaction - Full onboarding flow', async ({ page }) => {
     // Desktop viewport
     await page.setViewportSize({ width: 1440, height: 900 });
-    await page.goto('http://localhost:18080/registration-harness.html');
+    await page.goto('/registration-harness.html');
 
     // Wait for Svelte app to mount
     await page.waitForTimeout(1000);

@@ -3,7 +3,7 @@ import path from 'path';
 
 test.describe('Dossier Search E2E', () => {
     test('Dossier search flow', async ({ page }) => {
-        await page.goto(`file://${path.resolve('dossier-harness.html')}`);
+        await page.goto('/dossier-harness.html');
         await page.fill('#search-query-input', 'Иванов');
         await page.click('#search-button');
         await expect(page.locator('#document-list')).toBeVisible();
@@ -14,7 +14,7 @@ test.describe('Dossier Search E2E', () => {
     });
 
     test('Dossier Search Design Check Screenshots', async ({ page }) => {
-        await page.goto(`file://${path.resolve('dossier-harness.html')}`);
+        await page.goto('/dossier-harness.html');
         await page.fill('#search-query-input', 'Иванов');
         await page.click('#search-button');
         await expect(page.locator('#document-list')).toBeVisible();

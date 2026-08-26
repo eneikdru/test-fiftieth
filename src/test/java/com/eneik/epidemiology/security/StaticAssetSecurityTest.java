@@ -18,10 +18,16 @@ class StaticAssetSecurityTest {
     private MockMvc mockMvc;
 
     @Test
-    @DisplayName("Given an unauthenticated request for static HTML, When evaluated by SecurityConfig, Then access is permitted without 401 Unauthorized")
+    @DisplayName("Given an unauthenticated request for static HTML, When evaluated by SecurityConfig, Then access is permitted with 200 OK")
     void testStaticHtmlAccess_PermittedWithoutAuthentication() throws Exception {
         mockMvc.perform(get("/registration-harness.html"))
-                .andExpect(status().isNotFound()); // Permitted by security filter chain, resource missing returns 404 instead of 401
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/test-harness.html"))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/dossier-harness.html"))
+                .andExpect(status().isOk());
     }
 
     @Test
