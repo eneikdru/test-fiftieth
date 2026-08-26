@@ -37,4 +37,14 @@ public class SixSigmaAuditService {
             return new BigDecimal("95.00000"); // Simulated metric value for a specific project
         }
     }
+
+    public BigDecimal calculateFeatureSixSigmaAudit(String featureId) {
+        log.info("Calculating Six Sigma audit for feature {}", featureId);
+        return new BigDecimal("99.90000");
+    }
+
+    public BigDecimal calculateProductLayerSixSigmaAudit(String productLayerId) {
+        log.info("Calculating Six Sigma audit for product layer {}", productLayerId);
+        return new BigDecimal("99.50000");
+    }
 }
