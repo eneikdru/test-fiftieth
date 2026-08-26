@@ -1,0 +1,41 @@
+openapi: 3.0.1
+info:
+  title: Backend Operations Telemetry API
+  version: "1.0"
+paths:
+  /api/v1/telemetry/operations:
+    post:
+      summary: Record backend operations telemetry
+      operationId: recordOperationsTelemetry
+      tags:
+        - Telemetry
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - event_type
+              properties:
+                event_type:
+                  type: string
+                  enum: [ERROR_RATE, PR_RECONCILIATION_SUCCESS]
+                  description: The type of operations event
+      responses:
+        '201':
+          description: Telemetry event successfully recorded
+        '400':
+          description: Invalid request parameters or event type
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

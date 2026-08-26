@@ -15,6 +15,8 @@ public class TelemetryService {
     public static final String EVENT_DOWNLOAD_SUCCESS = "DOWNLOAD_SUCCESS";
     public static final String EVENT_DOSSIER_GENERATED = "DOSSIER_GENERATED";
     public static final String EVENT_DOSSIER_FAILED = "DOSSIER_FAILED";
+    public static final String EVENT_ERROR_RATE = "ERROR_RATE";
+    public static final String EVENT_PR_RECONCILIATION_SUCCESS = "PR_RECONCILIATION_SUCCESS";
 
     private final TelemetryEventRepository telemetryEventRepository;
     private final Clock clock;
@@ -64,6 +66,21 @@ public class TelemetryService {
                 null,
                 null,
                 processingTimeMs,
+                OffsetDateTime.now(clock)
+        );
+        return telemetryEventRepository.save(event);
+    }
+
+    @Transactional
+    public TelemetryEvent recordOperationsTelemetry(String eventType) {
+        if (!EVENT_ERROR_RATE.equals(eventType) && !EVENT_PR_RECONCILIATION_SUCCESS.equals(eventType)) {
+            return null; // Or throw IllegalArgumentException depending on validation layers
+        }
+        TelemetryEvent event = new TelemetryEvent(
+                eventType,
+                null,
+                null,
+                null,
                 OffsetDateTime.now(clock)
         );
         return telemetryEventRepository.save(event);
