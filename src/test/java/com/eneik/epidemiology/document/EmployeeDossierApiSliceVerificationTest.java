@@ -62,7 +62,7 @@ public class EmployeeDossierApiSliceVerificationTest {
                         .param("employee_id", "EMP-101")
                         .param("doc_type", "ORDER"))
                 .andExpect(status().isOk())
-                .andExpect(contentType(MediaType.APPLICATION_JSON))
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$", hasSize(1)))
                 .andExpect(jsonPath("$[0].employee_id").value("EMP-101"))
                 .andExpect(jsonPath("$[0].doc_type").value("ORDER"))
