@@ -1,5 +1,8 @@
 package com.eneik.epidemiology.privacy;
 
+import com.eneik.epidemiology.document.DossierReportRepository;
+import com.eneik.epidemiology.document.EmployeeDocument;
+import com.eneik.epidemiology.document.EmployeeDocumentRepository;
 import com.eneik.epidemiology.user.User;
 import com.eneik.epidemiology.user.UserRepository;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -22,6 +25,7 @@ import java.sql.Connection;
 import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.util.List;
@@ -46,6 +50,12 @@ class DataSubjectRightsVerificationTest {
     private UserRepository userRepository;
 
     @Autowired
+    private EmployeeDocumentRepository employeeDocumentRepository;
+
+    @Autowired
+    private DossierReportRepository dossierReportRepository;
+
+    @Autowired
     private ObjectMapper objectMapper;
 
     @Autowired
@@ -63,6 +73,8 @@ class DataSubjectRightsVerificationTest {
             exportJobRepository,
             erasureJobRepository,
             userRepository,
+            employeeDocumentRepository,
+            dossierReportRepository,
             objectMapper,
             fixedClock
         );
@@ -209,23 +221,28 @@ class DataSubjectRightsVerificationTest {
         user = userRepository.save(user);
         Long userId = user.getId();
 
+        EmployeeDocument doc = new EmployeeDocument("rights_erasure_user", "Publication", "Paper title", LocalDate.of(2025, 3, 10), "Details");
+        employeeDocumentRepository.save(doc);
+
         // Confirm user exists prior to erasure
         assertTrue(userRepository.findById(userId).isPresent());
         assertTrue(userRepository.findByUsername("rights_erasure_user").isPresent());
+        assertEquals(1, employeeDocumentRepository.findByEmployeeIdOrderByDocDateDesc("rights_erasure_user").size());
 
         // Perform erasure
         String confirmationToken = "CONFIRM_ERASURE_rights_erasure_user";
         DataErasureJob job = privacyService.initiateDataErasure("rights_erasure_user", confirmationToken, "152-FZ Withdrawal", "ALL_PERSONAL_DATA");
 
         assertEquals("COMPLETED", job.getStatus());
-        assertEquals(1, job.getRecordsErasedCount());
+        assertEquals(2, job.getRecordsErasedCount()); // 1 user + 1 document
 
-        // Subsequent database queries confirm user data is gone
+        // Subsequent database queries confirm user data and documents are gone
         Optional<User> byId = userRepository.findById(userId);
         Optional<User> byUsername = userRepository.findByUsername("rights_erasure_user");
 
         assertTrue(byId.isEmpty(), "User ID query must confirm data is deleted");
         assertTrue(byUsername.isEmpty(), "User username query must confirm data is deleted");
+        assertTrue(employeeDocumentRepository.findByEmployeeIdOrderByDocDateDesc("rights_erasure_user").isEmpty(), "Employee documents must be deleted");
     }
 
     @Test
