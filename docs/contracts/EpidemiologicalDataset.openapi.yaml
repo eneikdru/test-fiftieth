@@ -1,0 +1,48 @@
+openapi: 3.0.1
+info:
+  title: Epidemiological Dataset API Contract
+  version: "1.0"
+  description: Shared API contract for runtime contract mapping epidemiological datasets.
+paths:
+  /api/v1/datasets/validate:
+    post:
+      summary: Validate epidemiological schema interaction
+      operationId: validateDatasetInteraction
+      tags:
+        - Dataset
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - datasetId
+                - schemaVersion
+              properties:
+                datasetId:
+                  type: string
+                  description: The ID of the epidemiological dataset
+                schemaVersion:
+                  type: string
+                  description: The schema version string
+                payload:
+                  type: object
+                  description: The interaction payload to validate
+      responses:
+        '200':
+          description: Valid epidemiological schema interaction
+        '400':
+          description: Structural error - invalid epidemiological schema interaction
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Structural error"
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
