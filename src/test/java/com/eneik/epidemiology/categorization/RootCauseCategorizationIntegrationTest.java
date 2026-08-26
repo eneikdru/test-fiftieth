@@ -1,5 +1,8 @@
 package com.eneik.epidemiology.categorization;
 
+import com.eneik.epidemiology.telemetry.TelemetryEvent;
+import com.eneik.epidemiology.telemetry.TelemetryEventRepository;
+import com.eneik.epidemiology.telemetry.TelemetryService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +28,35 @@ class RootCauseCategorizationIntegrationTest {
 
     @Autowired
     private DesignReviewConcernRepository concernRepository;
+
+    @Autowired
+    private TelemetryEventRepository telemetryEventRepository;
+
+    @Test
+    @DisplayName("Given reviewConcerns stream in DB, When calculateCoverage is called, Then measures percentage of concerns with non-null rootCausePatternId and records telemetry event")
+    void testCalculateCoverageIntegrationAndTelemetryPersistence() {
+        DesignReviewConcern concern1 = new DesignReviewConcern(
+            "test-concern-coverage-1", "reviewConcerns", 13, new BigDecimal("0.0000"), "RCP-REVIEW-CONCERNS-001", "CATEGORIZED", OffsetDateTime.now()
+        );
+        DesignReviewConcern concern2 = new DesignReviewConcern(
+            "test-concern-coverage-2", "reviewConcerns", 14, new BigDecimal("0.0000"), null, "UNCATEGORIZED", OffsetDateTime.now()
+        );
+
+        concernRepository.saveAll(List.of(concern1, concern2));
+
+        CategorizationCoverageResponse coverage = service.calculateCoverage("reviewConcerns");
+
+        assertTrue(coverage.getTotalConcerns() >= 2);
+        assertTrue(coverage.getCategorizedConcerns() >= 1);
+        assertTrue(coverage.getCoverageRate() > 0.0 && coverage.getCoverageRate() <= 100.0);
+
+        List<TelemetryEvent> telemetryEvents = telemetryEventRepository.findByEventType(TelemetryService.EVENT_CATEGORIZATION_COVERAGE_MEASURED);
+        assertFalse(telemetryEvents.isEmpty());
+        TelemetryEvent event = telemetryEvents.get(telemetryEvents.size() - 1);
+        assertEquals("reviewConcerns", event.getQueryTerm());
+        assertNotNull(event.getResultsCount());
+        assertNotNull(event.getCreatedAt());
+    }
 
     @Test
     @DisplayName("Given reviewConcerns stream with uncategorized items in DB, When categorization service runs, Then assigns invariant rootCausePatternId and updates status to CATEGORIZED")
