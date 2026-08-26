@@ -16,6 +16,8 @@ public class TelemetryService {
     public static final String EVENT_DOSSIER_GENERATED = "DOSSIER_GENERATED";
     public static final String EVENT_DOSSIER_FAILED = "DOSSIER_FAILED";
     public static final String EVENT_CATEGORIZATION_COVERAGE_MEASURED = "CATEGORIZATION_COVERAGE_MEASURED";
+    public static final String EVENT_PR_RECONCILIATION_MATCHED = "PR_RECONCILIATION_MATCHED";
+    public static final String EVENT_PR_RECONCILIATION_UNMATCHED = "PR_RECONCILIATION_UNMATCHED";
 
     private final TelemetryEventRepository telemetryEventRepository;
     private final Clock clock;
@@ -52,6 +54,18 @@ public class TelemetryService {
                 null,
                 documentId,
                 null,
+                OffsetDateTime.now(clock)
+        );
+        return telemetryEventRepository.save(event);
+    }
+
+    @Transactional
+    public TelemetryEvent recordReconciliationTelemetry(String prIdentifier, boolean matched) {
+        TelemetryEvent event = new TelemetryEvent(
+                matched ? EVENT_PR_RECONCILIATION_MATCHED : EVENT_PR_RECONCILIATION_UNMATCHED,
+                prIdentifier,
+                null,
+                matched ? 1 : 0,
                 OffsetDateTime.now(clock)
         );
         return telemetryEventRepository.save(event);
