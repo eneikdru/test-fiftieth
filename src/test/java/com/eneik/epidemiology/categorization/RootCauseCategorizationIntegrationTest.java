@@ -69,7 +69,7 @@ class RootCauseCategorizationIntegrationTest {
         concern.setuValue(new BigDecimal("0.0000"));
         concern.setRootCausePatternId(null);
         concern.setStatus("UNCATEGORIZED");
-        concern.setCreatedAt(OffsetDateTime.now());
+        concern.setCreatedAt(OffsetDateTime.parse("2026-08-26T00:00:00Z"));
 
         concernRepository.save(concern);
 
@@ -83,6 +83,29 @@ class RootCauseCategorizationIntegrationTest {
 
         List<DesignReviewConcern> uncategorized = concernRepository.findByStreamNameAndRootCausePatternIdIsNull("reviewConcerns");
         assertTrue(uncategorized.isEmpty(), "No uncategorized concerns should remain");
+    }
+
+    @Test
+    @DisplayName("Given an uncategorized design review concern event from stream reviewConcerns at epic 13, When categorized in DB, Then assigns specific rootCausePatternId")
+    void testEndToEndCategorizationEpic13() {
+        DesignReviewConcern concern = new DesignReviewConcern();
+        concern.setId("test-concern-epic-13");
+        concern.setStreamName("reviewConcerns");
+        concern.setEpicSequence(13);
+        concern.setuValue(new BigDecimal("0.0000"));
+        concern.setRootCausePatternId(null);
+        concern.setStatus("UNCATEGORIZED");
+        concern.setCreatedAt(OffsetDateTime.parse("2026-08-26T00:00:00Z"));
+
+        concernRepository.save(concern);
+
+        int count = service.categorizeReviewConcerns("reviewConcerns");
+
+        assertTrue(count >= 1, "Epic 13 concern should have been categorized");
+
+        DesignReviewConcern updated = concernRepository.findById("test-concern-epic-13").orElseThrow();
+        assertEquals("RCP-REVIEW-CONCERNS-001", updated.getRootCausePatternId());
+        assertEquals("CATEGORIZED", updated.getStatus());
     }
 
     @Test
