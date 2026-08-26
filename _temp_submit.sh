@@ -1,1 +1,1 @@
-git checkout -b blocker-branch && git commit --allow-empty -m "Blocker: Architectural contradiction between memory requiring OBSERVER_LOG.md details to be included in task slices and THREE-LAYER ONTO-SEPARATION forbidding orchestrator names in documentation"
+git checkout -b task-plan-33e && git commit --allow-empty -m "Blocker: Architectural contradiction - THREE-LAYER ONTO-SEPARATION forbids mentioning factory orchestrator names like AutoMergeService/SixSigmaAuditService required by the task"
