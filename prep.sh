@@ -1,1 +1,0 @@
-git checkout -b fix/add-pdf-text-schema && git add src/main/java/com/eneik/epidemiology/document/Document.java src/main/resources/db/migration/V20260824095609887__add_text_content_to_documents.sql src/test/java/com/eneik/epidemiology/document/DocumentRepositoryTest.java && git commit -m "Add full-text searchable column to documents"
