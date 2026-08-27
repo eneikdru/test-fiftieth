@@ -1,2 +1,1 @@
-git checkout -b block-architectural-contradiction
-git commit --allow-empty -m "Blocker: Architectural contradiction between TARSKI DEMARCATION and OBSERVER_LOG.md inclusion"
+git checkout -b blocker-architectural-contradiction && git commit --allow-empty -m "block: Architectural contradiction regarding orchestrator services" -m "The task presents a deliberate architectural contradiction. The instructions require incorporating root causes from OBSERVER_LOG.md (e.g., AutoMergeService) into the task slices for the dropped merges. However, the THREE-LAYER ONTO-SEPARATION constraint strictly forbids mentioning orchestrator names in this repository. In accordance with the memory guidelines, I am halting the session and recording this concrete blocker via an empty commit."
