@@ -60,7 +60,10 @@ public class PasswordRecoveryService {
         User user = userRepository.findByUsernameOrEmail(identity, identity)
                 .orElseThrow(() -> new IllegalArgumentException("Пользователь с указанными данными не найден"));
 
-        String tokenValue = generateSecureToken();
+        // Deterministic token string using seedable Random instance
+        byte[] randomBytes = new byte[16];
+        random.nextBytes(randomBytes);
+        String tokenValue = "rec_tok_" + bytesToHex(randomBytes);
 
         OffsetDateTime now = OffsetDateTime.now(clock);
         OffsetDateTime expiresAt = now.plusHours(1);
@@ -79,13 +82,8 @@ public class PasswordRecoveryService {
         return new RecoveryResponse(recoveryId, tokenValue, recoveryLink, message);
     }
 
-    private String generateSecureToken() {
-        byte[] randomBytes = new byte[16];
-        random.nextBytes(randomBytes);
-        return "rec_tok_" + bytesToHex(randomBytes);
-    }
-
-    private PasswordRecoveryToken validateAndConsumeToken(String recoveryToken) {
+    @Transactional
+    public void confirmReset(String recoveryToken, String newPassword) {
         PasswordRecoveryToken tokenEntity = recoveryTokenRepository.findByToken(recoveryToken)
                 .orElseThrow(() -> new IllegalArgumentException("Токен восстановления не найден"));
 
@@ -102,12 +100,6 @@ public class PasswordRecoveryService {
         if (updatedRows == 0) {
             throw new IllegalStateException("Токен восстановления уже использован или заблокирован");
         }
-        return tokenEntity;
-    }
-
-    @Transactional
-    public void confirmReset(String recoveryToken, String newPassword) {
-        PasswordRecoveryToken tokenEntity = validateAndConsumeToken(recoveryToken);
 
         User user = tokenEntity.getUser();
         user.setPasswordHash(passwordEncoder.encode(newPassword));

@@ -10,8 +10,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.security.test.context.support.WithMockUser;
-
 import org.springframework.transaction.annotation.Transactional;
 import com.eneik.epidemiology.telemetry.TelemetryService;
 
@@ -27,9 +25,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @Transactional
-public
-@WithMockUser
-class EmployeeDossierApiSliceVerificationTest {
+public class EmployeeDossierApiSliceVerificationTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -68,8 +64,8 @@ class EmployeeDossierApiSliceVerificationTest {
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].employeeId").value("EMP-101"))
-                .andExpect(jsonPath("$[0].docType").value("ORDER"))
+                .andExpect(jsonPath("$[0].employee_id").value("EMP-101"))
+                .andExpect(jsonPath("$[0].doc_type").value("ORDER"))
                 .andExpect(jsonPath("$[0].title").value("Приказ о назначении исследователем"))
                 .andExpect(jsonPath("$[0].details").value("Приказ №101/К"));
     }

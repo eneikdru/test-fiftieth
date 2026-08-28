@@ -12,7 +12,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
-@org.springframework.security.test.context.support.WithMockUser
 public class FrontendBackendIntegrationE2ETest {
 
     @Autowired
@@ -22,13 +21,16 @@ public class FrontendBackendIntegrationE2ETest {
     @DisplayName("Given the frontend static resources served by Spring Boot, When static pages are requested, Then 200 OK is returned with HTML content")
     void testFrontendPagesServedSuccessfully() throws Exception {
         mockMvc.perform(get("/"))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith("text/html"));
 
         mockMvc.perform(get("/registration-harness.html"))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith("text/html"));
 
         mockMvc.perform(get("/test-harness.html"))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith("text/html"));
     }
 
     @Test
