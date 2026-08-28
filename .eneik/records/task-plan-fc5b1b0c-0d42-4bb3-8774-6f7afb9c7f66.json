@@ -1,0 +1,289 @@
+{
+  "epics": [
+    {
+      "existingEpicId": "0ff456b9-6ead-4ee0-bee3-84e9c399a6b0",
+      "title": null,
+      "jtbd": null,
+      "kanoClass": null,
+      "cynefinDomain": null,
+      "sixSigmaMetric": "Reduce document list retrieval latency from >1000ms to <200ms",
+      "tocConstraintRef": "Frontend rendering bottleneck for unpaginated lists",
+      "sourceIndex": 0,
+      "requirements": [
+        "R1: The frontend DossierSearch.svelte and /api/v1/dossier/documents endpoint must integrate to fetch real document data with pagination (page and size parameters).",
+        "R2: The /api/v1/dossier/documents endpoint must return paginated results instead of the entire dataset."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Implement pagination for dossier search",
+          "roleTag": "BARCAN-TAG-11",
+          "jtbd": "When implementing pagination for this epic, I want to fetch and display paginated data, so that the UI performs efficiently.",
+          "acceptanceCriteria": "Given a large dataset of employee documents, When the user searches and the API is called, Then the frontend requests paginated data and displays it correctly.\nGiven the search UI is loaded, When navigated via keyboard, Then it must meet WCAG 2.1 level AA standards.\nGiven the pagination feature, When tested, Then integration tests must verify correct page slicing.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "API pagination logic",
+          "sixSigmaMetric": "Increase paginated search success rate to 100%",
+          "hasUi": true,
+          "requirementRefs": ["R1", "R2"]
+        }
+      ]
+    },
+    {
+      "existingEpicId": "e1d42df5-7452-4487-87af-8721dcff70c3",
+      "title": null,
+      "jtbd": null,
+      "kanoClass": null,
+      "cynefinDomain": null,
+      "sixSigmaMetric": "Increase telemetry coverage for analysis speed to 100%",
+      "tocConstraintRef": "Analysis speed telemetry",
+      "sourceIndex": 0,
+      "requirements": [
+        "R1: Measure the time it takes an epidemiologist to complete a search and analysis."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Measure analysis completion speed",
+          "roleTag": "BARCAN-TAG-02",
+          "jtbd": "When implementing measurement for this epic, I want to record analysis search times, so that the product delivers its core value of speed.",
+          "acceptanceCriteria": "Given an epidemiologist performs a search, When the results load, Then the duration is recorded as a metric.\nGiven the recorded metric, When tested, Then it must be successfully saved and queryable.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "Search time telemetry",
+          "sixSigmaMetric": "Achieve 100% metric recording success",
+          "hasUi": false,
+          "requirementRefs": ["R1"]
+        }
+      ]
+    },
+    {
+      "existingEpicId": null,
+      "title": "Fix Dossier PDF Export Formatting",
+      "jtbd": "When a client downloads the dossier report, I want to receive a valid PDF file containing the compiled dossier data, so that I can view and store it according to the export requirements.",
+      "kanoClass": "Must-Be",
+      "cynefinDomain": "clear",
+      "sixSigmaMetric": "Increase PDF parsing success rate from 0% to 100%",
+      "tocConstraintRef": "PDF generation library implementation",
+      "sourceIndex": 1,
+      "requirements": [
+        "R1: EmployeeDossierController must generate a valid PDF document using a proper PDF library (e.g., itextpdf) instead of casting plaintext bytes.",
+        "R2: The returned PDF must contain the compiled dossier data with the application/pdf content type."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Implement valid PDF generation",
+          "roleTag": "BARCAN-TAG-02",
+          "jtbd": "When implementing PDF generation for this epic, I want to use a standard library, so that the exported file is uncorrupted.",
+          "acceptanceCriteria": "Given a generated dossier report, When the client downloads it, Then a valid PDF file is returned.\nGiven the PDF generation, When tested via integration tests, Then the file header must match a valid PDF signature.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "PDF payload formatting",
+          "sixSigmaMetric": "Increase valid PDF generation to 100%",
+          "hasUi": false,
+          "requirementRefs": ["R1", "R2"]
+        }
+      ]
+    },
+    {
+      "existingEpicId": null,
+      "title": "Measurement: PDF Export Quality and Speed",
+      "jtbd": "When the product is used in production, I want to measure the PDF export success rate, so that we can verify the export reliability.",
+      "kanoClass": "Must-Be",
+      "cynefinDomain": "clear",
+      "sixSigmaMetric": "Increase PDF generation telemetry coverage to 100%",
+      "tocConstraintRef": "PDF export telemetry",
+      "sourceIndex": 1,
+      "requirements": [
+        "R1: Measure the success rate and generation time of PDF dossier downloads."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Measure PDF generation success",
+          "roleTag": "BARCAN-TAG-02",
+          "jtbd": "When implementing measurement for this epic, I want to log PDF export events, so that export reliability is proven.",
+          "acceptanceCriteria": "Given a PDF export request, When it completes, Then a success metric is recorded.\nGiven a failed PDF export, When an error occurs, Then a failure metric is recorded and verified by tests.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "Export event logging",
+          "sixSigmaMetric": "Achieve 100% telemetry recording success",
+          "hasUi": false,
+          "requirementRefs": ["R1"]
+        }
+      ]
+    },
+    {
+      "existingEpicId": "b9c3cb6d-c0a1-4178-b202-1093b5058008",
+      "title": null,
+      "jtbd": null,
+      "kanoClass": null,
+      "cynefinDomain": null,
+      "sixSigmaMetric": "Reduce domain layer orchestrator references from >0 to 0",
+      "tocConstraintRef": "Domain purity boundary",
+      "sourceIndex": 2,
+      "requirements": [
+        "R1: Remove orchestrator factory references (AutoMergeService, SixSigmaAuditService) from the domain codebase and revert V20260825230107944 to fix architectural violations (Findings 1, 2, 3, 5, 6).",
+        "R2: Implement the missing features (full-text search, analytics, UI) from Finding 7 and ensure valid sixSigmaMetric deltas per Finding 4."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Resolve self-falsification findings",
+          "roleTag": "BARCAN-TAG-02",
+          "jtbd": "When implementing findings resolution for this epic, I want to remove orchestrator components and implement missing features, so that the domain product is correctly separated and functional.",
+          "acceptanceCriteria": "Given the domain product codebase, When analyzed, Then there are no references to AutoMergeService or SixSigmaAuditService.\nGiven the task resolution process, When executed, Then it legitimately updates the state rather than faking it, verified by tests.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "Orchestrator reference removal",
+          "sixSigmaMetric": "Increase domain separation compliance to 100%",
+          "hasUi": false,
+          "requirementRefs": ["R1", "R2"]
+        }
+      ]
+    },
+    {
+      "existingEpicId": null,
+      "title": "Measurement: Domain Layer Purity",
+      "jtbd": "When the system is deployed, I want to measure the rate of domain layer violations, so that we ensure strict separation of concerns.",
+      "kanoClass": "Must-Be",
+      "cynefinDomain": "clear",
+      "sixSigmaMetric": "Achieve 100% automated verification of domain purity",
+      "tocConstraintRef": "Architecture violation checks",
+      "sourceIndex": 2,
+      "requirements": [
+        "R1: Measure and report any architectural violations crossing the domain boundary."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Measure architectural boundaries",
+          "roleTag": "BARCAN-TAG-05",
+          "jtbd": "When implementing measurement for this epic, I want to run static analysis on dependencies, so that domain layer violations are caught.",
+          "acceptanceCriteria": "Given a build process, When verifying dependencies, Then cross-layer violations are reported as metrics.\nGiven the metric reporting, When tested, Then it successfully logs boundary compliance.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "Static analysis telemetry",
+          "sixSigmaMetric": "Increase boundary violation detection rate to 100%",
+          "hasUi": false,
+          "requirementRefs": ["R1"]
+        }
+      ]
+    },
+    {
+      "existingEpicId": null,
+      "title": "Build and Serve Frontend Assets",
+      "jtbd": "When a user opens the launched product, I want them to see the actual UI rather than a bare API, so that they can interact with the product.",
+      "kanoClass": "Must-Be",
+      "cynefinDomain": "clear",
+      "sixSigmaMetric": "Increase frontend asset serving success rate from 0% to 100%",
+      "tocConstraintRef": "Dockerfile build pipeline",
+      "sourceIndex": 3,
+      "requirements": [
+        "R1: Update Dockerfile to build the frontend (npm ci && npm run build) and copy the output to the backend static resource directory.",
+        "R2: Configure the backend application to serve the static frontend assets from the root path."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Configure full-stack Dockerfile build",
+          "roleTag": "BARCAN-TAG-05",
+          "jtbd": "When implementing the build steps for this epic, I want to compile and serve the frontend, so that the final image contains the complete product.",
+          "acceptanceCriteria": "Given the Docker image build process, When executed, Then the frontend is built and its artifacts are placed in the backend's static directory.\nGiven the running application, When a user navigates to the root URL, Then the static UI is served successfully, verified by E2E tests.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "Static resource routing",
+          "sixSigmaMetric": "Achieve 100% build inclusion of frontend assets",
+          "hasUi": false,
+          "requirementRefs": ["R1", "R2"]
+        }
+      ]
+    },
+    {
+      "existingEpicId": null,
+      "title": "Measurement: UI Delivery Reliability",
+      "jtbd": "When a user accesses the root URL, I want to measure the successful delivery of static assets, so that we know the UI is reachable.",
+      "kanoClass": "Must-Be",
+      "cynefinDomain": "clear",
+      "sixSigmaMetric": "Increase static asset delivery telemetry rate to 100%",
+      "tocConstraintRef": "Static asset serving telemetry",
+      "sourceIndex": 3,
+      "requirements": [
+        "R1: Measure successful delivery requests for static UI assets."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Measure static asset serving",
+          "roleTag": "BARCAN-TAG-02",
+          "jtbd": "When implementing measurement for this epic, I want to log static asset hits, so that UI reachability is monitored.",
+          "acceptanceCriteria": "Given a request for a static UI asset, When the backend serves it, Then a success metric is recorded.\nGiven the recorded metric, When tested, Then it reflects the asset delivery rate accurately.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "Asset hit telemetry",
+          "sixSigmaMetric": "Achieve 100% accuracy in UI reachability measurement",
+          "hasUi": false,
+          "requirementRefs": ["R1"]
+        }
+      ]
+    },
+    {
+      "existingEpicId": null,
+      "title": "Fix Docker Compose Network and Container Conflicts",
+      "jtbd": "When the client launches the product, I want it to start reliably without container name or network conflicts, so that the product is actually demonstrable.",
+      "kanoClass": "Must-Be",
+      "cynefinDomain": "clear",
+      "sixSigmaMetric": "Increase docker compose launch success rate from 0% to 100%",
+      "tocConstraintRef": "docker-compose.yml configuration conflicts",
+      "sourceIndex": 4,
+      "requirements": [
+        "R1: Update docker-compose.yml to uniquely name containers (e.g., dynamically or scoped) and avoid fixed container_names that cause conflicts.",
+        "R2: Update network configuration to handle existing networks gracefully or avoid fixed network names."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Resolve docker-compose naming conflicts",
+          "roleTag": "BARCAN-TAG-05",
+          "jtbd": "When implementing the compose fixes for this epic, I want to remove hardcoded names, so that concurrent launches don't conflict.",
+          "acceptanceCriteria": "Given a docker-compose up command, When executed twice in parallel environments, Then it starts successfully without network or container name conflicts.\nGiven the compose configuration, When verified, Then it relies on Docker's default scoping rather than hardcoded names.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "Container naming constraints",
+          "sixSigmaMetric": "Reduce compose conflict errors to 0",
+          "hasUi": false,
+          "requirementRefs": ["R1", "R2"]
+        }
+      ]
+    },
+    {
+      "existingEpicId": null,
+      "title": "Measurement: Application Launch Reliability",
+      "jtbd": "When the application is launched, I want to measure the startup success rate, so that we can ensure a healthy deployment.",
+      "kanoClass": "Must-Be",
+      "cynefinDomain": "clear",
+      "sixSigmaMetric": "Increase launch success telemetry to 100%",
+      "tocConstraintRef": "Launch telemetry",
+      "sourceIndex": 4,
+      "requirements": [
+        "R1: Measure docker compose startup success and report failures."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Measure application startup",
+          "roleTag": "BARCAN-TAG-05",
+          "jtbd": "When implementing measurement for this epic, I want to log application startup events, so that launch reliability is proven.",
+          "acceptanceCriteria": "Given an application startup, When the container initializes, Then a startup success event is logged.\nGiven a startup failure, When it occurs, Then an error event is captured and verified by tests.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "Startup event logging",
+          "sixSigmaMetric": "Achieve 100% startup event recording",
+          "hasUi": false,
+          "requirementRefs": ["R1"]
+        }
+      ]
+    }
+  ]
+}
