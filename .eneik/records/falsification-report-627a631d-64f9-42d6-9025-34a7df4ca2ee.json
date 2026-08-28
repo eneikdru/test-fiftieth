@@ -1,0 +1,45 @@
+{
+  "violations": [
+    {
+      "roleTag": "BARCAN-TAG-02",
+      "type": "stub",
+      "prNumber": 274,
+      "reason": "SixSigmaAuditService methods calculateFeatureSixSigmaAudit and calculateProductLayerSixSigmaAudit fake success by returning hardcoded BigDecimal values (99.90000 and 99.50000) instead of computing actual six sigma metrics based on real work."
+    },
+    {
+      "roleTag": "BARCAN-TAG-02",
+      "type": "stub",
+      "prNumber": 276,
+      "reason": "Flyway migration V20260825230107944 fakes task completion success by directly running SQL UPDATE statements to set status to 'RESOLVED' for specific UUIDs in orchestrator_tasks and other tables, instead of implementing the missing application logic or letting the actual process resolve the tasks."
+    },
+    {
+      "roleTag": "BARCAN-TAG-05",
+      "type": "causal_unjustified",
+      "prNumber": 276,
+      "reason": "The PR claims to 'Patch AutoMergeService for robust PR reconciliation' as the root cause, but the diff only adds a Flyway SQL migration that hardcodes 'RESOLVED' statuses for two specific task UUIDs. It only correlates with the symptom going away but does not change the reconciliation mechanism, meaning the claimed cause was never actually traced or addressed."
+    },
+    {
+      "roleTag": "BARCAN-TAG-09",
+      "type": "refusal_criteria",
+      "prNumber": 275,
+      "reason": "The task plan violates TAG-09 Lean/Six Sigma refusal criteria because task slices use absolute targets for sixSigmaMetric (e.g., 'Assignment logic pass rate = 100%') rather than a measurable delta (e.g., from A% to B%)."
+    },
+    {
+      "roleTag": "BARCAN-TAG-09",
+      "type": "refusal_criteria",
+      "prNumber": 275,
+      "reason": "The task plan violates the THREE-LAYER ONTO-SEPARATION (Tarski Demarcation) rule by explicitly planning work on factory orchestrator components ('AutoMergeService', 'isEligibleRetiredPlanTask', 'reconcileMergedGitHubPullRequests') instead of being scoped strictly to the client's Epidemiology Knowledge Base domain product."
+    },
+    {
+      "roleTag": "BARCAN-TAG-09",
+      "type": "refusal_criteria",
+      "prNumber": 274,
+      "reason": "PR violates THREE-LAYER ONTO-SEPARATION (Tarski Demarcation) by introducing the 'SixSigmaAuditService' class, exposing an orchestrator factory name within the client's domain product codebase."
+    },
+    {
+      "roleTag": "BARCAN-TAG-09",
+      "type": "specification_coverage",
+      "reason": "Audit of merged PRs reveals complete absence of implementation for key client brief requirements: full-text search within PDF files, arbitrary period analytics reporting, full user registration/authorization UI, and the SPA Hub Integration."
+    }
+  ]
+}
