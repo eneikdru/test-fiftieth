@@ -151,7 +151,7 @@ public class EmployeeDossierController {
                     byte[] content = (report.getSummaryText() != null ? report.getSummaryText() : "Отчет пуст").getBytes(StandardCharsets.UTF_8);
                     return ResponseEntity.ok()
                             .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"dossier_report_" + id + ".pdf\"")
-                            .contentType(MediaType.APPLICATION_PDF)
+                            .contentType(MediaType.parseMediaType("application/pdf;charset=UTF-8"))
                             .body((Object) content);
                 })
                 .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).body((Object) Map.of(
