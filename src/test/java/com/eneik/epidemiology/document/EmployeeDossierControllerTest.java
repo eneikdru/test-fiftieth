@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -62,6 +63,8 @@ class EmployeeDossierControllerTest {
         employeeDocumentRepository.saveAll(List.of(doc1, doc2, doc3, doc4));
     }
 
+
+    @WithMockUser(roles = "USER")
     @Test
     @DisplayName("Given the API contract, when a search request is made, then the backend returns the correct document list.")
     void testSearchEmployeeDocuments() throws Exception {
@@ -73,6 +76,8 @@ class EmployeeDossierControllerTest {
                 .andExpect(jsonPath("$[0].title").value("Приказ о назначении"));
     }
 
+
+    @WithMockUser(roles = "USER")
     @Test
     @DisplayName("Given an employee surname, when a search request is made, then the backend returns the documents associated with that surname.")
     void testSearchEmployeeDocumentsBySurname() throws Exception {
@@ -83,6 +88,8 @@ class EmployeeDossierControllerTest {
                 .andExpect(jsonPath("$[0].title").value("Отчет по исследованию 2"));
     }
 
+
+    @WithMockUser(roles = "USER")
     @Test
     @DisplayName("Given a report generation request, when processed, then the backend successfully generates and returns the report file metadata.")
     void testGenerateDossierReport() throws Exception {
@@ -102,6 +109,8 @@ class EmployeeDossierControllerTest {
         verify(telemetryService, times(1)).recordDossierGenerationTelemetry(anyLong(), eq(true));
     }
 
+
+    @WithMockUser(roles = "USER")
     @Test
     @DisplayName("Given a completed report, when downloaded, then returns file content.")
     void testDownloadDossierReport() throws Exception {
