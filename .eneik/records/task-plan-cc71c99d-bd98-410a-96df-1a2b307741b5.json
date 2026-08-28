@@ -1,0 +1,91 @@
+{
+  "epics": [
+    {
+      "existingEpicId": null,
+      "title": "Serve Frontend from Backend Container",
+      "jtbd": "When a real user opens the launched product, I want to see the actual UI, so that I am not faced with a bare API.",
+      "kanoClass": "Must-Be",
+      "cynefinDomain": "clear",
+      "sixSigmaMetric": "Reduce frontend load failure rate from baseline to 0%",
+      "tocConstraintRef": "Docker build process",
+      "sourceIndex": 0,
+      "requirements": [
+        "R1: Build frontend using 'npm ci && npm run build' during Docker build",
+        "R2: Serve built static frontend output via backend"
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Patch Dockerfile to build and serve frontend",
+          "roleTag": "BARCAN-TAG-05",
+          "jtbd": "When implementing frontend serving for this epic, I want to execute 'npm ci && npm run build' in the Dockerfile and configure the backend to serve it, so that the static output is available to users.",
+          "acceptanceCriteria": "Given a Docker build command\nWhen the Dockerfile executes\nThen the frontend is built successfully and served by the backend container",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "Docker build configuration",
+          "sixSigmaMetric": "Increase frontend build and serve success rate from baseline to 100%",
+          "hasUi": false,
+          "requirementRefs": ["R1", "R2"]
+        }
+      ]
+    },
+    {
+      "existingEpicId": null,
+      "title": "Fix Docker Compose Launch Issue",
+      "jtbd": "When a developer or CI runs docker-compose up, I want the system to launch cleanly without network or container conflicts, so that philosophical review can proceed on a running product.",
+      "kanoClass": "Must-Be",
+      "cynefinDomain": "clear",
+      "sixSigmaMetric": "Reduce docker-compose launch failure rate from baseline to 0%",
+      "tocConstraintRef": "Local development environment setup",
+      "sourceIndex": 1,
+      "requirements": [
+        "R1: Resolve docker compose network 'test-fiftieth_default' warning",
+        "R2: Resolve container name conflict for '/epidemiology_db'"
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Fix docker-compose network and container conflicts",
+          "roleTag": "BARCAN-TAG-05",
+          "jtbd": "When implementing Docker fixes for this epic, I want to resolve network definitions and container names, so that docker-compose up succeeds.",
+          "acceptanceCriteria": "Given a clean environment\nWhen docker-compose up is executed\nThen no network warnings or container conflicts occur",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "docker-compose.yml configuration",
+          "sixSigmaMetric": "Increase docker compose launch success rate from baseline to 100%",
+          "hasUi": false,
+          "requirementRefs": ["R1", "R2"]
+        }
+      ]
+    },
+    {
+      "existingEpicId": "d794abe6-e03f-47de-a3f9-2248c2c7df12",
+      "title": null,
+      "jtbd": null,
+      "kanoClass": null,
+      "cynefinDomain": null,
+      "sixSigmaMetric": "Increase recovered logic functionality success rate from 0% to 100%",
+      "tocConstraintRef": "Code recovery process",
+      "sourceIndex": 2,
+      "requirements": [
+        "R1: Recover deliverable logic for task 5421d1f0-ec82-43a9-ad0c-9a94345450af (API Slice D3a7a0f6)",
+        "R2: Recover deliverable logic for task 8bd0dbae-41f6-466a-95a7-aff680ed0866 (Runtime Contract 9b58412d)"
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Recover API Slice D3a7a0f6 and Runtime Contract 9b58412d",
+          "roleTag": "BARCAN-TAG-02",
+          "jtbd": "When implementing recovery for this epic, I want to recreate the missing logic, so that it exists on the main branch.",
+          "acceptanceCriteria": "Given the codebase\nWhen the recovered logic is tested\nThen the required endpoints and runtime behavior function correctly",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "Code implementation",
+          "sixSigmaMetric": "Increase recovered functionality test pass rate from 0% to 100%",
+          "hasUi": false,
+          "requirementRefs": ["R1", "R2"]
+        }
+      ]
+    }
+  ]
+}
