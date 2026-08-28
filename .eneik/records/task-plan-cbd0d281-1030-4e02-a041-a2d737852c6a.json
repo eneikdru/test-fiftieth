@@ -1,0 +1,229 @@
+{
+    "epics": [
+        {
+            "existingEpicId": "0ff456b9-6ead-4ee0-bee3-84e9c399a6b0",
+            "title": null,
+            "jtbd": null,
+            "kanoClass": null,
+            "cynefinDomain": null,
+            "sixSigmaMetric": null,
+            "tocConstraintRef": null,
+            "sourceIndex": 0,
+            "requirements": [
+                "R1: The frontend dossier search must call /api/v1/dossier/documents and display real data instead of mock data.",
+                "R2: The list of employee documents returned by the search endpoint must be paginated using 'page' and 'size' parameters to handle large datasets effectively."
+            ],
+            "coverageComplete": true,
+            "slices": [
+                {
+                    "title": "Implement pagination in dossier documents search API",
+                    "roleTag": "BARCAN-TAG-02",
+                    "jtbd": "When implementing the dossier search API, I want to add pagination parameters and return a paginated response, so that the endpoint can handle large datasets without memory overflow.",
+                    "acceptanceCriteria": "Given a large dataset of employee documents\nWhen the client calls GET /api/v1/dossier/documents with 'page' and 'size' parameters\nThen the system should return a paginated list of documents corresponding to the requested page.",
+                    "leanValue": "essential",
+                    "cynefinDomain": "clear",
+                    "tocConstraintRef": "backend API performance",
+                    "sixSigmaMetric": "Reduce API response time for large datasets by >50%",
+                    "hasUi": false,
+                    "requirementRefs": [
+                        "R2"
+                    ]
+                },
+                {
+                    "title": "Integrate frontend dossier search with paginated API",
+                    "roleTag": "BARCAN-TAG-11",
+                    "jtbd": "When implementing the frontend search, I want to replace hardcoded mock data with a real call to the paginated /api/v1/dossier/documents endpoint, so that users see actual employee documents.",
+                    "acceptanceCriteria": "Given a search query\nWhen the user clicks search\nThen the frontend should call /api/v1/dossier/documents with pagination parameters\nAnd display the returned real documents correctly.",
+                    "leanValue": "essential",
+                    "cynefinDomain": "clear",
+                    "tocConstraintRef": "frontend data binding",
+                    "sixSigmaMetric": "Increase proportion of UI searches returning real data from 0% to 100%",
+                    "hasUi": true,
+                    "requirementRefs": [
+                        "R1",
+                        "R2"
+                    ]
+                },
+                {
+                    "title": "QA coverage for dossier search data binding and pagination",
+                    "roleTag": "BARCAN-TAG-06",
+                    "jtbd": "When verifying the dossier search integration, I want to test both the backend pagination and the frontend integration end-to-end, so that the real data binding functions reliably.",
+                    "acceptanceCriteria": "Given a fresh deployment with real test data\nWhen the frontend search is executed with large result sets\nThen the E2E tests should confirm that pagination controls work and real data is displayed accurately.",
+                    "leanValue": "essential",
+                    "cynefinDomain": "clear",
+                    "tocConstraintRef": "QA coverage",
+                    "sixSigmaMetric": "Increase test coverage of search integration from 0% to 100%",
+                    "hasUi": true,
+                    "requirementRefs": [
+                        "R1",
+                        "R2"
+                    ]
+                }
+            ]
+        },
+        {
+            "existingEpicId": null,
+            "title": "Measurement: Dossier Search Integration Quality",
+            "jtbd": "When an epidemiologist searches for dossiers, I want to measure the time taken to fetch and render paginated results, so that we can prove the system provides efficient data retrieval.",
+            "kanoClass": "Must-Be",
+            "cynefinDomain": "clear",
+            "sixSigmaMetric": "Decrease average search response and render time by >30%",
+            "tocConstraintRef": "telemetry coverage",
+            "sourceIndex": 0,
+            "requirements": [
+                "R1: The system must measure the end-to-end response time for dossier document searches, ensuring that pagination keeps rendering fast."
+            ],
+            "coverageComplete": true,
+            "slices": [
+                {
+                    "title": "Instrument dossier search latency measurement",
+                    "roleTag": "BARCAN-TAG-08",
+                    "jtbd": "When implementing telemetry for dossier search, I want to record the latency of paginated requests, so that the measurement epic goals are tracked.",
+                    "acceptanceCriteria": "Given a dossier search request\nWhen the response is generated\nThen the telemetry system should record the latency and pagination metadata.",
+                    "leanValue": "essential",
+                    "cynefinDomain": "clear",
+                    "tocConstraintRef": "telemetry coverage",
+                    "sixSigmaMetric": "Increase search latency measurement coverage from 0% to 100%",
+                    "hasUi": false,
+                    "requirementRefs": [
+                        "R1"
+                    ]
+                }
+            ]
+        },
+        {
+            "existingEpicId": null,
+            "title": "Fix PDF Generation in Employee Dossier Report",
+            "jtbd": "When I request a dossier report, I want to receive a correctly formatted PDF file, so that I can print or share the official document.",
+            "kanoClass": "Must-Be",
+            "cynefinDomain": "clear",
+            "sixSigmaMetric": "Increase percentage of successfully generated valid PDF reports from 0% to 100%",
+            "tocConstraintRef": "document export reliability",
+            "sourceIndex": 1,
+            "requirements": [
+                "R1: The GET /api/v1/dossier/reports/{id}/download endpoint must generate a valid PDF document containing the summary text using a proper PDF library (like itextpdf) instead of casting plaintext bytes to application/pdf."
+            ],
+            "coverageComplete": true,
+            "slices": [
+                {
+                    "title": "Implement proper PDF generation with itextpdf",
+                    "roleTag": "BARCAN-TAG-02",
+                    "jtbd": "When implementing PDF generation, I want to use the itextpdf library to construct a valid PDF file, so that the downloaded report is not corrupted.",
+                    "acceptanceCriteria": "Given a generated dossier report\nWhen the client calls GET /api/v1/dossier/reports/{id}/download\nThen the EmployeeDossierController should use itextpdf to generate and return a valid PDF document.",
+                    "leanValue": "essential",
+                    "cynefinDomain": "clear",
+                    "tocConstraintRef": "document export reliability",
+                    "sixSigmaMetric": "Increase percentage of successfully generated valid PDF reports from 0% to 100%",
+                    "hasUi": false,
+                    "requirementRefs": [
+                        "R1"
+                    ]
+                },
+                {
+                    "title": "QA coverage for PDF Generation",
+                    "roleTag": "BARCAN-TAG-06",
+                    "jtbd": "When verifying the PDF generation, I want to test that a valid PDF is returned, so that the export functionality is reliable.",
+                    "acceptanceCriteria": "Given a generated dossier report\nWhen the client downloads the report\nThen the tests should confirm that the returned file is a valid PDF.",
+                    "leanValue": "essential",
+                    "cynefinDomain": "clear",
+                    "tocConstraintRef": "QA coverage",
+                    "sixSigmaMetric": "Increase test coverage of PDF generation to 100%",
+                    "hasUi": false,
+                    "requirementRefs": [
+                        "R1"
+                    ]
+                }
+            ]
+        },
+        {
+            "existingEpicId": null,
+            "title": "Measurement: Valid PDF Export Quality",
+            "jtbd": "When an epidemiologist downloads a dossier report, I want to measure the success rate of valid PDF exports, so that we can prove the system reliably generates compliant documents.",
+            "kanoClass": "Must-Be",
+            "cynefinDomain": "clear",
+            "sixSigmaMetric": "Increase success rate of PDF generation from 0% to 100%",
+            "tocConstraintRef": "telemetry coverage",
+            "sourceIndex": 1,
+            "requirements": [
+                "R1: The system must measure the success rate and generation time of PDF exports to ensure reliability."
+            ],
+            "coverageComplete": true,
+            "slices": [
+                {
+                    "title": "Instrument PDF generation telemetry",
+                    "roleTag": "BARCAN-TAG-08",
+                    "jtbd": "When implementing telemetry for PDF export, I want to record the success and duration of document generation, so that the measurement epic goals are tracked.",
+                    "acceptanceCriteria": "Given a request to download a PDF report\nWhen the PDF is generated and served\nThen the telemetry system should record the success status and generation latency.",
+                    "leanValue": "essential",
+                    "cynefinDomain": "clear",
+                    "tocConstraintRef": "telemetry coverage",
+                    "sixSigmaMetric": "Increase PDF export measurement coverage from 0% to 100%",
+                    "hasUi": false,
+                    "requirementRefs": [
+                        "R1"
+                    ]
+                }
+            ]
+        },
+        {
+            "existingEpicId": "d794abe6-e03f-47de-a3f9-2248c2c7df12",
+            "title": null,
+            "jtbd": null,
+            "kanoClass": null,
+            "cynefinDomain": null,
+            "sixSigmaMetric": null,
+            "tocConstraintRef": null,
+            "sourceIndex": 2,
+            "requirements": [
+                "R1: Reject Brief 2 tasks that violate THREE-LAYER ONTO-SEPARATION, specifically those editing orchestrator services (AutoMergeService, SixSigmaAuditService) instead of being scoped to the client domain."
+            ],
+            "coverageComplete": true,
+            "slices": [
+                {
+                    "title": "Record Block: Deliberate Architectural Contradiction",
+                    "roleTag": "BARCAN-TAG-09",
+                    "jtbd": "When decomposing Brief 2, I want to block the implementation, so that the THREE-LAYER ONTO-SEPARATION rule is not violated.",
+                    "acceptanceCriteria": "Given the brief requirements to edit orchestrator components\nWhen analyzing the required work\nThen a block must be explicitly recorded preventing the work on factory components.",
+                    "leanValue": "essential",
+                    "cynefinDomain": "clear",
+                    "tocConstraintRef": "architectural constraint compliance",
+                    "sixSigmaMetric": "Increase compliance with Tarski Demarcation rule to 100%",
+                    "hasUi": false,
+                    "requirementRefs": [
+                        "R1"
+                    ]
+                }
+            ]
+        },
+        {
+            "existingEpicId": null,
+            "title": "Measurement: Defect Rejection Rate",
+            "jtbd": "When the technical lead evaluates briefs, I want to measure the rate of correctly rejected un-implementable requirements, so that we can prove the system's filtering mechanisms are working.",
+            "kanoClass": "Must-Be",
+            "cynefinDomain": "clear",
+            "sixSigmaMetric": "Increase correct rejection rate for contradictory tasks to 100%",
+            "tocConstraintRef": "telemetry coverage",
+            "sourceIndex": 2,
+            "requirements": [
+                "R1: The system must track decisions that block work violating architectural constraints."
+            ],
+            "coverageComplete": true,
+            "slices": [
+                {
+                    "title": "Instrument contradiction rejection tracking",
+                    "roleTag": "BARCAN-TAG-09",
+                    "jtbd": "When recording decisions, I want to track blocks caused by constraints, so that the measurement epic goals are tracked.",
+                    "acceptanceCriteria": "Given a recorded block decision\nWhen the block is submitted\nThen the decision metrics must reflect the architectural contradiction detection.",
+                    "leanValue": "essential",
+                    "cynefinDomain": "clear",
+                    "tocConstraintRef": "telemetry coverage",
+                    "sixSigmaMetric": "Increase contradiction tracking from 0% to 100%",
+                    "hasUi": false,
+                    "requirementRefs": [
+                        "R1"
+                    ]
+                }
+            ]
+        }
+    ]
+}
