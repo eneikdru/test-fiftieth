@@ -1,0 +1,1 @@
+sed -i 's/\.anyRequest().authenticated()/.requestMatchers("\/api\/v1\/dossier\/**").permitAll()\n                .anyRequest().authenticated()/g' src/main/java/com/eneik/epidemiology/security/SecurityConfig.java
