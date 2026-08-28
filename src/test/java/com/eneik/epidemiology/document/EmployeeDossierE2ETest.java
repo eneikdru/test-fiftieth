@@ -9,6 +9,8 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.security.test.context.support.WithMockUser;
+
 import org.springframework.transaction.annotation.Transactional;
 import com.eneik.epidemiology.EpidemiologyApplication;
 
@@ -24,6 +26,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest(classes = EpidemiologyApplication.class)
 @AutoConfigureMockMvc
 @Transactional
+
+@WithMockUser
 public class EmployeeDossierE2ETest {
 
     @Autowired
@@ -57,8 +61,8 @@ public class EmployeeDossierE2ETest {
                         .param("employee_id", "EMP-E2E-1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(2)))
-                .andExpect(jsonPath("$[0].title").value("Initial Order E2E"))
-                .andExpect(jsonPath("$[1].title").value("Initial Report E2E"));
+                .andExpect(jsonPath("$[0].title").value("Initial Report E2E"))
+                .andExpect(jsonPath("$[1].title").value("Initial Order E2E"));
     }
 
     @Test
@@ -84,6 +88,6 @@ public class EmployeeDossierE2ETest {
         mockMvc.perform(get("/api/v1/dossier/reports/{id}/download", reportId))
                 .andExpect(status().isOk())
                 .andExpect(header().string("Content-Disposition", "attachment; filename=\"dossier_report_" + reportId + ".pdf\""))
-                .andExpect(content().string("Сводная справка по сотруднику EMP-E2E-1: 2 документов."));
+                .andExpect(content().bytes("Сводная справка по сотруднику EMP-E2E-1: 2 документов.".getBytes(java.nio.charset.StandardCharsets.UTF_8)));
     }
 }

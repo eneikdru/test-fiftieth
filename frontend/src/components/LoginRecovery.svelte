@@ -95,12 +95,11 @@
 
     isLoading = true;
     try {
+      const payload = { identity: recoveryIdentity.trim() };
       const response = await fetch(`${getApiBaseUrl()}/auth/recovery/request`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          identity: recoveryIdentity.trim()
-        })
+        body: JSON.stringify(payload)
       });
 
       if (!response.ok) {
