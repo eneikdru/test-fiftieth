@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -55,6 +56,8 @@ public class EmployeeDossierApiSliceVerificationTest {
         employeeDocumentRepository.saveAll(List.of(doc1, doc2));
     }
 
+
+    @WithMockUser(roles = "USER")
     @Test
     @DisplayName("Given the API endpoint is called with a concrete test payload representing employee document data, When the request is valid, Then it returns a 200 OK response with the correct document format.")
     void testGetEmployeeDocumentsSuccess() throws Exception {
@@ -70,6 +73,8 @@ public class EmployeeDossierApiSliceVerificationTest {
                 .andExpect(jsonPath("$[0].details").value("Приказ №101/К"));
     }
 
+
+    @WithMockUser(roles = "USER")
     @Test
     @DisplayName("Given an invalid request payload for report generation, When the endpoint is called, Then it returns a 400 Bad Request.")
     void testGenerateReportInvalidPayload() throws Exception {
@@ -86,6 +91,8 @@ public class EmployeeDossierApiSliceVerificationTest {
                 .andExpect(jsonPath("$.message", notNullValue()));
     }
 
+
+    @WithMockUser(roles = "USER")
     @Test
     @DisplayName("Given valid report generation payload, When POST is sent, Then returns 201 Created with DossierReport response.")
     void testGenerateReportSuccess() throws Exception {

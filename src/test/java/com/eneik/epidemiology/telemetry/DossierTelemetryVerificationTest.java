@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -54,6 +55,8 @@ class DossierTelemetryVerificationTest {
         employeeDocumentRepository.saveAll(List.of(doc1, doc2));
     }
 
+
+    @WithMockUser(roles = "USER")
     @Test
     @DisplayName("Given valid dossier report request, When report generation executes, Then DOSSIER_GENERATED telemetry metric is recorded with non-negative processing time")
     void givenValidDossierRequest_whenExecuted_thenDossierGeneratedMetricIsRecorded() throws Exception {
@@ -77,6 +80,8 @@ class DossierTelemetryVerificationTest {
         assertNotNull(event.getCreatedAt(), "Creation timestamp must be present");
     }
 
+
+    @WithMockUser(roles = "USER")
     @Test
     @DisplayName("Given dossier request targeting specific documents, When report generation executes, Then telemetry metric is persisted correctly")
     void givenDossierRequestWithDocumentIds_whenExecuted_thenTelemetryMetricIsPersisted() throws Exception {
@@ -98,6 +103,8 @@ class DossierTelemetryVerificationTest {
         assertNotNull(events.get(0).getCreatedAt());
     }
 
+
+    @WithMockUser(roles = "USER")
     @Test
     @DisplayName("Given invalid request missing mandatory fields, When validation fails, Then no dossier telemetry event is recorded")
     void givenInvalidDossierRequest_whenValidationFails_thenNoDossierTelemetryRecorded() throws Exception {

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -50,6 +51,8 @@ public class EmployeeDossierE2ETest {
         employeeDocumentRepository.saveAll(List.of(doc1, doc2, doc3));
     }
 
+
+    @WithMockUser(roles = "USER")
     @Test
     @DisplayName("Given the test suite, when the E2E tests run, then they verify that an employee can be searched and their documents displayed")
     void verifyEmployeeSearchAndDisplayDocuments() throws Exception {
@@ -60,6 +63,8 @@ public class EmployeeDossierE2ETest {
                 .andExpect(jsonPath("$[*].title", org.hamcrest.Matchers.containsInAnyOrder("Initial Order E2E", "Initial Report E2E")));
     }
 
+
+    @WithMockUser(roles = "USER")
     @Test
     @DisplayName("Given the report endpoint, when tested, then it verifies a report is generated successfully based on the initial sample content")
     void verifyReportGeneration() throws Exception {
