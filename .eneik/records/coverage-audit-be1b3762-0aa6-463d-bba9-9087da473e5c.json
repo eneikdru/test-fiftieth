@@ -1,0 +1,18 @@
+{
+  "gaps": [
+    {
+      "title": "Fake PDF Export implementation",
+      "roleTag": "BARCAN-TAG-02",
+      "jtbd": "When a client downloads the dossier report, I want to receive a valid PDF file containing the compiled dossier data, so that I can view and store it according to the requested export requirements.",
+      "acceptanceCriteria": "Given a generated dossier report\nWhen the client calls GET /api/v1/dossier/reports/{id}/download\nThen the system should generate and return a valid PDF document containing the document data instead of casting plaintext bytes as application/pdf.",
+      "reason": "The original brief explicitly requested 'Экспорт сводного документа в единый PDF-файл.' (Export of the summary document into a single PDF file). The current implementation in EmployeeDossierController casts a plaintext string to bytes and serves it as APPLICATION_PDF, which will result in a corrupted/invalid PDF file for users."
+    },
+    {
+      "title": "Missing pagination for dossier documents search",
+      "roleTag": "BARCAN-TAG-02",
+      "jtbd": "When searching for employee documents, I want the results to be paginated, so that the application performs efficiently even with thousands of documents.",
+      "acceptanceCriteria": "Given a large dataset of employee documents\nWhen the client calls GET /api/v1/dossier/documents\nThen the results should be paginated (e.g. using 'page' and 'size' parameters) rather than returning the entire dataset at once.",
+      "reason": "Domain-standard expectation. The search endpoint for employee documents currently returns a full, unpaginated list (`List<EmployeeDocument>`). In standard document management or analytical systems, any listing endpoint, especially one allowing filters, requires pagination to prevent memory overflow and ensure acceptable response times."
+    }
+  ]
+}
