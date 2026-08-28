@@ -1,1 +1,0 @@
-git checkout -b blocker-architectural-contradiction && git commit --allow-empty -m "Blocker: The task explicitly requires editing orchestrator services (e.g., AutoMergeService, SixSigmaAuditService) which contradicts the THREE-LAYER ONTO-SEPARATION negative constraint"
