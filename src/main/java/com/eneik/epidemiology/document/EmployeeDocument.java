@@ -12,27 +12,33 @@ public class EmployeeDocument {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @com.fasterxml.jackson.annotation.JsonProperty("employee_id")
     @Column(name = "employee_id", nullable = false, length = 100)
     private String employeeId;
 
+    @com.fasterxml.jackson.annotation.JsonProperty("employee_surname")
     @Column(name = "employee_surname", length = 255)
     private String employeeSurname;
 
+    @com.fasterxml.jackson.annotation.JsonProperty("doc_type")
     @Column(name = "doc_type", nullable = false, length = 50)
     private String docType;
 
     @Column(nullable = false, length = 255)
     private String title;
 
+    @com.fasterxml.jackson.annotation.JsonProperty("doc_date")
     @Column(name = "doc_date", nullable = false)
     private LocalDate docDate;
 
     @Column(columnDefinition = "TEXT")
     private String details;
 
+    @com.fasterxml.jackson.annotation.JsonProperty("scientific_direction")
     @Column(name = "scientific_direction", length = 255)
     private String scientificDirection;
 
+    @com.fasterxml.jackson.annotation.JsonProperty("created_at")
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;
 

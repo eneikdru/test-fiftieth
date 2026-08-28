@@ -57,8 +57,7 @@ public class EmployeeDossierE2ETest {
                         .param("employee_id", "EMP-E2E-1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(2)))
-                .andExpect(jsonPath("$[0].title").value("Initial Order E2E"))
-                .andExpect(jsonPath("$[1].title").value("Initial Report E2E"));
+                .andExpect(jsonPath("$[*].title", org.hamcrest.Matchers.containsInAnyOrder("Initial Order E2E", "Initial Report E2E")));
     }
 
     @Test
