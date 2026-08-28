@@ -1,0 +1,118 @@
+{
+  "epics": [
+    {
+      "existingEpicId": "b9c3cb6d-c0a1-4178-b202-1093b5058008",
+      "title": null,
+      "jtbd": null,
+      "kanoClass": null,
+      "cynefinDomain": null,
+      "sixSigmaMetric": "100% verification rate of previously unmerged completed tasks",
+      "tocConstraintRef": "Main branch feature availability",
+      "sourceIndex": 0,
+      "requirements": [
+        "R1: Implement the missing code for task 5421d1f0-ec82-43a9-ad0c-9a94345450af (API Slice D3a7a0f6) directly on the main branch.",
+        "R2: Implement the missing code for task 8bd0dbae-41f6-466a-95a7-aff680ed0866 (Runtime Contract 9b58412d) alongside the API slice, noting that end-user chains are out of scope for this technical restoration."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Implement missing API Slice and Runtime Contract",
+          "roleTag": "BARCAN-TAG-02",
+          "jtbd": "When implementing the missing code for this epic, I want to apply the API slice and runtime contract in a single patch, so that the required deliverables are fully restored to the main branch.",
+          "acceptanceCriteria": "Given the missing API Slice and Runtime Contract,\nWhen the code is implemented directly as a single patch without creating new layers,\nThen the REST controller logic and OpenAPI schema are fully restored.\nGiven the restored implementation,\nWhen the automated tests are run,\nThen they pass and verify the endpoint correctness, fulfilling QA requirements within this single slice.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "Backend endpoint completeness",
+          "sixSigmaMetric": "100% restoration of the specified missing endpoints and contracts",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1",
+            "R2"
+          ]
+        }
+      ]
+    },
+    {
+      "existingEpicId": "e1d42df5-7452-4487-87af-8721dcff70c3",
+      "title": null,
+      "jtbd": null,
+      "kanoClass": null,
+      "cynefinDomain": null,
+      "sixSigmaMetric": "Reduction in mean time to complete analysis (MTTCA)",
+      "tocConstraintRef": "Epidemiologist manual step latency",
+      "sourceIndex": 0,
+      "requirements": [
+        "R1: Goal: Increase the speed of epidemiological analysis. Question 1: How long does an analyst take from starting a session to exporting the final report? Question 2: Which stage takes the most time?",
+        "R2: Measure the total duration it takes an epidemiologist to complete an analysis workflow.",
+        "R3: Emit a telemetry event with the analysis speed metric to the observability platform, noting that standard end-user chains are outside the scope of this measurement capability."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Instrument analysis speed metric",
+          "roleTag": "BARCAN-TAG-02",
+          "jtbd": "When implementing telemetry for this epic, I want to calculate the analysis duration answering how long analysts take to complete a session, so that the analysis speed metric is recorded and emitted.",
+          "acceptanceCriteria": "Given an active epidemiological analysis session,\nWhen the user finalizes the dossier,\nThen the backend must calculate the total duration.\nGiven the calculated duration,\nWhen the event is processed,\nThen the metric is emitted to the observability platform.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "Telemetry pipeline coverage",
+          "sixSigmaMetric": "100% of completed analyses emit a duration metric",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1",
+            "R2",
+            "R3"
+          ]
+        },
+        {
+          "title": "Verify analysis speed metric telemetry flow",
+          "roleTag": "BARCAN-TAG-06",
+          "jtbd": "When implementing verification for this epic, I want to ensure the duration telemetry is accurately calculated and emitted, so that the measurement data is reliable.",
+          "acceptanceCriteria": "Given the telemetry instrumentation,\nWhen the end-to-end analysis workflow is simulated,\nThen the tests must verify the correct calculation of duration.\nGiven the emitted event,\nWhen it reaches the observability platform,\nThen the payload matches the expected schema and includes the correct duration value.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "Telemetry verification",
+          "sixSigmaMetric": "100% telemetry tests pass",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1",
+            "R2",
+            "R3"
+          ]
+        }
+      ]
+    },
+    {
+      "existingEpicId": "fa1a3417-70d7-4a64-a16a-40cc8807b877",
+      "title": null,
+      "jtbd": null,
+      "kanoClass": null,
+      "cynefinDomain": null,
+      "sixSigmaMetric": "100% population of real initial domain content for demonstrability",
+      "tocConstraintRef": "Client acceptance testing capability",
+      "sourceIndex": 0,
+      "requirements": [
+        "R1: Populate the system with real epidemiological domain content (pathogen metadata, isolated strains, analytical dossiers) upon a fresh install.",
+        "R2: Ensure the deployed instance is reachable by the client and holds content sufficient to exercise every link of every declared path for evaluation."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Provide initial epidemiological domain content",
+          "roleTag": "BARCAN-TAG-08",
+          "jtbd": "When implementing the initial state for this epic, I want to populate real domain content, so that every step of the analytical dossier workflow is demonstrable to the client.",
+          "acceptanceCriteria": "Given a fresh installation of the system,\nWhen the application initializes,\nThen the database is seeded with real epidemiological domain content.\nGiven the seeded data,\nWhen an end user traverses the core workflows,\nThen they are fully walkable and demonstrate the intended capability.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "Demonstrable initial state",
+          "sixSigmaMetric": "0 missing data points preventing workflow traversal on fresh install",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1",
+            "R2"
+          ]
+        }
+      ]
+    }
+  ]
+}
