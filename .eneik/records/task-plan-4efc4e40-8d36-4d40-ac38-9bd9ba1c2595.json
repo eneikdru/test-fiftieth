@@ -1,0 +1,115 @@
+{
+  "epics": [
+    {
+      "existingEpicId": null,
+      "title": "Moodle SSO and Role Synchronization",
+      "jtbd": "When an epidemiologist or researcher accesses the archive, I want to authenticate via my existing Moodle account and have my roles automatically synchronized, so that I don't need separate credentials and always have correct access rights.",
+      "kanoClass": "Performance",
+      "cynefinDomain": "complicated",
+      "sixSigmaMetric": "Reduce manual access provisioning interventions from 100% to 0% for Moodle users",
+      "tocConstraintRef": "Manual role and access provisioning bottleneck",
+      "sourceIndex": 0,
+      "requirements": [
+        "R1: The system must provide Single Sign-On (SSO) authentication through Moodle using OAuth2, OIDC, or LTI.",
+        "R2: The system must synchronize the Moodle role hierarchy into the archive's role model (Administrator, Senior Researcher / Epidemiologist with right to sign dossier, Researcher / PhD student with access to protocols).",
+        "R3: The system must display the user's synchronized roles in their profile.",
+        "R4: The system must automatically differentiate access rights to closed strains based on Moodle departments and courses.",
+        "R5: The system must automatically differentiate access rights to analytical reports based on Moodle departments and courses.",
+        "R6: The system must provide an autonomous fallback authentication mechanism to ensure resilience to external LMS failures.",
+        "R7: The end user must be able to successfully complete the authentication flow from login to dashboard access."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Moodle SSO Data Schema",
+          "roleTag": "BARCAN-TAG-08",
+          "jtbd": "When implementing the Moodle integration for this epic, I want to persist Moodle identities, mapped roles, and fallback credentials, so that the SSO and fallback mechanisms have a reliable data foundation.",
+          "acceptanceCriteria": "Given a valid Moodle identity, When the schema is applied, Then the database can store the Moodle ID, role mappings, and department claims.\nGiven a user needs fallback access, When they are created, Then the schema supports storing local fallback credentials.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "Database schema missing SSO fields",
+          "sixSigmaMetric": "Increase schema coverage for SSO attributes from 0% to 100%",
+          "hasUi": false,
+          "requirementRefs": ["R2", "R4", "R5"]
+        },
+        {
+          "title": "Moodle SSO API Contract",
+          "roleTag": "BARCAN-TAG-12",
+          "jtbd": "When implementing the Moodle authentication flow for this epic, I want a shared API contract, so that frontend and backend can be built in parallel without integration mismatches.",
+          "acceptanceCriteria": "Given the frontend needs to initiate SSO, When it requests the login endpoints, Then the contract clearly defines the OAuth2 initiation and callback routes.\nGiven a fallback login attempt, When the frontend sends credentials, Then the contract specifies the required request payload and response tokens.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "Backend/Frontend integration ambiguity",
+          "sixSigmaMetric": "Reduce API contract integration mismatches from 10% to 0%",
+          "hasUi": false,
+          "requirementRefs": ["R1", "R6"]
+        },
+        {
+          "title": "Moodle SSO Backend Logic",
+          "roleTag": "BARCAN-TAG-02",
+          "jtbd": "When implementing SSO backend logic for this epic, I want to handle OAuth2 callbacks, role mappings, and fallback authentication, so that users are securely authenticated and assigned correct permissions.",
+          "acceptanceCriteria": "Given a successful Moodle OAuth2 callback, When the backend processes it, Then it updates the user profile with mapped roles and department access.\nGiven Moodle is unreachable, When a user attempts fallback login, Then the backend authenticates them using locally cached or secondary credentials.\nGiven a fresh install, When the database is seeded, Then a set of mock Moodle identities and roles are provided for demonstration.",
+          "leanValue": "essential",
+          "cynefinDomain": "complicated",
+          "tocConstraintRef": "Missing SSO and mapping logic",
+          "sixSigmaMetric": "Increase successful SSO authentication rate from 0% to >99%",
+          "hasUi": false,
+          "requirementRefs": ["R1", "R2", "R4", "R5", "R6", "R7"]
+        },
+        {
+          "title": "Moodle SSO Frontend UI",
+          "roleTag": "BARCAN-TAG-11",
+          "jtbd": "When implementing the login and profile UI for this epic, I want to display the Moodle login option, fallback form, and synced roles, so that users can interact with the authentication features easily.",
+          "acceptanceCriteria": "Given a user on the login screen, When they view the options, Then they see a clear 'Login with Moodle' button and a fallback login form.\nGiven a logged-in user, When they view their profile, Then their synchronized Moodle roles and access rights are displayed.\nGiven a user with a keyboard or screen reader, When they navigate the login screen, Then all form controls and buttons are fully operable and labeled, maintaining WCAG 2.1 level AA contrast.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "Missing user interface for SSO",
+          "sixSigmaMetric": "Reduce UI-related login errors from 5% to 0%",
+          "hasUi": true,
+          "requirementRefs": ["R1", "R3", "R6", "R7"]
+        },
+        {
+          "title": "Moodle SSO QA Coverage",
+          "roleTag": "BARCAN-TAG-06",
+          "jtbd": "When implementing QA for this epic, I want to verify the entire SSO and fallback flow across the test pyramid, so that authentication bugs do not reach production.",
+          "acceptanceCriteria": "Given unit tests, When executed, Then role mapping and department access logic are verified against expected Moodle payloads.\nGiven integration and E2E tests, When a full Moodle login and fallback login are simulated, Then the user is successfully authenticated and directed to the dashboard.",
+          "leanValue": "essential",
+          "cynefinDomain": "complicated",
+          "tocConstraintRef": "Risk of authentication regressions",
+          "sixSigmaMetric": "Increase test coverage for SSO flows from 0% to 90%",
+          "hasUi": false,
+          "requirementRefs": ["R1", "R2", "R3", "R4", "R5", "R6", "R7"]
+        }
+      ]
+    },
+    {
+      "existingEpicId": null,
+      "title": "Measurement: Moodle Integration Outcomes",
+      "jtbd": "When the Moodle integration is active, I want to measure the rate of successful SSO logins and fallback activations, so that we can prove the system provides resilient authentication.",
+      "kanoClass": "Must-Be",
+      "cynefinDomain": "clear",
+      "sixSigmaMetric": "Increase visibility of authentication success rates from 0% to 100%",
+      "tocConstraintRef": "Blindness to authentication performance",
+      "sourceIndex": 0,
+      "requirements": [
+        "M1: The system must track the number of successful and failed Moodle SSO login attempts.",
+        "M2: The system must track the frequency of fallback authentication activations due to Moodle unreachability."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "SSO Telemetry Implementation",
+          "roleTag": "BARCAN-TAG-02",
+          "jtbd": "When implementing telemetry for this epic, I want to record SSO and fallback events, so that the success and failure rates can be analyzed.",
+          "acceptanceCriteria": "Given a Moodle SSO attempt, When it succeeds or fails, Then the system records the outcome metric.\nGiven a fallback login event, When it occurs, Then the system increments the fallback usage counter.\nGiven the need for verification, When tests are run, Then the metrics are correctly incremented without affecting the login flow.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "Lack of authentication metrics",
+          "sixSigmaMetric": "Increase telemetry coverage for authentication events from 0% to 100%",
+          "hasUi": false,
+          "requirementRefs": ["M1", "M2"]
+        }
+      ]
+    }
+  ]
+}
