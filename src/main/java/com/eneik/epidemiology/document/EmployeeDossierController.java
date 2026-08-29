@@ -9,6 +9,10 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import com.eneik.epidemiology.telemetry.TelemetryService;
 
+import com.itextpdf.text.Document;
+import com.itextpdf.text.Paragraph;
+import com.itextpdf.text.pdf.PdfWriter;
+import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
@@ -171,11 +175,24 @@ public class EmployeeDossierController {
                         ));
                     }
 
-                    byte[] content = (report.getSummaryText() != null ? report.getSummaryText() : "Отчет пуст").getBytes(StandardCharsets.UTF_8);
-                    return ResponseEntity.ok()
-                            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"dossier_report_" + id + ".pdf\"")
-                            .contentType(MediaType.parseMediaType("application/pdf;charset=UTF-8"))
-                            .body((Object) content);
+                    try {
+                        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                        Document document = new Document();
+                        PdfWriter.getInstance(document, baos);
+                        document.open();
+                        String text = report.getSummaryText() != null ? report.getSummaryText() : "Отчет пуст";
+                        document.add(new Paragraph(text));
+                        document.close();
+
+                        byte[] content = baos.toByteArray();
+                        return ResponseEntity.ok()
+                                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"dossier_report_" + id + ".pdf\"")
+                                .contentType(MediaType.APPLICATION_PDF)
+                                .body((Object) content);
+                    } catch (Exception e) {
+                        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                                .body(Map.of("error_code", "PDF_GENERATION_ERROR", "message", "Ошибка при генерации PDF файла"));
+                    }
                 })
                 .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).body((Object) Map.of(
                         "error_code", "NOT_FOUND",
