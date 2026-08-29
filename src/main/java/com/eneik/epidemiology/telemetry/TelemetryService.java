@@ -21,6 +21,8 @@ public class TelemetryService {
     public static final String EVENT_PR_RECONCILIATION_UNMATCHED = "PR_RECONCILIATION_UNMATCHED";
     public static final String EVENT_WORKFLOW_DURATION_MEASURED = "WORKFLOW_DURATION_MEASURED";
     public static final String EVENT_ANALYSIS_SPEED_MEASURED = "ANALYSIS_SPEED_MEASURED";
+    public static final String EVENT_SSO_LOGIN_SUCCESS = "sso_login_success";
+    public static final String EVENT_FALLBACK_LOGIN_SUCCESS = "fallback_login_success";
 
     private final TelemetryEventRepository telemetryEventRepository;
     private final Clock clock;
@@ -126,6 +128,30 @@ public class TelemetryService {
                 startTime,
                 endTime,
                 computedDuration,
+                OffsetDateTime.now(clock)
+        );
+        return telemetryEventRepository.save(event);
+    }
+
+    @Transactional
+    public TelemetryEvent recordSsoLoginTelemetry(String username) {
+        TelemetryEvent event = new TelemetryEvent(
+                EVENT_SSO_LOGIN_SUCCESS,
+                username,
+                null,
+                null,
+                OffsetDateTime.now(clock)
+        );
+        return telemetryEventRepository.save(event);
+    }
+
+    @Transactional
+    public TelemetryEvent recordFallbackLoginTelemetry(String username) {
+        TelemetryEvent event = new TelemetryEvent(
+                EVENT_FALLBACK_LOGIN_SUCCESS,
+                username,
+                null,
+                null,
                 OffsetDateTime.now(clock)
         );
         return telemetryEventRepository.save(event);

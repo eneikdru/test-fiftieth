@@ -53,10 +53,14 @@ class AuthControllerTest {
     private UserService.PasswordEncoderConfig passwordEncoderConfig;
 
     @Autowired
+    private com.eneik.epidemiology.telemetry.TelemetryEventRepository telemetryEventRepository;
+
+    @Autowired
     private ObjectMapper objectMapper;
 
     @BeforeEach
     void setUp() {
+        telemetryEventRepository.deleteAll();
         recoveryTokenRepository.deleteAll();
         userRepository.deleteAll();
     }
@@ -136,6 +140,32 @@ class AuthControllerTest {
                 .andExpect(jsonPath("$.user.email", is("katya@inst.ru")))
                 .andExpect(jsonPath("$.user.full_name", is("Екатерина Сергеевна")))
                 .andExpect(jsonPath("$.user.role", is("RESEARCHER")));
+
+        long fallbackEvents = telemetryEventRepository.findAll().stream()
+                .filter(e -> "fallback_login_success".equals(e.getEventType()) && "katya_exp".equals(e.getQueryTerm()))
+                .count();
+        assert fallbackEvents == 1;
+    }
+
+    @Test
+    @DisplayName("Given valid SSO login request, When moodle sso endpoint called, Then returns JWT tokens and records sso login telemetry")
+    void testSsoLogin_ReturnsAuthTokensAndRecordsTelemetry() throws Exception {
+        userService.createUser("moodle_user", "Pass123!", "moodle@inst.ru", "Moodle User", "RESEARCHER");
+
+        String ssoBody = "{\"username\":\"moodle_user\",\"moodle_token\":\"mock_valid_moodle_token\"}";
+
+        mockMvc.perform(post("/api/v1/auth/sso/moodle")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(ssoBody))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.access_token", notNullValue()))
+                .andExpect(jsonPath("$.refresh_token", notNullValue()))
+                .andExpect(jsonPath("$.user.username", is("moodle_user")));
+
+        long ssoEvents = telemetryEventRepository.findAll().stream()
+                .filter(e -> "sso_login_success".equals(e.getEventType()) && "moodle_user".equals(e.getQueryTerm()))
+                .count();
+        assert ssoEvents == 1;
     }
 
     @Test
