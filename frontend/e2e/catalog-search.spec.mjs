@@ -127,8 +127,64 @@ test.describe('Catalog Search and Document Management E2E Tests', () => {
     await expect(page.locator('#upload-description-input')).toHaveValue(testDesc);
   });
 
+  test('Given a found document in the catalog search results, When the user clicks the open/view action, Then the document content opens in an inline viewer', async ({ page }) => {
+    await page.goto(harnessPath);
+
+    // Click open/view button on first document
+    await page.click('.view-btn');
+
+    // Confirm inline viewer modal opens
+    const modal = page.locator('#doc-viewer-modal');
+    await expect(modal).toBeVisible();
+
+    // Verify modal title
+    const modalTitle = page.locator('#doc-viewer-title');
+    await expect(modalTitle).toBeVisible();
+
+    // Close viewer modal
+    await page.click('#viewer-close-btn');
+    await expect(modal).not.toBeVisible();
+  });
+
+  test('Given an unsupported document format or view error, When the viewer attempts to load, Then a clear error message and fallback download link are presented', async ({ page }) => {
+    await page.goto(harnessPath);
+
+    // Open upload modal as Admin and upload a .docx document
+    await page.click('#open-upload-modal-btn');
+    await page.fill('#upload-title-input', 'Методические рекомендации docx');
+    await page.fill('#upload-author-input', 'Минздрав');
+    await page.fill('#upload-year-input', '2024');
+    await page.fill('#upload-description-input', 'Руководство docx');
+    await page.selectOption('#upload-doctype-select', 'Методическое руководство');
+
+    // Select file with .docx extension
+    await page.setInputFiles('#upload-file-input', {
+      name: 'recommendations.docx',
+      mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      buffer: Buffer.from('mock docx content')
+    });
+
+    // Submit form
+    await page.click('#upload-submit-btn');
+    await expect(page.locator('#upload-modal')).not.toBeVisible();
+
+    // Click open button on newly created docx document card
+    const uploadedCard = page.locator('.document-card', { hasText: 'Методические рекомендации docx' });
+    await uploadedCard.locator('.view-btn').click();
+
+    // Confirm error notification container is displayed
+    const errorContainer = page.locator('#doc-viewer-error');
+    await expect(errorContainer).toBeVisible();
+    await expect(errorContainer).toContainText('Предпросмотр недоступен');
+    await expect(errorContainer).toContainText('Формат файла не поддерживается');
+
+    // Fallback download link/button is visible
+    const fallbackBtn = page.locator('#viewer-fallback-download-btn');
+    await expect(fallbackBtn).toBeVisible();
+  });
+
   test('Given a user accesses the site on desktop and mobile devices, When the UI renders, Then screenshots are saved for design verification', async ({ page }) => {
-    const recordDir = path.resolve(process.cwd(), '.eneik/records/design-check-72f86240-fcf6-4d30-9ff6-02ae1b8fb711');
+    const recordDir = path.resolve('/app/.eneik/records/design-check-49bf6c01-253a-48a9-8073-9ab9cf4c0497');
     if (!fs.existsSync(recordDir)) {
       fs.mkdirSync(recordDir, { recursive: true });
     }
@@ -136,13 +192,17 @@ test.describe('Catalog Search and Document Management E2E Tests', () => {
     // Desktop viewport (1440px width)
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto(harnessPath);
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
+    await page.click('.view-btn');
+    await page.waitForSelector('#doc-viewer-modal');
     await page.screenshot({ path: path.join(recordDir, 'desktop-1440.png'), fullPage: true });
 
     // Mobile viewport (375px width)
     await page.setViewportSize({ width: 375, height: 812 });
     await page.goto(harnessPath);
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
+    await page.click('.view-btn');
+    await page.waitForSelector('#doc-viewer-modal');
     await page.screenshot({ path: path.join(recordDir, 'mobile-375.png'), fullPage: true });
 
     expect(fs.existsSync(path.join(recordDir, 'desktop-1440.png'))).toBe(true);

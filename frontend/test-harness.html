@@ -115,6 +115,7 @@
       isLoading: false,
       searchError: '',
       backendStopped: false, // Simulator flag for testing backend stopped AC
+      viewerDocument: null,
 
       // Upload modal states
       isUploadModalOpen: false,
@@ -534,6 +535,15 @@
                       <div class="flex items-center justify-between gap-2 pt-3 border-t border-[#e0e3e5]">
                         <button
                           type="button"
+                          id="view-btn-${doc.id}"
+                          onclick="handleViewDocument('${doc.id}')"
+                          class="view-btn flex-1 py-2 px-3 bg-[#e0e3e5] hover:bg-[#c2c6d4] focus:ring-2 focus:ring-[#003f87]/50 focus:outline-none text-[#191c1e] text-xs font-medium rounded-md transition-colors flex items-center justify-center gap-1 shadow-sm"
+                        >
+                          <span>Открыть</span>
+                        </button>
+
+                        <button
+                          type="button"
                           id="download-btn-${doc.id}"
                           onclick="handleDownloadDocument('${doc.id}')"
                           class="download-btn flex-1 py-2 px-3 bg-[#003f87] hover:bg-[#002b5e] focus:ring-2 focus:ring-[#003f87]/50 focus:outline-none text-white text-xs font-medium rounded-md transition-colors flex items-center justify-center gap-1 shadow-sm"
@@ -713,6 +723,95 @@
               </div>
             ` : ''}
 
+            <!-- Inline Document Viewer Modal -->
+            ${state.viewerDocument ? `
+              <div
+                id="doc-viewer-modal"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="doc-viewer-title"
+                class="fixed inset-0 z-50 bg-[#131b2e]/40 backdrop-blur-md flex flex-col pt-16 focus:outline-none"
+              >
+                <header class="absolute top-0 w-full flex items-center justify-between px-4 sm:px-6 lg:px-8 h-16 bg-[#faf8ff] dark:bg-[#131b2e] border-b border-[#c3c5d9] shadow-sm z-30">
+                  <button
+                    type="button"
+                    id="close-viewer-btn"
+                    onclick="closeViewer()"
+                    class="text-[#434656] dark:text-[#c3c5d9] hover:bg-[#eaedff] dark:hover:bg-[#283044] p-2 rounded-full flex items-center justify-center transition-colors focus:ring-2 focus:ring-[#003f87]/50 focus:outline-none"
+                    aria-label="Закрыть просмотр"
+                  >
+                    <span>←</span>
+                  </button>
+                  <h1 id="doc-viewer-title" class="font-bold text-base sm:text-lg text-[#131b2e] dark:text-[#faf8ff] truncate max-w-md sm:max-w-xl text-center">
+                    ${state.viewerDocument.title || state.viewerDocument.fileName || 'Просмотр документа'}
+                  </h1>
+                  <button type="button" class="text-[#434656] dark:text-[#c3c5d9] hover:bg-[#eaedff] dark:hover:bg-[#283044] p-2 rounded-full flex items-center justify-center transition-colors">
+                    🔍
+                  </button>
+                </header>
+
+                <main class="flex-1 bg-white m-2 sm:m-4 rounded-xl shadow-lg border border-[#c3c5d9] overflow-y-auto relative z-20 flex flex-col mb-24">
+                  ${isUnsupportedFormat(state.viewerDocument) ? `
+                    <div id="doc-viewer-error" class="flex flex-col items-center justify-center h-full p-6 text-center space-y-4 my-auto">
+                       <div class="w-16 h-16 bg-[#ffdad6] rounded-full flex items-center justify-center text-[#93000a] text-2xl font-bold mb-2">
+                         ⚠️
+                       </div>
+                       <h2 class="text-xl font-bold text-[#131b2e]">Предпросмотр недоступен</h2>
+                       <p class="text-sm text-[#434656] max-w-md">
+                         Формат файла не поддерживается для встроенного просмотра или произошла ошибка при загрузке.
+                       </p>
+                       <button
+                          type="button"
+                          id="viewer-fallback-download-btn"
+                          onclick="handleDownloadDocument('${state.viewerDocument.id}')"
+                          class="mt-4 py-2.5 px-6 bg-[#003f87] hover:bg-[#002b5e] focus:ring-2 focus:ring-[#003f87]/50 focus:outline-none text-white text-sm font-semibold rounded-lg transition-colors flex items-center justify-center gap-2 shadow-sm"
+                       >
+                         <span>Скачать файл</span>
+                       </button>
+                    </div>
+                  ` : `
+                    <iframe
+                      id="doc-viewer-iframe"
+                      src="/api/v1/documents/${state.viewerDocument.id}/view"
+                      title="${state.viewerDocument.title}"
+                      class="w-full h-full border-0 min-h-[500px] sm:min-h-[800px]"
+                    ></iframe>
+                  `}
+                </main>
+
+                <div class="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-[#faf8ff] dark:bg-[#131b2e] rounded-full shadow-xl border border-[#c3c5d9] px-5 py-2.5 flex items-center gap-4 sm:gap-6 z-40">
+                  <button
+                    type="button"
+                    id="viewer-download-btn"
+                    onclick="handleDownloadDocument('${state.viewerDocument.id}')"
+                    class="flex flex-col items-center justify-center gap-1 text-[#003f87] hover:opacity-80 transition-opacity focus:outline-none focus:ring-2 focus:ring-[#003f87]/50 rounded-lg p-1"
+                    aria-label="Скачать документ"
+                  >
+                    <span class="text-xs uppercase font-bold tracking-wider">Скачать</span>
+                  </button>
+                  <div class="w-[1px] h-8 bg-[#c3c5d9]"></div>
+                  <button
+                    type="button"
+                    onclick="alert('Печать документа')"
+                    class="flex flex-col items-center justify-center gap-1 text-[#434656] hover:opacity-80 transition-opacity focus:outline-none focus:ring-2 focus:ring-[#003f87]/50 rounded-lg p-1"
+                    aria-label="Печать документа"
+                  >
+                    <span class="text-xs uppercase font-bold tracking-wider">Печать</span>
+                  </button>
+                  <div class="w-[1px] h-8 bg-[#c3c5d9]"></div>
+                  <button
+                    type="button"
+                    id="viewer-close-btn"
+                    onclick="closeViewer()"
+                    class="flex flex-col items-center justify-center gap-1 text-[#434656] hover:opacity-80 transition-opacity focus:outline-none focus:ring-2 focus:ring-[#003f87]/50 rounded-lg p-1"
+                    aria-label="Закрыть окно просмотра"
+                  >
+                    <span class="text-xs uppercase font-bold tracking-wider">Закрыть</span>
+                  </button>
+                </div>
+              </div>
+            ` : ''}
+
             <!-- Footer -->
             <footer class="w-full py-6 mt-12 text-center text-xs text-[#727784] border-t border-[#e0e3e5] flex flex-col sm:flex-row items-center justify-between gap-2">
               <p>Российский научно-исследовательский институт эпидемиологии</p>
@@ -864,6 +963,29 @@
         defaultSampleDocuments.splice(idx, 1);
       }
       render();
+    }
+
+    function handleViewDocument(id) {
+      const doc = state.documents.find(d => String(d.id) === String(id)) || defaultSampleDocuments.find(d => String(d.id) === String(id));
+      if (doc) {
+        state.viewerDocument = doc;
+        render();
+      }
+    }
+
+    function closeViewer() {
+      state.viewerDocument = null;
+      render();
+    }
+
+    function isUnsupportedFormat(doc) {
+      if (!doc) return false;
+      const path = doc.fileName || doc.filePath || doc.file_path || '';
+      const lower = path.toLowerCase();
+      if (lower.endsWith('.pdf') || lower.endsWith('.txt')) {
+        return false;
+      }
+      return true;
     }
 
     function toggleRole() {

@@ -1,5 +1,5 @@
 <script>
-  import { createEventDispatcher } from 'svelte';
+  import { createEventDispatcher, onMount } from 'svelte';
 
   export let document = null;
   export let apiBaseUrl = '';
@@ -7,6 +7,7 @@
   const dispatch = createEventDispatcher();
 
   let hasError = false;
+  let viewerElement;
 
   function handleClose() {
     dispatch('close');
@@ -41,82 +42,130 @@
     return '';
   }
 
+  function isUnsupportedFormat(doc) {
+    if (!doc) return false;
+    const path = doc.fileName || doc.filePath || doc.file_path || '';
+    const lower = path.toLowerCase();
+    if (lower.endsWith('.pdf') || lower.endsWith('.txt')) {
+      return false;
+    }
+    return true;
+  }
+
+  function handleKeyDown(event) {
+    if (event.key === 'Escape') {
+      handleClose();
+    }
+  }
+
+  onMount(() => {
+    if (viewerElement) {
+      viewerElement.focus();
+    }
+  });
 </script>
 
-<div class="fixed inset-0 z-50 bg-on-surface/20 backdrop-blur-md flex flex-col pt-16">
+<div
+  bind:this={viewerElement}
+  tabindex="-1"
+  on:keydown={handleKeyDown}
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="doc-viewer-title"
+  id="doc-viewer-modal"
+  class="fixed inset-0 z-50 bg-[#131b2e]/40 backdrop-blur-md flex flex-col pt-16 focus:outline-none"
+>
   <!-- TopAppBar (Floating above document) -->
-  <header class="absolute top-0 w-full flex items-center justify-between px-4 sm:px-6 lg:px-8 h-16 bg-surface dark:bg-surface-dim border-b border-outline-variant dark:border-on-surface-variant shadow-sm z-30 transition-colors duration-200 ease-in-out">
+  <header class="absolute top-0 w-full flex items-center justify-between px-4 sm:px-6 lg:px-8 h-16 bg-[#faf8ff] dark:bg-[#131b2e] border-b border-[#c3c5d9] shadow-sm z-30 transition-colors duration-200 ease-in-out">
     <button
+      type="button"
       on:click={handleClose}
-      class="text-on-surface-variant dark:text-outline hover:bg-surface-container dark:hover:bg-surface-container-highest p-2 rounded-full flex items-center justify-center transition-colors focus:ring-2 focus:ring-primary/50 focus:outline-none"
-      aria-label="Back"
+      class="text-[#434656] dark:text-[#c3c5d9] hover:bg-[#eaedff] dark:hover:bg-[#283044] p-2 rounded-full flex items-center justify-center transition-colors focus:ring-2 focus:ring-[#003ec7]/50 focus:outline-none"
+      aria-label="Закрыть просмотр"
+      title="Закрыть"
     >
       <span class="material-symbols-outlined" data-icon="arrow_back">arrow_back</span>
     </button>
-    <h1 class="font-headline-md text-headline-md font-bold text-on-surface dark:text-on-surface-variant truncate max-w-lg text-center">
-      {document ? (document.title || document.fileName || 'Document Preview') : 'Document Preview'}
+    <h1 id="doc-viewer-title" class="font-bold text-base sm:text-lg text-[#131b2e] dark:text-[#faf8ff] truncate max-w-md sm:max-w-xl text-center">
+      {document ? (document.title || document.fileName || 'Просмотр документа') : 'Просмотр документа'}
     </h1>
-    <button class="text-on-surface-variant dark:text-outline hover:bg-surface-container dark:hover:bg-surface-container-highest p-2 rounded-full flex items-center justify-center transition-colors focus:ring-2 focus:ring-primary/50 focus:outline-none" aria-label="Search">
+    <button
+      type="button"
+      class="text-[#434656] dark:text-[#c3c5d9] hover:bg-[#eaedff] dark:hover:bg-[#283044] p-2 rounded-full flex items-center justify-center transition-colors focus:ring-2 focus:ring-[#003ec7]/50 focus:outline-none"
+      aria-label="Поиск по документу"
+      title="Поиск"
+    >
       <span class="material-symbols-outlined" data-icon="search">search</span>
     </button>
   </header>
 
   <!-- Document Preview Canvas -->
-  <main class="flex-1 bg-surface-container-lowest m-4 rounded-xl shadow-lg border border-outline-variant overflow-y-auto relative z-20 flex flex-col mb-24">
+  <main class="flex-1 bg-white m-2 sm:m-4 rounded-xl shadow-lg border border-[#c3c5d9] overflow-y-auto relative z-20 flex flex-col mb-24">
     {#if document}
-      {#if hasError || (document.fileName && !document.fileName.toLowerCase().endsWith('.pdf') && !document.fileName.toLowerCase().endsWith('.txt'))}
-        <div class="flex flex-col items-center justify-center h-full p-8 text-center space-y-4">
-           <span class="material-symbols-outlined text-4xl text-error" data-icon="error">error</span>
-           <h2 class="font-headline-lg text-headline-lg text-on-surface">Preview Not Available</h2>
-           <p class="font-body-md text-body-md text-on-surface-variant">The document format is unsupported for inline viewing, or an error occurred.</p>
+      {#if hasError || isUnsupportedFormat(document)}
+        <div id="doc-viewer-error" class="flex flex-col items-center justify-center h-full p-6 text-center space-y-4 my-auto">
+           <div class="w-16 h-16 bg-[#ffdad6] rounded-full flex items-center justify-center text-[#93000a] text-2xl font-bold mb-2">
+             ⚠️
+           </div>
+           <h2 class="text-xl font-bold text-[#131b2e]">Предпросмотр недоступен</h2>
+           <p class="text-sm text-[#434656] max-w-md">
+             Формат файла не поддерживается для встроенного просмотра или произошла ошибка при загрузке.
+           </p>
            <button
+              type="button"
               on:click={handleDownload}
-              class="mt-4 py-2 px-6 bg-primary hover:opacity-90 focus:ring-2 focus:ring-primary/50 focus:outline-none text-on-primary text-sm font-medium rounded-md transition-colors flex items-center justify-center gap-2 shadow-sm"
+              class="mt-4 py-2.5 px-6 bg-[#003f87] hover:bg-[#002b5e] focus:ring-2 focus:ring-[#003f87]/50 focus:outline-none text-white text-sm font-semibold rounded-lg transition-colors flex items-center justify-center gap-2 shadow-sm"
            >
              <span class="material-symbols-outlined text-[20px]" data-icon="download">download</span>
-             <span>Download File Instead</span>
+             <span>Скачать файл</span>
            </button>
         </div>
       {:else}
         <iframe
           id="doc-viewer-iframe"
           src={getViewerUrl(document)}
-          title="Document Viewer"
-          class="w-full h-full border-0 min-h-[800px]"
+          title={document.title || "Документ"}
+          class="w-full h-full border-0 min-h-[500px] sm:min-h-[800px]"
           on:error={onIframeError}
         ></iframe>
       {/if}
     {:else}
-      <div class="flex items-center justify-center h-full">
-         <p class="font-body-md text-body-md text-on-surface-variant">No document selected</p>
+      <div class="flex items-center justify-center h-full p-8 text-center text-[#434656]">
+         <p class="text-base font-medium">Документ не выбран</p>
       </div>
     {/if}
   </main>
 
   <!-- Floating Controls Panel -->
-  <div class="absolute bottom-6 left-1/2 transform -translate-x-1/2 bg-surface dark:bg-surface-dim rounded-full shadow-lg border border-outline-variant px-6 py-3 flex items-center gap-6 z-40">
+  <div class="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-[#faf8ff] dark:bg-[#131b2e] rounded-full shadow-xl border border-[#c3c5d9] px-5 py-2.5 flex items-center gap-4 sm:gap-6 z-40">
     <button
+      type="button"
       on:click={handleDownload}
-      class="flex flex-col items-center justify-center gap-1 text-primary hover:opacity-80 transition-opacity focus:outline-none"
+      class="flex flex-col items-center justify-center gap-1 text-[#003f87] hover:opacity-80 transition-opacity focus:outline-none focus:ring-2 focus:ring-[#003f87]/50 rounded-lg p-1"
+      aria-label="Скачать документ"
     >
       <span class="material-symbols-outlined text-[24px]" data-icon="download">download</span>
-      <span class="font-label-caps text-label-caps text-[10px] uppercase font-bold tracking-wider">Download</span>
+      <span class="text-[10px] uppercase font-bold tracking-wider">Скачать</span>
     </button>
-    <div class="w-[1px] h-8 bg-outline-variant"></div>
+    <div class="w-[1px] h-8 bg-[#c3c5d9]"></div>
     <button
+      type="button"
       on:click={handlePrint}
-      class="flex flex-col items-center justify-center gap-1 text-on-surface-variant hover:opacity-80 transition-opacity focus:outline-none"
+      class="flex flex-col items-center justify-center gap-1 text-[#434656] hover:opacity-80 transition-opacity focus:outline-none focus:ring-2 focus:ring-[#003f87]/50 rounded-lg p-1"
+      aria-label="Печать документа"
     >
       <span class="material-symbols-outlined text-[24px]" data-icon="print">print</span>
-      <span class="font-label-caps text-label-caps text-[10px] uppercase font-bold tracking-wider">Print</span>
+      <span class="text-[10px] uppercase font-bold tracking-wider">Печать</span>
     </button>
-    <div class="w-[1px] h-8 bg-outline-variant"></div>
+    <div class="w-[1px] h-8 bg-[#c3c5d9]"></div>
     <button
+      type="button"
       on:click={handleClose}
-      class="flex flex-col items-center justify-center gap-1 text-on-surface-variant hover:opacity-80 transition-opacity focus:outline-none"
+      class="flex flex-col items-center justify-center gap-1 text-[#434656] hover:opacity-80 transition-opacity focus:outline-none focus:ring-2 focus:ring-[#003f87]/50 rounded-lg p-1"
+      aria-label="Закрыть окно просмотра"
     >
       <span class="material-symbols-outlined text-[24px]" data-icon="close">close</span>
-      <span class="font-label-caps text-label-caps text-[10px] uppercase font-bold tracking-wider">Close</span>
+      <span class="text-[10px] uppercase font-bold tracking-wider">Закрыть</span>
     </button>
   </div>
 </div>

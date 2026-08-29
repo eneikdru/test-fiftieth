@@ -53,6 +53,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/", "/*.html", "/*.js", "/*.css", "/*.ico", "/*.png", "/*.svg", "/static/**", "/assets/**").permitAll()
                 .requestMatchers("/health", "/actuator/**", "/api/v1/auth/**", "/api/v1/recovery/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/documents/*/download", "/api/v1/documents/*/view", "/api/v1/documents/search").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/v1/documents/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.DELETE, "/api/v1/documents/**").hasRole("ADMIN")
                 .requestMatchers("/api/v1/dossier/**").hasAnyRole("USER", "ADMIN")

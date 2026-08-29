@@ -558,16 +558,18 @@
             <div class="flex items-center justify-between gap-2 pt-3 border-t border-[#e0e3e5]">
               <button
                 type="button"
+                id={doc.id ? `view-btn-${doc.id}` : undefined}
                 on:click={() => handleViewDocument(doc)}
-                class="flex-1 py-2 px-3 bg-[#e0e3e5] hover:bg-[#c2c6d4] focus:ring-2 focus:ring-[#003f87]/50 focus:outline-none text-[#191c1e] text-xs font-medium rounded-md transition-colors flex items-center justify-center gap-1 shadow-sm"
+                class="view-btn flex-1 py-2 px-3 bg-[#e0e3e5] hover:bg-[#c2c6d4] focus:ring-2 focus:ring-[#003f87]/50 focus:outline-none text-[#191c1e] text-xs font-medium rounded-md transition-colors flex items-center justify-center gap-1 shadow-sm"
               >
                 <span>Открыть</span>
               </button>
 
               <button
                 type="button"
+                id={doc.id ? `download-btn-${doc.id}` : undefined}
                 on:click={() => handleDownload(doc)}
-                class="flex-1 py-2 px-3 bg-[#003f87] hover:bg-[#002b5e] focus:ring-2 focus:ring-[#003f87]/50 focus:outline-none text-white text-xs font-medium rounded-md transition-colors flex items-center justify-center gap-1 shadow-sm"
+                class="download-btn flex-1 py-2 px-3 bg-[#003f87] hover:bg-[#002b5e] focus:ring-2 focus:ring-[#003f87]/50 focus:outline-none text-white text-xs font-medium rounded-md transition-colors flex items-center justify-center gap-1 shadow-sm"
               >
                 <span>Скачать</span>
               </button>
