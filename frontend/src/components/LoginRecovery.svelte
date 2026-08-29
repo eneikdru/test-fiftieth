@@ -1,8 +1,19 @@
 <script>
-  import { createEventDispatcher } from 'svelte';
+  import { createEventDispatcher, onMount } from 'svelte';
   import ImprintModal from './ImprintModal.svelte';
 
   const dispatch = createEventDispatcher();
+
+
+  onMount(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const errorParam = urlParams.get('error');
+    if (errorParam === 'sso_failed') {
+      errorMessage = 'Ошибка аутентификации через Moodle. Пожалуйста, используйте локальный вход.';
+    } else if (errorParam) {
+      errorMessage = 'Ошибка SSO: ' + errorParam;
+    }
+  });
 
   // Props
   export function getApiBaseUrl() {
@@ -270,6 +281,18 @@
             {/if}
           </button>
         </div>
+
+        <div class="pt-2">
+          <button
+            type="button"
+            on:click={async () => { try { isLoading = true; const r = await fetch(getApiBaseUrl() + '/auth/moodle/config'); if (r.ok) { const d = await r.json(); window.location.href = d.auth_url; } } catch(e) { errorMessage = 'Ошибка инициализации SSO'; } finally { isLoading = false; } }}
+            disabled={isLoading}
+            class="w-full h-13 bg-primary text-on-primary rounded-lg font-medium text-base py-3 flex items-center justify-center hover:bg-primary-container active:scale-[0.98] transition-all disabled:opacity-60 disabled:cursor-not-allowed shadow-sm"
+          >
+            <span class="mr-2">Login with Moodle</span>
+            <span class="material-symbols-outlined" class="text-lg">login</span>
+          </button>
+        </div>
       </form>
 
     {:else if mode === 'recovery'}
@@ -320,6 +343,18 @@
             {:else}
               <span>Отправить</span>
             {/if}
+          </button>
+        </div>
+
+        <div class="pt-2">
+          <button
+            type="button"
+            on:click={async () => { try { isLoading = true; const r = await fetch(getApiBaseUrl() + '/auth/moodle/config'); if (r.ok) { const d = await r.json(); window.location.href = d.auth_url; } } catch(e) { errorMessage = 'Ошибка инициализации SSO'; } finally { isLoading = false; } }}
+            disabled={isLoading}
+            class="w-full h-13 bg-primary text-on-primary rounded-lg font-medium text-base py-3 flex items-center justify-center hover:bg-primary-container active:scale-[0.98] transition-all disabled:opacity-60 disabled:cursor-not-allowed shadow-sm"
+          >
+            <span class="mr-2">Login with Moodle</span>
+            <span class="material-symbols-outlined" class="text-lg">login</span>
           </button>
         </div>
       </form>
