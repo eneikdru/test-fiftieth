@@ -82,10 +82,10 @@ class EmployeeDocumentRestoreVerificationTest {
         ProcessBuilder restorePb = new ProcessBuilder("bash", "scripts/restore.sh");
         Map<String, String> restoreEnv = restorePb.environment();
         restoreEnv.put("SQLITE_DB_PATH", restoredDb.toAbsolutePath().toString());
-        restoreEnv.put("UPLOADS_DIR", restoredUploads.toAbsolutePath().toString());
-        restoreEnv.put("BACKUP_DIR", backupDir.toAbsolutePath().toString());
-        restoreEnv.put("DB_BACKUP_FILE", dbBackupFile.toAbsolutePath().toString());
-        restoreEnv.put("UPLOADS_BACKUP_FILE", uploadsBackupFile.toAbsolutePath().toString());
+        restoreEnv.put("UPLOADS_DIR", restoredUploads.toRealPath().toString());
+        restoreEnv.put("BACKUP_DIR", backupDir.toRealPath().toString());
+        restoreEnv.put("DB_BACKUP_FILE", dbBackupFile.toRealPath().toString());
+        restoreEnv.put("UPLOADS_BACKUP_FILE", uploadsBackupFile.toRealPath().toString());
 
         Process restoreProc = restorePb.start();
         assertThat(restoreProc.waitFor()).isEqualTo(0);
