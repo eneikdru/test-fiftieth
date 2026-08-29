@@ -11,6 +11,7 @@ import com.eneik.epidemiology.telemetry.TelemetryService;
 
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -62,6 +63,28 @@ public class EmployeeDossierController {
         DossierReport report = null;
 
         try {
+            if (requestBody.containsKey("session_id") || requestBody.containsKey("session_start_time") || requestBody.containsKey("session_duration_ms")) {
+                String sessionId = requestBody.containsKey("session_id") ? (String) requestBody.get("session_id") : "session_" + employeeId;
+                OffsetDateTime sessionStart = null;
+                OffsetDateTime sessionEnd = null;
+                Long sessionDurationMs = null;
+
+                if (requestBody.containsKey("session_start_time") && requestBody.get("session_start_time") != null) {
+                    sessionStart = OffsetDateTime.parse(requestBody.get("session_start_time").toString());
+                }
+                if (requestBody.containsKey("session_end_time") && requestBody.get("session_end_time") != null) {
+                    sessionEnd = OffsetDateTime.parse(requestBody.get("session_end_time").toString());
+                } else if (sessionStart != null) {
+                    sessionEnd = OffsetDateTime.now();
+                }
+
+                if (requestBody.containsKey("session_duration_ms") && requestBody.get("session_duration_ms") != null) {
+                    sessionDurationMs = ((Number) requestBody.get("session_duration_ms")).longValue();
+                }
+
+                telemetryService.recordAnalysisSpeedTelemetry(sessionId, sessionStart, sessionEnd, sessionDurationMs);
+            }
+
             List<EmployeeDocument> documents;
 
             if (requestBody.containsKey("document_ids") && requestBody.get("document_ids") != null) {
