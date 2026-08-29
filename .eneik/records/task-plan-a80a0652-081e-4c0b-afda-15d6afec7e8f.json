@@ -1,0 +1,196 @@
+{
+  "epics": [
+    {
+      "existingEpicId": "0ff456b9-6ead-4ee0-bee3-84e9c399a6b0",
+      "title": null,
+      "jtbd": null,
+      "kanoClass": null,
+      "cynefinDomain": null,
+      "sixSigmaMetric": "Decrease hardcoded mock data usage in dossier search from 100% to 0%",
+      "tocConstraintRef": "TOC-FRONTEND-INTEGRATION",
+      "sourceIndex": 0,
+      "requirements": [
+        "R1: The frontend dossier search must fetch actual data from the API endpoint instead of using hardcoded mock data.",
+        "R2: The employee documents list endpoint and frontend must support and utilize pagination to handle large datasets effectively."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Implement Dossier Search API Integration and Pagination",
+          "roleTag": "BARCAN-TAG-11",
+          "jtbd": "When implementing frontend and API patches for this epic, I want to replace mock data with paginated API calls, so that the dossier integration is functional.",
+          "acceptanceCriteria": "Given a large dataset of employee documents\nWhen the client calls GET /api/v1/dossier/documents and UI requests it\nThen the results should be paginated and actual backend data is displayed meeting WCAG 2.1 level AA standards, alongside a passing automated QA check.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "TOC-FRONTEND-INTEGRATION",
+          "sixSigmaMetric": "Reduce unpaginated mock data load time impact by 100%",
+          "hasUi": true,
+          "requirementRefs": [
+            "R1",
+            "R2"
+          ]
+        }
+      ]
+    },
+    {
+      "existingEpicId": null,
+      "title": "Valid PDF Generation for Dossier Reports",
+      "jtbd": "When an epidemiologist requests a dossier report, I want the system to generate a valid PDF file, so that the document can be stored and shared without corruption.",
+      "kanoClass": "Must-Be",
+      "cynefinDomain": "clear",
+      "sixSigmaMetric": "Reduce corrupted PDF file generation rate from 100% to 0%",
+      "tocConstraintRef": "TOC-PDF-EXPORT",
+      "sourceIndex": 1,
+      "requirements": [
+        "R1: The export endpoint must generate a valid binary PDF document using a proper library instead of casting plaintext bytes.",
+        "R2: The generated PDF must contain the compiled dossier summary text and return it with the application/pdf content type."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Fix PDF Export Binary Generation",
+          "roleTag": "BARCAN-TAG-02",
+          "jtbd": "When implementing PDF generation for this epic, I want to use a proper PDF library, so that a valid binary file is returned.",
+          "acceptanceCriteria": "Given a generated dossier report\nWhen the client calls GET /api/v1/dossier/reports/{id}/download\nThen the system should generate and return a valid PDF document, alongside a passing automated QA check.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "TOC-PDF-EXPORT",
+          "sixSigmaMetric": "Decrease PDF parse error rate to 0%",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1",
+            "R2"
+          ]
+        }
+      ]
+    },
+    {
+      "existingEpicId": null,
+      "title": "Remove Mocked Audits and Restore Architectural Boundaries",
+      "jtbd": "When the system runs automated audits or merges, I want all factory orchestrator references and hardcoded statuses removed from the product, so that the domain architecture remains strictly isolated.",
+      "kanoClass": "Must-Be",
+      "cynefinDomain": "clear",
+      "sixSigmaMetric": "Decrease orchestrator factory references in client product codebase to 0",
+      "tocConstraintRef": "TOC-ARCH-ISOLATION",
+      "sourceIndex": 2,
+      "requirements": [
+        "R1: Remove all hardcoded SixSigmaAuditService metric logic, factory orchestrator references, and Flyway task status overrides from the product codebase.",
+        "R2: Ensure the application strictly operates within the client's domain vocabulary without cross-layer contamination."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Strip Hardcoded Orchestrator and Audit Mocks",
+          "roleTag": "BARCAN-TAG-02",
+          "jtbd": "When implementing architectural compliance for this epic, I want to remove injected orchestrator services, so that domain separation is restored.",
+          "acceptanceCriteria": "Given the current codebase with mocked orchestrator services\nWhen the compliance patch is applied\nThen SixSigmaAuditService and hardcoded Flyway updates must be removed without adding new scope, verified by passing tests.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "TOC-ARCH-ISOLATION",
+          "sixSigmaMetric": "Reduce factory name occurrences in codebase to 0",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1",
+            "R2"
+          ]
+        }
+      ]
+    },
+    {
+      "existingEpicId": null,
+      "title": "Unified Full-Stack Docker Image Build",
+      "jtbd": "When a user deploys the application, I want the Docker image to include and serve the built frontend, so that the actual UI is presented instead of a bare API.",
+      "kanoClass": "Must-Be",
+      "cynefinDomain": "clear",
+      "sixSigmaMetric": "Increase frontend bundle availability in running container from 0% to 100%",
+      "tocConstraintRef": "TOC-CONTAINER-BUILD",
+      "sourceIndex": 3,
+      "requirements": [
+        "R1: The Dockerfile must compile the frontend bundle via npm and copy the static assets into the deployable image.",
+        "R2: The backend must be configured to correctly serve the static frontend files on the root path."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Integrate Frontend Build into Docker Image",
+          "roleTag": "BARCAN-TAG-05",
+          "jtbd": "When implementing the Dockerfile for this epic, I want to add frontend build stages, so that the image is full-stack.",
+          "acceptanceCriteria": "Given a fresh docker build\nWhen the image is run\nThen the backend must serve the compiled frontend assets at the root path, validated by a QA availability check.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "TOC-CONTAINER-BUILD",
+          "sixSigmaMetric": "Increase successful frontend root HTTP 200 responses to 100%",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1",
+            "R2"
+          ]
+        }
+      ]
+    },
+    {
+      "existingEpicId": null,
+      "title": "Resolve Local Runtime Network Conflicts",
+      "jtbd": "When a developer launches the local environment, I want the docker-compose setup to start reliably, so that testing and review can proceed without network or container naming collisions.",
+      "kanoClass": "Must-Be",
+      "cynefinDomain": "clear",
+      "sixSigmaMetric": "Reduce local docker-compose up launch failure rate from 100% to 0%",
+      "tocConstraintRef": "TOC-LOCAL-RUNTIME",
+      "sourceIndex": 4,
+      "requirements": [
+        "R1: The docker-compose configuration must explicitly handle or avoid external network name conflicts for the default network.",
+        "R2: The configuration must use dynamic or appropriately scoped container names to prevent already-in-use collisions."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Fix docker-compose network and container collisions",
+          "roleTag": "BARCAN-TAG-05",
+          "jtbd": "When implementing compose fixes for this epic, I want to remove hardcoded container names, so that multiple compose instances do not conflict.",
+          "acceptanceCriteria": "Given the docker-compose environment\nWhen docker compose up is executed\nThen the containers must start successfully without naming or network conflicts, validated by an integration start test.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "TOC-LOCAL-RUNTIME",
+          "sixSigmaMetric": "Decrease container start errors to 0%",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1",
+            "R2"
+          ]
+        }
+      ]
+    },
+    {
+      "existingEpicId": "b9c3cb6d-c0a1-4178-b202-1093b5058008",
+      "title": null,
+      "jtbd": null,
+      "kanoClass": null,
+      "cynefinDomain": null,
+      "sixSigmaMetric": "Increase missing critical deliverable presence on main branch to 100%",
+      "tocConstraintRef": "TOC-MAIN-DELIVERY",
+      "sourceIndex": 5,
+      "requirements": [
+        "R1: Re-implement the missing API Slice D3a7a0f6 directly onto the main branch.",
+        "R2: Re-implement the missing Runtime Contract 9b58412d directly onto the main branch."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Restore Missing API Slice and Runtime Contract",
+          "roleTag": "BARCAN-TAG-02",
+          "jtbd": "When implementing the recovery for this epic, I want to commit the missing API and Runtime changes directly, so that the missing deliverables exist on main.",
+          "acceptanceCriteria": "Given the missing API Slice D3a7a0f6 and Runtime Contract 9b58412d\nWhen the patch is applied\nThen the code must accurately reflect the missing implementation on main, verified by a passing QA check.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "TOC-MAIN-DELIVERY",
+          "sixSigmaMetric": "Increase presence of recovered commits to 100%",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1",
+            "R2"
+          ]
+        }
+      ]
+    }
+  ]
+}
