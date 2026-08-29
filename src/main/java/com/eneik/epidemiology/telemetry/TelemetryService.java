@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
+import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.util.List;
 
@@ -18,6 +19,7 @@ public class TelemetryService {
     public static final String EVENT_CATEGORIZATION_COVERAGE_MEASURED = "CATEGORIZATION_COVERAGE_MEASURED";
     public static final String EVENT_PR_RECONCILIATION_MATCHED = "PR_RECONCILIATION_MATCHED";
     public static final String EVENT_PR_RECONCILIATION_UNMATCHED = "PR_RECONCILIATION_UNMATCHED";
+    public static final String EVENT_WORKFLOW_DURATION_MEASURED = "WORKFLOW_DURATION_MEASURED";
 
     private final TelemetryEventRepository telemetryEventRepository;
     private final Clock clock;
@@ -91,6 +93,22 @@ public class TelemetryService {
                 null,
                 null,
                 processingTimeMs,
+                OffsetDateTime.now(clock)
+        );
+        return telemetryEventRepository.save(event);
+    }
+
+    @Transactional
+    public TelemetryEvent recordWorkflowTelemetry(String workflowType, OffsetDateTime startTime, OffsetDateTime endTime, Long durationMs) {
+        long computedDuration = (durationMs != null) ? durationMs :
+                ((startTime != null && endTime != null) ? Duration.between(startTime, endTime).toMillis() : 0L);
+
+        TelemetryEvent event = TelemetryEvent.createWorkflowEvent(
+                EVENT_WORKFLOW_DURATION_MEASURED,
+                workflowType,
+                startTime,
+                endTime,
+                computedDuration,
                 OffsetDateTime.now(clock)
         );
         return telemetryEventRepository.save(event);
