@@ -46,9 +46,48 @@ test.describe('Authentication, Role Access, and Recovery E2E Tests', () => {
     await expect(page.locator('h3')).toHaveText('Инструкции отправлены');
     await expect(page.locator('main')).toContainText('Инструкции по восстановлению пароля отправлены на ваш электронный адрес.');
 
-    // Return to login
-    await page.click('button:has-text("Вернуться ко входу")');
+    // Complete password reset flow
+    await page.fill('#recovery-token-input', 'rec_tok_test_restoration_123');
+    await page.fill('#new-password-input', 'RestoredPass789!');
+    await page.click('#reset-password-submit-btn');
+
+    // Verify access restored confirmation
+    await expect(page.locator('h3')).toHaveText('Доступ успешно восстановлен');
+    await expect(page.locator('#recovery-success-message')).toContainText('Ваш пароль успешно изменен');
+
+    // Return to login and authenticate with restored password
+    await page.click('button:has-text("Перейти ко входу")');
     await expect(page.locator('h2')).toHaveText('Вход в систему');
+
+    await page.fill('#username-input', 'locked_employee');
+    await page.fill('#password-input', 'RestoredPass789!');
+    await page.click('button[type="submit"]');
+    await expect(page.locator('main')).toContainText('Роль: RESEARCHER');
+  });
+
+  test('Given the login UI is displayed, When accessed via a screen reader, Then all form controls are correctly labeled and accessible (WCAG AA)', async ({ page }) => {
+    await page.goto(harnessPath);
+
+    // Verify accessible labels for login form controls
+    const usernameInput = page.locator('#username-input');
+    await expect(usernameInput).toBeVisible();
+    const usernameLabel = page.locator('label[for="username-input"]');
+    await expect(usernameLabel).toBeVisible();
+    await expect(usernameLabel).toContainText('Имя пользователя');
+
+    const passwordInput = page.locator('#password-input');
+    await expect(passwordInput).toBeVisible();
+    const passwordLabel = page.locator('label[for="password-input"]');
+    await expect(passwordLabel).toBeVisible();
+    await expect(passwordLabel).toContainText('Пароль');
+
+    // Check recovery form accessibility labels
+    await page.click('#forgot-password-link');
+    const recoveryInput = page.locator('#recovery-identity-input');
+    await expect(recoveryInput).toBeVisible();
+    const recoveryLabel = page.locator('label[for="recovery-identity-input"]');
+    await expect(recoveryLabel).toBeVisible();
+    await expect(recoveryLabel).toContainText('Электронная почта');
   });
 
   test('Given a logged-in user, When they click logout, Then they are logged out successfully', async ({ page }) => {

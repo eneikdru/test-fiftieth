@@ -10,10 +10,12 @@
   }
 
   // State
-  let mode = 'login'; // 'login' | 'recovery' | 'recovery_sent' | 'authenticated'
+  let mode = 'login'; // 'login' | 'recovery' | 'recovery_sent' | 'reset_password' | 'recovery_completed' | 'authenticated'
   let username = '';
   let password = '';
   let recoveryIdentity = '';
+  let recoveryToken = '';
+  let newPassword = '';
   let isLoading = false;
   let errorMessage = '';
   let successMessage = '';
@@ -119,9 +121,50 @@
 
       const data = await response.json();
       successMessage = data.message || 'Инструкции по восстановлению пароля отправлены на ваш электронный адрес.';
+      recoveryToken = data.recovery_token || '';
       mode = 'recovery_sent';
     } catch (err) {
       errorMessage = err.message || 'Произошла ошибка при запросе восстановления пароля.';
+    } finally {
+      isLoading = false;
+    }
+  }
+
+  async function handleConfirmReset(event) {
+    event.preventDefault();
+    errorMessage = '';
+    successMessage = '';
+
+    if (!recoveryToken.trim() || !newPassword) {
+      errorMessage = 'Заполните токен восстановления и новый пароль.';
+      return;
+    }
+
+    isLoading = true;
+    try {
+      const response = await fetch(`${getApiBaseUrl()}/auth/recovery/reset`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          recovery_token: recoveryToken.trim(),
+          new_password: newPassword
+        })
+      });
+
+      if (!response.ok) {
+        let errData = {};
+        try {
+          errData = await response.json();
+        } catch (e) {}
+        throw new Error(errData.message || 'Не удалось сбросить пароль.');
+      }
+
+      const data = await response.json();
+      successMessage = data.message || 'Пароль успешно изменен.';
+      password = newPassword;
+      mode = 'recovery_completed';
+    } catch (err) {
+      errorMessage = err.message || 'Произошла ошибка при сбросе пароля.';
     } finally {
       isLoading = false;
     }
@@ -222,6 +265,7 @@
               bind:value={username}
               placeholder="ivanov@epidemiology-inst.ru"
               required
+          aria-label="Имя пользователя или электронная почта"
               disabled={isLoading}
               class="w-full h-14 px-4 bg-transparent border-none rounded-md focus:outline-none text-base text-[#1a1c1e] placeholder-[#737685]"
             />
@@ -248,6 +292,7 @@
               bind:value={password}
               placeholder="••••••••"
               required
+          aria-label="Пароль пользователя"
               disabled={isLoading}
               class="w-full h-14 px-4 bg-transparent border-none rounded-md focus:outline-none text-base text-[#1a1c1e] placeholder-[#737685]"
             />
@@ -326,20 +371,77 @@
 
     {:else if mode === 'recovery_sent'}
       <!-- RECOVERY SENT CONFIRMATION VIEW -->
+      <div class="p-6 bg-white rounded-xl border border-[#c3c6d6] space-y-4 shadow-sm">
+        <div class="w-12 h-12 bg-[#00328a]/10 text-[#00328a] rounded-full flex items-center justify-center mx-auto text-2xl font-bold">
+          ✓
+        </div>
+        <h3 class="text-xl font-bold text-[#1a1c1e] text-center">Инструкции отправлены</h3>
+        <p class="text-sm text-[#434653] leading-relaxed text-center">
+          {successMessage}
+        </p>
+
+        <form on:submit={handleConfirmReset} class="flex flex-col space-y-4 pt-3 border-t border-[#eeeef0]" novalidate>
+          <div>
+            <label for="recovery-token-input" class="block text-sm font-semibold text-[#1a1c1e] mb-1">
+              Токен восстановления
+            </label>
+            <input
+              id="recovery-token-input"
+              type="text"
+              bind:value={recoveryToken}
+              required
+              aria-label="Токен восстановления пароля"
+              class="w-full h-11 px-3 border border-[#c3c6d6] rounded-md text-sm text-[#1a1c1e]"
+            />
+          </div>
+          <div>
+            <label for="new-password-input" class="block text-sm font-semibold text-[#1a1c1e] mb-1">
+              Новый пароль
+            </label>
+            <input
+              id="new-password-input"
+              type="password"
+              bind:value={newPassword}
+              required
+              aria-label="Новый пароль"
+              class="w-full h-11 px-3 border border-[#c3c6d6] rounded-md text-sm text-[#1a1c1e]"
+            />
+          </div>
+          <button
+            type="submit"
+            id="confirm-reset-submit-btn"
+            disabled={isLoading}
+            class="w-full py-3 bg-[#00328a] text-white rounded-lg text-sm font-medium hover:bg-[#002566] transition-colors"
+          >
+            Сбросить пароль и восстановить доступ
+          </button>
+        </form>
+
+        <button
+          type="button"
+          on:click={switchToLogin}
+          class="w-full py-2 border border-[#c3c6d6] text-[#434653] rounded-lg text-sm font-medium hover:bg-[#eeeef0] transition-colors"
+        >
+          Вернуться ко входу
+        </button>
+      </div>
+
+    {:else if mode === 'recovery_completed'}
+      <!-- RECOVERY COMPLETED VIEW -->
       <div class="p-6 bg-white rounded-xl border border-[#c3c6d6] text-center space-y-4 shadow-sm">
         <div class="w-12 h-12 bg-[#00328a]/10 text-[#00328a] rounded-full flex items-center justify-center mx-auto text-2xl font-bold">
           ✓
         </div>
-        <h3 class="text-xl font-bold text-[#1a1c1e]">Инструкции отправлены</h3>
-        <p class="text-sm text-[#434653] leading-relaxed">
-          {successMessage}
+        <h3 class="text-xl font-bold text-[#1a1c1e]">Доступ успешно восстановлен</h3>
+        <p id="recovery-completed-message" class="text-sm text-[#434653] leading-relaxed">
+          {successMessage || 'Ваш пароль успешно изменен.'}
         </p>
         <button
           type="button"
           on:click={switchToLogin}
           class="w-full py-3 bg-[#00328a] text-white rounded-lg text-sm font-medium hover:bg-[#002566] transition-colors"
         >
-          Вернуться ко входу
+          Перейти ко входу
         </button>
       </div>
 
