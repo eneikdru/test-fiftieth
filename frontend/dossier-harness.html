@@ -1,73 +1,188 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dossier Search Mock</title>
+    <title>Формирование досье сотрудников — НИИ Эпидемиологии</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
     <style>
-        .dossier-container { padding: 20px; font-family: sans-serif; }
-        .search-section { margin-bottom: 20px; display: flex; gap: 10px; }
-        input { padding: 8px; flex-grow: 1; border: 1px solid #ccc; border-radius: 4px; }
-        button { padding: 8px 16px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        body { font-family: 'Inter', sans-serif; background-color: #f7f9fb; color: #191c1e; }
+        .dossier-container { padding: 24px; max-width: 1200px; margin: 0 auto; }
+        .search-section { display: grid; grid-template-cols: 1fr; gap: 16px; margin-bottom: 20px; }
+        @media (min-width: 768px) {
+            .search-section { grid-template-cols: 4fr 3fr 3fr 2fr; }
+        }
+        input, select { height: 44px; padding: 8px 14px; border: 1px solid #c2c6d4; border-radius: 8px; font-size: 14px; width: 100%; background-color: #ffffff; }
+        input:focus, select:focus { outline: none; border-color: #003f87; box-shadow: 0 0 0 2px rgba(0, 63, 135, 0.2); }
+        button { min-height: 44px; min-width: 44px; padding: 10px 20px; background-color: #003f87; color: white; font-weight: 600; border: none; border-radius: 8px; cursor: pointer; transition: background-color 0.2s; }
+        button:hover { background-color: #002b5e; }
         button:disabled { background-color: #a0c4ff; cursor: not-allowed; }
         .document-list { list-style: none; padding: 0; margin-bottom: 20px; }
-        .document-list li { padding: 8px; border-bottom: 1px solid #eee; }
-        .report-section { display: flex; align-items: center; }
+        .document-list li { padding: 12px 16px; border: 1px solid #e0e3e5; border-radius: 8px; margin-bottom: 8px; background-color: #f7f9fb; display: flex; justify-content: space-between; align-items: center; }
+        .report-section { display: flex; align-items: center; padding-top: 16px; border-top: 1px solid #e0e3e5; }
+        .feedback-notice { margin-top: 16px; padding: 12px; background-color: #d9e3f1; color: #001a40; border-radius: 8px; font-size: 14px; border: 1px solid #003f87; font-weight: 500; }
+        .dossier-footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #e0e3e5; text-align: center; font-size: 12px; color: #727784; display: flex; justify-content: space-between; align-items: center; }
+        .imprint-btn { background: none; border: none; color: #003f87; text-decoration: underline; cursor: pointer; padding: 0; min-height: auto; }
     </style>
 </head>
 <body>
     <div id="app">
-        <div class="dossier-container">
-            <div class="search-section">
-                <input type="text" id="search-query-input" placeholder="Фамилия сотрудника" />
-                <button id="search-button">Поиск</button>
-            </div>
-            <div id="results-container" style="display: none;">
-                <ul class="document-list" id="document-list"></ul>
-                <div class="report-section">
-                    <button id="generate-report-button">Сформировать итоговую справку</button>
+        <div class="dossier-container bg-white rounded-xl border border-[#e0e3e5] shadow-sm my-6">
+            <header class="border-b border-[#e0e3e5] pb-4 mb-6">
+                <h1 class="text-xl font-bold text-[#003f87]">Формирование досье и аналитических справок</h1>
+                <p class="text-xs text-[#424752] mt-1">Фильтрация документов по сотрудникам, периодам и научным направлениям</p>
+            </header>
+
+            <div class="search-section bg-[#f7f9fb] p-4 rounded-lg border border-[#e0e3e5]">
+                <div>
+                    <label for="search-query-input" class="block text-xs font-semibold text-[#191c1e] mb-1">Фамилия сотрудника</label>
+                    <input type="text" id="search-query-input" placeholder="Фамилия сотрудника" />
+                </div>
+                <div>
+                    <label for="filter-period" class="block text-xs font-semibold text-[#191c1e] mb-1">Период</label>
+                    <select id="filter-period">
+                        <option value="ALL">Все периоды</option>
+                        <option value="2024">2024 год</option>
+                        <option value="2023">2023 год</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="filter-direction" class="block text-xs font-semibold text-[#191c1e] mb-1">Научное направление</label>
+                    <select id="filter-direction">
+                        <option value="ALL">Все направления</option>
+                        <option value="virology">Вирусология</option>
+                        <option value="bacteriology">Бактериология</option>
+                        <option value="surveillance">Эпиднадзор</option>
+                        <option value="vaccination">Вакцинопрофилактика</option>
+                    </select>
+                </div>
+                <div class="flex items-end">
+                    <button id="search-button" class="w-full min-h-[44px] min-w-[44px] px-6 py-2.5 bg-[#003f87] text-white font-bold text-xs rounded-lg hover:bg-[#002b5e] focus:outline-none focus:ring-2 focus:ring-[#003f87] transition-colors shadow-sm" style="color: #ffffff !important; background-color: #003f87 !important;">Поиск</button>
                 </div>
             </div>
+
+            <div class="mb-4 flex items-center gap-2">
+                <label for="filter-doc-type" class="text-xs font-semibold text-[#191c1e]">Тип документа:</label>
+                <select id="filter-doc-type" class="h-9 px-3 bg-white border border-[#c2c6d4] rounded-md text-xs text-[#191c1e] focus:outline-none focus:ring-2 focus:ring-[#003f87]" style="width: auto;">
+                    <option value="ALL">Все типы документов</option>
+                    <option value="publication">Научные публикации</option>
+                    <option value="order">Приказы</option>
+                    <option value="extract">Выписки из учёного совета</option>
+                    <option value="report">Отчёты</option>
+                </select>
+            </div>
+
+            <div id="results-container" style="display: none;">
+                <h3 class="text-base font-bold text-[#191c1e] mb-3">Состав документов досье</h3>
+                <ul class="document-list" id="document-list"></ul>
+                <div class="report-section">
+                    <button id="generate-report-button" class="min-h-[44px] min-w-[44px] px-6 py-2.5 bg-[#003f87] text-white text-xs font-bold rounded-lg hover:bg-[#002b5e] focus:outline-none focus:ring-2 focus:ring-[#003f87] disabled:bg-[#a0c4ff] transition-colors shadow-sm" style="color: #ffffff !important; background-color: #003f87 !important;">📥 Сформировать и экспортировать PDF</button>
+                </div>
+                <div id="feedback-notice-container"></div>
+            </div>
+
+            <footer class="dossier-footer">
+                <span>Российский научно-исследовательский институт эпидемиологии</span>
+                <button onclick="alert('Выходные данные (Imprint / Impressum):\nФБУН «НИИ Эпидемиологии»\nг. Москва, ул. Новогиреевская, 3А')" class="imprint-btn">
+                    Выходные данные (Imprint / Impressum)
+                </button>
+            </footer>
         </div>
     </div>
+
     <script>
         const searchButton = document.getElementById('search-button');
         const searchInput = document.getElementById('search-query-input');
+        const periodSelect = document.getElementById('filter-period');
+        const directionSelect = document.getElementById('filter-direction');
+        const docTypeSelect = document.getElementById('filter-doc-type');
         const resultsContainer = document.getElementById('results-container');
         const documentList = document.getElementById('document-list');
         const generateReportButton = document.getElementById('generate-report-button');
+        const feedbackContainer = document.getElementById('feedback-notice-container');
 
-        searchButton.addEventListener('click', () => {
-            if (!searchInput.value.trim()) return;
-            documentList.innerHTML = `
-                <li>Приказ о назначении №42</li>
-                <li>Выписка из учёного совета от 12.05.2023</li>
-                <li>Отчёт о командировке (Самара)</li>
-            `;
+        const allDocuments = [
+            { id: 1, title: "Приказ о назначении №42", type: "order", direction: "surveillance", period: "2023", author: "Петров П.П.", docTypeName: "Приказы", directionName: "Эпиднадзор" },
+            { id: 2, title: "Выписка из учёного совета от 12.05.2023", type: "extract", direction: "virology", period: "2023", author: "Иванов И.И.", docTypeName: "Выписки из учёного совета", directionName: "Вирусология" },
+            { id: 3, title: "Отчёт о командировке (Самара)", type: "report", direction: "bacteriology", period: "2023", author: "Иванов И.И.", docTypeName: "Отчёты", directionName: "Бактериология" },
+            { id: 4, title: "Научная публикация: Мониторинг вирусов гриппа A/H1N1", type: "publication", direction: "virology", period: "2024", author: "Петров П.П.", docTypeName: "Научные публикации", directionName: "Вирусология" },
+            { id: 5, title: "Аналитический отчет по вакцинопрофилактике кори", type: "report", direction: "vaccination", period: "2024", author: "Иванов И.И.", docTypeName: "Отчёты", directionName: "Вакцинопрофилактика" },
+            { id: 6, title: "Научная публикация: Генотипирование бактериальных штаммов", type: "publication", direction: "bacteriology", period: "2023", author: "Сидоров С.С.", docTypeName: "Научные публикации", directionName: "Бактериология" },
+            { id: 7, title: "Приказ об организации эпиднадзора №105", type: "order", direction: "surveillance", period: "2024", author: "Петров П.П.", docTypeName: "Приказы", directionName: "Эпиднадзор" }
+        ];
+
+        function renderDocuments() {
+            const surname = searchInput.value.trim().toLowerCase();
+            const period = periodSelect.value;
+            const direction = directionSelect.value;
+            const docType = docTypeSelect.value;
+
+            let filtered = allDocuments;
+            if (surname) {
+                filtered = filtered.filter(doc => doc.author.toLowerCase().includes(surname));
+            }
+            if (period !== 'ALL') {
+                filtered = filtered.filter(doc => doc.period === period);
+            }
+            if (direction !== 'ALL') {
+                filtered = filtered.filter(doc => doc.direction === direction);
+            }
+            if (docType !== 'ALL') {
+                filtered = filtered.filter(doc => doc.type === docType);
+            }
+
+            if (filtered.length === 0) {
+                documentList.innerHTML = '<li class="p-4 text-center text-[#727784]">нет материалов по выбранным критериям</li>';
+            } else {
+                documentList.innerHTML = filtered.map(doc => `
+                    <li>
+                        <span>📄 <strong>${doc.title}</strong></span>
+                        <span class="text-xs text-[#424752]">
+                            <span style="background-color: #d9e3f1; padding: 2px 8px; border-radius: 12px; margin-right: 4px;">${doc.directionName}</span>
+                            <span>${doc.period} г.</span> |
+                            <span style="color: #003f87; font-weight: 600;">${doc.author}</span>
+                        </span>
+                    </li>
+                `).join('');
+            }
             resultsContainer.style.display = 'block';
-        });
+        }
+
+        searchButton.addEventListener('click', renderDocuments);
+        periodSelect.addEventListener('change', () => { if (resultsContainer.style.display !== 'none') renderDocuments(); });
+        directionSelect.addEventListener('change', () => { if (resultsContainer.style.display !== 'none') renderDocuments(); });
+        docTypeSelect.addEventListener('change', () => { if (resultsContainer.style.display !== 'none') renderDocuments(); });
+        searchInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') renderDocuments(); });
 
         generateReportButton.addEventListener('click', () => {
             generateReportButton.disabled = true;
-            generateReportButton.innerHTML = '<span id="loading-spinner">Загрузка...</span>';
+            generateReportButton.innerHTML = '<span id="loading-spinner">Генерация PDF-досье...</span>';
+            feedbackContainer.innerHTML = '';
+
             setTimeout(() => {
                 generateReportButton.disabled = false;
-                generateReportButton.innerHTML = 'Сформировать итоговую справку';
+                generateReportButton.innerHTML = '📥 Сформировать и экспортировать PDF';
+
+                const dummyPdfContent = `%PDF-1.4\n1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R >>\nendobj\n4 0 obj\n<< /Length 55 >>\nstream\nBT\n/F1 12 Tf\n100 700 Td\n(Analytical Dossier Summary Report) Tj\nET\nendstream\nendobj\nxref\n0 5\n0000000000 65535 f \n0000000009 00000 n \n0000000058 00000 n \n0000000115 00000 n \n0000000216 00000 n \ntrailer\n<< /Size 5 /Root 1 0 R >>\nstartxref\n321\n%%EOF`;
+                const blob = new Blob([dummyPdfContent], { type: 'application/pdf' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `dossier_report_${searchInput.value.trim() || 'summary'}.pdf`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
                 const notice = document.createElement('div');
                 notice.setAttribute('role', 'status');
                 notice.setAttribute('aria-live', 'polite');
-                notice.style.cssText = 'margin-top: 15px; padding: 10px; background-color: #d9e3f1; color: #001a40; border-radius: 4px; font-size: 14px; border: 1px solid #003f87;';
-                notice.innerText = '✓ Итоговая справка успешно сформирована.';
-                resultsContainer.appendChild(notice);
-            }, 1000);
+                notice.className = 'feedback-notice';
+                notice.innerText = '✓ Сводный PDF-документ успешно сформирован и скачан.';
+                feedbackContainer.appendChild(notice);
+            }, 800);
         });
     </script>
-
-    <footer style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; text-align: center; font-size: 12px; color: #666; display: flex; justify-content: space-between; align-items: center;">
-        <span>Российский научно-исследовательский институт эпидемиологии</span>
-        <button onclick="alert('Выходные данные (Imprint / Impressum):\nФБУН «НИИ Эпидемиологии»\nг. Москва, ул. Новогиреевская, 3А\nТел: +7 (495) 123-45-67')" style="background: none; border: none; color: #007bff; text-decoration: underline; cursor: pointer; padding: 0;">
-            Выходные данные (Imprint / Impressum)
-        </button>
-    </footer>
 </body>
 </html>
