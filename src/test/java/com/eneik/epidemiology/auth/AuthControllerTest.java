@@ -150,7 +150,7 @@ class AuthControllerTest {
     @Test
     @DisplayName("Given valid SSO login request, When moodle sso endpoint called, Then returns JWT tokens and records sso login telemetry")
     void testSsoLogin_ReturnsAuthTokensAndRecordsTelemetry() throws Exception {
-        userService.createUser("moodle_user", "Pass123!", "moodle@inst.ru", "Moodle User", "RESEARCHER");
+        userService.createUser("moodle_user", "Pass123!", "moodle@inst.ru", "Moodle User", "USER");
 
         String ssoBody = "{\"username\":\"moodle_user\",\"moodle_token\":\"mock_valid_moodle_token\"}";
 
@@ -160,12 +160,40 @@ class AuthControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.access_token", notNullValue()))
                 .andExpect(jsonPath("$.refresh_token", notNullValue()))
-                .andExpect(jsonPath("$.user.username", is("moodle_user")));
+                .andExpect(jsonPath("$.user.username", is("moodle_user")))
+                .andExpect(jsonPath("$.user.role", is("EPIDEMIOLOGIST")));
 
         long ssoEvents = telemetryEventRepository.findAll().stream()
                 .filter(e -> "sso_login_success".equals(e.getEventType()) && "moodle_user".equals(e.getQueryTerm()))
                 .count();
         assert ssoEvents == 1;
+
+        User user = userService.findByUsername("moodle_user").orElseThrow();
+        assert "EPIDEMIOLOGIST".equals(user.getRole());
+        assert "Эпидемиология".equals(user.getDepartment());
+    }
+
+    @Test
+    @DisplayName("Given SSO login request for new user, When moodle sso endpoint called, Then user is auto-provisioned with fallback password")
+    void testSsoLogin_NewUserAutoProvisioning() throws Exception {
+        String ssoBody = "{\"username\":\"new_moodle_user\",\"moodle_token\":\"mock_valid_new_moodle_token\",\"fallback_password\":\"MySecureFallback!\"}";
+
+        mockMvc.perform(post("/api/v1/auth/sso/moodle")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(ssoBody))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.access_token", notNullValue()))
+                .andExpect(jsonPath("$.refresh_token", notNullValue()))
+                .andExpect(jsonPath("$.user.username", is("new_moodle_user")))
+                .andExpect(jsonPath("$.user.role", is("ADMIN")))
+                .andExpect(jsonPath("$.user.email", is("new_moodle@inst.ru")));
+
+        User user = userService.findByUsername("new_moodle_user").orElseThrow();
+        assert "ADMIN".equals(user.getRole());
+        assert "IT".equals(user.getDepartment());
+        assert "new_moodle_user".equals(user.getMoodleId());
+
+        assert userService.verifyPassword("MySecureFallback!", user.getPasswordHash());
     }
 
     @Test

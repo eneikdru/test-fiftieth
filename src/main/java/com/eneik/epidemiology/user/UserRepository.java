@@ -27,6 +27,10 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query("UPDATE User u SET u.role = :newRole WHERE u.id = :id AND u.role = :oldRole")
     int updateRoleAtomically(@Param("id") Long id, @Param("oldRole") String oldRole, @Param("newRole") String newRole);
 
+    @Modifying
+    @Query("UPDATE User u SET u.role = :newRole, u.department = :newDepartment WHERE u.id = :id AND (u.role = :oldRole OR u.department IS NULL OR u.department != :newDepartment)")
+    int updateRoleAndDepartmentAtomically(@Param("id") Long id, @Param("oldRole") String oldRole, @Param("newRole") String newRole, @Param("newDepartment") String newDepartment);
+
     @Query("SELECT u.role FROM User u WHERE u.username = :username")
     Optional<String> findRoleByUsername(@Param("username") String username);
 

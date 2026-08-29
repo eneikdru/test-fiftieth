@@ -28,7 +28,7 @@ public class AuthController {
     }
 
     public record RegistrationRequest(String username, String password, String email, String full_name) {}
-    public record SsoLoginRequest(String username, String moodle_token) {}
+    public record SsoLoginRequest(String username, String moodle_token, String fallback_password) {}
     public record LoginRequest(String username, String password) {}
     public record RefreshTokenRequest(String refresh_token) {}
     public record LogoutRequest(String refresh_token) {}
@@ -117,22 +117,46 @@ public class AuthController {
 
         // Minimal mock validation for SSO token to prevent arbitrary auth bypass.
         // In a real implementation, this would involve verifying an OAuth2/OIDC token or SAML assertion
-        // against the Moodle identity provider's public keys.
-        if (!"mock_valid_moodle_token".equals(request.moodle_token())) {
+        // against the Moodle identity provider's public keys and fetching the user profile securely.
+        MoodleProfile profile = fetchMoodleProfile(request.moodle_token());
+
+        if (profile == null || !profile.username().equals(request.username())) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
                     "error_code", "INVALID_SSO_TOKEN",
-                    "message", "Недействительный токен SSO.",
+                    "message", "Недействительный токен SSO или имя пользователя.",
                     "timestamp", OffsetDateTime.now().toString()
             ));
         }
 
+        String internalRole = mapMoodleRole(profile.moodleRole());
         User user = userService.findByUsernameOrEmail(request.username().trim()).orElse(null);
+
         if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
-                    "error_code", "INVALID_CREDENTIALS",
-                    "message", "Пользователь не найден.",
-                    "timestamp", OffsetDateTime.now().toString()
-            ));
+            String defaultPassword = (request.fallback_password() != null && !request.fallback_password().trim().isEmpty())
+                ? request.fallback_password().trim()
+                : "Fallback" + Math.abs(profile.username().hashCode()) + "!";
+            user = userService.createUserWithMoodle(
+                profile.username().trim(),
+                defaultPassword,
+                profile.email(),
+                profile.fullName(),
+                internalRole,
+                profile.username().trim(),
+                profile.department()
+            );
+        } else {
+            boolean needsUpdate = false;
+            if (internalRole != null && !internalRole.equals(user.getRole())) {
+                needsUpdate = true;
+            }
+            if (profile.department() != null && !profile.department().equals(user.getDepartment())) {
+                needsUpdate = true;
+            }
+            if (needsUpdate) {
+                userService.updateRoleAndDepartmentAtomically(user.getId(), user.getRole(), internalRole != null ? internalRole : user.getRole(), profile.department());
+                user.setRole(internalRole != null ? internalRole : user.getRole());
+                user.setDepartment(profile.department());
+            }
         }
 
         telemetryService.recordSsoLoginTelemetry(user.getUsername());
@@ -259,6 +283,32 @@ public class AuthController {
                     "timestamp", OffsetDateTime.now().toString()
             ));
         }
+    }
+
+    private record MoodleProfile(String username, String moodleRole, String department, String email, String fullName) {}
+
+    private MoodleProfile fetchMoodleProfile(String token) {
+        if ("mock_valid_moodle_token".equals(token)) {
+            return new MoodleProfile("moodle_user", "Старший научный сотрудник", "Эпидемиология", "moodle@inst.ru", "Moodle User");
+        } else if ("mock_valid_new_moodle_token".equals(token)) {
+            return new MoodleProfile("new_moodle_user", "Администратор", "IT", "new_moodle@inst.ru", "New Moodle Admin");
+        }
+        return null;
+    }
+
+    private static String mapMoodleRole(String moodleRole) {
+        if (moodleRole == null) {
+            return "USER";
+        }
+        String lowerRole = moodleRole.toLowerCase();
+        if (lowerRole.contains("администратор")) {
+            return "ADMIN";
+        } else if (lowerRole.contains("старший научный сотрудник") || lowerRole.contains("эпидемиолог")) {
+            return "EPIDEMIOLOGIST";
+        } else if (lowerRole.contains("исследователь") || lowerRole.contains("аспирант")) {
+            return "RESEARCHER";
+        }
+        return "USER";
     }
 
     private static boolean isBlank(String str) {

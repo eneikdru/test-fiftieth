@@ -95,6 +95,11 @@ public class UserService {
         return userRepository.updateRoleAtomically(id, oldRole, newRole);
     }
 
+    @Transactional
+    public int updateRoleAndDepartmentAtomically(Long id, String oldRole, String newRole, String newDepartment) {
+        return userRepository.updateRoleAndDepartmentAtomically(id, oldRole, newRole, newDepartment);
+    }
+
     @Transactional(readOnly = true)
     public boolean existsByUsername(String username) {
         return userRepository.existsByUsername(username);
