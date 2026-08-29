@@ -21,7 +21,8 @@ All repository configuration artifacts must be derived from and synchronized wit
    - `spring.datasource.url`: `jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${POSTGRES_DB:epidemiology_db}`
    - `spring.datasource.driver-class-name`: `org.postgresql.Driver`
    - `spring.jpa.database-platform`: `org.hibernate.dialect.PostgreSQLDialect`
+4. `src/test/resources/application.properties` configures test execution against PostgreSQL 15 via Testcontainers (`jdbc:tc:postgresql:15-alpine:///testdb`) with `spring.test.database.replace=NONE` to prevent Spring Boot test framework from substituting embedded H2.
 
 ## Consequences
 - Engine consistency across dev, test, and containerized deployment.
-- Database schema migrations (Flyway) and JPA queries execute against PostgreSQL semantics.
+- Database schema migrations (Flyway) and JPA queries execute against PostgreSQL semantics across all test and production environments.
