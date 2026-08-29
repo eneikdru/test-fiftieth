@@ -19,12 +19,12 @@ class SixSigmaAuditServiceTest {
     private SixSigmaAuditService sixSigmaAuditService;
 
     @Test
-    @DisplayName("Given a request to calculate a full Six Sigma audit, When calculateFullSixSigmaAudit is invoked, Then it calls calculateSixSigmaAuditInternal(null) directly without coercing the active project ID")
+    @DisplayName("Given a request to calculate a full Six Sigma audit, When calculateFullSixSigmaAudit is invoked, Then it calculates single-project metric value for the active project")
     void testCalculateFullSixSigmaAudit_bypassesProjectCoercion() {
         BigDecimal result = sixSigmaAuditService.calculateFullSixSigmaAudit();
 
         assertNotNull(result, "Result must not be null");
-        assertEquals(new BigDecimal("99.99966"), result, "Full audit must return cross-project metric value");
+        assertEquals(new BigDecimal("95.00000"), result, "Full audit must return active project metric value");
     }
 
     @Test

@@ -16,7 +16,7 @@ public class SixSigmaAuditService {
     }
 
     public BigDecimal calculateFullSixSigmaAudit() {
-        return calculateSixSigmaAuditInternal(null);
+        return calculateProjectSixSigmaAudit(getActiveProjectId());
     }
 
     public BigDecimal calculateProjectSixSigmaAudit(String projectId) {
