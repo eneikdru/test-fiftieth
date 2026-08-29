@@ -46,8 +46,8 @@ public class EmployeeDossierController {
 
     @PostMapping("/reports")
     @Transactional
-    public ResponseEntity<?> generateDossierReport(@RequestBody Map<String, Object> requestBody) {
-        if (!requestBody.containsKey("employee_id") || !requestBody.containsKey("template_type")) {
+    public ResponseEntity<?> generateDossierReport(@RequestBody(required = false) Map<String, Object> requestBody) {
+        if (requestBody == null || !requestBody.containsKey("employee_id") || !requestBody.containsKey("template_type")) {
             return ResponseEntity.badRequest().body(Map.of(
                     "error_code", "VALIDATION_ERROR",
                     "message", "Не указан обязательный параметр employee_id или template_type."
