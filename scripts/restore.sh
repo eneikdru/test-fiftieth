@@ -17,6 +17,15 @@ echo "=== Starting Automated Restore process at $(date) ==="
 echo "Target Database: ${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}"
 echo "Target Uploads Directory: ${UPLOADS_DIR}"
 
+OFFSITE_BACKUP_DIR="${OFFSITE_BACKUP_DIR:-}"
+
+# Sync from off-site storage if enabled and backups are missing locally
+if [ -n "${OFFSITE_BACKUP_DIR}" ] && [ -d "${OFFSITE_BACKUP_DIR}" ]; then
+    echo "Checking for off-site backups in '${OFFSITE_BACKUP_DIR}'..."
+    cp -p "${OFFSITE_BACKUP_DIR}"/db_*.sql.gz "${BACKUP_DIR}/" 2>/dev/null || true
+    cp -p "${OFFSITE_BACKUP_DIR}"/uploads_*.tar.gz "${BACKUP_DIR}/" 2>/dev/null || true
+fi
+
 if [ -z "${DB_BACKUP_FILE}" ]; then
     DB_BACKUP_FILE="$(ls -t "${BACKUP_DIR}"/db_"${POSTGRES_DB}"_*.sql.gz 2>/dev/null | head -n 1 || true)"
 fi
