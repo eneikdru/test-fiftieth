@@ -28,18 +28,18 @@ fi
 # 1. Restore Database
 if [ -n "${DB_BACKUP_FILE}" ] && [ -f "${DB_BACKUP_FILE}" ]; then
     echo "Restoring database from ${DB_BACKUP_FILE}..."
-    if command -v psql &> /dev/null; then
+    if [ -n "${SQLITE_DB_PATH:-}" ] && command -v sqlite3 &> /dev/null; then
+        echo "Restoring SQLite database to '${SQLITE_DB_PATH}'..."
+        mkdir -p "$(dirname "${SQLITE_DB_PATH}")"
+        rm -f "${SQLITE_DB_PATH}"
+        gunzip -c "${DB_BACKUP_FILE}" | sqlite3 "${SQLITE_DB_PATH}"
+        echo "Database restore completed successfully."
+    elif command -v psql &> /dev/null; then
         gunzip -c "${DB_BACKUP_FILE}" | PGPASSWORD="${POSTGRES_PASSWORD}" psql \
             -h "${POSTGRES_HOST}" \
             -p "${POSTGRES_PORT}" \
             -U "${POSTGRES_USER}" \
             -d "${POSTGRES_DB}"
-        echo "Database restore completed successfully."
-    elif [ -n "${SQLITE_DB_PATH:-}" ] && command -v sqlite3 &> /dev/null; then
-        echo "Restoring SQLite database to '${SQLITE_DB_PATH}'..."
-        mkdir -p "$(dirname "${SQLITE_DB_PATH}")"
-        rm -f "${SQLITE_DB_PATH}"
-        gunzip -c "${DB_BACKUP_FILE}" | sqlite3 "${SQLITE_DB_PATH}"
         echo "Database restore completed successfully."
     elif [ "${ALLOW_MOCK_RESTORE}" -eq 1 ]; then
         echo "psql not found in environment, performing mock database restore..."

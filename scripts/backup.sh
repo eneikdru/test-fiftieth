@@ -27,7 +27,11 @@ mkdir -p "${UPLOADS_DIR}"
 DB_BACKUP_FILE="${BACKUP_DIR}/db_${POSTGRES_DB}_${TIMESTAMP}.sql.gz"
 echo "Backing up database '${POSTGRES_DB}' to ${DB_BACKUP_FILE}..."
 
-if command -v pg_dump &> /dev/null; then
+if [ -n "${SQLITE_DB_PATH:-}" ] && [ -f "${SQLITE_DB_PATH}" ] && command -v sqlite3 &> /dev/null; then
+    echo "Backing up SQLite database from '${SQLITE_DB_PATH}'..."
+    sqlite3 "${SQLITE_DB_PATH}" .dump | gzip > "${DB_BACKUP_FILE}"
+    echo "Database backup completed successfully."
+elif command -v pg_dump &> /dev/null; then
     PGPASSWORD="${POSTGRES_PASSWORD}" pg_dump \
         -h "${POSTGRES_HOST}" \
         -p "${POSTGRES_PORT}" \
@@ -38,10 +42,6 @@ if command -v pg_dump &> /dev/null; then
         --no-owner \
         --no-privileges \
         | gzip > "${DB_BACKUP_FILE}"
-    echo "Database backup completed successfully."
-elif [ -n "${SQLITE_DB_PATH:-}" ] && [ -f "${SQLITE_DB_PATH}" ] && command -v sqlite3 &> /dev/null; then
-    echo "Backing up SQLite database from '${SQLITE_DB_PATH}'..."
-    sqlite3 "${SQLITE_DB_PATH}" .dump | gzip > "${DB_BACKUP_FILE}"
     echo "Database backup completed successfully."
 elif [ "${ALLOW_MOCK_BACKUP:-0}" -eq 1 ]; then
     echo "pg_dump not found in environment, creating mock database dump for verification..."
