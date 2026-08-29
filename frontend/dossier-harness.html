@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dossier Search Mock</title>
+    <title>Досье сотрудника — Поиск и отчетность</title>
     <style>
-        .dossier-container { padding: 20px; font-family: sans-serif; }
+        .dossier-container { padding: 20px; font-family: sans-serif; max-width: 800px; margin: 0 auto; }
         .search-section { margin-bottom: 20px; display: flex; gap: 10px; }
         input { padding: 8px; flex-grow: 1; border: 1px solid #ccc; border-radius: 4px; }
         button { padding: 8px 16px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
@@ -13,6 +13,10 @@
         .document-list { list-style: none; padding: 0; margin-bottom: 20px; }
         .document-list li { padding: 8px; border-bottom: 1px solid #eee; }
         .report-section { display: flex; align-items: center; }
+        .feedback-notice { margin-top: 15px; padding: 10px; background-color: #d9e3f1; color: #001a40; border-radius: 4px; font-size: 14px; border: 1px solid #003f87; }
+        .error-notice { margin-bottom: 15px; padding: 10px; background-color: #ffdad6; color: #93000a; border-radius: 4px; font-size: 14px; border: 1px solid #ba1a1a; }
+        .dossier-footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; text-align: center; font-size: 12px; color: #666; display: flex; justify-content: space-between; align-items: center; }
+        .imprint-btn { background: none; border: none; color: #007bff; text-decoration: underline; cursor: pointer; padding: 0; }
     </style>
 </head>
 <body>
@@ -22,11 +26,13 @@
                 <input type="text" id="search-query-input" placeholder="Фамилия сотрудника" />
                 <button id="search-button">Поиск</button>
             </div>
+            <div id="error-container" style="display: none;" class="error-notice"></div>
             <div id="results-container" style="display: none;">
                 <ul class="document-list" id="document-list"></ul>
                 <div class="report-section">
                     <button id="generate-report-button">Сформировать итоговую справку</button>
                 </div>
+                <div id="feedback-container"></div>
             </div>
         </div>
     </div>
@@ -34,38 +40,91 @@
         const searchButton = document.getElementById('search-button');
         const searchInput = document.getElementById('search-query-input');
         const resultsContainer = document.getElementById('results-container');
+        const errorContainer = document.getElementById('error-container');
         const documentList = document.getElementById('document-list');
         const generateReportButton = document.getElementById('generate-report-button');
+        const feedbackContainer = document.getElementById('feedback-container');
 
-        searchButton.addEventListener('click', () => {
-            if (!searchInput.value.trim()) return;
-            documentList.innerHTML = `
-                <li>Приказ о назначении №42</li>
-                <li>Выписка из учёного совета от 12.05.2023</li>
-                <li>Отчёт о командировке (Самара)</li>
-            `;
-            resultsContainer.style.display = 'block';
+        let currentDocuments = [];
+
+        searchButton.addEventListener('click', async () => {
+            const query = searchInput.value.trim();
+            if (!query) return;
+
+            searchButton.disabled = true;
+            searchButton.textContent = 'Поиск...';
+            errorContainer.style.display = 'none';
+            feedbackContainer.innerHTML = '';
+
+            try {
+                const encoded = encodeURIComponent(query);
+                const res = await fetch(`/api/v1/dossier/documents?employee_id=${encoded}&query=${encoded}`);
+                if (!res.ok) {
+                    throw new Error(`Ошибка сервера (${res.status}): Не удалось загрузить документы досье.`);
+                }
+                const data = await res.json();
+                currentDocuments = Array.isArray(data) ? data : (data.documents || []);
+
+                documentList.innerHTML = '';
+                currentDocuments.forEach(doc => {
+                    const li = document.createElement('li');
+                    li.textContent = doc.title || doc.name;
+                    documentList.appendChild(li);
+                });
+                resultsContainer.style.display = 'block';
+            } catch (err) {
+                resultsContainer.style.display = 'none';
+                errorContainer.textContent = err.message || 'Ошибка выполнения запроса.';
+                errorContainer.style.display = 'block';
+            } finally {
+                searchButton.disabled = false;
+                searchButton.textContent = 'Поиск';
+            }
         });
 
-        generateReportButton.addEventListener('click', () => {
+        generateReportButton.addEventListener('click', async () => {
             generateReportButton.disabled = true;
             generateReportButton.innerHTML = '<span id="loading-spinner">Загрузка...</span>';
-            setTimeout(() => {
-                generateReportButton.disabled = false;
-                generateReportButton.innerHTML = 'Сформировать итоговую справку';
+            feedbackContainer.innerHTML = '';
+
+            try {
+                const employeeId = searchInput.value.trim() || 'EMP-001';
+                const res = await fetch('/api/v1/dossier/reports', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        employee_id: employeeId,
+                        template_type: 'SUMMARY_STANDARD',
+                        document_ids: currentDocuments.map(d => d.id).filter(Boolean)
+                    })
+                });
+
+                if (!res.ok) {
+                    throw new Error(`Ошибка генерации справки (${res.status})`);
+                }
+
+                const data = await res.json();
                 const notice = document.createElement('div');
                 notice.setAttribute('role', 'status');
                 notice.setAttribute('aria-live', 'polite');
-                notice.style.cssText = 'margin-top: 15px; padding: 10px; background-color: #d9e3f1; color: #001a40; border-radius: 4px; font-size: 14px; border: 1px solid #003f87;';
-                notice.innerText = '✓ Итоговая справка успешно сформирована.';
-                resultsContainer.appendChild(notice);
-            }, 1000);
+                notice.className = 'feedback-notice';
+                notice.textContent = data.summary_text || '✓ Итоговая справка успешно сформирована.';
+                feedbackContainer.appendChild(notice);
+            } catch (err) {
+                const notice = document.createElement('div');
+                notice.className = 'error-notice';
+                notice.textContent = err.message || 'Ошибка при генерации справки.';
+                feedbackContainer.appendChild(notice);
+            } finally {
+                generateReportButton.disabled = false;
+                generateReportButton.textContent = 'Сформировать итоговую справку';
+            }
         });
     </script>
 
-    <footer style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; text-align: center; font-size: 12px; color: #666; display: flex; justify-content: space-between; align-items: center;">
+    <footer class="dossier-footer" style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; text-align: center; font-size: 12px; color: #666; display: flex; justify-content: space-between; align-items: center;">
         <span>Российский научно-исследовательский институт эпидемиологии</span>
-        <button onclick="alert('Выходные данные (Imprint / Impressum):\nФБУН «НИИ Эпидемиологии»\nг. Москва, ул. Новогиреевская, 3А\nТел: +7 (495) 123-45-67')" style="background: none; border: none; color: #007bff; text-decoration: underline; cursor: pointer; padding: 0;">
+        <button onclick="alert('Выходные данные (Imprint / Impressum):\nФБУН «НИИ Эпидемиологии»\nг. Москва, ул. Новогиреевская, 3А\nТел: +7 (495) 123-45-67')" class="imprint-btn" style="background: none; border: none; color: #007bff; text-decoration: underline; cursor: pointer; padding: 0;">
             Выходные данные (Imprint / Impressum)
         </button>
     </footer>

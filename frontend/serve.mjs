@@ -23,7 +23,68 @@ const server = http.createServer((req, res) => {
   const parsedUrl = new URL(req.url, `http://localhost:${PORT}`);
   const pathname = parsedUrl.pathname;
 
-  // Mock API endpoints
+  // Mock Dossier API endpoints
+  if (pathname === '/api/v1/dossier/documents' && req.method === 'GET') {
+    const employeeId = parsedUrl.searchParams.get('employee_id') || '';
+    const query = parsedUrl.searchParams.get('query') || '';
+
+    const docs = [
+      {
+        id: 1,
+        employee_id: employeeId || "EMP-001",
+        doc_type: "ORDER",
+        title: "Приказ о назначении №42",
+        doc_date: "2023-01-15",
+        created_at: new Date().toISOString()
+      },
+      {
+        id: 2,
+        employee_id: employeeId || "EMP-001",
+        doc_type: "EXTRACT",
+        title: "Выписка из учёного совета от 12.05.2023",
+        doc_date: "2023-05-12",
+        created_at: new Date().toISOString()
+      },
+      {
+        id: 3,
+        employee_id: employeeId || "EMP-001",
+        doc_type: "REPORT",
+        title: "Отчёт о командировке (Самара)",
+        doc_date: "2023-09-20",
+        created_at: new Date().toISOString()
+      }
+    ];
+
+    res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+    res.end(JSON.stringify(docs));
+    return;
+  }
+
+  if (pathname === '/api/v1/dossier/reports' && req.method === 'POST') {
+    let body = '';
+    req.on('data', chunk => { body += chunk; });
+    req.on('end', () => {
+      let parsedBody = {};
+      try { parsedBody = JSON.parse(body); } catch(e) {}
+
+      const responsePayload = {
+        id: 101,
+        employee_id: parsedBody.employee_id || "EMP-001",
+        template_type: parsedBody.template_type || "SUMMARY_STANDARD",
+        status: "COMPLETED",
+        summary_text: "✓ Итоговая справка успешно сформирована.",
+        document_count: parsedBody.document_ids ? parsedBody.document_ids.length : 3,
+        download_url: "/api/v1/dossier/reports/101/download",
+        created_at: new Date().toISOString()
+      };
+
+      res.writeHead(201, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify(responsePayload));
+    });
+    return;
+  }
+
+  // Mock Catalog API endpoints
   if (pathname === '/api/v1/documents/1/download' || (pathname.startsWith('/api/v1/documents/') && pathname.endsWith('/download'))) {
     res.writeHead(200, {
       'Content-Type': 'application/pdf',
