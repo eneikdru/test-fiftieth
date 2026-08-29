@@ -53,12 +53,12 @@ class StuckSubjectsResolutionTest {
 
         // Execute atomically-guarded database UPDATE matching the Flyway migration
         int exportUpdated = jdbcTemplate.update(
-            "UPDATE privacy_export_requests SET status = 'ESCALATED', notes = 'Escalated stuck subject from iteration-admission poka-yoke failure' WHERE subject_id = ? AND status IN ('PENDING', 'PROCESSING')",
+            "UPDATE privacy_export_requests SET status = 'ESCALATED', notes = 'Escalated stuck subject from iteration-admission poka-yoke failure' WHERE subject_id = ? AND status IN ('PENDING', 'PROCESSING', 'FLAGGED_FOR_HUMAN_REVIEW')",
             subjectId
         );
 
         int erasureUpdated = jdbcTemplate.update(
-            "UPDATE privacy_erasure_requests SET status = 'ESCALATED', reason = 'Escalated stuck subject from iteration-admission poka-yoke failure' WHERE subject_id = ? AND status IN ('PENDING', 'PROCESSING')",
+            "UPDATE privacy_erasure_requests SET status = 'ESCALATED', reason = 'Escalated stuck subject from iteration-admission poka-yoke failure' WHERE subject_id = ? AND status IN ('PENDING', 'PROCESSING', 'FLAGGED_FOR_HUMAN_REVIEW')",
             subjectId
         );
 
@@ -89,7 +89,7 @@ class StuckSubjectsResolutionTest {
         exportJobRepository.saveAndFlush(exportJob);
 
         int exportUpdated = jdbcTemplate.update(
-            "UPDATE privacy_export_requests SET status = 'ESCALATED', notes = 'Escalated stuck subject with orphaned dependency' WHERE subject_id = ? AND status IN ('PENDING', 'PROCESSING')",
+            "UPDATE privacy_export_requests SET status = 'ESCALATED', notes = 'Escalated stuck subject with orphaned dependency' WHERE subject_id = ? AND status IN ('PENDING', 'PROCESSING', 'FLAGGED_FOR_HUMAN_REVIEW')",
             subjectId
         );
 
