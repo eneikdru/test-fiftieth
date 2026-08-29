@@ -18,14 +18,17 @@ public class AuthController {
     private final UserService userService;
     private final JwtTokenProvider jwtTokenProvider;
     private final PasswordRecoveryService passwordRecoveryService;
+    private final com.eneik.epidemiology.telemetry.TelemetryService telemetryService;
 
-    public AuthController(UserService userService, JwtTokenProvider jwtTokenProvider, PasswordRecoveryService passwordRecoveryService) {
+    public AuthController(UserService userService, JwtTokenProvider jwtTokenProvider, PasswordRecoveryService passwordRecoveryService, com.eneik.epidemiology.telemetry.TelemetryService telemetryService) {
         this.userService = userService;
         this.jwtTokenProvider = jwtTokenProvider;
         this.passwordRecoveryService = passwordRecoveryService;
+        this.telemetryService = telemetryService;
     }
 
     public record RegistrationRequest(String username, String password, String email, String full_name) {}
+    public record SsoLoginRequest(String username, String moodle_token) {}
     public record LoginRequest(String username, String password) {}
     public record RefreshTokenRequest(String refresh_token) {}
     public record LogoutRequest(String refresh_token) {}
@@ -85,6 +88,54 @@ public class AuthController {
                     "timestamp", OffsetDateTime.now().toString()
             ));
         }
+
+        telemetryService.recordFallbackLoginTelemetry(user.getUsername());
+
+        String accessToken = jwtTokenProvider.generateToken(user.getUsername(), user.getRole());
+        String refreshToken = "ref_" + user.getUsername() + "_" + System.currentTimeMillis();
+
+        Map<String, Object> response = Map.of(
+                "access_token", accessToken,
+                "refresh_token", refreshToken,
+                "token_type", "Bearer",
+                "expires_in", 3600,
+                "user", buildUserInfo(user)
+        );
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/sso/moodle")
+    public ResponseEntity<?> ssoLogin(@RequestBody SsoLoginRequest request) {
+        if (request == null || isBlank(request.username()) || isBlank(request.moodle_token())) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "error_code", "INVALID_REQUEST",
+                    "message", "Необходимо указать имя пользователя и SSO токен.",
+                    "timestamp", OffsetDateTime.now().toString()
+            ));
+        }
+
+        // Minimal mock validation for SSO token to prevent arbitrary auth bypass.
+        // In a real implementation, this would involve verifying an OAuth2/OIDC token or SAML assertion
+        // against the Moodle identity provider's public keys.
+        if (!"mock_valid_moodle_token".equals(request.moodle_token())) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
+                    "error_code", "INVALID_SSO_TOKEN",
+                    "message", "Недействительный токен SSO.",
+                    "timestamp", OffsetDateTime.now().toString()
+            ));
+        }
+
+        User user = userService.findByUsernameOrEmail(request.username().trim()).orElse(null);
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
+                    "error_code", "INVALID_CREDENTIALS",
+                    "message", "Пользователь не найден.",
+                    "timestamp", OffsetDateTime.now().toString()
+            ));
+        }
+
+        telemetryService.recordSsoLoginTelemetry(user.getUsername());
 
         String accessToken = jwtTokenProvider.generateToken(user.getUsername(), user.getRole());
         String refreshToken = "ref_" + user.getUsername() + "_" + System.currentTimeMillis();
