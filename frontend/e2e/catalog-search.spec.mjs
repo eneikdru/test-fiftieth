@@ -6,9 +6,6 @@ const harnessPath = '/test-harness.html';
 
 test.describe('Catalog Search and Document Management E2E Tests', () => {
 
-  // BLOCKER: The E2E test currently fails because the real backend is offline or not deployed during the test run.
-  // We removed the try/catch gating so the test correctly enforces the API call and download assertions.
-  // The backend needs to be deployed and reachable at the configured baseURL for this test to pass.
   test('Given a fresh deployment pre-populated with sample "Epidemiological Protocol" documents, When the E2E test downloads a document, Then it correctly hits the system API using a configured Playwright baseURL', async ({ page, request, baseURL }) => {
     await page.goto('/');
 
