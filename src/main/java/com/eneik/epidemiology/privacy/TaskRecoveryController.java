@@ -5,6 +5,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.Clock;
 import java.time.OffsetDateTime;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -15,10 +16,16 @@ import java.util.UUID;
 public class TaskRecoveryController {
 
     private final TaskRecoveryService taskRecoveryService;
+    private final Clock clock;
 
     @Autowired
     public TaskRecoveryController(TaskRecoveryService taskRecoveryService) {
+        this(taskRecoveryService, Clock.systemUTC());
+    }
+
+    public TaskRecoveryController(TaskRecoveryService taskRecoveryService, Clock clock) {
         this.taskRecoveryService = taskRecoveryService;
+        this.clock = clock;
     }
 
     public record ResumeTaskRequest(String action) {}
@@ -38,31 +45,30 @@ public class TaskRecoveryController {
         return ResponseEntity.ok(response);
     }
 
+    public record ErrorResponse(String error_code, String message, String timestamp) {}
+
     @ExceptionHandler(TaskRecoveryService.TaskNotFoundException.class)
-    public ResponseEntity<Map<String, Object>> handleNotFound(TaskRecoveryService.TaskNotFoundException ex) {
+    public ResponseEntity<ErrorResponse> handleNotFound(TaskRecoveryService.TaskNotFoundException ex) {
         return buildErrorResponse(HttpStatus.NOT_FOUND, ex.getErrorCode(), ex.getMessage());
     }
 
     @ExceptionHandler(TaskRecoveryService.TaskBadRequestException.class)
-    public ResponseEntity<Map<String, Object>> handleBadRequest(TaskRecoveryService.TaskBadRequestException ex) {
+    public ResponseEntity<ErrorResponse> handleBadRequest(TaskRecoveryService.TaskBadRequestException ex) {
         return buildErrorResponse(HttpStatus.BAD_REQUEST, ex.getErrorCode(), ex.getMessage());
     }
 
     @ExceptionHandler(TaskRecoveryService.TaskConflictException.class)
-    public ResponseEntity<Map<String, Object>> handleConflict(TaskRecoveryService.TaskConflictException ex) {
+    public ResponseEntity<ErrorResponse> handleConflict(TaskRecoveryService.TaskConflictException ex) {
         return buildErrorResponse(HttpStatus.CONFLICT, ex.getErrorCode(), ex.getMessage());
     }
 
     @ExceptionHandler(TaskRecoveryService.TaskRecoveryException.class)
-    public ResponseEntity<Map<String, Object>> handleGenericException(TaskRecoveryService.TaskRecoveryException ex) {
+    public ResponseEntity<ErrorResponse> handleGenericException(TaskRecoveryService.TaskRecoveryException ex) {
         return buildErrorResponse(HttpStatus.BAD_REQUEST, ex.getErrorCode(), ex.getMessage());
     }
 
-    private ResponseEntity<Map<String, Object>> buildErrorResponse(HttpStatus status, String errorCode, String message) {
-        Map<String, Object> err = new LinkedHashMap<>();
-        err.put("error_code", errorCode);
-        err.put("message", message);
-        err.put("timestamp", OffsetDateTime.now().toString());
+    private ResponseEntity<ErrorResponse> buildErrorResponse(HttpStatus status, String errorCode, String message) {
+        ErrorResponse err = new ErrorResponse(errorCode, message, OffsetDateTime.now(clock).toString());
         return ResponseEntity.status(status).body(err);
     }
 }

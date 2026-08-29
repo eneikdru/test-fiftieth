@@ -84,7 +84,9 @@ class TaskRecoveryControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(body)))
             .andExpect(status().isBadRequest())
-            .andExpect(jsonPath("$.error_code").value("INVALID_ACTION"));
+            .andExpect(jsonPath("$.error_code").value("INVALID_ACTION"))
+            .andExpect(jsonPath("$.message").exists())
+            .andExpect(jsonPath("$.timestamp").exists());
     }
 
     @Test
@@ -96,7 +98,9 @@ class TaskRecoveryControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(body)))
             .andExpect(status().isConflict())
-            .andExpect(jsonPath("$.error_code").value("STATE_CONFLICT"));
+            .andExpect(jsonPath("$.error_code").value("STATE_CONFLICT"))
+            .andExpect(jsonPath("$.message").exists())
+            .andExpect(jsonPath("$.timestamp").exists());
     }
 
     @Test
@@ -109,6 +113,8 @@ class TaskRecoveryControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(body)))
             .andExpect(status().isNotFound())
-            .andExpect(jsonPath("$.error_code").value("TASK_NOT_FOUND"));
+            .andExpect(jsonPath("$.error_code").value("TASK_NOT_FOUND"))
+            .andExpect(jsonPath("$.message").exists())
+            .andExpect(jsonPath("$.timestamp").exists());
     }
 }
