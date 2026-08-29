@@ -23,7 +23,7 @@ echo "Retention Policy: ${BACKUP_RETENTION_DAYS} days"
 mkdir -p "${BACKUP_DIR}"
 mkdir -p "${UPLOADS_DIR}"
 
-# 1. Database Backup (pg_dump without locking)
+# 1. Database Backup (pg_dump without locking, or SQLite dump via sqlite3/python3)
 DB_BACKUP_FILE="${BACKUP_DIR}/db_${POSTGRES_DB}_${TIMESTAMP}.sql.gz"
 echo "Backing up database '${POSTGRES_DB}' to ${DB_BACKUP_FILE}..."
 
@@ -39,9 +39,16 @@ if command -v pg_dump &> /dev/null; then
         --no-privileges \
         | gzip > "${DB_BACKUP_FILE}"
     echo "Database backup completed successfully."
-elif [ -n "${SQLITE_DB_PATH:-}" ] && [ -f "${SQLITE_DB_PATH}" ] && command -v sqlite3 &> /dev/null; then
+elif [ -n "${SQLITE_DB_PATH:-}" ] && [ -f "${SQLITE_DB_PATH}" ]; then
     echo "Backing up SQLite database from '${SQLITE_DB_PATH}'..."
-    sqlite3 "${SQLITE_DB_PATH}" .dump | gzip > "${DB_BACKUP_FILE}"
+    if command -v sqlite3 &> /dev/null; then
+        sqlite3 "${SQLITE_DB_PATH}" .dump | gzip > "${DB_BACKUP_FILE}"
+    elif command -v python3 &> /dev/null; then
+        python3 -c "import sqlite3; conn = sqlite3.connect('${SQLITE_DB_PATH}'); [print(line) for line in conn.iterdump()]" | gzip > "${DB_BACKUP_FILE}"
+    else
+        echo "ERROR: Neither sqlite3 nor python3 found to dump SQLite database." >&2
+        exit 1
+    fi
     echo "Database backup completed successfully."
 elif [ "${ALLOW_MOCK_BACKUP:-0}" -eq 1 ]; then
     echo "pg_dump not found in environment, creating mock database dump for verification..."

@@ -8,12 +8,22 @@ import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class EmployeeDocumentRestoreVerificationTest {
+
+    private boolean isCommandAvailable(String command) {
+        try {
+            Process p = new ProcessBuilder(command, "--version").start();
+            return p.waitFor() == 0;
+        } catch (Exception e) {
+            return false;
+        }
+    }
 
     @Test
     @DisplayName("Given automated backup, When restore operation runs in fresh environment, Then employee documents and data integrity match time of backup")
@@ -42,11 +52,7 @@ class EmployeeDocumentRestoreVerificationTest {
         Files.writeString(originalUploads.resolve(doc1Name), doc1Content, StandardCharsets.UTF_8);
         Files.writeString(originalUploads.resolve(doc2Name), doc2Content, StandardCharsets.UTF_8);
 
-        // Populate database schema & sample employee document records using sqlite3 process
-        ProcessBuilder initDbBuilder = new ProcessBuilder(
-                "sqlite3", originalDb.toAbsolutePath().toString()
-        );
-        Process initDbProc = initDbBuilder.start();
+        // Populate database schema & sample employee document records using sqlite3 or python3 process
         String initSql = "CREATE TABLE employee_documents (" +
                 "id INTEGER PRIMARY KEY, " +
                 "employee_name TEXT NOT NULL, " +
@@ -56,6 +62,15 @@ class EmployeeDocumentRestoreVerificationTest {
                 ");\n" +
                 "INSERT INTO employee_documents VALUES (1, 'Dr. Ivanov', 'Virology', 'Virology Research Paper', 'PUBLICATION');\n" +
                 "INSERT INTO employee_documents VALUES (2, 'Dr. Petrov', 'Bacteriology', 'Bacteriology Safety Order', 'ORDER');\n";
+
+        ProcessBuilder initDbBuilder;
+        if (isCommandAvailable("sqlite3")) {
+            initDbBuilder = new ProcessBuilder("sqlite3", originalDb.toAbsolutePath().toString());
+        } else {
+            initDbBuilder = new ProcessBuilder("python3", "-c",
+                "import sqlite3, sys; conn = sqlite3.connect('" + originalDb.toAbsolutePath().toString() + "'); conn.executescript(sys.stdin.read()); conn.commit()");
+        }
+        Process initDbProc = initDbBuilder.start();
         initDbProc.getOutputStream().write(initSql.getBytes(StandardCharsets.UTF_8));
         initDbProc.getOutputStream().flush();
         initDbProc.getOutputStream().close();
@@ -97,8 +112,14 @@ class EmployeeDocumentRestoreVerificationTest {
         assertThat(Files.readString(restoredUploads.resolve(doc2Name), StandardCharsets.UTF_8)).isEqualTo(doc2Content);
 
         // Execute validation query against restored database
-        ProcessBuilder queryPb = new ProcessBuilder("sqlite3", restoredDb.toAbsolutePath().toString(),
-                "SELECT employee_name, scientific_direction, document_title FROM employee_documents ORDER BY id ASC;");
+        ProcessBuilder queryPb;
+        if (isCommandAvailable("sqlite3")) {
+            queryPb = new ProcessBuilder("sqlite3", restoredDb.toAbsolutePath().toString(),
+                    "SELECT employee_name, scientific_direction, document_title FROM employee_documents ORDER BY id ASC;");
+        } else {
+            queryPb = new ProcessBuilder("python3", "-c",
+                    "import sqlite3; conn = sqlite3.connect('" + restoredDb.toAbsolutePath().toString() + "'); cur = conn.cursor(); [print(f'{r[0]}|{r[1]}|{r[2]}') for r in cur.execute('SELECT employee_name, scientific_direction, document_title FROM employee_documents ORDER BY id ASC').fetchall()]");
+        }
         Process queryProc = queryPb.start();
         String queryOutput = new String(queryProc.getInputStream().readAllBytes(), StandardCharsets.UTF_8).trim();
         assertThat(queryProc.waitFor()).isEqualTo(0);
