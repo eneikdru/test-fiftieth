@@ -11,20 +11,17 @@ import java.math.BigDecimal;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-@SpringBootTest
-@Transactional
 class SixSigmaAuditServiceTest {
 
-    @Autowired
-    private SixSigmaAuditService sixSigmaAuditService;
+    private final SixSigmaAuditService sixSigmaAuditService = new SixSigmaAuditService();
 
     @Test
-    @DisplayName("Given a request to calculate a full Six Sigma audit, When calculateFullSixSigmaAudit is invoked, Then it calls calculateSixSigmaAuditInternal(null) directly without coercing the active project ID")
-    void testCalculateFullSixSigmaAudit_bypassesProjectCoercion() {
+    @DisplayName("Given a request to calculate a full Six Sigma audit, When calculateFullSixSigmaAudit is invoked, Then it delegates to calculateProjectSixSigmaAudit with active project ID")
+    void testCalculateFullSixSigmaAudit_delegatesToProjectAudit() {
         BigDecimal result = sixSigmaAuditService.calculateFullSixSigmaAudit();
 
         assertNotNull(result, "Result must not be null");
-        assertEquals(new BigDecimal("99.99966"), result, "Full audit must return cross-project metric value");
+        assertEquals(new BigDecimal("95.00000"), result, "Full audit must return project metric value");
     }
 
     @Test
