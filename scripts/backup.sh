@@ -64,7 +64,17 @@ else
     tar -czf "${UPLOADS_BACKUP_FILE}" --files-from /dev/null
 fi
 
-# 3. Retention Policy Cleanup
+# 3. Off-site Synchronization
+OFFSITE_BACKUP_DIR="${OFFSITE_BACKUP_DIR:-}"
+if [ -n "${OFFSITE_BACKUP_DIR}" ]; then
+    echo "Synchronizing backups to off-site storage at '${OFFSITE_BACKUP_DIR}'..."
+    mkdir -p "${OFFSITE_BACKUP_DIR}"
+    cp -p "${DB_BACKUP_FILE}" "${OFFSITE_BACKUP_DIR}/" || echo "WARNING: Failed to sync DB backup off-site."
+    cp -p "${UPLOADS_BACKUP_FILE}" "${OFFSITE_BACKUP_DIR}/" || echo "WARNING: Failed to sync Uploads backup off-site."
+    echo "Off-site synchronization completed."
+fi
+
+# 4. Retention Policy Cleanup
 echo "Cleaning up backups older than ${BACKUP_RETENTION_DAYS} days..."
 if [ "${BACKUP_RETENTION_DAYS}" -ge 0 ]; then
     # Delete backup files matching backup patterns modified more than BACKUP_RETENTION_DAYS ago
