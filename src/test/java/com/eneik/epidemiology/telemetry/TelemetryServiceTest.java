@@ -175,4 +175,26 @@ class TelemetryServiceTest {
 
         verify(telemetryEventRepository, times(1)).save(any(TelemetryEvent.class));
     }
+
+    @Test
+    @DisplayName("Given session details and timestamps, When recordAnalysisSpeedTelemetry is called, Then ANALYSIS_SPEED_MEASURED event is saved with calculated session duration")
+    void testRecordAnalysisSpeedTelemetry() {
+        when(telemetryEventRepository.save(any(TelemetryEvent.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        OffsetDateTime startTime = OffsetDateTime.of(2026, 8, 28, 14, 0, 0, 0, ZoneOffset.UTC);
+        OffsetDateTime endTime = OffsetDateTime.of(2026, 8, 28, 14, 10, 0, 0, ZoneOffset.UTC);
+
+        TelemetryEvent event = telemetryService.recordAnalysisSpeedTelemetry("SESS-99", startTime, endTime, null);
+
+        assertNotNull(event);
+        assertEquals(TelemetryService.EVENT_ANALYSIS_SPEED_MEASURED, event.getEventType());
+        assertEquals("SESS-99", event.getQueryTerm());
+        assertEquals(startTime, event.getStartTime());
+        assertEquals(endTime, event.getEndTime());
+        assertEquals(600000L, event.getWorkflowDurationMs());
+        assertEquals(Instant.parse("2026-08-22T15:00:00Z"), event.getCreatedAt().toInstant());
+
+        verify(telemetryEventRepository, times(1)).save(any(TelemetryEvent.class));
+    }
 }

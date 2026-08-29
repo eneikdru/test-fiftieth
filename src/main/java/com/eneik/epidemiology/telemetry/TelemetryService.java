@@ -20,6 +20,7 @@ public class TelemetryService {
     public static final String EVENT_PR_RECONCILIATION_MATCHED = "PR_RECONCILIATION_MATCHED";
     public static final String EVENT_PR_RECONCILIATION_UNMATCHED = "PR_RECONCILIATION_UNMATCHED";
     public static final String EVENT_WORKFLOW_DURATION_MEASURED = "WORKFLOW_DURATION_MEASURED";
+    public static final String EVENT_ANALYSIS_SPEED_MEASURED = "ANALYSIS_SPEED_MEASURED";
 
     private final TelemetryEventRepository telemetryEventRepository;
     private final Clock clock;
@@ -56,6 +57,22 @@ public class TelemetryService {
                 null,
                 documentId,
                 null,
+                OffsetDateTime.now(clock)
+        );
+        return telemetryEventRepository.save(event);
+    }
+
+    @Transactional
+    public TelemetryEvent recordAnalysisSpeedTelemetry(String sessionId, OffsetDateTime startTime, OffsetDateTime endTime, Long durationMs) {
+        long computedDuration = (durationMs != null) ? durationMs :
+                ((startTime != null && endTime != null) ? Duration.between(startTime, endTime).toMillis() : 0L);
+
+        TelemetryEvent event = TelemetryEvent.createWorkflowEvent(
+                EVENT_ANALYSIS_SPEED_MEASURED,
+                sessionId,
+                startTime,
+                endTime,
+                computedDuration,
                 OffsetDateTime.now(clock)
         );
         return telemetryEventRepository.save(event);
