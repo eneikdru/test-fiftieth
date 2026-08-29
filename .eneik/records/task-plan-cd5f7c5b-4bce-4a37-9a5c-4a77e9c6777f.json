@@ -1,0 +1,222 @@
+{
+  "epics": [
+    {
+      "existingEpicId": null,
+      "title": "Moodle SSO and Autonomous Role Synchronization",
+      "jtbd": "When a researcher accesses the archive, I want their identity and permissions to be synchronized automatically from Moodle, so that they can access restricted strains without manual administration.",
+      "kanoClass": "Must-Be",
+      "cynefinDomain": "complicated",
+      "sixSigmaMetric": "Increase the percentage of automated role provisionings from 0% to 100% and reduce manual access-granting tickets to near zero.",
+      "tocConstraintRef": "Manual permission administration bottleneck",
+      "sourceIndex": 0,
+      "requirements": [
+        "R1: The user navigates to the login screen and chooses Moodle SSO.",
+        "R2: The system authenticates the user via OAuth2/OIDC/LTI against Moodle.",
+        "R3: The system maps Moodle roles (Administrator, Senior Researcher, Researcher) and course memberships to the internal role model.",
+        "R4: The system restricts access to closed strains and analytical reports based on the mapped Moodle departments/courses.",
+        "R5: If Moodle is unreachable, the system provides autonomous fallback authentication for previously synced users.",
+        "R6: The user receives visible feedback of successful login, permission denial (e.g. no recognized roles), or fallback mode activation."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Moodle SSO and Fallback Auth API Contract",
+          "roleTag": "BARCAN-TAG-12",
+          "jtbd": "When implementing the SSO endpoints for this epic, I want a strict shared API contract, so that backend and frontend can be built in parallel without integration drift.",
+          "acceptanceCriteria": "Given the API contract is defined, When the backend and frontend are implemented, Then both must adhere strictly to the endpoints, request/response shapes, and DTOs for Moodle authentication and fallback.\nGiven the contract includes mock Moodle test accounts (Dr. Schmidt, Prof. Weber), When a fresh install is tested, Then the contract provides clear domain examples for integration.",
+          "leanValue": "essential",
+          "cynefinDomain": "complicated",
+          "tocConstraintRef": "Frontend-backend integration delays",
+          "sixSigmaMetric": "Reduce contract mismatch bugs during SSO integration from current baseline to 0.",
+          "hasUi": false,
+          "requirementRefs": [
+            "R2",
+            "R3",
+            "R5"
+          ]
+        },
+        {
+          "title": "Moodle Identity and Fallback Token Schema",
+          "roleTag": "BARCAN-TAG-08",
+          "jtbd": "When implementing identity synchronization for this epic, I want a robust database schema, so that Moodle roles, department mappings, and fallback tokens are securely persisted.",
+          "acceptanceCriteria": "Given a database migration, When executed, Then tables for Moodle identities, role mappings, and cached credentials are created.\nGiven an authorized user, When their Moodle roles are updated, Then the schema supports atomic updates to their department and course associations.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "Data persistence bottlenecks for auth",
+          "sixSigmaMetric": "Increase schema migration success rate to 100% without data loss.",
+          "hasUi": false,
+          "requirementRefs": [
+            "R3",
+            "R4",
+            "R5"
+          ]
+        },
+        {
+          "title": "Moodle OAuth2 Client and Fallback Authentication Logic",
+          "roleTag": "BARCAN-TAG-02",
+          "jtbd": "When implementing backend authentication for this epic, I want to integrate the OAuth2 client and role sync, so that Moodle identities are accurately mapped and fallback works during outages.",
+          "acceptanceCriteria": "Given a valid Moodle OAuth2 token, When the backend receives it, Then it synchronizes the user's role (e.g. Senior Researcher) and department access.\nGiven Moodle is unreachable, When a known user attempts to authenticate, Then the backend issues a session via the autonomous fallback mechanism using cached credentials.",
+          "leanValue": "essential",
+          "cynefinDomain": "complicated",
+          "tocConstraintRef": "Authentication latency and reliability",
+          "sixSigmaMetric": "Decrease SSO authentication failures due to Moodle timeouts from A% to 0% by utilizing fallback.",
+          "hasUi": false,
+          "requirementRefs": [
+            "R2",
+            "R3",
+            "R4",
+            "R5"
+          ]
+        },
+        {
+          "title": "Moodle SSO Login UI and Fallback Mode Feedback",
+          "roleTag": "BARCAN-TAG-11",
+          "jtbd": "When implementing the login screen for this epic, I want to present Moodle SSO options and fallback feedback, so that users understand their authentication state.",
+          "acceptanceCriteria": "Given the login screen, When loaded, Then it prominently displays the Moodle SSO option and is fully operable via keyboard and screen reader (WCAG 2.1 level AA).\nGiven a Moodle outage, When the user authenticates via fallback, Then they receive a visible notification that the system is operating in offline/fallback mode.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "User confusion during auth outages",
+          "sixSigmaMetric": "Increase successful logins during LMS outages from 0% to >95% via clear fallback UI.",
+          "hasUi": true,
+          "requirementRefs": [
+            "R1",
+            "R5",
+            "R6"
+          ]
+        },
+        {
+          "title": "QA Coverage for Moodle SSO, Roles, and Fallback",
+          "roleTag": "BARCAN-TAG-06",
+          "jtbd": "When verifying the SSO integration for this epic, I want to execute full E2E and integration tests, so that role mappings and fallback auth function correctly under failure conditions.",
+          "acceptanceCriteria": "Given the deployed system, When the E2E suite runs with mock Moodle accounts (Dr. Schmidt, Prof. Weber), Then it verifies successful SSO login and correct role mapping.\nGiven a simulated Moodle timeout, When the E2E suite attempts login, Then it verifies the autonomous fallback mechanism correctly grants access to known users.",
+          "leanValue": "essential",
+          "cynefinDomain": "complicated",
+          "tocConstraintRef": "Regression bugs in auth flows",
+          "sixSigmaMetric": "Increase automated test coverage of the Moodle SSO flow from 0% to >90%.",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1",
+            "R2",
+            "R3",
+            "R4",
+            "R5",
+            "R6"
+          ]
+        }
+      ]
+    },
+    {
+      "existingEpicId": null,
+      "title": "Data Subject Rights and Erasure (GDPR)",
+      "jtbd": "When an epidemiologist or researcher requests it, I want to be able to export or erase my stored personal data, so that the institute complies with GDPR obligations.",
+      "kanoClass": "Must-Be",
+      "cynefinDomain": "complicated",
+      "sixSigmaMetric": "Decrease the time to process data export and erasure requests from manual days to under 1 hour.",
+      "tocConstraintRef": "Manual legal compliance overhead",
+      "sourceIndex": 0,
+      "requirements": [
+        "R1: The user can request an export of their stored personal data and Moodle role mappings in a machine-readable format.",
+        "R2: The user can request the erasure of their personal data from the archive, triggering an anonymization or deletion workflow.",
+        "R3: The system provides a visible confirmation to the user that their data export or erasure request has been received and processed."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "GDPR Export and Anonymization Schema",
+          "roleTag": "BARCAN-TAG-08",
+          "jtbd": "When implementing GDPR features for this epic, I want to define how data is safely anonymized or exported, so that referential integrity is preserved during erasure.",
+          "acceptanceCriteria": "Given a deletion request, When executed, Then the database schema supports anonymizing the user record without breaking foreign key constraints on analytical dossiers.\nGiven an export request, When executed, Then the schema supports gathering all user attributes.",
+          "leanValue": "essential",
+          "cynefinDomain": "complicated",
+          "tocConstraintRef": "Database integrity during user deletion",
+          "sixSigmaMetric": "Reduce referential integrity violations during user deletion from current baseline to 0.",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1",
+            "R2"
+          ]
+        },
+        {
+          "title": "Data Subject Export and Erasure API",
+          "roleTag": "BARCAN-TAG-02",
+          "jtbd": "When implementing the GDPR backend for this epic, I want to provide endpoints for data export and anonymization, so that subject rights are enforceable.",
+          "acceptanceCriteria": "Given an authenticated user, When they request data export, Then the API returns a structured JSON containing their identity and mapped Moodle roles.\nGiven an authenticated user, When they request account erasure, Then the API anonymizes their identity and returns a success confirmation.",
+          "leanValue": "essential",
+          "cynefinDomain": "complicated",
+          "tocConstraintRef": "Manual GDPR compliance response time",
+          "sixSigmaMetric": "Increase automated fulfillment of GDPR requests from 0% to 100%.",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1",
+            "R2",
+            "R3"
+          ]
+        },
+        {
+          "title": "GDPR Compliance Settings Interface",
+          "roleTag": "BARCAN-TAG-11",
+          "jtbd": "When implementing the settings screen for this epic, I want to provide controls for data export and erasure, so that users can exercise their subject rights autonomously.",
+          "acceptanceCriteria": "Given the user settings page, When loaded, Then it displays accessible (WCAG 2.1 AA) buttons for Data Export and Account Deletion.\nGiven the user clicks Account Deletion, When the action is destructive, Then the UI requires explicit confirmation before proceeding and shows a success state.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "User friction in compliance actions",
+          "sixSigmaMetric": "Increase autonomous GDPR request completion without support tickets from 0% to >95%.",
+          "hasUi": true,
+          "requirementRefs": [
+            "R1",
+            "R2",
+            "R3"
+          ]
+        },
+        {
+          "title": "QA Coverage for GDPR Subject Rights",
+          "roleTag": "BARCAN-TAG-06",
+          "jtbd": "When verifying the GDPR implementation for this epic, I want to test export and erasure flows, so that we ensure compliance without data loss.",
+          "acceptanceCriteria": "Given an active user with roles, When they trigger export, Then the E2E test verifies the JSON payload contains all expected personal data.\nGiven a user triggers deletion, Then the test verifies the account is anonymized in the database and login is subsequently denied.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "Risk of non-compliance in subject rights",
+          "sixSigmaMetric": "Increase automated test coverage of GDPR flows from 0% to 100%.",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1",
+            "R2",
+            "R3"
+          ]
+        }
+      ]
+    },
+    {
+      "existingEpicId": null,
+      "title": "Measurement: Autonomous Authentication Speed and Reliability",
+      "jtbd": "When the system is running in production, I want to measure the reliability and speed of Moodle SSO and fallback, so that we can prove the system eliminates manual access administration.",
+      "kanoClass": "Must-Be",
+      "cynefinDomain": "clear",
+      "sixSigmaMetric": "Establish baseline telemetry to track SSO login success rates and fallback activations per month.",
+      "tocConstraintRef": "Lack of visibility into authentication reliability",
+      "sourceIndex": 0,
+      "requirements": [
+        "R1: The system records metrics for successful SSO logins, fallback logins, and role synchronization latency.",
+        "R2: The system records metrics for any manual role administration actions taken, tracking the goal to eliminate them."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Instrumentation for SSO and Fallback Telemetry",
+          "roleTag": "BARCAN-TAG-02",
+          "jtbd": "When implementing measurement for this epic, I want to emit metrics for SSO and manual role administration, so that the GQM goals are trackable.",
+          "acceptanceCriteria": "Given a successful SSO login or fallback activation, When it occurs, Then the system emits an observability metric recording the event and latency.\nGiven the instrumentation is deployed, When the integration tests run, Then they assert that the correct telemetry events are emitted for logins and manual updates.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "Invisible authentication reliability",
+          "sixSigmaMetric": "Increase the percentage of measured SSO events from 0% to 100%.",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1",
+            "R2"
+          ]
+        }
+      ]
+    }
+  ]
+}
