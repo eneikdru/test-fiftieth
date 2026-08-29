@@ -85,9 +85,13 @@ public class EmployeeDossierE2ETest {
         Map<String, Object> responseMap = objectMapper.readValue(responseContent, Map.class);
         Integer reportId = (Integer) responseMap.get("id");
 
-        mockMvc.perform(get("/api/v1/dossier/reports/{id}/download", reportId))
+        byte[] pdfBytes = mockMvc.perform(get("/api/v1/dossier/reports/{id}/download", reportId))
                 .andExpect(status().isOk())
                 .andExpect(header().string("Content-Disposition", "attachment; filename=\"dossier_report_" + reportId + ".pdf\""))
-                .andExpect(content().string("Сводная справка по сотруднику EMP-E2E-1: 2 документов."));
+                .andExpect(content().contentType(MediaType.APPLICATION_PDF))
+                .andReturn().getResponse().getContentAsByteArray();
+
+        org.junit.jupiter.api.Assertions.assertTrue(pdfBytes.length > 4);
+        org.junit.jupiter.api.Assertions.assertEquals("%PDF", new String(pdfBytes, 0, 4));
     }
 }

@@ -117,9 +117,13 @@ class EmployeeDossierControllerTest {
         DossierReport report = new DossierReport("EMP-777", "FULL", "COMPLETED", "Test summary", 1, "/api/v1/dossier/reports/1/download");
         report = dossierReportRepository.save(report);
 
-        mockMvc.perform(get("/api/v1/dossier/reports/{id}/download", report.getId()))
+        byte[] pdfBytes = mockMvc.perform(get("/api/v1/dossier/reports/{id}/download", report.getId()))
                 .andExpect(status().isOk())
                 .andExpect(header().string("Content-Disposition", "attachment; filename=\"dossier_report_" + report.getId() + ".pdf\""))
-                .andExpect(content().string("Test summary"));
+                .andExpect(content().contentType(MediaType.APPLICATION_PDF))
+                .andReturn().getResponse().getContentAsByteArray();
+
+        org.junit.jupiter.api.Assertions.assertTrue(pdfBytes.length > 4);
+        org.junit.jupiter.api.Assertions.assertEquals("%PDF", new String(pdfBytes, 0, 4));
     }
 }
