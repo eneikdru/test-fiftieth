@@ -202,6 +202,51 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
+
+  /auth/moodle/config:
+    get:
+      summary: Get Moodle SSO configuration
+      description: Returns the OAuth2 login URL for Moodle SSO.
+      operationId: getMoodleConfig
+      responses:
+        '200':
+          description: Moodle SSO config returned successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MoodleConfigResponse'
+
+  /auth/moodle/callback:
+    post:
+      summary: Moodle SSO callback
+      description: Receives the authentication code from Moodle, performs role sync, and returns session token.
+      operationId: moodleCallback
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MoodleCallbackRequest'
+      responses:
+        '200':
+          description: Successful Moodle authentication, mapped user profile and session token returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthTokenResponse'
+        '400':
+          description: Invalid code or callback request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Authentication failed or unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
 components:
   schemas:
     RegistrationRequest:
@@ -427,6 +472,32 @@ components:
           type: string
           format: date-time
           description: Server timestamp when error occurred
+
+
+    MoodleConfigResponse:
+      type: object
+      required:
+        - login_url
+      properties:
+        login_url:
+          type: string
+          format: uri
+          description: OAuth2 login URL for Moodle
+          example: "https://moodle.epidemiology-inst.ru/oauth2/authorize?client_id=..."
+
+    MoodleCallbackRequest:
+      type: object
+      required:
+        - code
+      properties:
+        code:
+          type: string
+          description: Authorization code received from Moodle
+          example: "splxlOBeZQQYbYS6WxSbIA"
+        state:
+          type: string
+          description: Optional state parameter for CSRF validation
+          example: "xyz123"
 
   securitySchemes:
     BearerAuth:
