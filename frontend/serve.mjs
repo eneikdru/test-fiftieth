@@ -71,6 +71,25 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  if (pathname.startsWith('/api/v1/dossier/documents')) {
+    const query = parsedUrl.searchParams.get('query') || '';
+    const page = parseInt(parsedUrl.searchParams.get('page') || '0', 10);
+    const size = parseInt(parsedUrl.searchParams.get('size') || '10', 10);
+
+    let docs = [];
+    for (let i = 1; i <= 25; i++) {
+       docs.push({ id: i, title: `Документ ${query} #${i}`, type: "generic" });
+    }
+
+    const start = page * size;
+    const end = start + size;
+    const paginatedDocs = docs.slice(start, end);
+
+    res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+    res.end(JSON.stringify(paginatedDocs));
+    return;
+  }
+
   // Static file serving
   let relativePath = pathname === '/' ? 'index.html' : pathname.replace(/^\//, '');
   let filePath = path.join(__dirname, relativePath);
