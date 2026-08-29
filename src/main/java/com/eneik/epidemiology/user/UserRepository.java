@@ -1,6 +1,7 @@
 package com.eneik.epidemiology.user;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -19,6 +20,12 @@ public interface UserRepository extends JpaRepository<User, Long> {
     boolean existsByUsername(String username);
 
     boolean existsByEmail(String email);
+
+    Optional<User> findByMoodleId(String moodleId);
+
+    @Modifying
+    @Query("UPDATE User u SET u.role = :newRole WHERE u.id = :id AND u.role = :oldRole")
+    int updateRoleAtomically(@Param("id") Long id, @Param("oldRole") String oldRole, @Param("newRole") String newRole);
 
     @Query("SELECT u.role FROM User u WHERE u.username = :username")
     Optional<String> findRoleByUsername(@Param("username") String username);

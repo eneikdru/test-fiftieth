@@ -89,4 +89,38 @@ class UserServiceTest {
         assertTrue(foundByUsername.isPresent());
         assertEquals("ivanov@epidemiology-inst.ru", foundByUsername.get().getEmail());
     }
+
+    @Test
+    @DisplayName("Given user logged in via SSO, When their Moodle ID is not found, Then a new user record with mapped department policies is automatically inserted")
+    void testCreateUser_WithMoodleIdAndDepartment() {
+        UserService userService = new UserService(userRepository, passwordEncoderConfig.passwordEncoder());
+        User user = userService.createUserWithMoodle("moodle_user", "Pass123!", "moodle@test.com", "Moodle User", "RESEARCHER", "moodle-12345", "Epidemiology Department");
+
+        assertNotNull(user.getId());
+        assertEquals("moodle-12345", user.getMoodleId());
+        assertEquals("Epidemiology Department", user.getDepartment());
+
+        Optional<User> foundByMoodleId = userService.findByMoodleId("moodle-12345");
+        assertTrue(foundByMoodleId.isPresent());
+        assertEquals("moodle_user", foundByMoodleId.get().getUsername());
+    }
+
+    @Test
+    @DisplayName("Given an existing user, When their Moodle roles change, Then the internal role assignments are updated atomically in the database")
+    void testUpdateRoleAtomically() {
+        UserService userService = new UserService(userRepository, passwordEncoderConfig.passwordEncoder());
+        User user = userService.createUser("role_user", "Pass123!", "RESEARCHER");
+
+        // Success update
+        int updatedCount = userService.updateRoleAtomically(user.getId(), "RESEARCHER", "ADMIN");
+        assertEquals(1, updatedCount);
+
+        Optional<String> newRole = userService.resolveRoleById(user.getId());
+        assertTrue(newRole.isPresent());
+        assertEquals("ADMIN", newRole.get());
+
+        // Failed update (wrong old role)
+        int failedCount = userService.updateRoleAtomically(user.getId(), "RESEARCHER", "USER");
+        assertEquals(0, failedCount);
+    }
 }

@@ -37,6 +37,11 @@ public class UserService {
 
     @Transactional
     public User createUser(String username, String rawPassword, String email, String fullName, String role) {
+        return createUserWithMoodle(username, rawPassword, email, fullName, role, null, null);
+    }
+
+    @Transactional
+    public User createUserWithMoodle(String username, String rawPassword, String email, String fullName, String role, String moodleId, String department) {
         if (userRepository.existsByUsername(username)) {
             throw new IllegalArgumentException("Пользователь с таким именем уже существует");
         }
@@ -50,6 +55,8 @@ public class UserService {
         user.setRole(role != null ? role : "USER");
         user.setEmail(email != null ? email.trim() : null);
         user.setFullName(fullName != null ? fullName.trim() : null);
+        user.setMoodleId(moodleId);
+        user.setDepartment(department);
         user.setCreatedAt(OffsetDateTime.now(clock));
         return userRepository.save(user);
     }
@@ -76,6 +83,16 @@ public class UserService {
         }
         String trimmed = identity.trim();
         return userRepository.findByUsernameOrEmail(trimmed, trimmed);
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<User> findByMoodleId(String moodleId) {
+        return userRepository.findByMoodleId(moodleId);
+    }
+
+    @Transactional
+    public int updateRoleAtomically(Long id, String oldRole, String newRole) {
+        return userRepository.updateRoleAtomically(id, oldRole, newRole);
     }
 
     @Transactional(readOnly = true)

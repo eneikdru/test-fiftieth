@@ -1,0 +1,3 @@
+ALTER TABLE users ADD COLUMN IF NOT EXISTS moodle_id VARCHAR(255) UNIQUE;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS department VARCHAR(255);
+CREATE INDEX IF NOT EXISTS idx_users_moodle_id ON users(moodle_id);
