@@ -1,0 +1,213 @@
+{
+  "epics": [
+    {
+      "existingEpicId": null,
+      "title": "Moodle Single Sign-On and Role Synchronization",
+      "jtbd": "When an epidemiologist accesses the system, I want to authenticate via the Institute Moodle and receive correct role permissions, so that I can seamlessly access appropriate restricted strains without separate credentials.",
+      "kanoClass": "Must-Be",
+      "cynefinDomain": "complicated",
+      "sixSigmaMetric": "Reduce login authentication failures from 15% to less than 1%",
+      "tocConstraintRef": "Authentication and user onboarding bottleneck",
+      "sourceIndex": 0,
+      "requirements": [
+        "R1: Implement OAuth2/OIDC/LTI SSO login flow against the Institute Moodle LMS.",
+        "R2: Synchronize Moodle role hierarchy to archive system roles upon login.",
+        "R3: Automatically restrict access to strains and reports based on Moodle departments.",
+        "R4: Provide an autonomous fallback authentication mechanism if Moodle is down.",
+        "R5: User logs in via Moodle, receives synced roles, and accesses restricted data.",
+        "R6: In fallback mode, user logs in securely to retain access based on last state."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Shared API Contract for Auth Endpoints",
+          "roleTag": "BARCAN-TAG-12",
+          "jtbd": "When implementing the API contract for this epic, I want to define request/response shapes for SSO and fallback auth, so that backend and frontend can build in parallel.",
+          "acceptanceCriteria": "Given the SSO endpoint,\nWhen requested,\nThen the OpenAPI spec types the token payload.\nGiven the fallback endpoint,\nWhen defined,\nThen the response includes the session fields.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "Parallel development blocking",
+          "sixSigmaMetric": "Reduce contract drift defects from 5% to 0%",
+          "hasUi": false,
+          "requirementRefs": ["R1", "R4"]
+        },
+        {
+          "title": "Moodle SSO Integration Backend",
+          "roleTag": "BARCAN-TAG-02",
+          "jtbd": "When implementing the backend for this epic, I want to process Moodle tokens and map them to internal roles, so that secure sessions are established.",
+          "acceptanceCriteria": "Given a valid Moodle token,\nWhen processed,\nThen the backend creates a session with synced roles like 'Старший научный сотрудник'.\nGiven Moodle is unreachable,\nWhen a user logs in via fallback,\nThen the backend authenticates via cache.",
+          "leanValue": "essential",
+          "cynefinDomain": "complicated",
+          "tocConstraintRef": "API authentication processing",
+          "sixSigmaMetric": "Reduce SSO handshake errors to under 0.1%",
+          "hasUi": false,
+          "requirementRefs": ["R1", "R2", "R4"]
+        },
+        {
+          "title": "Data Model for Role Mapping and Fallback Cache",
+          "roleTag": "BARCAN-TAG-08",
+          "jtbd": "When implementing data storage for this epic, I want to store the mapping between Moodle departments and internal roles, so that permissions can be evaluated efficiently.",
+          "acceptanceCriteria": "Given a synced user,\nWhen their Moodle department like 'Кафедра Эпидемиологии' changes,\nThen the database updates the internal role mapping.\nGiven a fallback scenario,\nWhen reading user state,\nThen it uses cached credentials.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "Database query performance for auth",
+          "sixSigmaMetric": "Reduce role lookup time from 50ms to <10ms",
+          "hasUi": false,
+          "requirementRefs": ["R2", "R3", "R4"]
+        },
+        {
+          "title": "SSO and Fallback User Interface",
+          "roleTag": "BARCAN-TAG-11",
+          "jtbd": "When implementing the frontend for this epic, I want to provide a Moodle login button and a fallback login form, so that users can authenticate seamlessly or recover access.",
+          "acceptanceCriteria": "Given a user on the login screen,\nWhen they click 'Log in with Moodle',\nThen they are redirected to Moodle.\nGiven a fallback need,\nWhen using the fallback form,\nThen they log in securely.\nGiven WCAG 2.1 AA requirements,\nWhen navigating with a keyboard,\nThen all login controls are fully operable and have 4.5:1 text contrast.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "Frontend bundle size and load time",
+          "sixSigmaMetric": "Improve Time to Interactive on login page to under 1.5s",
+          "hasUi": true,
+          "requirementRefs": ["R1", "R4", "R5", "R6"]
+        },
+        {
+          "title": "QA E2E and Integration Verification for SSO",
+          "roleTag": "BARCAN-TAG-06",
+          "jtbd": "When implementing QA for this epic, I want to verify the complete SSO and fallback workflows, so that no regression occurs in the authentication chain.",
+          "acceptanceCriteria": "Given a mock Moodle server,\nWhen the E2E suite runs SSO,\nThen the user logs in and gets correct roles.\nGiven the server is down,\nWhen the suite runs fallback,\nThen the user logs in using cached credentials.",
+          "leanValue": "essential",
+          "cynefinDomain": "complicated",
+          "tocConstraintRef": "Test execution stability",
+          "sixSigmaMetric": "Increase test coverage of auth flows to 100% without flakiness",
+          "hasUi": false,
+          "requirementRefs": ["R1", "R2", "R3", "R4", "R5", "R6"]
+        }
+      ]
+    },
+    {
+      "existingEpicId": null,
+      "title": "Measurement: Moodle Integration Effectiveness (GQM)",
+      "jtbd": "When operating the platform, I want to measure the usage of Moodle SSO and fallback mechanisms. Goal: Prove the system delivers seamless access to epidemiologists. Q1: Are users successfully logging in via Moodle? Q2: How often is the fallback mechanism required?, so that we can demonstrate seamless access.",
+      "kanoClass": "Must-Be",
+      "cynefinDomain": "clear",
+      "sixSigmaMetric": "Increase the percentage of successful logins via Moodle SSO to >99%",
+      "tocConstraintRef": "Observability and analytics tracking",
+      "sourceIndex": 0,
+      "requirements": [
+        "R1: The system shall track the ratio of successful Moodle SSO logins to total Moodle SSO login attempts to answer Q1.",
+        "R2: The system shall track the daily count of fallback logins to answer Q2."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Instrument Auth Telemetry",
+          "roleTag": "BARCAN-TAG-02",
+          "jtbd": "When implementing metrics for this epic, I want to emit structured events for SSO and fallback logins, so that analytics can aggregate the usage data.",
+          "acceptanceCriteria": "Given a successful SSO login,\nWhen the session is created,\nThen an auth.success event is emitted.\nGiven a fallback login,\nWhen it completes,\nThen a fallback.used event is emitted.\nGiven the test environment,\nWhen metrics are verified,\nThen assertions prove events are correctly tracked.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "Telemetry event processing pipeline",
+          "sixSigmaMetric": "Ensure 100% of auth events are successfully dispatched to the metric store",
+          "hasUi": false,
+          "requirementRefs": ["R1", "R2"]
+        }
+      ]
+    },
+    {
+      "existingEpicId": null,
+      "title": "Regulatory: GDPR Data Subject Rights",
+      "jtbd": "When a Moodle user requests their data, I want to export or erase their profile and roles, so that the system complies with GDPR data subject rights.",
+      "kanoClass": "Must-Be",
+      "cynefinDomain": "complicated",
+      "sixSigmaMetric": "Reduce manual data export effort from 2 hours to 0 hours via self-service",
+      "tocConstraintRef": "Data subject compliance bottleneck",
+      "sourceIndex": 0,
+      "requirements": [
+        "R1: Provide a secure method for users to export their synchronized Moodle profile data.",
+        "R2: Provide a secure method for users to request erasure of their locally stored data.",
+        "R3: Ensure data exports and erasures are delivered within the statutory 30-day deadline."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Data Export and Erasure API",
+          "roleTag": "BARCAN-TAG-02",
+          "jtbd": "When implementing compliance API for this epic, I want to extract or delete user records, so that statutory requirements are met programmatically.",
+          "acceptanceCriteria": "Given a user request,\nWhen they invoke the export API,\nThen data is returned as JSON.\nGiven an erasure request,\nWhen invoked,\nThen their profile data is irreversibly anonymized.",
+          "leanValue": "essential",
+          "cynefinDomain": "complicated",
+          "tocConstraintRef": "Database record cascading deletion",
+          "sixSigmaMetric": "Ensure 100% of PII is removed or anonymized upon erasure execution",
+          "hasUi": false,
+          "requirementRefs": ["R1", "R2", "R3"]
+        },
+        {
+          "title": "QA Verification for Data Rights",
+          "roleTag": "BARCAN-TAG-06",
+          "jtbd": "When implementing QA for this epic, I want to verify that exports contain all PII and erasures actually remove it, so that we prevent compliance violations.",
+          "acceptanceCriteria": "Given a seeded user,\nWhen the export is requested,\nThen the output contains all known fields.\nGiven the user is erased,\nWhen looking up their ID,\nThen no PII is returned by the system.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "Test environment isolation",
+          "sixSigmaMetric": "Achieve 100% test coverage on data compliance endpoints",
+          "hasUi": false,
+          "requirementRefs": ["R1", "R2", "R3"]
+        }
+      ]
+    },
+    {
+      "existingEpicId": null,
+      "title": "Regulatory: Verified Automated Backups",
+      "jtbd": "When operating the platform, I want automated backups and verified restore procedures, so that we protect the business against critical data loss.",
+      "kanoClass": "Must-Be",
+      "cynefinDomain": "clear",
+      "sixSigmaMetric": "Reduce Mean Time to Recovery (MTTR) from hours to under 15 minutes",
+      "tocConstraintRef": "Disaster recovery readiness",
+      "sourceIndex": 0,
+      "requirements": [
+        "R1: The system shall perform automated daily backups of the database.",
+        "R2: A verified restore process must be executed and proven to work."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Automated DB Backup and Restore Pipeline",
+          "roleTag": "BARCAN-TAG-05",
+          "jtbd": "When implementing backups for this epic, I want to configure the backup scripts and a test restore environment, so that data loss risks are mitigated.",
+          "acceptanceCriteria": "Given the production database,\nWhen the scheduled job runs,\nThen a backup artifact is created.\nGiven a fresh environment,\nWhen the restore script is executed,\nThen the database is fully restored and verified by automated tests.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "CI/CD backup execution",
+          "sixSigmaMetric": "Ensure 100% success rate of automated backup and restore tests",
+          "hasUi": false,
+          "requirementRefs": ["R1", "R2"]
+        }
+      ]
+    },
+    {
+      "existingEpicId": "9d6bb646-d5aa-429b-bf4c-926857c78696",
+      "title": null,
+      "jtbd": null,
+      "kanoClass": null,
+      "cynefinDomain": null,
+      "sixSigmaMetric": "Reduce support tickets for password resets from 20% to 2%",
+      "tocConstraintRef": "Manual helpdesk capacity",
+      "sourceIndex": 0,
+      "requirements": [
+        "R1: Provide a self-service recovery path for a locked-out account in the fallback mechanism."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Self-Service Fallback Recovery",
+          "roleTag": "BARCAN-TAG-02",
+          "jtbd": "When implementing recovery for this epic, I want to allow users to securely reset their fallback credentials, so that they regain access without manual support.",
+          "acceptanceCriteria": "Given a locked out user,\nWhen they request recovery,\nThen a secure reset link is generated.\nGiven a valid reset link,\nWhen the user submits a new password,\nThen the fallback credentials are updated.\nGiven the automated test suite,\nWhen the recovery flow runs,\nThen it asserts the reset link works.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "Recovery email delivery latency",
+          "sixSigmaMetric": "Ensure 99.9% delivery rate for recovery tokens",
+          "hasUi": false,
+          "requirementRefs": ["R1"]
+        }
+      ]
+    }
+  ]
+}
