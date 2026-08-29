@@ -26,6 +26,15 @@ public class TelemetryEvent {
     @Column(name = "processing_time_ms")
     private Long processingTimeMs;
 
+    @Column(name = "workflow_duration_ms")
+    private Long workflowDurationMs;
+
+    @Column(name = "start_time")
+    private OffsetDateTime startTime;
+
+    @Column(name = "end_time")
+    private OffsetDateTime endTime;
+
     @Column(name = "created_at", nullable = false)
     private OffsetDateTime createdAt;
 
@@ -47,6 +56,17 @@ public class TelemetryEvent {
         this.resultsCount = resultsCount;
         this.processingTimeMs = processingTimeMs;
         this.createdAt = createdAt;
+    }
+
+    public static TelemetryEvent createWorkflowEvent(String eventType, String workflowType, OffsetDateTime startTime, OffsetDateTime endTime, Long workflowDurationMs, OffsetDateTime createdAt) {
+        TelemetryEvent event = new TelemetryEvent();
+        event.setEventType(eventType);
+        event.setQueryTerm(workflowType);
+        event.setStartTime(startTime);
+        event.setEndTime(endTime);
+        event.setWorkflowDurationMs(workflowDurationMs);
+        event.setCreatedAt(createdAt);
+        return event;
     }
 
     public Long getId() {
@@ -103,5 +123,29 @@ public class TelemetryEvent {
 
     public void setProcessingTimeMs(Long processingTimeMs) {
         this.processingTimeMs = processingTimeMs;
+    }
+
+    public Long getWorkflowDurationMs() {
+        return workflowDurationMs;
+    }
+
+    public void setWorkflowDurationMs(Long workflowDurationMs) {
+        this.workflowDurationMs = workflowDurationMs;
+    }
+
+    public OffsetDateTime getStartTime() {
+        return startTime;
+    }
+
+    public void setStartTime(OffsetDateTime startTime) {
+        this.startTime = startTime;
+    }
+
+    public OffsetDateTime getEndTime() {
+        return endTime;
+    }
+
+    public void setEndTime(OffsetDateTime endTime) {
+        this.endTime = endTime;
     }
 }
