@@ -15,7 +15,7 @@ This inconsistency risks SQL dialect mismatches passing local gates while failin
 PostgreSQL 15 is defined as the single source of truth for the primary relational datastore engine across all application runtime environments (development, test execution, containerized delivery, and production).
 
 All repository configuration artifacts must be derived from and synchronized with this decision:
-1. `docker-compose.yml` provides PostgreSQL 15 (`postgres:15-alpine`).
+1. `docker-compose.yml` provides PostgreSQL 15 (`postgres:15-alpine`), `backend`, and `backup` services.
 2. `pom.xml` includes `org.postgresql:postgresql` as runtime dependency.
 3. `src/main/resources/application.properties` configures PostgreSQL defaults using environment variables with PostgreSQL fallbacks:
    - `spring.datasource.url`: `jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${POSTGRES_DB:epidemiology_db}`
