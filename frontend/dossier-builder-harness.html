@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Dossier Builder</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+
+  <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "secondary": "#0058be",
+                        "on-primary": "#ffffff",
+                        "primary": "#000000",
+                        "surface": "#f8f9ff",
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+      .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24 }
+    </style>
+  <script type="importmap">
+    {
+      "imports": {
+        "svelte": "https://unpkg.com/svelte@3.59.2/index.mjs",
+        "svelte/internal": "https://unpkg.com/svelte@3.59.2/internal/index.mjs",
+        "svelte/transition": "https://unpkg.com/svelte@3.59.2/transition/index.mjs"
+      }
+    }
+  </script>
+  <script src="https://unpkg.com/svelte@3.59.2/compiler.js"></script>
+</head>
+<body>
+  <div id="app"></div>
+  <script type="module">
+    import * as svelteInternal from 'svelte/internal';
+
+    async function loadComponent() {
+      try {
+        const response = await fetch('./src/components/DossierBuilder.svelte');
+        const source = await response.text();
+
+        const { js } = window.svelte.compile(source, {
+          format: 'esm',
+          name: 'DossierBuilder',
+          sveltePath: 'svelte'
+        });
+
+        const blob = new Blob([js.code], { type: 'application/javascript' });
+        const blobUrl = URL.createObjectURL(blob);
+
+        const module = await import(blobUrl);
+        const DossierBuilder = module.default;
+
+        new DossierBuilder({
+          target: document.getElementById('app')
+        });
+      } catch (err) {
+        document.getElementById('app').innerHTML = `<h1 class="error">Error loading component: ${err.message}</h1>`;
+      }
+    }
+    loadComponent();
+  </script>
+</body>
+</html>
