@@ -94,7 +94,7 @@ class UserServiceTest {
     @DisplayName("Given user logged in via SSO, When their Moodle ID is not found, Then a new user record with mapped department policies is automatically inserted")
     void testCreateUser_WithMoodleIdAndDepartment() {
         UserService userService = new UserService(userRepository, passwordEncoderConfig.passwordEncoder());
-        User user = userService.createUserWithMoodle("moodle_user", "Pass123!", "moodle@test.com", "Moodle User", "RESEARCHER", "moodle-12345", "Epidemiology Department");
+        User user = userService.createUserWithMoodle("moodle_user", "Pass123!", "moodle@test.com", "Moodle User", "RESEARCHER", "moodle-12345", "Epidemiology Department", "BIO-101");
 
         assertNotNull(user.getId());
         assertEquals("moodle-12345", user.getMoodleId());

@@ -6,6 +6,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import com.eneik.epidemiology.telemetry.TelemetryService;
+import org.springframework.security.core.context.SecurityContextHolder;
+import com.eneik.epidemiology.user.User;
+import com.eneik.epidemiology.user.UserRepository;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -18,11 +21,13 @@ public class EmployeeDossierAnalyticsController {
     private final EmployeeDocumentRepository employeeDocumentRepository;
     private final DossierReportRepository dossierReportRepository;
     private final TelemetryService telemetryService;
+    private final UserRepository userRepository;
 
-    public EmployeeDossierAnalyticsController(EmployeeDocumentRepository employeeDocumentRepository, DossierReportRepository dossierReportRepository, TelemetryService telemetryService) {
+    public EmployeeDossierAnalyticsController(EmployeeDocumentRepository employeeDocumentRepository, DossierReportRepository dossierReportRepository, TelemetryService telemetryService, UserRepository userRepository) {
         this.employeeDocumentRepository = employeeDocumentRepository;
         this.dossierReportRepository = dossierReportRepository;
         this.telemetryService = telemetryService;
+        this.userRepository = userRepository;
     }
 
     @GetMapping("/documents")
@@ -33,9 +38,22 @@ public class EmployeeDossierAnalyticsController {
             @RequestParam(value = "from_date", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
             @RequestParam(value = "to_date", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate) {
 
+        String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
+        User currentUser = userRepository.findByUsername(currentUsername).orElse(null);
+
         List<EmployeeDocument> documents = employeeDocumentRepository.searchEmployeeDocuments(
                 employeeId, null, docType, scientificDirection, null, fromDate, toDate
         );
+
+        if (currentUser != null && !"ADMIN".equals(currentUser.getRole())) {
+            documents = documents.stream().filter(d -> {
+                if (!"STRAIN_ISOLATION".equals(d.getDocType()) && !"REPORT".equals(d.getDocType())) return true;
+                if (d.getAccessDepartment() == null && d.getAccessCourse() == null) return true;
+                boolean depMatch = d.getAccessDepartment() != null && d.getAccessDepartment().equals(currentUser.getDepartment());
+                boolean courseMatch = d.getAccessCourse() != null && currentUser.getCourses() != null && currentUser.getCourses().contains(d.getAccessCourse());
+                return depMatch || courseMatch;
+            }).toList();
+        }
 
         List<Map<String, Object>> response = documents.stream().map(d -> (Map<String, Object>) Map.<String, Object>of(
                 "id", d.getId(),
@@ -95,6 +113,18 @@ public class EmployeeDossierAnalyticsController {
                  documents = documents.stream().filter(d -> finalDocTypes.contains(d.getDocType())).toList();
             }
 
+            String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
+            User currentUser = userRepository.findByUsername(currentUsername).orElse(null);
+
+            if (currentUser != null && !"ADMIN".equals(currentUser.getRole())) {
+                documents = documents.stream().filter(d -> {
+                    if (!"STRAIN_ISOLATION".equals(d.getDocType()) && !"REPORT".equals(d.getDocType())) return true;
+                    boolean depMatch = d.getAccessDepartment() != null && d.getAccessDepartment().equals(currentUser.getDepartment());
+                    boolean courseMatch = d.getAccessCourse() != null && currentUser.getCourses() != null && currentUser.getCourses().contains(d.getAccessCourse());
+                    return depMatch || courseMatch;
+                }).toList();
+            }
+
             String summaryText = "Сводная аналитическая справка по сотруднику " + employeeId + ": " + documents.size() + " документов.";
 
             report = new DossierReport(
@@ -140,6 +170,19 @@ public class EmployeeDossierAnalyticsController {
                 employeeId, null, null, scientificDirection, null, null, null
         );
 
+        String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
+        User currentUser = userRepository.findByUsername(currentUsername).orElse(null);
+
+        if (currentUser != null && !"ADMIN".equals(currentUser.getRole())) {
+            documents = documents.stream().filter(d -> {
+                if (!"STRAIN_ISOLATION".equals(d.getDocType()) && !"REPORT".equals(d.getDocType())) return true;
+                if (d.getAccessDepartment() == null && d.getAccessCourse() == null) return true;
+                boolean depMatch = d.getAccessDepartment() != null && d.getAccessDepartment().equals(currentUser.getDepartment());
+                boolean courseMatch = d.getAccessCourse() != null && currentUser.getCourses() != null && currentUser.getCourses().contains(d.getAccessCourse());
+                return depMatch || courseMatch;
+            }).toList();
+        }
+
         int denominator = documents.size();
         if (denominator == 0) {
             return ResponseEntity.ok(Map.of(
@@ -176,8 +219,21 @@ public class EmployeeDossierAnalyticsController {
 
     @GetMapping("/reports/{id}/download")
     public ResponseEntity<?> downloadAnalyticsReport(@PathVariable("id") Long id) {
+        String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
+        User currentUser = userRepository.findByUsername(currentUsername).orElse(null);
+
         return dossierReportRepository.findById(id)
                 .map(report -> {
+                    if (currentUser != null && !"ADMIN".equals(currentUser.getRole())) {
+                        boolean depMatch = report.getAccessDepartment() != null && report.getAccessDepartment().equals(currentUser.getDepartment());
+                        boolean courseMatch = report.getAccessCourse() != null && currentUser.getCourses() != null && currentUser.getCourses().contains(report.getAccessCourse());
+                        if (report.getAccessDepartment() != null || report.getAccessCourse() != null) {
+                             if (!depMatch && !courseMatch) {
+                                  return ResponseEntity.status(HttpStatus.FORBIDDEN).body((Object) Map.of("error_code", "FORBIDDEN", "message", "Access denied"));
+                             }
+                        }
+                    }
+
                     if (!"COMPLETED".equals(report.getStatus())) {
                         return ResponseEntity.status(HttpStatus.NOT_FOUND).body((Object) Map.of(
                                 "error_code", "NOT_FOUND",

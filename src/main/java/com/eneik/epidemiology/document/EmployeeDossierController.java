@@ -8,6 +8,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import com.eneik.epidemiology.telemetry.TelemetryService;
+import org.springframework.security.core.context.SecurityContextHolder;
+import com.eneik.epidemiology.user.User;
+import com.eneik.epidemiology.user.UserRepository;
 
 import com.itextpdf.text.Document;
 import com.itextpdf.text.Paragraph;
@@ -26,11 +29,13 @@ public class EmployeeDossierController {
     private final EmployeeDocumentRepository employeeDocumentRepository;
     private final DossierReportRepository dossierReportRepository;
     private final TelemetryService telemetryService;
+    private final UserRepository userRepository;
 
-    public EmployeeDossierController(EmployeeDocumentRepository employeeDocumentRepository, DossierReportRepository dossierReportRepository, TelemetryService telemetryService) {
+    public EmployeeDossierController(EmployeeDocumentRepository employeeDocumentRepository, DossierReportRepository dossierReportRepository, TelemetryService telemetryService, UserRepository userRepository) {
         this.employeeDocumentRepository = employeeDocumentRepository;
         this.dossierReportRepository = dossierReportRepository;
         this.telemetryService = telemetryService;
+        this.userRepository = userRepository;
     }
 
     @GetMapping("/documents")
@@ -43,9 +48,22 @@ public class EmployeeDossierController {
             @RequestParam(value = "from_date", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
             @RequestParam(value = "to_date", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate) {
 
+        String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
+        User currentUser = userRepository.findByUsername(currentUsername).orElse(null);
+
         List<EmployeeDocument> documents = employeeDocumentRepository.searchEmployeeDocuments(
                 employeeId, employeeSurname, docType, scientificDirection, query, fromDate, toDate
         );
+
+        if (currentUser != null && !"ADMIN".equals(currentUser.getRole())) {
+            documents = documents.stream().filter(d -> {
+                if (!"STRAIN_ISOLATION".equals(d.getDocType()) && !"REPORT".equals(d.getDocType())) return true;
+                if (d.getAccessDepartment() == null && d.getAccessCourse() == null) return true;
+                boolean depMatch = d.getAccessDepartment() != null && d.getAccessDepartment().equals(currentUser.getDepartment());
+                boolean courseMatch = d.getAccessCourse() != null && currentUser.getCourses() != null && currentUser.getCourses().contains(d.getAccessCourse());
+                return depMatch || courseMatch;
+            }).toList();
+        }
         return ResponseEntity.ok(documents);
     }
 
@@ -107,6 +125,18 @@ public class EmployeeDossierController {
                  documents = documents.stream().filter(d -> docTypes.contains(d.getDocType())).toList();
             }
 
+            String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
+            User currentUser = userRepository.findByUsername(currentUsername).orElse(null);
+
+            if (currentUser != null && !"ADMIN".equals(currentUser.getRole())) {
+                documents = documents.stream().filter(d -> {
+                    if (!"STRAIN_ISOLATION".equals(d.getDocType()) && !"REPORT".equals(d.getDocType())) return true;
+                    boolean depMatch = d.getAccessDepartment() != null && d.getAccessDepartment().equals(currentUser.getDepartment());
+                    boolean courseMatch = d.getAccessCourse() != null && currentUser.getCourses() != null && currentUser.getCourses().contains(d.getAccessCourse());
+                    return depMatch || courseMatch;
+                }).toList();
+            }
+
             String summaryText = "Сводная справка по сотруднику " + employeeId + ": " + documents.size() + " документов.";
 
             report = new DossierReport(
@@ -147,8 +177,21 @@ public class EmployeeDossierController {
 
     @GetMapping("/reports/{id}")
     public ResponseEntity<?> getDossierReportStatus(@PathVariable("id") Long id) {
+        String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
+        User currentUser = userRepository.findByUsername(currentUsername).orElse(null);
+
         return dossierReportRepository.findById(id)
-                .map(report -> ResponseEntity.ok(Map.of(
+                .map(report -> {
+                    if (currentUser != null && !"ADMIN".equals(currentUser.getRole())) {
+                        boolean depMatch = report.getAccessDepartment() != null && report.getAccessDepartment().equals(currentUser.getDepartment());
+                        boolean courseMatch = report.getAccessCourse() != null && currentUser.getCourses() != null && currentUser.getCourses().contains(report.getAccessCourse());
+                        if (report.getAccessDepartment() != null || report.getAccessCourse() != null) {
+                             if (!depMatch && !courseMatch) {
+                                  return ResponseEntity.status(HttpStatus.FORBIDDEN).body((Object) Map.of("error_code", "FORBIDDEN", "message", "Access denied"));
+                             }
+                        }
+                    }
+                    return ResponseEntity.ok(Map.of(
                         "id", report.getId(),
                         "employee_id", report.getEmployeeId(),
                         "template_type", report.getTemplateType(),
@@ -157,7 +200,8 @@ public class EmployeeDossierController {
                         "document_count", report.getDocumentCount(),
                         "download_url", report.getDownloadUrl(),
                         "created_at", report.getCreatedAt() != null ? report.getCreatedAt().toString() : ""
-                )))
+                ));
+                })
                 .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
                         "error_code", "NOT_FOUND",
                         "message", "Справка не найдена"
@@ -166,8 +210,21 @@ public class EmployeeDossierController {
 
     @GetMapping("/reports/{id}/download")
     public ResponseEntity<?> downloadDossierReport(@PathVariable("id") Long id) {
+        String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
+        User currentUser = userRepository.findByUsername(currentUsername).orElse(null);
+
         return dossierReportRepository.findById(id)
                 .map(report -> {
+                    if (currentUser != null && !"ADMIN".equals(currentUser.getRole())) {
+                        boolean depMatch = report.getAccessDepartment() != null && report.getAccessDepartment().equals(currentUser.getDepartment());
+                        boolean courseMatch = report.getAccessCourse() != null && currentUser.getCourses() != null && currentUser.getCourses().contains(report.getAccessCourse());
+                        if (report.getAccessDepartment() != null || report.getAccessCourse() != null) {
+                             if (!depMatch && !courseMatch) {
+                                  return ResponseEntity.status(HttpStatus.FORBIDDEN).body((Object) Map.of("error_code", "FORBIDDEN", "message", "Access denied"));
+                             }
+                        }
+                    }
+
                     if (!"COMPLETED".equals(report.getStatus())) {
                         return ResponseEntity.status(HttpStatus.NOT_FOUND).body((Object) Map.of(
                                 "error_code", "NOT_FOUND",
@@ -177,11 +234,11 @@ public class EmployeeDossierController {
 
                     try {
                         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                        Document document = new Document();
-                        PdfWriter.getInstance(document, baos);
+                        com.itextpdf.text.Document document = new com.itextpdf.text.Document();
+                        com.itextpdf.text.pdf.PdfWriter.getInstance(document, baos);
                         document.open();
                         String text = report.getSummaryText() != null ? report.getSummaryText() : "Отчет пуст";
-                        document.add(new Paragraph(text));
+                        document.add(new com.itextpdf.text.Paragraph(text));
                         document.close();
 
                         byte[] content = baos.toByteArray();

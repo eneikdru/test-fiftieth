@@ -13,6 +13,10 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import com.eneik.epidemiology.telemetry.TelemetryService;
+import com.eneik.epidemiology.user.User;
+import com.eneik.epidemiology.user.UserRepository;
+import java.util.Optional;
+import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.verify;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
@@ -46,6 +50,8 @@ class EmployeeDossierControllerTest {
 
     @MockBean
     private TelemetryService telemetryService;
+    @MockBean
+    private UserRepository userRepository;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -57,14 +63,49 @@ class EmployeeDossierControllerTest {
 
         EmployeeDocument doc1 = new EmployeeDocument("EMP-999", "ORDER", "Приказ о назначении", LocalDate.of(2023, 1, 15), "Приказ №42");
         EmployeeDocument doc2 = new EmployeeDocument("EMP-999", "REPORT", "Отчет по исследованию", LocalDate.of(2023, 6, 20), "Годовой отчет");
+        doc2.setAccessDepartment("Эпидемиология");
         EmployeeDocument doc3 = new EmployeeDocument("EMP-888", "EXAM", "Экзамен", LocalDate.of(2023, 11, 10), "Оценка: отлично");
         EmployeeDocument doc4 = new EmployeeDocument("EMP-777", "Ivanov", "REPORT", "Отчет по исследованию 2", LocalDate.of(2023, 6, 20), "Годовой отчет 2");
+        doc4.setAccessDepartment("Эпидемиология");
 
         employeeDocumentRepository.saveAll(List.of(doc1, doc2, doc3, doc4));
+
+        User testUser = new User();
+        testUser.setUsername("user");
+        testUser.setRole("USER");
+        testUser.setDepartment("Эпидемиология");
+        when(userRepository.findByUsername("user")).thenReturn(Optional.of(testUser));
+
+        User otherUser = new User();
+        otherUser.setUsername("other");
+        otherUser.setRole("USER");
+        otherUser.setDepartment("Вирусология");
+        when(userRepository.findByUsername("other")).thenReturn(Optional.of(otherUser));
     }
 
 
-    @WithMockUser(roles = "USER")
+    @WithMockUser(username = "other", roles = "USER")
+    @Test
+    @DisplayName("Given a mismatched department, when a search request is made, then restricted documents are filtered out.")
+    void testSearchEmployeeDocumentsAccessDenied() throws Exception {
+        mockMvc.perform(get("/api/v1/dossier/documents")
+                        .param("employee_id", "EMP-999"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1))) // Only ORDER is visible, REPORT is filtered
+                .andExpect(jsonPath("$[0].title").value("Приказ о назначении"));
+    }
+
+    @WithMockUser(username = "user", roles = "USER")
+    @Test
+    @DisplayName("Given a matching department, when a search request is made, then restricted documents are included.")
+    void testSearchEmployeeDocumentsAccessAllowed() throws Exception {
+        mockMvc.perform(get("/api/v1/dossier/documents")
+                        .param("employee_id", "EMP-999"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(2)));
+    }
+
+    @WithMockUser(username = "user", roles = "USER")
     @Test
     @DisplayName("Given the API contract, when a search request is made, then the backend returns the correct document list.")
     void testSearchEmployeeDocuments() throws Exception {
@@ -77,7 +118,7 @@ class EmployeeDossierControllerTest {
     }
 
 
-    @WithMockUser(roles = "USER")
+    @WithMockUser(username = "user", roles = "USER")
     @Test
     @DisplayName("Given an employee surname, when a search request is made, then the backend returns the documents associated with that surname.")
     void testSearchEmployeeDocumentsBySurname() throws Exception {
