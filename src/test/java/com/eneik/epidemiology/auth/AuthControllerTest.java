@@ -174,6 +174,27 @@ class AuthControllerTest {
     }
 
     @Test
+    @DisplayName("Given LMS is unreachable, When moodle sso endpoint is called with fallback password, Then user is authenticated locally")
+    void testSsoLogin_LmsUnreachable_FallbacksToLocalAuth() throws Exception {
+        userService.createUser("moodle_user", "MySecureFallback!", "moodle@inst.ru", "Moodle User", "USER");
+
+        String ssoBody = "{\"username\":\"moodle_user\",\"moodle_token\":\"mock_invalid_token\",\"fallback_password\":\"MySecureFallback!\"}";
+
+        mockMvc.perform(post("/api/v1/auth/sso/moodle")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(ssoBody))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.access_token", notNullValue()))
+                .andExpect(jsonPath("$.refresh_token", notNullValue()))
+                .andExpect(jsonPath("$.user.username", is("moodle_user")));
+
+        long fallbackEvents = telemetryEventRepository.findAll().stream()
+                .filter(e -> "fallback_login_success".equals(e.getEventType()) && "moodle_user".equals(e.getQueryTerm()))
+                .count();
+        assert fallbackEvents == 1;
+    }
+
+    @Test
     @DisplayName("Given SSO login request for new user, When moodle sso endpoint called, Then user is auto-provisioned with fallback password")
     void testSsoLogin_NewUserAutoProvisioning() throws Exception {
         String ssoBody = "{\"username\":\"new_moodle_user\",\"moodle_token\":\"mock_valid_new_moodle_token\",\"fallback_password\":\"MySecureFallback!\"}";
