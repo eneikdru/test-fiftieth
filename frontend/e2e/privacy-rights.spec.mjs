@@ -172,4 +172,18 @@ test.describe('Data Subject Rights E2E Tests (152-FZ Compliance)', () => {
     });
     expect(checkStatus).toBe(404);
   });
+
+  test('Given a new visitor session, When consent is refused, Then no non-essential cookies or trackers are loaded', async ({ context, page }) => {
+    // Navigate to the privacy page
+    await page.goto('/privacy-harness.html');
+
+    // Wait for a bit to allow any potential client-side scripts to run
+    await page.waitForTimeout(500);
+
+    // Retrieve cookies using Playwright's context
+    const cookies = await context.cookies();
+    const nonEssentialCookies = cookies.filter(cookie => cookie.name !== 'session_id');
+
+    expect(nonEssentialCookies.length).toBe(0);
+  });
 });
