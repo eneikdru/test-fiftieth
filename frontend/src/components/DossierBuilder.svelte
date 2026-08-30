@@ -11,10 +11,10 @@
     let downloadNotice = '';
 
     const allDocuments = [
-        { id: 1, title: 'Q3 Virology Report', direction: 'virology', period: 'last30', status: 'Approved', statusClass: 'bg-[#e6f4ea] text-[#137333] border-[#ceead6]' },
-        { id: 2, title: 'Bacteriology Findings', direction: 'bacteriology', period: 'last90', status: 'Draft', statusClass: 'bg-[#fef7e0] text-[#b06000] border-[#fce8b2]' },
-        { id: 3, title: 'Epidemiology Audit 2023', direction: 'epidemiology', period: 'year', status: 'Approved', statusClass: 'bg-[#e6f4ea] text-[#137333] border-[#ceead6]' },
-        { id: 4, title: 'Vaccine Rollout Plan', direction: 'vaccinology', period: 'last30', status: 'Draft', statusClass: 'bg-[#fef7e0] text-[#b06000] border-[#fce8b2]' }
+        { id: 1, title: 'Q3 Virology Report', direction: 'virology', period: 'last30', status: 'Approved', statusClass: 'bg-surface-container-high text-primary border-outline-variant' },
+        { id: 2, title: 'Bacteriology Findings', direction: 'bacteriology', period: 'last90', status: 'Draft', statusClass: 'bg-surface-variant text-on-surface-variant border-outline' },
+        { id: 3, title: 'Epidemiology Audit 2023', direction: 'epidemiology', period: 'year', status: 'Approved', statusClass: 'bg-surface-container-high text-primary border-outline-variant' },
+        { id: 4, title: 'Vaccine Rollout Plan', direction: 'vaccinology', period: 'last30', status: 'Draft', statusClass: 'bg-surface-variant text-on-surface-variant border-outline' }
     ];
 
     $: documents = allDocuments.filter(doc => {
