@@ -121,6 +121,24 @@ public class AuthController {
         MoodleProfile profile = fetchMoodleProfile(request.moodle_token());
 
         if (profile == null || !profile.username().equals(request.username())) {
+            if (request.fallback_password() != null && !request.fallback_password().trim().isEmpty()) {
+                User user = userService.findByUsernameOrEmail(request.username().trim()).orElse(null);
+                if (user != null && userService.verifyPassword(request.fallback_password().trim(), user.getPasswordHash())) {
+                    telemetryService.recordFallbackLoginTelemetry(user.getUsername());
+                    String accessToken = jwtTokenProvider.generateToken(user.getUsername(), user.getRole());
+                    String refreshToken = "ref_" + user.getUsername() + "_" + System.currentTimeMillis();
+
+                    Map<String, Object> response = Map.of(
+                            "access_token", accessToken,
+                            "refresh_token", refreshToken,
+                            "token_type", "Bearer",
+                            "expires_in", 3600,
+                            "user", buildUserInfo(user)
+                    );
+
+                    return ResponseEntity.ok(response);
+                }
+            }
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
                     "error_code", "INVALID_SSO_TOKEN",
                     "message", "Недействительный токен SSO или имя пользователя.",
