@@ -32,6 +32,9 @@ public class User {
     @Column(length = 255)
     private String department;
 
+    @Column(length = 500)
+    private String courses;
+
     @Column(name = "created_at", nullable = false)
     private OffsetDateTime createdAt;
 
@@ -54,7 +57,7 @@ public class User {
         this.createdAt = OffsetDateTime.now();
     }
 
-    public User(String username, String passwordHash, String role, String email, String fullName, String moodleId, String department) {
+    public User(String username, String passwordHash, String role, String email, String fullName, String moodleId, String department, String courses) {
         this.username = username;
         this.passwordHash = passwordHash;
         this.role = role;
@@ -62,6 +65,7 @@ public class User {
         this.fullName = fullName;
         this.moodleId = moodleId;
         this.department = department;
+        this.courses = courses;
         this.createdAt = OffsetDateTime.now();
     }
 
@@ -135,6 +139,14 @@ public class User {
 
     public void setDepartment(String department) {
         this.department = department;
+    }
+
+    public String getCourses() {
+        return courses;
+    }
+
+    public void setCourses(String courses) {
+        this.courses = courses;
     }
 
     public OffsetDateTime getCreatedAt() {

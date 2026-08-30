@@ -37,11 +37,11 @@ public class UserService {
 
     @Transactional
     public User createUser(String username, String rawPassword, String email, String fullName, String role) {
-        return createUserWithMoodle(username, rawPassword, email, fullName, role, null, null);
+        return createUserWithMoodle(username, rawPassword, email, fullName, role, null, null, null);
     }
 
     @Transactional
-    public User createUserWithMoodle(String username, String rawPassword, String email, String fullName, String role, String moodleId, String department) {
+    public User createUserWithMoodle(String username, String rawPassword, String email, String fullName, String role, String moodleId, String department, String courses) {
         if (userRepository.existsByUsername(username)) {
             throw new IllegalArgumentException("Пользователь с таким именем уже существует");
         }
@@ -57,6 +57,7 @@ public class UserService {
         user.setFullName(fullName != null ? fullName.trim() : null);
         user.setMoodleId(moodleId);
         user.setDepartment(department);
+        user.setCourses(courses);
         user.setCreatedAt(OffsetDateTime.now(clock));
         return userRepository.save(user);
     }
@@ -96,8 +97,8 @@ public class UserService {
     }
 
     @Transactional
-    public int updateRoleAndDepartmentAtomically(Long id, String oldRole, String newRole, String newDepartment) {
-        return userRepository.updateRoleAndDepartmentAtomically(id, oldRole, newRole, newDepartment);
+    public int updateRoleAndDepartmentAtomically(Long id, String oldRole, String newRole, String newDepartment, String courses) {
+        return userRepository.updateRoleAndDepartmentAtomically(id, oldRole, newRole, newDepartment, courses);
     }
 
     @Transactional(readOnly = true)

@@ -29,6 +29,12 @@ public class DossierReport {
     @Column(name = "download_url", length = 255)
     private String downloadUrl;
 
+    @Column(name = "access_department", length = 255)
+    private String accessDepartment;
+
+    @Column(name = "access_course", length = 255)
+    private String accessCourse;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;
 
@@ -105,6 +111,22 @@ public class DossierReport {
 
     public void setDownloadUrl(String downloadUrl) {
         this.downloadUrl = downloadUrl;
+    }
+
+    public String getAccessDepartment() {
+        return accessDepartment;
+    }
+
+    public void setAccessDepartment(String accessDepartment) {
+        this.accessDepartment = accessDepartment;
+    }
+
+    public String getAccessCourse() {
+        return accessCourse;
+    }
+
+    public void setAccessCourse(String accessCourse) {
+        this.accessCourse = accessCourse;
     }
 
     public OffsetDateTime getCreatedAt() {

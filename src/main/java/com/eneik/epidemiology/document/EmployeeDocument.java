@@ -38,6 +38,14 @@ public class EmployeeDocument {
     @Column(name = "scientific_direction", length = 255)
     private String scientificDirection;
 
+    @com.fasterxml.jackson.annotation.JsonProperty("access_department")
+    @Column(name = "access_department", length = 255)
+    private String accessDepartment;
+
+    @com.fasterxml.jackson.annotation.JsonProperty("access_course")
+    @Column(name = "access_course", length = 255)
+    private String accessCourse;
+
     @com.fasterxml.jackson.annotation.JsonProperty("created_at")
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;
@@ -150,6 +158,22 @@ public class EmployeeDocument {
 
     public void setScientificDirection(String scientificDirection) {
         this.scientificDirection = scientificDirection;
+    }
+
+    public String getAccessDepartment() {
+        return accessDepartment;
+    }
+
+    public void setAccessDepartment(String accessDepartment) {
+        this.accessDepartment = accessDepartment;
+    }
+
+    public String getAccessCourse() {
+        return accessCourse;
+    }
+
+    public void setAccessCourse(String accessCourse) {
+        this.accessCourse = accessCourse;
     }
 
     public OffsetDateTime getCreatedAt() {

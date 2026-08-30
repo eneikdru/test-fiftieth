@@ -142,7 +142,8 @@ public class AuthController {
                 profile.fullName(),
                 internalRole,
                 profile.username().trim(),
-                profile.department()
+                profile.department(),
+                profile.courses()
             );
         } else {
             boolean needsUpdate = false;
@@ -152,10 +153,14 @@ public class AuthController {
             if (profile.department() != null && !profile.department().equals(user.getDepartment())) {
                 needsUpdate = true;
             }
+            if (profile.courses() != null && !profile.courses().equals(user.getCourses())) {
+                needsUpdate = true;
+            }
             if (needsUpdate) {
-                userService.updateRoleAndDepartmentAtomically(user.getId(), user.getRole(), internalRole != null ? internalRole : user.getRole(), profile.department());
+                userService.updateRoleAndDepartmentAtomically(user.getId(), user.getRole(), internalRole != null ? internalRole : user.getRole(), profile.department(), profile.courses());
                 user.setRole(internalRole != null ? internalRole : user.getRole());
                 user.setDepartment(profile.department());
+                user.setCourses(profile.courses());
             }
         }
 
@@ -285,13 +290,13 @@ public class AuthController {
         }
     }
 
-    private record MoodleProfile(String username, String moodleRole, String department, String email, String fullName) {}
+    private record MoodleProfile(String username, String moodleRole, String department, String email, String fullName, String courses) {}
 
     private MoodleProfile fetchMoodleProfile(String token) {
         if ("mock_valid_moodle_token".equals(token)) {
-            return new MoodleProfile("moodle_user", "Старший научный сотрудник", "Эпидемиология", "moodle@inst.ru", "Moodle User");
+            return new MoodleProfile("moodle_user", "Старший научный сотрудник", "Эпидемиология", "moodle@inst.ru", "Moodle User", "BIO-101");
         } else if ("mock_valid_new_moodle_token".equals(token)) {
-            return new MoodleProfile("new_moodle_user", "Администратор", "IT", "new_moodle@inst.ru", "New Moodle Admin");
+            return new MoodleProfile("new_moodle_user", "Администратор", "IT", "new_moodle@inst.ru", "New Moodle Admin", "");
         }
         return null;
     }
