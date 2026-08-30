@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>База знаний по эпидемиологии — Регистрация и Онбординг</title>
   <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -17,10 +17,7 @@
     async function loadComponent() {
       try {
         const response = await fetch('./src/components/RegistrationForm.svelte');
-        const sourceRaw = await response.text();
-          const source = sourceRaw
-              .replace("import ImprintModal from './ImprintModal.svelte';", "")
-              .replace("<ImprintModal on:close={() => showImprint = false} />", "<!-- ImprintModal Stubbed -->");
+        const source = await response.text();
 
         // Compile using the unpkg compiler to ESM
         const { js } = window.svelte.compile(source, {
