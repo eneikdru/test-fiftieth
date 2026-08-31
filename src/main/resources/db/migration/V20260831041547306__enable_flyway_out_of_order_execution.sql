@@ -1,0 +1,1 @@
+-- Enable Flyway outOfOrder migration execution configuration
