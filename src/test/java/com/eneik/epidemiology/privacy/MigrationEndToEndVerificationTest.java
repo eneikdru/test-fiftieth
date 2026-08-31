@@ -1,5 +1,9 @@
 package com.eneik.epidemiology.privacy;
 
+import io.zonky.test.db.AutoConfigureEmbeddedDatabase;
+import io.zonky.test.db.AutoConfigureEmbeddedDatabase.DatabaseProvider;
+import io.zonky.test.db.AutoConfigureEmbeddedDatabase.DatabaseType;
+
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,6 +22,7 @@ import java.time.OffsetDateTime;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 
+@AutoConfigureEmbeddedDatabase(type = DatabaseType.POSTGRES, provider = DatabaseProvider.ZONKY)
 @SpringBootTest
 @Transactional
 class MigrationEndToEndVerificationTest {

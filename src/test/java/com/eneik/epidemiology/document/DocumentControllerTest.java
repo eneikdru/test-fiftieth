@@ -1,5 +1,9 @@
 package com.eneik.epidemiology.document;
 
+import io.zonky.test.db.AutoConfigureEmbeddedDatabase;
+import io.zonky.test.db.AutoConfigureEmbeddedDatabase.DatabaseProvider;
+import io.zonky.test.db.AutoConfigureEmbeddedDatabase.DatabaseType;
+
 import com.eneik.epidemiology.security.JwtTokenProvider;
 import com.eneik.epidemiology.user.User;
 import com.eneik.epidemiology.user.UserRepository;
@@ -22,6 +26,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+@AutoConfigureEmbeddedDatabase(type = DatabaseType.POSTGRES, provider = DatabaseProvider.ZONKY)
 @SpringBootTest
 @AutoConfigureMockMvc
 @Transactional

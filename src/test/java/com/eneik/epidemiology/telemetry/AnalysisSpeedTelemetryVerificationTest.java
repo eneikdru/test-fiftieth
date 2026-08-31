@@ -1,5 +1,9 @@
 package com.eneik.epidemiology.telemetry;
 
+import io.zonky.test.db.AutoConfigureEmbeddedDatabase;
+import io.zonky.test.db.AutoConfigureEmbeddedDatabase.DatabaseProvider;
+import io.zonky.test.db.AutoConfigureEmbeddedDatabase.DatabaseType;
+
 import com.eneik.epidemiology.document.DossierReportRepository;
 import com.eneik.epidemiology.document.EmployeeDocument;
 import com.eneik.epidemiology.document.EmployeeDocumentRepository;
@@ -25,6 +29,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+@AutoConfigureEmbeddedDatabase(type = DatabaseType.POSTGRES, provider = DatabaseProvider.ZONKY)
 @SpringBootTest
 @AutoConfigureMockMvc
 @Transactional

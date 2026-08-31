@@ -1,5 +1,9 @@
 package com.eneik.epidemiology.categorization;
 
+import io.zonky.test.db.AutoConfigureEmbeddedDatabase;
+import io.zonky.test.db.AutoConfigureEmbeddedDatabase.DatabaseProvider;
+import io.zonky.test.db.AutoConfigureEmbeddedDatabase.DatabaseType;
+
 import com.eneik.epidemiology.telemetry.TelemetryEvent;
 import com.eneik.epidemiology.telemetry.TelemetryEventRepository;
 import com.eneik.epidemiology.telemetry.TelemetryService;
@@ -16,6 +20,7 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+@AutoConfigureEmbeddedDatabase(type = DatabaseType.POSTGRES, provider = DatabaseProvider.ZONKY)
 @SpringBootTest
 @Transactional
 class RootCauseCategorizationIntegrationTest {

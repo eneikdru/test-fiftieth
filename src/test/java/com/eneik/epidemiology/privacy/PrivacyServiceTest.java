@@ -1,5 +1,9 @@
 package com.eneik.epidemiology.privacy;
 
+import io.zonky.test.db.AutoConfigureEmbeddedDatabase;
+import io.zonky.test.db.AutoConfigureEmbeddedDatabase.DatabaseProvider;
+import io.zonky.test.db.AutoConfigureEmbeddedDatabase.DatabaseType;
+
 import com.eneik.epidemiology.document.DossierReport;
 import com.eneik.epidemiology.document.DossierReportRepository;
 import com.eneik.epidemiology.document.EmployeeDocument;
@@ -25,6 +29,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+@AutoConfigureEmbeddedDatabase(type = DatabaseType.POSTGRES, provider = DatabaseProvider.ZONKY)
 @SpringBootTest
 @Transactional
 class PrivacyServiceTest {

@@ -1,5 +1,9 @@
 package com.eneik.epidemiology.user;
 
+import io.zonky.test.db.AutoConfigureEmbeddedDatabase;
+import io.zonky.test.db.AutoConfigureEmbeddedDatabase.DatabaseProvider;
+import io.zonky.test.db.AutoConfigureEmbeddedDatabase.DatabaseType;
+
 import com.eneik.epidemiology.auth.PasswordRecoveryService;
 import com.eneik.epidemiology.auth.PasswordRecoveryTokenRepository;
 import org.junit.jupiter.api.DisplayName;
@@ -16,6 +20,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+@AutoConfigureEmbeddedDatabase(type = DatabaseType.POSTGRES, provider = DatabaseProvider.ZONKY)
 @SpringBootTest
 @Transactional
 class AuthenticationAccessE2ETest {
