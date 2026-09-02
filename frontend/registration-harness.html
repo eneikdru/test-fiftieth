@@ -7,33 +7,50 @@
   <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
+  <script type="importmap">
+    {
+      "imports": {
+        "svelte": "https://unpkg.com/svelte@3.59.2/index.mjs",
+        "svelte/internal": "https://unpkg.com/svelte@3.59.2/internal/index.mjs"
+      }
+    }
+  </script>
   <script src="https://unpkg.com/svelte@3.59.2/compiler.js"></script>
 </head>
 <body>
   <div id="app"></div>
   <script type="module">
-    import * as svelteInternal from 'https://unpkg.com/svelte@3.59.2/internal/index.mjs';
-
     async function loadComponent() {
       try {
-        const response = await fetch('./src/components/RegistrationForm.svelte');
-        const source = await response.text();
+        const formResp = await fetch('./src/components/RegistrationForm.svelte');
+        const formSource = await formResp.text();
 
-        // Compile using the unpkg compiler to ESM
-        const { js } = window.svelte.compile(source, {
-          format: 'esm',
-          name: 'RegistrationForm',
-          sveltePath: 'svelte' // Keep it basic, we will map it below
-        });
+        // Custom fetch/compile resolver for component imports
+        async function compileAndGetBlobUrl(componentPath) {
+          const resp = await fetch(componentPath);
+          const source = await resp.text();
+          const { js } = window.svelte.compile(source, {
+            format: 'esm',
+            name: componentPath.split('/').pop().replace('.svelte', ''),
+            sveltePath: 'svelte'
+          });
 
-        // Instead of data URI which might conflict, let's create a blob URL
-        // We replace standard 'svelte/internal' imports with full unpkg URL
-        const codeWithMjs = js.code.replace(/from "svelte\/internal"/g, `from "https://unpkg.com/svelte@3.59.2/internal/index.mjs"`);
+          let code = js.code;
+          // Replace relative .svelte imports with blob URLs
+          const importMatches = [...code.matchAll(/import\s+(\w+)\s+from\s+['"](\.\/[^'"]+\.svelte)['"]/g)];
+          for (const match of importMatches) {
+            const [fullMatch, importName, relativePath] = match;
+            const subPath = './src/components/' + relativePath.replace('./', '');
+            const subBlobUrl = await compileAndGetBlobUrl(subPath);
+            code = code.replace(fullMatch, `import ${importName} from '${subBlobUrl}'`);
+          }
 
-        const blob = new Blob([codeWithMjs], { type: 'application/javascript' });
-        const blobUrl = URL.createObjectURL(blob);
+          const blob = new Blob([code], { type: 'application/javascript' });
+          return URL.createObjectURL(blob);
+        }
 
-        const module = await import(blobUrl);
+        const mainBlobUrl = await compileAndGetBlobUrl('./src/components/RegistrationForm.svelte');
+        const module = await import(mainBlobUrl);
         const RegistrationForm = module.default;
 
         new RegistrationForm({
