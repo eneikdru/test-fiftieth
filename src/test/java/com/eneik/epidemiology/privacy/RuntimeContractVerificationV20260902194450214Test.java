@@ -1,6 +1,5 @@
 package com.eneik.epidemiology.privacy;
 
-import io.zonky.test.db.AutoConfigureEmbeddedDatabase;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,11 +17,6 @@ import java.sql.Connection;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
 @SpringBootTest
-@AutoConfigureEmbeddedDatabase(provider = AutoConfigureEmbeddedDatabase.DatabaseProvider.ZONKY, type = AutoConfigureEmbeddedDatabase.DatabaseType.POSTGRES)
-@TestPropertySource(properties = {
-    "zonky.test.database.provider=zonky",
-    "zonky.test.database.type=postgres"
-})
 @Transactional
 class RuntimeContractVerificationV20260902194450214Test {
 
