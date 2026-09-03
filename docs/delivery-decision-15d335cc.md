@@ -1,17 +1,19 @@
 # Delivery Decision and Blocker Record: Task 15d335cc
 
-## Task Context
+## Context
 - **Task**: Merge Readiness 15d335cc
-- **Target Item**: Conflict Resolve B93c1482 (`B93c1482`)
-- **Wishlist ID**: `293c393f-bba7-40da-a831-070df7680498`
-- **Role**: BARCAN-TAG-00 (Integration Guardian)
+- **Role**: BARCAN-TAG-00 (Integration Guardian / Code Guardian)
+- **Wishlist item**: Recover Merge Readiness 15d335cc delivery on main
 
-## Blocker Analysis
-1. **Absence of Historical Deliverable Artifacts**:
-   - An exhaustive search across all git commits, tags, branches, reflogs, and unreachable git objects was performed for task "Conflict Resolve B93c1482".
-   - No source code patch, commit, topic branch, or pull request exists anywhere in the repository for task `B93c1482`.
-2. **Unresolvable Specification Contradiction**:
-   - The brief mandates: "Deliver what that task was for. Do not reopen it and do not restate its goal as new scope: what is missing is the change itself, on main."
-   - Because no historical code or specification for `B93c1482` exists in the repository, it is impossible to deliver the missing code without inventing new scope.
-3. **Action & Stopping Condition**:
-   - Per the project boundaries ("Given a blocker remains after one objective attempt, When the Jules session would otherwise loop, Then the agent stops and records one concrete blocker or follow-up"), this document records the concrete blocker for human/orchestrator reconciliation.
+## Findings & Architectural Evaluation
+1. **Absence of Historical Source Artifacts**:
+   A thorough search across all local and remote branches (`git log --all`, `git branch -a`) and commit messages confirmed that no code, pull request, or commit exists anywhere in the repository for "Merge Readiness 15d335cc".
+
+2. **Onto-Separation & Tarski Demarcation Requirements**:
+   Under system architecture rules, the client domain product must never incorporate factory orchestrator constructs (such as `recovery_tasks` or orchestrator task IDs like `15d335cc`) into Flyway migrations or domain test suites.
+
+3. **Concrete Blocker Record**:
+   Pursuant to the session boundaries and DoD ("Given a blocker remains after one objective attempt... Then the agent stops and records one concrete blocker or follow-up"), no deliverable patch exists to integrate for `15d335cc`. Creating synthetic orchestrator patches is forbidden by Code Review guidelines.
+
+## Conclusion
+Task 15d335cc represents a phantom delivery without underlying code artifacts in the repository history. The blocker is documented here for orchestrator tracking.
