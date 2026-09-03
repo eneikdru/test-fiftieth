@@ -1,0 +1,5 @@
+-- Flyway Migration V20260903142600830: Document human reconciliation blocker for git clone timeout
+-- Mandatory version: V20260903142600830
+-- The deployment pipeline consistently times out after 120 seconds during the git clone operation.
+-- This represents an external infrastructure contradiction. The failure occurs before the repository files are accessed, meaning internal configuration changes cannot influence the external git clone operation timeout.
+-- This blocker requires escalation to the infrastructure orchestration layer to adjust the timeout parameters.
