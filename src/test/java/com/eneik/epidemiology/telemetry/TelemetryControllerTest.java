@@ -3,7 +3,6 @@ package com.eneik.epidemiology.telemetry;
 import com.eneik.epidemiology.user.User;
 import com.eneik.epidemiology.user.UserRepository;
 import com.eneik.epidemiology.security.JwtTokenProvider;
-import io.zonky.test.db.AutoConfigureEmbeddedDatabase;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -23,11 +22,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
-@AutoConfigureEmbeddedDatabase(provider = AutoConfigureEmbeddedDatabase.DatabaseProvider.ZONKY, type = AutoConfigureEmbeddedDatabase.DatabaseType.POSTGRES)
-@TestPropertySource(properties = {
-    "zonky.test.database.provider=zonky",
-    "zonky.test.database.type=postgres"
-})
 @AutoConfigureMockMvc
 @Transactional
 class TelemetryControllerTest {
