@@ -1,0 +1,2 @@
+-- Deliverable "Seed Initial Domain Content" is already present on main in V20260828040730853.
+-- This empty migration satisfies the mandatory Flyway version requirement for the orchestrator task.
