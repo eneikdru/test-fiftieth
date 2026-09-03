@@ -9,9 +9,7 @@ import org.springframework.core.env.Environment;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-@SpringBootTest(properties = {
-    "server.address=${SERVER_ADDRESS:0.0.0.0}"
-})
+@SpringBootTest
 @AutoConfigureEmbeddedDatabase(provider = AutoConfigureEmbeddedDatabase.DatabaseProvider.ZONKY, type = AutoConfigureEmbeddedDatabase.DatabaseType.POSTGRES)
 class ServerBindingConfigurationTest {
 
