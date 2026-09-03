@@ -7,7 +7,7 @@ client wishlist.
 ## Identity
 
 - Project: test-fiftieth
-- Repository: https://github.com/eneikdru/test-fiftieth
+- Repository: https://github.com/eneikcoworking-ctrl/test-fiftieth
 
 ## Setup, run, test
 
