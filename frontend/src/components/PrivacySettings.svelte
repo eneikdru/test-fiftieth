@@ -1,4 +1,8 @@
 <script>
+  /**
+   * Data Subject Rights Management Component (152-FZ Compliance)
+   * UI Slice for self-serve privacy rights, data export, and destructive erasure.
+   */
   import { createEventDispatcher } from 'svelte';
   import ImprintModal from './ImprintModal.svelte';
 
