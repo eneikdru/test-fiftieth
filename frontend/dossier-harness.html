@@ -4,15 +4,72 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dossier Search Mock</title>
+    <!-- Add Material Symbols Outlined font -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
     <style>
-        .dossier-container { padding: 20px; font-family: sans-serif; }
-        .search-section { margin-bottom: 20px; display: flex; gap: 10px; }
-        input { padding: 8px; flex-grow: 1; border: 1px solid #ccc; border-radius: 4px; }
-        button { padding: 8px 16px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        .dossier-container { padding: 1.25rem; font-family: sans-serif; }
+
+        .search-section {
+            margin-bottom: 1.25rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.625rem;
+        }
+
+        @media (min-width: 768px) {
+            .search-section {
+                flex-direction: row;
+            }
+        }
+
+        input, select { padding: 0.5rem; border: 1px solid #ccc; border-radius: 0.25rem; }
+        input { flex-grow: 1; }
+
+        button { padding: 0.5rem 1rem; background-color: #007bff; color: white; border: none; border-radius: 0.25rem; cursor: pointer; }
         button:disabled { background-color: #a0c4ff; cursor: not-allowed; }
-        .document-list { list-style: none; padding: 0; margin-bottom: 20px; }
-        .document-list li { padding: 8px; border-bottom: 1px solid #eee; }
-        .report-section { display: flex; align-items: center; }
+
+        .document-list { list-style: none; padding: 0; margin-bottom: 1.25rem; }
+        .document-list li { padding: 0.5rem; border-bottom: 1px solid #eee; }
+
+        .report-section { display: flex; align-items: center; justify-content: flex-end; }
+
+        .export-button {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: bold;
+        }
+
+        .export-button .icon {
+            font-size: 1.2em;
+        }
+
+        @media (max-width: 767px) {
+            .report-section {
+                justify-content: center;
+                position: fixed;
+                bottom: 1.5rem;
+                right: 1.5rem;
+                z-index: 50;
+            }
+
+            .export-button {
+                width: 3.5rem;
+                height: 3.5rem;
+                border-radius: 50%;
+                padding: 0;
+                justify-content: center;
+                box-shadow: 0 0.25rem 0.375rem rgba(0,0,0,0.3);
+            }
+
+            .export-button .icon {
+                font-size: 1.5rem;
+            }
+
+            .export-button span:not(.icon) {
+                display: none;
+            }
+        }
     </style>
 </head>
 <body>
@@ -20,12 +77,28 @@
         <div class="dossier-container">
             <div class="search-section">
                 <input type="text" id="search-query-input" placeholder="Фамилия сотрудника" />
+                <select id="filter-period" aria-label="Период">
+                    <option value="all">За все время</option>
+                    <option value="last_month">Конкретный месяц</option>
+                    <option value="last_3_months">Несколько месяцев (3)</option>
+                    <option value="last_year">Полный календарный год</option>
+                </select>
+                <select id="filter-direction" aria-label="Научное направление">
+                    <option value="all">Все направления</option>
+                    <option value="virology">Вирусология</option>
+                    <option value="bacteriology">Бактериология</option>
+                    <option value="epidemiology">Эпиднадзор</option>
+                    <option value="vaccinology">Вакцинопрофилактика</option>
+                </select>
                 <button id="search-button">Поиск</button>
             </div>
             <div id="results-container" style="display: none;">
                 <ul class="document-list" id="document-list"></ul>
                 <div class="report-section">
-                    <button id="generate-report-button">Сформировать итоговую справку</button>
+                    <button id="generate-report-button" class="export-button">
+                        <span class="material-symbols-outlined icon">download</span>
+                        <span>Сформировать итоговую справку</span>
+                    </button>
                 </div>
             </div>
         </div>
@@ -33,14 +106,20 @@
     <script>
         const searchButton = document.getElementById('search-button');
         const searchInput = document.getElementById('search-query-input');
+        const filterPeriod = document.getElementById('filter-period');
+        const filterDirection = document.getElementById('filter-direction');
         const resultsContainer = document.getElementById('results-container');
         const documentList = document.getElementById('document-list');
         const generateReportButton = document.getElementById('generate-report-button');
 
         searchButton.addEventListener('click', () => {
             if (!searchInput.value.trim()) return;
+
+            const directionText = filterDirection.options[filterDirection.selectedIndex].text;
+            const periodText = filterPeriod.options[filterPeriod.selectedIndex].text;
+
             documentList.innerHTML = `
-                <li>Приказ о назначении №42</li>
+                <li>Приказ о назначении №42 (${directionText}, ${periodText})</li>
                 <li>Выписка из учёного совета от 12.05.2023</li>
                 <li>Отчёт о командировке (Самара)</li>
             `;
@@ -52,13 +131,25 @@
             generateReportButton.innerHTML = '<span id="loading-spinner">Загрузка...</span>';
             setTimeout(() => {
                 generateReportButton.disabled = false;
-                generateReportButton.innerHTML = 'Сформировать итоговую справку';
-                const notice = document.createElement('div');
-                notice.setAttribute('role', 'status');
-                notice.setAttribute('aria-live', 'polite');
-                notice.style.cssText = 'margin-top: 15px; padding: 10px; background-color: #d9e3f1; color: #001a40; border-radius: 4px; font-size: 14px; border: 1px solid #003f87;';
-                notice.innerText = '✓ Итоговая справка успешно сформирована.';
-                resultsContainer.appendChild(notice);
+                generateReportButton.innerHTML = '<span class="material-symbols-outlined icon">download</span><span>Сформировать итоговую справку</span>';
+
+                if (!document.getElementById('feedback-notice')) {
+                    const notice = document.createElement('div');
+                    notice.id = 'feedback-notice';
+                    notice.setAttribute('role', 'status');
+                    notice.setAttribute('aria-live', 'polite');
+                    notice.style.cssText = 'margin-top: 15px; padding: 10px; background-color: #d9e3f1; color: #001a40; border-radius: 4px; font-size: 14px; border: 1px solid #003f87;';
+                    notice.innerText = '✓ Итоговая справка успешно сформирована.';
+                    resultsContainer.appendChild(notice);
+                }
+
+                // Download a mock PDF file
+                const a = document.createElement('a');
+                a.href = 'data:application/pdf;base64,JVBERi0xLjQKJcOkw7zDtsOfCjIgMCBvYmoKPDwvTGVuZ3RoIDMgMCBSL0ZpbHRlci9GbGF0ZURlY29kZT4+CnN0cmVhbQp4nDPQM1Qo5ypUMFAwALJMLY31jBQK04sSSxIVMvNzlXADFhB2uQplVQrlV1cUK2TmphZoOufn5xclFqUml2Tm5ykk5+elFhQrFJanFuWnKmTmJ6ZkZucpOOeX5OYlp6YWZabml2SmKhTnF+WklmTmpxaVFOYllqQWK5SlpqUqZGbmpQDFMjLzUoFimZl5KQqZJXmJmXkKzgX5RSUKOal5JZkKmcn5eVwF+UX5yRkK+fkp5Ym5iZk5qblJqQpGhgYKEB8DQx0F+0IFR0cFR6DEmFhdxzQlx6TEFJAyUwVQ/tWpXIUKtgoZibmpxUoGBnADjAwMjAwMFEpSi4sVkjLz0hVy8lMKS1IVchLLU1KLFIz0DEyMDGz0DM3NDQyUDFR0FfLz04sSc0tKFAwNDMwMDFQ0FQz0DAxMdBTyU4pTi1R0FErzc1LzFfLLFHLB5tTVK3h5+QMA7YtWwA0KZW5kc3RyZWFtCmVuZG9iagoKCjMgMCBvYmoKNDI4CmVuZG9iagoKMSAwIG9iago8PC9UeXBlL1BhZ2UvTWVkaWFCb3ggWzAgMCA1OTUgODQyXQovUmVzb3VyY2VzPDwvRm9udDw8L0YxIDQgMCBSPj4+PgovQ29udGVudHMgMiAwIFIKL1BhcmVudCA1IDAgUgo+PgplbmRvYmoKCjQgMCBvYmoKPDwvVHlwZS9Gb250L1N1YnR5cGUvVHlwZTEvQmFzZUZvbnQvSGVsdmV0aWNhPj4KZW5kb2JqCgo1IDAgb2JqCjw8L1R5cGUvUGFnZXMvQ291bnQgMS9LaWRzWzEgMCBSXT4+CmVuZG9iagoKNiAwIG9iago8PC9UeXBlL0NhdGFsb2cvUGFnZXMgNSAwIFI+PgplbmRvYmoKCjcgMCBvYmoKPDwvUHJvZHVjZXIoZ2F1c3NfaW5pdF8yMDIzKS9DcmVhdGlvbkRhdGUoRDoyMDIzMDUyNDE0MjUzMlopL01vZERhdGUoRDoyMDIzMDUyNDE0MjUzMlopPj4KZW5kb2JqCgp4cmVmCjAgOAowMDAwMDAwMDAwIDY1NTM1IGYgCjAwMDAwMDA1MjUgMDAwMDAgbiAKMDAwMDAwMDAxOSAwMDAwMCBuIAowMDAwMDAwNTA1IDAwMDAwIG4gCjAwMDAwMDA2MzUgMDAwMDAgbiAKMDAwMDAwMDcyMyAwMDAwMCBuIAowMDAwMDAwNzgxIDAwMDAwIG4gCjAwMDAwMDA4MzAgMDAwMDAgbiAKdHJhaWxlcgo8PC9TaXplIDgvUm9vdCA2IDAgUi9JbmZvIDcgMCBSL0lEIFs8MTQzQ0Y3MUE5QTM0NTE4NjhBNENCODMwREYyMjQyQTM+PDE0M0NGNzFBOUEzNDUxODY4QTRDQjgzMERGMjI0MkEzPl0+PgpzdGFydHhyZWYKOTQ3CiUlRU9GCg==';
+                a.download = 'dossier-report.pdf';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
             }, 1000);
         });
     </script>
