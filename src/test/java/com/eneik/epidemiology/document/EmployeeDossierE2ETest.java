@@ -59,8 +59,8 @@ public class EmployeeDossierE2ETest {
         mockMvc.perform(get("/api/v1/dossier/documents")
                         .param("employee_id", "EMP-E2E-1"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(2)))
-                .andExpect(jsonPath("$[*].title", org.hamcrest.Matchers.containsInAnyOrder("Initial Order E2E", "Initial Report E2E")));
+                .andExpect(jsonPath("$.results", hasSize(2)))
+                .andExpect(jsonPath("$.results[*].title", org.hamcrest.Matchers.containsInAnyOrder("Initial Order E2E", "Initial Report E2E")));
     }
 
 

@@ -71,9 +71,9 @@ class EmployeeDossierAnalyticsControllerTest {
                         .param("scientific_direction", "VIRUSOLOGY")
                         .param("doc_type", "REPORT"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].title").value("Отчет 1"))
-                .andExpect(jsonPath("$[0].doc_type").value("REPORT"));
+                .andExpect(jsonPath("$.results", hasSize(1)))
+                .andExpect(jsonPath("$.results[0].title").value("Отчет 1"))
+                .andExpect(jsonPath("$.results[0].doc_type").value("REPORT"));
     }
 
     @Test

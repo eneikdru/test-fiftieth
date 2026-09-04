@@ -66,11 +66,11 @@ public class EmployeeDossierApiSliceVerificationTest {
                         .param("doc_type", "ORDER"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].employee_id").value("EMP-101"))
-                .andExpect(jsonPath("$[0].doc_type").value("ORDER"))
-                .andExpect(jsonPath("$[0].title").value("Приказ о назначении исследователем"))
-                .andExpect(jsonPath("$[0].details").value("Приказ №101/К"));
+                .andExpect(jsonPath("$.results", hasSize(1)))
+                .andExpect(jsonPath("$.results[0].employee_id").value("EMP-101"))
+                .andExpect(jsonPath("$.results[0].doc_type").value("ORDER"))
+                .andExpect(jsonPath("$.results[0].title").value("Приказ о назначении исследователем"))
+                .andExpect(jsonPath("$.results[0].details").value("Приказ №101/К"));
     }
 
 

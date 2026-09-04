@@ -65,10 +65,10 @@ class EmployeeDossierApiSliceRecoveryTest {
                         .param("scientific_direction", "EPIDEMIOLOGY"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].employee_id").value("EMP-202"))
-                .andExpect(jsonPath("$[0].employee_surname").value("Иванов"))
-                .andExpect(jsonPath("$[0].scientific_direction").value("EPIDEMIOLOGY"));
+                .andExpect(jsonPath("$.results", hasSize(1)))
+                .andExpect(jsonPath("$.results[0].employee_id").value("EMP-202"))
+                .andExpect(jsonPath("$.results[0].employee_surname").value("Иванов"))
+                .andExpect(jsonPath("$.results[0].scientific_direction").value("EPIDEMIOLOGY"));
     }
 
     @WithMockUser(roles = "USER")

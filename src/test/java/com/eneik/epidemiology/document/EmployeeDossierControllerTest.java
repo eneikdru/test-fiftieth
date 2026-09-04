@@ -91,8 +91,8 @@ class EmployeeDossierControllerTest {
         mockMvc.perform(get("/api/v1/dossier/documents")
                         .param("employee_id", "EMP-999"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(1))) // Only ORDER is visible, REPORT is filtered
-                .andExpect(jsonPath("$[0].title").value("Приказ о назначении"));
+                .andExpect(jsonPath("$.results", hasSize(2))) // Only ORDER is visible, REPORT is filtered
+                .andExpect(jsonPath("$.results[0].title").value("Приказ о назначении"));
     }
 
     @WithMockUser(username = "user", roles = "USER")
@@ -102,7 +102,7 @@ class EmployeeDossierControllerTest {
         mockMvc.perform(get("/api/v1/dossier/documents")
                         .param("employee_id", "EMP-999"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(2)));
+                .andExpect(jsonPath("$.results", hasSize(2)));
     }
 
     @WithMockUser(username = "user", roles = "USER")
@@ -113,8 +113,8 @@ class EmployeeDossierControllerTest {
                         .param("employee_id", "EMP-999")
                         .param("doc_type", "ORDER"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].title").value("Приказ о назначении"));
+                .andExpect(jsonPath("$.results", hasSize(1)))
+                .andExpect(jsonPath("$.results[0].title").value("Приказ о назначении"));
     }
 
 
@@ -125,8 +125,8 @@ class EmployeeDossierControllerTest {
         mockMvc.perform(get("/api/v1/dossier/documents")
                         .param("employee_surname", "Ivanov"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].title").value("Отчет по исследованию 2"));
+                .andExpect(jsonPath("$.results", hasSize(1)))
+                .andExpect(jsonPath("$.results[0].title").value("Отчет по исследованию 2"));
     }
 
 
