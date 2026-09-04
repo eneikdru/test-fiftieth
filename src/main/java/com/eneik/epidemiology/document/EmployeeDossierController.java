@@ -53,25 +53,15 @@ public class EmployeeDossierController {
         String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
         User currentUser = userRepository.findByUsername(currentUsername).orElse(null);
 
-        List<EmployeeDocument> documents = employeeDocumentRepository.searchEmployeeDocuments(
-                employeeId, employeeSurname, docType, scientificDirection, query, fromDate, toDate, false, null, null, org.springframework.data.domain.Pageable.unpaged()
-        ).getContent();
+        boolean applyFilter = currentUser != null && !"ADMIN".equals(currentUser.getRole());
+        String department = currentUser != null ? currentUser.getDepartment() : null;
+        String course = currentUser != null ? currentUser.getCourses() : null;
 
-        if (currentUser != null && !"ADMIN".equals(currentUser.getRole())) {
-            documents = documents.stream().filter(d -> {
-                if (!"STRAIN_ISOLATION".equals(d.getDocType()) && !"REPORT".equals(d.getDocType())) return true;
-                if (d.getAccessDepartment() == null && d.getAccessCourse() == null) return true;
-                boolean depMatch = d.getAccessDepartment() != null && d.getAccessDepartment().equals(currentUser.getDepartment());
-                boolean courseMatch = d.getAccessCourse() != null && currentUser.getCourses() != null && currentUser.getCourses().contains(d.getAccessCourse());
-                return depMatch || courseMatch;
-            }).toList();
-        }
+        org.springframework.data.domain.Page<EmployeeDocument> pageResult = employeeDocumentRepository.searchEmployeeDocuments(
+                employeeId, employeeSurname, docType, scientificDirection, query, fromDate, toDate, applyFilter, department, course, org.springframework.data.domain.PageRequest.of(page, size)
+        );
 
-        int start = Math.min(page * size, documents.size());
-        int end = Math.min((start + size), documents.size());
-        org.springframework.data.domain.Page<EmployeeDocument> pagedResult = new org.springframework.data.domain.PageImpl<>(documents.subList(start, end), org.springframework.data.domain.PageRequest.of(page, size), documents.size());
-
-        return ResponseEntity.ok(pagedResult);
+        return ResponseEntity.ok(pageResult);
     }
 
     @PostMapping("/reports")

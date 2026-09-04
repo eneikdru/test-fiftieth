@@ -21,7 +21,7 @@ public interface EmployeeDocumentRepository extends JpaRepository<EmployeeDocume
            "AND (:employeeSurname IS NULL OR d.employeeSurname = :employeeSurname) " +
            "AND (:docType IS NULL OR d.docType = :docType) " +
            "AND (:scientificDirection IS NULL OR d.scientificDirection = :scientificDirection) " +
-           "AND (:applyFilter = false OR d.docType NOT IN ('STRAIN_ISOLATION', 'REPORT') OR (d.accessDepartment IS NULL AND d.accessCourse IS NULL) OR (:department IS NOT NULL AND d.accessDepartment = :department) OR (:course IS NOT NULL AND d.accessCourse IS NOT NULL AND :course LIKE CONCAT('%', d.accessCourse, '%'))) AND (:query IS NULL OR LOWER(CAST(d.title AS string)) LIKE LOWER(CONCAT('%', CAST(:query AS string), '%')) OR LOWER(CAST(d.details AS string)) LIKE LOWER(CONCAT('%', CAST(:query AS string), '%'))) " +
+           "AND (:applyFilter = false OR d.docType NOT IN ('STRAIN_ISOLATION', 'REPORT') OR (d.accessDepartment IS NULL AND d.accessCourse IS NULL) OR (:department IS NOT NULL AND d.accessDepartment = :department) OR (:course IS NOT NULL AND d.accessCourse IS NOT NULL AND d.accessCourse LIKE CONCAT('%', :course, '%'))) AND (:query IS NULL OR LOWER(CAST(d.title AS string)) LIKE LOWER(CONCAT('%', CAST(:query AS string), '%')) OR LOWER(CAST(d.details AS string)) LIKE LOWER(CONCAT('%', CAST(:query AS string), '%'))) " +
            "AND (CAST(:fromDate AS java.time.LocalDate) IS NULL OR d.docDate >= :fromDate) " +
            "AND (CAST(:toDate AS java.time.LocalDate) IS NULL OR d.docDate <= :toDate) " +
            "ORDER BY d.docDate DESC")
