@@ -30,7 +30,11 @@ public class TaskRecoveryService {
             return false;
         }
         String failureReason = task.getFailureReason();
-        return failureReason != null && failureReason.contains("reconcileClosedUnmergedPullRequest");
+        return failureReason != null && (
+            failureReason.contains("reconcileClosedUnmergedPullRequest") ||
+            failureReason.contains("poka-yoke") ||
+            failureReason.contains("iteration-admission poka-yoke")
+        );
     }
 
     @Transactional

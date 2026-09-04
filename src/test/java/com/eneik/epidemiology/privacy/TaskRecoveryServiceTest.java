@@ -45,6 +45,15 @@ class TaskRecoveryServiceTest {
     }
 
     @Test
+    @DisplayName("Given task failed due to poka-yoke retirement, When isEligibleRetiredPlanTask is evaluated, Then it returns true")
+    void testIsEligibleRetiredPlanTask_MatchesPokaYokeFailure() {
+        RecoveryTask task = new RecoveryTask();
+        task.setFailureReason("Blocked task retired by iteration-admission poka-yoke; no child work created");
+
+        assertTrue(taskRecoveryService.isEligibleRetiredPlanTask(task));
+    }
+
+    @Test
     @DisplayName("Given task with other failure reason or null, When isEligibleRetiredPlanTask is evaluated, Then it returns false")
     void testIsEligibleRetiredPlanTask_DoesNotMatchOtherFailures() {
         RecoveryTask task1 = new RecoveryTask();
