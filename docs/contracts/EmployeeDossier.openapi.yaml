@@ -52,15 +52,44 @@ paths:
             type: string
             format: date
             example: "2023-12-31"
+        - name: page
+          in: query
+          description: Номер страницы (начиная с 0)
+          required: false
+          schema:
+            type: integer
+            default: 0
+        - name: size
+          in: query
+          description: Количество элементов на странице
+          required: false
+          schema:
+            type: integer
+            default: 20
       responses:
         '200':
           description: Успешный выбор документов досье
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/EmployeeDocumentResponse'
+                type: object
+                properties:
+                  content:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/EmployeeDocumentResponse'
+                  totalElements:
+                    type: integer
+                    description: Общее количество элементов
+                  totalPages:
+                    type: integer
+                    description: Общее количество страниц
+                  size:
+                    type: integer
+                    description: Размер страницы
+                  number:
+                    type: integer
+                    description: Текущий номер страницы
         '400':
           description: Некорректные параметры запроса
           content:
