@@ -27,6 +27,11 @@
                 <div class="report-section">
                     <button id="generate-report-button">Сформировать итоговую справку</button>
                 </div>
+                <div class="pagination-section" id="pagination-section" style="display: none; margin-top: 20px; justify-content: space-between; align-items: center;">
+                    <button id="prev-page-btn" aria-label="Предыдущая страница">Назад</button>
+                    <span id="page-indicator">Страница 1</span>
+                    <button id="next-page-btn" aria-label="Следующая страница">Вперед</button>
+                </div>
             </div>
         </div>
     </div>
@@ -36,15 +41,59 @@
         const resultsContainer = document.getElementById('results-container');
         const documentList = document.getElementById('document-list');
         const generateReportButton = document.getElementById('generate-report-button');
+        const paginationSection = document.getElementById('pagination-section');
+        const prevPageBtn = document.getElementById('prev-page-btn');
+        const nextPageBtn = document.getElementById('next-page-btn');
+        const pageIndicator = document.getElementById('page-indicator');
+
+        let currentPage = 0;
+        let pageSize = 10;
+        let hasNextPage = false;
+
+        async function fetchDossierData() {
+            if (!searchInput.value.trim()) return;
+            try {
+                const res = await fetch(`/api/v1/dossier/documents?employee_surname=${encodeURIComponent(searchInput.value)}&page=${currentPage}&size=${pageSize}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    documentList.innerHTML = '';
+                    data.forEach(doc => {
+                        const li = document.createElement('li');
+                        li.innerText = `📄 ${doc.title || doc.id}`;
+                        documentList.appendChild(li);
+                    });
+
+                    hasNextPage = data.length === pageSize;
+
+                    pageIndicator.innerText = `Страница ${currentPage + 1}`;
+                    prevPageBtn.disabled = currentPage === 0;
+                    nextPageBtn.disabled = !hasNextPage;
+
+                    resultsContainer.style.display = 'block';
+                    paginationSection.style.display = 'flex';
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
 
         searchButton.addEventListener('click', () => {
-            if (!searchInput.value.trim()) return;
-            documentList.innerHTML = `
-                <li>Приказ о назначении №42</li>
-                <li>Выписка из учёного совета от 12.05.2023</li>
-                <li>Отчёт о командировке (Самара)</li>
-            `;
-            resultsContainer.style.display = 'block';
+            currentPage = 0;
+            fetchDossierData();
+        });
+
+        prevPageBtn.addEventListener('click', () => {
+            if (currentPage > 0) {
+                currentPage--;
+                fetchDossierData();
+            }
+        });
+
+        nextPageBtn.addEventListener('click', () => {
+            if (hasNextPage) {
+                currentPage++;
+                fetchDossierData();
+            }
         });
 
         generateReportButton.addEventListener('click', () => {

@@ -1,0 +1,38 @@
+--- a/e2e/navigation-hub.spec.mjs
++++ b/e2e/navigation-hub.spec.mjs
+@@ -35,6 +35,7 @@
+     });
+
+     await page.click('#panel-dossier #search-button');
++    await expect(page.locator('#document-list')).toContainText('Приказ о назначении №42');
+
+     // Click Privacy tab (#tab-privacy)
+     await page.click('#tab-privacy');
+--- a/e2e/dossier-search.spec.mjs
++++ b/e2e/dossier-search.spec.mjs
+@@ -5,14 +5,6 @@
+     test('Dossier search flow', async ({ page }) => {
+         await page.goto('/dossier-harness.html');
+         await page.fill('#search-query-input', 'Иванов');
+-        await page.click('#search-button');
+-        // The API returns empty since it's just a test, we verify the container gets displayed.
+-        // Or wait for resultsContainer to not have display: none
+-        // but playwright waits for visible.
+-        // We can just verify the button is clickable and the input has value.
+-        await expect(page.locator('#search-query-input')).toHaveValue('Иванов');
+-        // Let's also check if results container becomes visible or at least doesn't crash
+-        // Actually, since there's no real backend for this standalone harness test running in playwright,
+-        // the fetch might fail, so resultsContainer might remain hidden.
+-        // Let's mock the API call
+         await page.route('**/api/v1/dossier/documents*', route => {
+             route.fulfill({
+                 status: 200,
+                 contentType: 'application/json',
+                 body: JSON.stringify([{ id: 1, title: 'Document 1' }])
+             });
+         });
+         await page.click('#search-button');
++        await expect(page.locator('#search-query-input')).toHaveValue('Иванов');
+         await expect(page.locator('#document-list')).toBeVisible();
+
+         await page.click('#generate-report-button');
