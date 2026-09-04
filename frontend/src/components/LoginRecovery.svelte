@@ -7,7 +7,7 @@
   onMount(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const errorParam = urlParams.get('error');
-    const tokenParam = urlParams.get('token');
+    const tokenParam = urlParams.get('token') || urlParams.get('recovery_token');
     const modeParam = urlParams.get('mode');
 
     if (tokenParam || modeParam === 'set_password') {
@@ -190,7 +190,9 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           token: resetToken,
-          password: newPassword
+          recovery_token: resetToken,
+          password: newPassword,
+          new_password: newPassword
         })
       });
 
