@@ -110,4 +110,21 @@ public class EmployeeDossierApiSliceVerificationTest {
                 .andExpect(jsonPath("$.status").value("COMPLETED"))
                 .andExpect(jsonPath("$.document_count").value(2));
     }
+
+    @WithMockUser(roles = "USER")
+    @Test
+    @DisplayName("Given a completed report ID, When downloading the report, Then returns a valid PDF byte stream.")
+    void testDownloadDossierReportValidPdf() throws Exception {
+        DossierReport report = new DossierReport("EMP-101", "SUMMARY_STANDARD", "COMPLETED", "Сводная справка по сотруднику EMP-101: 2 документов.", 2, "/api/v1/dossier/reports/1/download");
+        report = dossierReportRepository.save(report);
+
+        byte[] pdfBytes = mockMvc.perform(get("/api/v1/dossier/reports/{id}/download", report.getId()))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Content-Disposition", "attachment; filename=\"dossier_report_" + report.getId() + ".pdf\""))
+                .andExpect(content().contentType(MediaType.APPLICATION_PDF))
+                .andReturn().getResponse().getContentAsByteArray();
+
+        org.junit.jupiter.api.Assertions.assertTrue(pdfBytes.length > 4);
+        org.junit.jupiter.api.Assertions.assertEquals("%PDF", new String(pdfBytes, 0, 4));
+    }
 }

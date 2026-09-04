@@ -246,7 +246,8 @@ public class EmployeeDossierAnalyticsController {
                         com.itextpdf.text.Document pdfDoc = new com.itextpdf.text.Document();
                         com.itextpdf.text.pdf.PdfWriter.getInstance(pdfDoc, out);
                         pdfDoc.open();
-                        pdfDoc.add(new com.itextpdf.text.Paragraph(report.getSummaryText() != null ? report.getSummaryText() : "Отчет пуст"));
+                        com.itextpdf.text.Font font = com.itextpdf.text.FontFactory.getFont(com.itextpdf.text.FontFactory.HELVETICA, "Cp1251", com.itextpdf.text.pdf.BaseFont.NOT_EMBEDDED, 12);
+                        pdfDoc.add(new com.itextpdf.text.Paragraph(report.getSummaryText() != null ? report.getSummaryText() : "Отчет пуст", font));
                         pdfDoc.close();
                         content = out.toByteArray();
                     } catch (Exception e) {

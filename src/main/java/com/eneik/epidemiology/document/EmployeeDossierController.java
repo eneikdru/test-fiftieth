@@ -13,7 +13,10 @@ import com.eneik.epidemiology.user.User;
 import com.eneik.epidemiology.user.UserRepository;
 
 import com.itextpdf.text.Document;
+import com.itextpdf.text.Font;
+import com.itextpdf.text.FontFactory;
 import com.itextpdf.text.Paragraph;
+import com.itextpdf.text.pdf.BaseFont;
 import com.itextpdf.text.pdf.PdfWriter;
 import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
@@ -238,7 +241,8 @@ public class EmployeeDossierController {
                         com.itextpdf.text.pdf.PdfWriter.getInstance(document, baos);
                         document.open();
                         String text = report.getSummaryText() != null ? report.getSummaryText() : "Отчет пуст";
-                        document.add(new com.itextpdf.text.Paragraph(text));
+                        Font font = FontFactory.getFont(FontFactory.HELVETICA, "Cp1251", BaseFont.NOT_EMBEDDED, 12);
+                        document.add(new Paragraph(text, font));
                         document.close();
 
                         byte[] content = baos.toByteArray();
