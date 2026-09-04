@@ -1,0 +1,44 @@
+name: Backup and Restore Verification
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  push:
+    branches:
+      - main
+  schedule:
+    - cron: '0 3 * * *'
+
+jobs:
+  verify-backup-restore:
+    runs-on: ubuntu-latest
+    services:
+      db:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: epidemiology_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y sqlite3 postgresql-client
+
+      - name: Run Restore Verification
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: epidemiology_db
+          POSTGRES_HOST: localhost
+          POSTGRES_PORT: 5432
+        run: bash scripts/test-restore-verify.sh
