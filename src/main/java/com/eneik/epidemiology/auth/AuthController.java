@@ -32,9 +32,6 @@ public class AuthController {
     public record LoginRequest(String username, String password) {}
     public record RefreshTokenRequest(String refresh_token) {}
     public record LogoutRequest(String refresh_token) {}
-    public record PasswordRecoveryRequest(String identity) {}
-    public record PasswordResetConfirmationRequest(String recovery_token, String new_password) {}
-
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody RegistrationRequest request) {
         if (request == null || isBlank(request.username()) || isBlank(request.password()) || isBlank(request.email()) || isBlank(request.full_name())) {
@@ -248,64 +245,6 @@ public class AuthController {
                 "success", true,
                 "message", "Успешный выход из системы."
         ));
-    }
-
-    @PostMapping("/recovery/request")
-    public ResponseEntity<?> requestRecovery(@RequestBody PasswordRecoveryRequest request) {
-        if (request == null || isBlank(request.identity())) {
-            return ResponseEntity.badRequest().body(Map.of(
-                    "error_code", "INVALID_IDENTITY",
-                    "message", "Укажите имя пользователя или адрес электронной почты.",
-                    "timestamp", OffsetDateTime.now().toString()
-            ));
-        }
-
-        try {
-            PasswordRecoveryService.RecoveryResponse response = passwordRecoveryService.initiateRecovery(request.identity().trim());
-            return ResponseEntity.ok(Map.of(
-                    "recovery_id", response.recoveryId().toString(),
-                    "recovery_token", response.recoveryToken(),
-                    "recovery_link", response.recoveryLink(),
-                    "message", response.message()
-            ));
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
-                    "error_code", "USER_NOT_FOUND",
-                    "message", "Пользователь с указанной учетной записью не найден.",
-                    "timestamp", OffsetDateTime.now().toString()
-            ));
-        }
-    }
-
-    @PostMapping("/recovery/reset")
-    public ResponseEntity<?> confirmReset(@RequestBody PasswordResetConfirmationRequest request) {
-        if (request == null || isBlank(request.recovery_token()) || isBlank(request.new_password())) {
-            return ResponseEntity.badRequest().body(Map.of(
-                    "error_code", "INVALID_REQUEST",
-                    "message", "Необходимо указать токен восстановления и новый пароль.",
-                    "timestamp", OffsetDateTime.now().toString()
-            ));
-        }
-
-        try {
-            passwordRecoveryService.confirmReset(request.recovery_token(), request.new_password());
-            return ResponseEntity.ok(Map.of(
-                    "success", true,
-                    "message", "Пароль успешно изменен."
-            ));
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
-                    "error_code", "TOKEN_NOT_FOUND",
-                    "message", e.getMessage(),
-                    "timestamp", OffsetDateTime.now().toString()
-            ));
-        } catch (IllegalStateException e) {
-            return ResponseEntity.badRequest().body(Map.of(
-                    "error_code", "TOKEN_INVALID",
-                    "message", e.getMessage(),
-                    "timestamp", OffsetDateTime.now().toString()
-            ));
-        }
     }
 
     private record MoodleProfile(String username, String moodleRole, String department, String email, String fullName, String courses) {}

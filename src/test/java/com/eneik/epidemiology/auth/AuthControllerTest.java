@@ -274,13 +274,11 @@ class AuthControllerTest {
         // Execute via MockMvc with email identity
         String requestBody = "{\"identity\":\"petrov@inst.ru\"}";
 
-        mockMvc.perform(post("/api/v1/auth/recovery/request")
+        mockMvc.perform(post("/api/v1/recovery/request")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(requestBody))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.recovery_id", notNullValue()))
-                .andExpect(jsonPath("$.recovery_token", notNullValue()))
-                .andExpect(jsonPath("$.recovery_link", notNullValue()))
                 .andExpect(jsonPath("$.message", is("Инструкции по восстановлению пароля отправлены на ваш электронный адрес.")));
     }
 
@@ -291,7 +289,7 @@ class AuthControllerTest {
 
         String requestBody = "{\"identity\":\"sidorov_v\"}";
 
-        MvcResult result = mockMvc.perform(post("/api/v1/auth/recovery/request")
+        MvcResult result = mockMvc.perform(post("/api/v1/recovery/request")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(requestBody))
                 .andExpect(status().isOk())
@@ -299,14 +297,18 @@ class AuthControllerTest {
 
         String responseJson = result.getResponse().getContentAsString();
         Map<?, ?> responseMap = objectMapper.readValue(responseJson, Map.class);
-        String recoveryToken = (String) responseMap.get("recovery_token");
+
+        // We have to extract the token directly from the database or the service because the api does not return it anymore.
+        // Doing this manually since it was removed from the response per contract
+        String recoveryToken = recoveryTokenRepository.findAll().stream().filter(t -> t.getUser().getUsername().equals("sidorov_v")).findFirst().get().getToken();
+
 
         String resetBody = String.format(
                 "{\"recovery_token\":\"%s\",\"new_password\":\"NewStrongPass2026!\"}",
                 recoveryToken
         );
 
-        mockMvc.perform(post("/api/v1/auth/recovery/reset")
+        mockMvc.perform(post("/api/v1/recovery/reset")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(resetBody))
                 .andExpect(status().isOk())
