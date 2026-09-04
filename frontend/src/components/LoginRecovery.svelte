@@ -4,10 +4,17 @@
 
   const dispatch = createEventDispatcher();
 
-
   onMount(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const errorParam = urlParams.get('error');
+    const tokenParam = urlParams.get('token');
+    const modeParam = urlParams.get('mode');
+
+    if (tokenParam || modeParam === 'set_password') {
+      resetToken = tokenParam || 'demo-reset-token';
+      mode = 'set_password';
+    }
+
     if (errorParam === 'sso_failed') {
       errorMessage = 'Ошибка аутентификации через Moodle. Пожалуйста, используйте локальный вход.';
     } else if (errorParam) {
@@ -21,13 +28,19 @@
   }
 
   // State
-  let mode = 'login'; // 'login' | 'recovery' | 'recovery_sent' | 'authenticated'
+  let mode = 'login'; // 'login' | 'recovery' | 'recovery_sent' | 'set_password' | 'password_reset_success' | 'authenticated'
   let username = '';
   let password = '';
   let recoveryIdentity = '';
+  let newPassword = '';
+  let confirmPassword = '';
+  let resetToken = '';
+
   let isLoading = false;
   let errorMessage = '';
   let successMessage = '';
+  let fieldErrors = {};
+
   let currentUser = null; // { id, username, role, full_name, email }
   let showImprint = false;
 
@@ -38,6 +51,7 @@
     event.preventDefault();
     errorMessage = '';
     successMessage = '';
+    fieldErrors = {};
 
     if (!username.trim() || !password) {
       errorMessage = 'Заполните все обязательные поля.';
@@ -98,9 +112,17 @@
     event.preventDefault();
     errorMessage = '';
     successMessage = '';
+    fieldErrors = {};
 
     if (!recoveryIdentity.trim()) {
-      errorMessage = 'Пожалуйста, укажите ваш email или имя пользователя.';
+      fieldErrors.recoveryIdentity = 'Пожалуйста, укажите ваш email или имя пользователя.';
+      errorMessage = 'Укажите адрес электронной почты или логин для восстановления.';
+      return;
+    }
+
+    if (recoveryIdentity.includes('@') && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recoveryIdentity.trim())) {
+      fieldErrors.recoveryIdentity = 'Введите корректный адрес электронной почты.';
+      errorMessage = 'Указан некорректный адрес электронной почты.';
       return;
     }
 
@@ -138,6 +160,62 @@
     }
   }
 
+  async function handleSetPassword(event) {
+    event.preventDefault();
+    errorMessage = '';
+    successMessage = '';
+    fieldErrors = {};
+
+    if (!newPassword) {
+      fieldErrors.newPassword = 'Введите новый пароль.';
+    } else if (newPassword.length < 8) {
+      fieldErrors.newPassword = 'Пароль должен содержать не менее 8 символов.';
+    }
+
+    if (!confirmPassword) {
+      fieldErrors.confirmPassword = 'Подтвердите новый пароль.';
+    } else if (newPassword && confirmPassword && newPassword !== confirmPassword) {
+      fieldErrors.confirmPassword = 'Пароли не совпадают.';
+    }
+
+    if (Object.keys(fieldErrors).length > 0) {
+      errorMessage = 'Пожалуйста, исправьте ошибки в форме установки нового пароля.';
+      return;
+    }
+
+    isLoading = true;
+    try {
+      const response = await fetch(`${getApiBaseUrl()}/auth/recovery/reset`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          token: resetToken,
+          password: newPassword
+        })
+      });
+
+      if (!response.ok) {
+        let errData = {};
+        try {
+          errData = await response.json();
+        } catch (e) {}
+        if (response.status === 400 || response.status === 422) {
+          throw new Error(errData.message || 'Токен сброса пароля недействителен или истек.');
+        } else {
+          throw new Error(errData.message || 'Не удалось установить новый пароль. Попробуйте позже.');
+        }
+      }
+
+      const data = await response.json();
+      successMessage = data.message || 'Ваш пароль был успешно изменен. Теперь вы можете войти в систему с новым паролем.';
+      mode = 'password_reset_success';
+    } catch (err) {
+      errorMessage = err.message || 'Произошла ошибка при сохранении нового пароля.';
+    } finally {
+      isLoading = false;
+    }
+  }
+
   async function handleLogout() {
     isLoading = true;
     const refreshToken = localStorage.getItem('refresh_token') || '';
@@ -161,8 +239,11 @@
       username = '';
       password = '';
       recoveryIdentity = '';
+      newPassword = '';
+      confirmPassword = '';
       errorMessage = '';
       successMessage = '';
+      fieldErrors = {};
       mode = 'login';
       isLoading = false;
       dispatch('logout');
@@ -172,12 +253,23 @@
   function switchToRecovery() {
     errorMessage = '';
     successMessage = '';
+    fieldErrors = {};
     mode = 'recovery';
+  }
+
+  function switchToSetPassword() {
+    errorMessage = '';
+    successMessage = '';
+    fieldErrors = {};
+    mode = 'set_password';
   }
 
   function switchToLogin() {
     errorMessage = '';
     successMessage = '';
+    fieldErrors = {};
+    newPassword = '';
+    confirmPassword = '';
     mode = 'login';
   }
 </script>
@@ -185,7 +277,7 @@
 <div class="auth-wrapper font-sans min-h-screen bg-[#f9f9fc] text-[#1a1c1e] flex flex-col justify-between antialiased">
   <!-- Top App Bar -->
   <header class="w-full top-0 sticky bg-[#f9f9fc] flex items-center justify-between h-16 px-6 max-w-md mx-auto z-10 border-b border-[#e2e2e5]">
-    {#if mode === 'recovery' || mode === 'recovery_sent'}
+    {#if mode === 'recovery' || mode === 'recovery_sent' || mode === 'set_password' || mode === 'password_reset_success'}
       <button
         type="button"
         aria-label="Назад к входу"
@@ -194,7 +286,7 @@
       >
         <span class="material-symbols-outlined text-2xl" data-icon="arrow_back">←</span>
       </button>
-      <h1 class="font-semibold text-lg text-[#00328a] flex-1">Восстановление</h1>
+      <h1 class="font-semibold text-lg text-[#00328a] flex-1">Восстановление доступа</h1>
     {:else}
       <div class="flex items-center space-x-2">
         <span class="text-[#00328a] font-bold text-xl tracking-tight">ЭпидБаза</span>
@@ -215,7 +307,7 @@
       </div>
 
       {#if errorMessage}
-        <div role="alert" class="mb-6 p-4 rounded-lg bg-[#ffdad6] text-[#93000a] text-sm border border-[#ba1a1a]/20 flex items-start space-x-2">
+        <div role="alert" aria-live="assertive" class="mb-6 p-4 rounded-lg bg-[#ffdad6] text-[#93000a] text-sm border border-[#ba1a1a]/20 flex items-start space-x-2">
           <span class="font-bold">!</span>
           <span>{errorMessage}</span>
         </div>
@@ -233,6 +325,7 @@
               bind:value={username}
               placeholder="ivanov@epidemiology-inst.ru"
               required
+              aria-required="true"
               disabled={isLoading}
               class="w-full h-14 px-4 bg-transparent border-none rounded-md focus:outline-none text-base text-[#1a1c1e] placeholder-[#737685]"
             />
@@ -246,6 +339,7 @@
             </label>
             <button
               type="button"
+              id="forgot-password-link"
               on:click={switchToRecovery}
               class="text-sm font-medium text-[#00328a] hover:underline focus:outline-none focus:ring-1 focus:ring-[#00328a] rounded px-1"
             >
@@ -259,6 +353,7 @@
               bind:value={password}
               placeholder="••••••••"
               required
+              aria-required="true"
               disabled={isLoading}
               class="w-full h-14 px-4 bg-transparent border-none rounded-md focus:outline-none text-base text-[#1a1c1e] placeholder-[#737685]"
             />
@@ -290,13 +385,13 @@
             class="w-full h-13 bg-primary text-on-primary rounded-lg font-medium text-base py-3 flex items-center justify-center hover:bg-primary-container active:scale-[0.98] transition-all disabled:opacity-60 disabled:cursor-not-allowed shadow-sm"
           >
             <span class="mr-2">Login with Moodle</span>
-            <span class="material-symbols-outlined" class="text-lg">login</span>
+            <span class="material-symbols-outlined text-lg">login</span>
           </button>
         </div>
       </form>
 
     {:else if mode === 'recovery'}
-      <!-- RECOVERY REQUEST VIEW -->
+      <!-- RECOVERY REQUEST VIEW (FORGOT PASSWORD) -->
       <div class="mb-8">
         <h2 class="text-3xl font-bold text-[#1a1c1e] mb-2 tracking-tight">Забыли пароль?</h2>
         <p class="text-base text-[#434653]">
@@ -305,7 +400,7 @@
       </div>
 
       {#if errorMessage}
-        <div role="alert" class="mb-6 p-4 rounded-lg bg-[#ffdad6] text-[#93000a] text-sm border border-[#ba1a1a]/20 flex items-start space-x-2">
+        <div id="recovery-error-message" role="alert" aria-live="assertive" class="mb-6 p-4 rounded-lg bg-[#ffdad6] text-[#93000a] text-sm border border-[#ba1a1a]/20 flex items-start space-x-2">
           <span class="font-bold">!</span>
           <span>{errorMessage}</span>
         </div>
@@ -314,24 +409,33 @@
       <form on:submit={handleRecoveryRequest} class="flex flex-col space-y-5" novalidate>
         <div>
           <label for="recovery-identity-input" class="block text-sm font-semibold text-[#1a1c1e] mb-2">
-            Email или логин
+            Email или логин <span class="text-[#ba1a1a]" aria-hidden="true">*</span>
           </label>
-          <div class="relative rounded-md border border-[#c3c6d6] bg-white focus-within:border-[#00328a] focus-within:ring-2 focus-within:ring-[#00328a]/10 transition-all">
+          <div class="relative rounded-md border {fieldErrors.recoveryIdentity ? 'border-[#ba1a1a] bg-[#ffdad6]/10' : 'border-[#c3c6d6] bg-white'} focus-within:border-[#00328a] focus-within:ring-2 focus-within:ring-[#00328a]/10 transition-all">
             <input
               id="recovery-identity-input"
               type="text"
               bind:value={recoveryIdentity}
               placeholder="name@example.com"
               required
+              aria-required="true"
+              aria-invalid={fieldErrors.recoveryIdentity ? 'true' : 'false'}
+              aria-describedby={fieldErrors.recoveryIdentity ? 'recovery-identity-error' : undefined}
               disabled={isLoading}
               class="w-full h-14 px-4 bg-transparent border-none rounded-md focus:outline-none text-base text-[#1a1c1e] placeholder-[#737685]"
             />
           </div>
+          {#if fieldErrors.recoveryIdentity}
+            <p id="recovery-identity-error" class="text-xs text-[#ba1a1a] mt-1 font-medium flex items-center gap-1">
+              <span>⚠</span> {fieldErrors.recoveryIdentity}
+            </p>
+          {/if}
         </div>
 
-        <div class="pt-4">
+        <div class="pt-4 flex flex-col gap-3">
           <button
             type="submit"
+            id="recovery-submit-btn"
             disabled={isLoading}
             class="w-full h-13 bg-[#00328a] text-white rounded-lg font-medium text-base py-3 flex items-center justify-center hover:bg-[#002566] active:scale-[0.98] transition-all disabled:opacity-60 disabled:cursor-not-allowed shadow-sm"
           >
@@ -341,20 +445,16 @@
                 <path class="opacity-75" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" fill="currentColor"></path>
               </svg>
             {:else}
-              <span>Отправить</span>
+              <span>Отправить инструкции</span>
             {/if}
           </button>
-        </div>
 
-        <div class="pt-2">
           <button
             type="button"
-            on:click={async () => { try { isLoading = true; const r = await fetch(getApiBaseUrl() + '/auth/moodle/config'); if (r.ok) { const d = await r.json(); window.location.href = d.auth_url; } } catch(e) { errorMessage = 'Ошибка инициализации SSO'; } finally { isLoading = false; } }}
-            disabled={isLoading}
-            class="w-full h-13 bg-primary text-on-primary rounded-lg font-medium text-base py-3 flex items-center justify-center hover:bg-primary-container active:scale-[0.98] transition-all disabled:opacity-60 disabled:cursor-not-allowed shadow-sm"
+            on:click={switchToSetPassword}
+            class="text-sm text-[#00328a] hover:underline text-center py-2 font-medium"
           >
-            <span class="mr-2">Login with Moodle</span>
-            <span class="material-symbols-outlined" class="text-lg">login</span>
+            Есть токен восстановления? Установить новый пароль
           </button>
         </div>
       </form>
@@ -369,12 +469,126 @@
         <p class="text-sm text-[#434653] leading-relaxed">
           {successMessage}
         </p>
+        <div class="pt-2 flex flex-col gap-2">
+          <button
+            type="button"
+            on:click={switchToSetPassword}
+            class="w-full py-3 bg-[#00328a] text-white rounded-lg text-sm font-medium hover:bg-[#002566] transition-colors"
+          >
+            Перейти к установке нового пароля
+          </button>
+          <button
+            type="button"
+            on:click={switchToLogin}
+            class="w-full py-2.5 border border-[#c3c6d6] text-[#1a1c1e] hover:bg-[#eeeef0] rounded-lg text-sm font-medium transition-colors"
+          >
+            Вернуться ко входу
+          </button>
+        </div>
+      </div>
+
+    {:else if mode === 'set_password'}
+      <!-- SET NEW PASSWORD VIEW -->
+      <div class="mb-8">
+        <h2 class="text-3xl font-bold text-[#1a1c1e] mb-2 tracking-tight">Установка нового пароля</h2>
+        <p class="text-base text-[#434653]">
+          Придумайте надежный пароль для вашей учетной записи.
+        </p>
+      </div>
+
+      {#if errorMessage}
+        <div id="set-password-error-summary" role="alert" aria-live="assertive" class="mb-6 p-4 rounded-lg bg-[#ffdad6] text-[#93000a] text-sm border border-[#ba1a1a]/20 flex items-start space-x-2">
+          <span class="font-bold">!</span>
+          <span>{errorMessage}</span>
+        </div>
+      {/if}
+
+      <form on:submit={handleSetPassword} class="flex flex-col space-y-5" novalidate>
+        <div>
+          <label for="new-password-input" class="block text-sm font-semibold text-[#1a1c1e] mb-2">
+            Новый пароль <span class="text-[#ba1a1a]" aria-hidden="true">*</span>
+          </label>
+          <div class="relative rounded-md border {fieldErrors.newPassword ? 'border-[#ba1a1a] bg-[#ffdad6]/10' : 'border-[#c3c6d6] bg-white'} focus-within:border-[#00328a] focus-within:ring-2 focus-within:ring-[#00328a]/10 transition-all">
+            <input
+              id="new-password-input"
+              type="password"
+              bind:value={newPassword}
+              placeholder="Минимум 8 символов"
+              required
+              aria-required="true"
+              aria-invalid={fieldErrors.newPassword ? 'true' : 'false'}
+              aria-describedby={fieldErrors.newPassword ? 'new-password-error' : undefined}
+              disabled={isLoading}
+              class="w-full h-14 px-4 bg-transparent border-none rounded-md focus:outline-none text-base text-[#1a1c1e] placeholder-[#737685]"
+            />
+          </div>
+          {#if fieldErrors.newPassword}
+            <p id="new-password-error" class="text-xs text-[#ba1a1a] mt-1 font-medium flex items-center gap-1">
+              <span>⚠</span> {fieldErrors.newPassword}
+            </p>
+          {/if}
+        </div>
+
+        <div>
+          <label for="confirm-password-input" class="block text-sm font-semibold text-[#1a1c1e] mb-2">
+            Подтвердите новый пароль <span class="text-[#ba1a1a]" aria-hidden="true">*</span>
+          </label>
+          <div class="relative rounded-md border {fieldErrors.confirmPassword ? 'border-[#ba1a1a] bg-[#ffdad6]/10' : 'border-[#c3c6d6] bg-white'} focus-within:border-[#00328a] focus-within:ring-2 focus-within:ring-[#00328a]/10 transition-all">
+            <input
+              id="confirm-password-input"
+              type="password"
+              bind:value={confirmPassword}
+              placeholder="Повторите новый пароль"
+              required
+              aria-required="true"
+              aria-invalid={fieldErrors.confirmPassword ? 'true' : 'false'}
+              aria-describedby={fieldErrors.confirmPassword ? 'confirm-password-error' : undefined}
+              disabled={isLoading}
+              class="w-full h-14 px-4 bg-transparent border-none rounded-md focus:outline-none text-base text-[#1a1c1e] placeholder-[#737685]"
+            />
+          </div>
+          {#if fieldErrors.confirmPassword}
+            <p id="confirm-password-error" class="text-xs text-[#ba1a1a] mt-1 font-medium flex items-center gap-1">
+              <span>⚠</span> {fieldErrors.confirmPassword}
+            </p>
+          {/if}
+        </div>
+
+        <div class="pt-4">
+          <button
+            type="submit"
+            id="set-password-submit-btn"
+            disabled={isLoading}
+            class="w-full h-13 bg-[#00328a] text-white rounded-lg font-medium text-base py-3 flex items-center justify-center hover:bg-[#002566] active:scale-[0.98] transition-all disabled:opacity-60 disabled:cursor-not-allowed shadow-sm"
+          >
+            {#if isLoading}
+              <svg class="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" fill="currentColor"></path>
+              </svg>
+            {:else}
+              <span>Сохранить новый пароль</span>
+            {/if}
+          </button>
+        </div>
+      </form>
+
+    {:else if mode === 'password_reset_success'}
+      <!-- PASSWORD RESET SUCCESS CONFIRMATION VIEW -->
+      <div class="p-6 bg-white rounded-xl border border-[#c3c6d6] text-center space-y-4 shadow-sm">
+        <div class="w-12 h-12 bg-[#00328a]/10 text-[#00328a] rounded-full flex items-center justify-center mx-auto text-2xl font-bold">
+          ✓
+        </div>
+        <h3 class="text-xl font-bold text-[#1a1c1e]">Пароль успешно обновлен</h3>
+        <p class="text-sm text-[#434653] leading-relaxed">
+          {successMessage}
+        </p>
         <button
           type="button"
           on:click={switchToLogin}
           class="w-full py-3 bg-[#00328a] text-white rounded-lg text-sm font-medium hover:bg-[#002566] transition-colors"
         >
-          Вернуться ко входу
+          Войти с новым паролем
         </button>
       </div>
 
@@ -399,7 +613,6 @@
             Вам доступен просмотр и поиск протоколов расследований вспышек, отчетов эпиднадзора и методических руководств.
           </p>
 
-          <!-- Explicit constraint: Upload and delete controls MUST be entirely hidden for non-admin employees -->
           {#if isAdmin}
             <div class="p-3 bg-[#f3f3f6] rounded border border-[#c3c6d6] flex space-x-2">
               <button class="px-3 py-1.5 bg-[#00328a] text-white text-xs rounded font-medium">Загрузить документ</button>

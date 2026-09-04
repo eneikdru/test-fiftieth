@@ -90,7 +90,7 @@
     ];
 
     let state = {
-      mode: initialMode, // 'catalog' | 'login' | 'recovery'
+      mode: initialMode, // 'catalog' | 'login' | 'recovery' | 'set_password'
       currentUser: {
         id: 101,
         username: 'admin_user',
@@ -104,6 +104,9 @@
       loginPassword: '',
       recoveryIdentity: '',
       recoverySent: false,
+      newPassword: '',
+      confirmPassword: '',
+      fieldErrors: {},
 
       // Search filter states
       searchQuery: '',
@@ -228,7 +231,7 @@
                   />
                 </div>
                 <div class="flex items-center justify-between pt-2">
-                  <a id="forgot-password-link" href="#" onclick="event.preventDefault(); state.mode = 'recovery'; render();" class="text-xs text-[#003f87] hover:underline">
+                  <a id="forgot-password-link" href="#" onclick="event.preventDefault(); state.mode = 'recovery'; state.fieldErrors = {}; render();" class="text-xs text-[#003f87] hover:underline">
                     Забыли пароль?
                   </a>
                 </div>
@@ -253,36 +256,137 @@
                 <h2 class="text-2xl font-bold text-[#003f87] mb-6">Забыли пароль?</h2>
                 <form onsubmit="handleRecoverySubmit(event)" class="space-y-4">
                   <div>
-                    <label class="block text-xs font-semibold text-[#191c1e] mb-1">Электронная почта / Логин</label>
+                    <label class="block text-xs font-semibold text-[#191c1e] mb-1">Электронная почта / Логин *</label>
                     <input
                       id="recovery-identity-input"
                       type="text"
                       value="${state.recoveryIdentity}"
                       oninput="state.recoveryIdentity = this.value"
                       required
-                      class="w-full h-10 px-3 bg-[#f7f9fb] border border-[#c2c6d4] rounded-md text-sm text-[#191c1e]"
+                      aria-required="true"
+                      aria-invalid="${state.fieldErrors.recoveryIdentity ? 'true' : 'false'}"
+                      class="w-full h-10 px-3 bg-[#f7f9fb] border ${state.fieldErrors.recoveryIdentity ? 'border-[#ba1a1a]' : 'border-[#c2c6d4]'} rounded-md text-sm text-[#191c1e]"
                     />
+                    ${state.fieldErrors.recoveryIdentity ? `
+                      <p id="recovery-identity-error" class="text-xs text-[#ba1a1a] mt-1 font-medium">⚠ ${state.fieldErrors.recoveryIdentity}</p>
+                    ` : ''}
                   </div>
                   <button
                     type="submit"
+                    id="recovery-submit-btn"
                     class="w-full h-10 bg-[#003f87] text-white font-medium text-sm rounded-md transition-colors"
                   >
                     Восстановить
                   </button>
+                  <div class="pt-2 text-center">
+                    <button
+                      type="button"
+                      onclick="state.mode = 'set_password'; state.fieldErrors = {}; render();"
+                      class="text-xs text-[#003f87] hover:underline"
+                    >
+                      Есть токен восстановления? Установить новый пароль
+                    </button>
+                  </div>
                 </form>
               ` : `
                 <main>
                   <h3 class="text-xl font-bold text-[#003f87] mb-4">Инструкции отправлены</h3>
                   <p class="text-sm text-[#424752] mb-6">Инструкции по восстановлению пароля отправлены на ваш электронный адрес.</p>
                 </main>
+                <div class="flex flex-col gap-2">
+                  <button
+                    type="button"
+                    onclick="state.mode = 'set_password'; state.fieldErrors = {}; render();"
+                    class="w-full h-10 bg-[#003f87] text-white font-medium text-sm rounded-md transition-colors"
+                  >
+                    Перейти к установке нового пароля
+                  </button>
+                  <button
+                    type="button"
+                    onclick="state.mode = 'login'; state.recoverySent = false; state.fieldErrors = {}; render();"
+                    class="w-full h-10 border border-[#c2c6d4] text-[#191c1e] font-medium text-sm rounded-md hover:bg-[#eceef0] transition-colors"
+                  >
+                    Вернуться ко входу
+                  </button>
+                </div>
+              `}
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      if (state.mode === 'set_password') {
+        app.innerHTML = `
+          <div class="min-h-screen flex items-center justify-center p-4">
+            <div class="bg-white p-8 rounded-xl border border-[#e0e3e5] shadow-lg max-w-md w-full">
+              <h2 class="text-2xl font-bold text-[#003f87] mb-6">Установка нового пароля</h2>
+
+              ${state.fieldErrors.summary ? `
+                <div id="set-password-error-summary" role="alert" class="mb-4 p-3 bg-[#ffdad6] text-[#93000a] text-xs font-semibold rounded-md border border-[#ba1a1a]/30">
+                  ⚠ ${state.fieldErrors.summary}
+                </div>
+              ` : ''}
+
+              <form onsubmit="handleSetPasswordSubmit(event)" class="space-y-4" novalidate>
+                <div>
+                  <label for="new-password-input" class="block text-xs font-semibold text-[#191c1e] mb-1">
+                    Новый пароль *
+                  </label>
+                  <input
+                    id="new-password-input"
+                    type="password"
+                    value="${state.newPassword}"
+                    oninput="state.newPassword = this.value"
+                    required
+                    aria-required="true"
+                    aria-invalid="${state.fieldErrors.newPassword ? 'true' : 'false'}"
+                    aria-describedby="${state.fieldErrors.newPassword ? 'new-password-error' : ''}"
+                    class="w-full h-10 px-3 bg-[#f7f9fb] border ${state.fieldErrors.newPassword ? 'border-[#ba1a1a]' : 'border-[#c2c6d4]'} rounded-md text-sm text-[#191c1e]"
+                  />
+                  ${state.fieldErrors.newPassword ? `
+                    <p id="new-password-error" class="text-xs text-[#ba1a1a] mt-1 font-medium">⚠ ${state.fieldErrors.newPassword}</p>
+                  ` : ''}
+                </div>
+
+                <div>
+                  <label for="confirm-password-input" class="block text-xs font-semibold text-[#191c1e] mb-1">
+                    Подтвердите новый пароль *
+                  </label>
+                  <input
+                    id="confirm-password-input"
+                    type="password"
+                    value="${state.confirmPassword}"
+                    oninput="state.confirmPassword = this.value"
+                    required
+                    aria-required="true"
+                    aria-invalid="${state.fieldErrors.confirmPassword ? 'true' : 'false'}"
+                    aria-describedby="${state.fieldErrors.confirmPassword ? 'confirm-password-error' : ''}"
+                    class="w-full h-10 px-3 bg-[#f7f9fb] border ${state.fieldErrors.confirmPassword ? 'border-[#ba1a1a]' : 'border-[#c2c6d4]'} rounded-md text-sm text-[#191c1e]"
+                  />
+                  ${state.fieldErrors.confirmPassword ? `
+                    <p id="confirm-password-error" class="text-xs text-[#ba1a1a] mt-1 font-medium">⚠ ${state.fieldErrors.confirmPassword}</p>
+                  ` : ''}
+                </div>
+
                 <button
-                  type="button"
-                  onclick="state.mode = 'login'; state.recoverySent = false; render();"
+                  type="submit"
+                  id="set-password-submit-btn"
                   class="w-full h-10 bg-[#003f87] text-white font-medium text-sm rounded-md transition-colors"
                 >
-                  Вернуться ко входу
+                  Сохранить новый пароль
                 </button>
-              `}
+
+                <div class="pt-2 text-center">
+                  <button
+                    type="button"
+                    onclick="state.mode = 'login'; state.fieldErrors = {}; render();"
+                    class="text-xs text-[#003f87] hover:underline"
+                  >
+                    Вернуться ко входу
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         `;
@@ -752,9 +856,48 @@
       state.currentUser = { id: null, username: "", role: "", full_name: "", email: "" };
       render();
     }
+
     function handleRecoverySubmit(event) {
       if (event) event.preventDefault();
+      state.fieldErrors = {};
+
+      if (!state.recoveryIdentity.trim()) {
+        state.fieldErrors.recoveryIdentity = 'Пожалуйста, укажите ваш email или имя пользователя.';
+        render();
+        return;
+      }
+
       state.recoverySent = true;
+      render();
+    }
+
+    function handleSetPasswordSubmit(event) {
+      if (event) event.preventDefault();
+      state.fieldErrors = {};
+
+      if (!state.newPassword) {
+        state.fieldErrors.newPassword = 'Введите новый пароль.';
+      } else if (state.newPassword.length < 8) {
+        state.fieldErrors.newPassword = 'Пароль должен содержать не менее 8 символов.';
+      }
+
+      if (!state.confirmPassword) {
+        state.fieldErrors.confirmPassword = 'Подтвердите новый пароль.';
+      } else if (state.newPassword && state.confirmPassword && state.newPassword !== state.confirmPassword) {
+        state.fieldErrors.confirmPassword = 'Пароли не совпадают.';
+      }
+
+      if (Object.keys(state.fieldErrors).length > 0) {
+        state.fieldErrors.summary = 'Пожалуйста, исправьте ошибки в форме установки нового пароля.';
+        render();
+        return;
+      }
+
+      state.mode = 'login';
+      state.loginUsername = state.recoveryIdentity || 'user@epidemiology-inst.ru';
+      state.loginPassword = state.newPassword;
+      state.newPassword = '';
+      state.confirmPassword = '';
       render();
     }
 
