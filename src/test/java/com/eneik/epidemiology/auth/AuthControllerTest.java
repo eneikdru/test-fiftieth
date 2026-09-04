@@ -8,6 +8,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.mockito.Mockito;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.when;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
@@ -33,6 +37,18 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @Transactional
 class AuthControllerTest {
+
+    @MockBean
+    private MoodleOAuth2Client moodleOAuth2Client;
+
+    @org.junit.jupiter.api.BeforeEach
+    void setupMocks() {
+        when(moodleOAuth2Client.exchangeCodeForProfile(anyString())).thenReturn(null);
+        when(moodleOAuth2Client.exchangeCodeForProfile("mock_invalid_token")).thenReturn(null);
+        when(moodleOAuth2Client.exchangeCodeForProfile("mock_valid_code")).thenReturn(new MoodleProfile("moodle_user", "Старший научный сотрудник", "Эпидемиология", "moodle@inst.ru", "Moodle User", "BIO-101"));
+
+        when(moodleOAuth2Client.exchangeCodeForProfile("mock_valid_new_moodle_token")).thenReturn(new MoodleProfile("new_moodle_user", "Администратор", "IT", "new_moodle@inst.ru", "New Moodle Admin", ""));
+    }
 
     @Autowired
     private MockMvc mockMvc;

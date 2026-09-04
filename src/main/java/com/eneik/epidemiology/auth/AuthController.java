@@ -10,6 +10,9 @@ import org.springframework.web.bind.annotation.*;
 import java.time.OffsetDateTime;
 import java.util.HashMap;
 import java.util.Map;
+import java.time.OffsetDateTime;
+import java.util.HashMap;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/auth")
@@ -19,12 +22,14 @@ public class AuthController {
     private final JwtTokenProvider jwtTokenProvider;
     private final PasswordRecoveryService passwordRecoveryService;
     private final com.eneik.epidemiology.telemetry.TelemetryService telemetryService;
+    private final MoodleOAuth2Client moodleOAuth2Client;
 
-    public AuthController(UserService userService, JwtTokenProvider jwtTokenProvider, PasswordRecoveryService passwordRecoveryService, com.eneik.epidemiology.telemetry.TelemetryService telemetryService) {
+    public AuthController(UserService userService, JwtTokenProvider jwtTokenProvider, PasswordRecoveryService passwordRecoveryService, com.eneik.epidemiology.telemetry.TelemetryService telemetryService, MoodleOAuth2Client moodleOAuth2Client) {
         this.userService = userService;
         this.jwtTokenProvider = jwtTokenProvider;
         this.passwordRecoveryService = passwordRecoveryService;
         this.telemetryService = telemetryService;
+        this.moodleOAuth2Client = moodleOAuth2Client;
     }
 
     public record RegistrationRequest(String username, String password, String email, String full_name) {}
@@ -34,6 +39,38 @@ public class AuthController {
     public record LogoutRequest(String refresh_token) {}
     public record PasswordRecoveryRequest(String identity) {}
     public record PasswordResetConfirmationRequest(String recovery_token, String new_password) {}
+    public record MoodleCallbackRequest(String code, String state) {}
+
+
+    @GetMapping("/moodle/config")
+    public ResponseEntity<?> getMoodleConfig() {
+        return ResponseEntity.ok(Map.of(
+            "login_url", moodleOAuth2Client.getAuthorizationUrl()
+        ));
+    }
+
+    @PostMapping("/moodle/callback")
+    public ResponseEntity<?> moodleCallback(@RequestBody MoodleCallbackRequest request) {
+        if (request == null || request.code() == null || request.code().trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "error_code", "INVALID_REQUEST",
+                    "message", "Необходимо указать код авторизации.",
+                    "timestamp", OffsetDateTime.now().toString()
+            ));
+        }
+
+        MoodleProfile profile = moodleOAuth2Client.exchangeCodeForProfile(request.code());
+
+        if (profile == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
+                    "error_code", "INVALID_SSO_TOKEN",
+                    "message", "Недействительный код авторизации Moodle.",
+                    "timestamp", OffsetDateTime.now().toString()
+            ));
+        }
+
+        return processMoodleProfile(profile);
+    }
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody RegistrationRequest request) {
@@ -308,16 +345,63 @@ public class AuthController {
         }
     }
 
-    private record MoodleProfile(String username, String moodleRole, String department, String email, String fullName, String courses) {}
+
+    private ResponseEntity<?> processMoodleProfile(MoodleProfile profile) {
+        String internalRole = mapMoodleRole(profile.moodleRole());
+        User user = userService.findByUsernameOrEmail(profile.username().trim()).orElse(null);
+
+        if (user == null) {
+            String defaultPassword = "Fallback" + Math.abs(profile.username().hashCode()) + "!";
+            user = userService.createUserWithMoodle(
+                profile.username().trim(),
+                defaultPassword,
+                profile.email(),
+                profile.fullName(),
+                internalRole,
+                profile.username().trim(),
+                profile.department(),
+                profile.courses()
+            );
+        } else {
+            boolean needsUpdate = false;
+            if (internalRole != null && !internalRole.equals(user.getRole())) {
+                needsUpdate = true;
+            }
+            if (profile.department() != null && !profile.department().equals(user.getDepartment())) {
+                needsUpdate = true;
+            }
+            if (profile.courses() != null && !profile.courses().equals(user.getCourses())) {
+                needsUpdate = true;
+            }
+            if (needsUpdate) {
+                userService.updateRoleAndDepartmentAtomically(user.getId(), user.getRole(), internalRole != null ? internalRole : user.getRole(), profile.department(), profile.courses());
+                user.setRole(internalRole != null ? internalRole : user.getRole());
+                user.setDepartment(profile.department());
+                user.setCourses(profile.courses());
+            }
+        }
+
+        telemetryService.recordSsoLoginTelemetry(user.getUsername());
+
+        String accessToken = jwtTokenProvider.generateToken(user.getUsername(), user.getRole());
+        String refreshToken = "ref_" + user.getUsername() + "_" + System.currentTimeMillis();
+
+        Map<String, Object> response = Map.of(
+                "access_token", accessToken,
+                "refresh_token", refreshToken,
+                "token_type", "Bearer",
+                "expires_in", 3600,
+                "user", buildUserInfo(user)
+        );
+
+        return ResponseEntity.ok(response);
+    }
 
     private MoodleProfile fetchMoodleProfile(String token) {
-        if ("mock_valid_moodle_token".equals(token)) {
-            return new MoodleProfile("moodle_user", "Старший научный сотрудник", "Эпидемиология", "moodle@inst.ru", "Moodle User", "BIO-101");
-        } else if ("mock_valid_new_moodle_token".equals(token)) {
-            return new MoodleProfile("new_moodle_user", "Администратор", "IT", "new_moodle@inst.ru", "New Moodle Admin", "");
-        }
-        return null;
+        return moodleOAuth2Client.exchangeCodeForProfile(token);
     }
+
+
 
     private static String mapMoodleRole(String moodleRole) {
         if (moodleRole == null) {

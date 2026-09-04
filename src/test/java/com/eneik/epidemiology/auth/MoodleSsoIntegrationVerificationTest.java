@@ -9,6 +9,10 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.mockito.Mockito;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.when;
 import org.springframework.transaction.annotation.Transactional;
 
 import static org.hamcrest.Matchers.is;
@@ -28,9 +32,14 @@ public class MoodleSsoIntegrationVerificationTest {
     @Autowired
     private UserRepository userRepository;
 
+    @MockBean
+    private MoodleOAuth2Client moodleOAuth2Client;
+
     @Test
     @DisplayName("Given an integration test suite, When the Moodle OAuth2 mock responds with valid roles, Then the user is successfully logged in and granted appropriate archive access")
     void testMoodleSsoValidRolesArchiveAccess() throws Exception {
+        when(moodleOAuth2Client.exchangeCodeForProfile("mock_valid_new_moodle_token")).thenReturn(new MoodleProfile("new_moodle_user", "Администратор", "IT", "new_moodle@inst.ru", "New Moodle Admin", ""));
+
         String ssoBody = "{\"username\":\"new_moodle_user\",\"moodle_token\":\"mock_valid_new_moodle_token\",\"fallback_password\":\"MySecureFallback!\"}";
 
         mockMvc.perform(post("/api/v1/auth/sso/moodle")
