@@ -46,14 +46,16 @@ public class EmployeeDossierController {
             @RequestParam(value = "scientific_direction", required = false) String scientificDirection,
             @RequestParam(value = "query", required = false) String query,
             @RequestParam(value = "from_date", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
-            @RequestParam(value = "to_date", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate) {
+            @RequestParam(value = "to_date", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "10") int size) {
 
         String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
         User currentUser = userRepository.findByUsername(currentUsername).orElse(null);
 
         List<EmployeeDocument> documents = employeeDocumentRepository.searchEmployeeDocuments(
-                employeeId, employeeSurname, docType, scientificDirection, query, fromDate, toDate
-        );
+                employeeId, employeeSurname, docType, scientificDirection, query, fromDate, toDate, org.springframework.data.domain.Pageable.unpaged()
+        ).getContent();
 
         if (currentUser != null && !"ADMIN".equals(currentUser.getRole())) {
             documents = documents.stream().filter(d -> {
@@ -64,7 +66,12 @@ public class EmployeeDossierController {
                 return depMatch || courseMatch;
             }).toList();
         }
-        return ResponseEntity.ok(documents);
+
+        int start = Math.min(page * size, documents.size());
+        int end = Math.min((start + size), documents.size());
+        org.springframework.data.domain.Page<EmployeeDocument> pagedResult = new org.springframework.data.domain.PageImpl<>(documents.subList(start, end), org.springframework.data.domain.PageRequest.of(page, size), documents.size());
+
+        return ResponseEntity.ok(pagedResult);
     }
 
     @PostMapping("/reports")
