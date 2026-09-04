@@ -45,7 +45,7 @@ class AuthControllerTest {
     void setupMocks() {
         when(moodleOAuth2Client.exchangeCodeForProfile(anyString())).thenReturn(null);
         when(moodleOAuth2Client.exchangeCodeForProfile("mock_invalid_token")).thenReturn(null);
-        when(moodleOAuth2Client.exchangeCodeForProfile("mock_valid_code")).thenReturn(new MoodleProfile("moodle_user", "Старший научный сотрудник", "Эпидемиология", "moodle@inst.ru", "Moodle User", "BIO-101"));
+        when(moodleOAuth2Client.exchangeCodeForProfile("mock_valid_moodle_token")).thenReturn(new MoodleProfile("moodle_user", "Старший научный сотрудник", "Эпидемиология", "moodle@inst.ru", "Moodle User", "BIO-101"));
 
         when(moodleOAuth2Client.exchangeCodeForProfile("mock_valid_new_moodle_token")).thenReturn(new MoodleProfile("new_moodle_user", "Администратор", "IT", "new_moodle@inst.ru", "New Moodle Admin", ""));
     }
