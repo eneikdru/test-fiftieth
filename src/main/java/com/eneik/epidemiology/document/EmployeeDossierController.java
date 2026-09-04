@@ -7,6 +7,8 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import com.eneik.epidemiology.telemetry.TelemetryService;
 import org.springframework.security.core.context.SecurityContextHolder;
 import com.eneik.epidemiology.user.User;
@@ -49,25 +51,32 @@ public class EmployeeDossierController {
             @RequestParam(value = "scientific_direction", required = false) String scientificDirection,
             @RequestParam(value = "query", required = false) String query,
             @RequestParam(value = "from_date", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
-            @RequestParam(value = "to_date", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate) {
+            @RequestParam(value = "to_date", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "size", defaultValue = "20") int size) {
 
         String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
         User currentUser = userRepository.findByUsername(currentUsername).orElse(null);
 
-        List<EmployeeDocument> documents = employeeDocumentRepository.searchEmployeeDocuments(
-                employeeId, employeeSurname, docType, scientificDirection, query, fromDate, toDate
-        );
+        boolean isAdmin = currentUser == null || "ADMIN".equals(currentUser.getRole());
+        String userDepartment = currentUser != null ? currentUser.getDepartment() : null;
+        String userCourses = currentUser != null ? currentUser.getCourses() : null;
 
-        if (currentUser != null && !"ADMIN".equals(currentUser.getRole())) {
-            documents = documents.stream().filter(d -> {
-                if (!"STRAIN_ISOLATION".equals(d.getDocType()) && !"REPORT".equals(d.getDocType())) return true;
-                if (d.getAccessDepartment() == null && d.getAccessCourse() == null) return true;
-                boolean depMatch = d.getAccessDepartment() != null && d.getAccessDepartment().equals(currentUser.getDepartment());
-                boolean courseMatch = d.getAccessCourse() != null && currentUser.getCourses() != null && currentUser.getCourses().contains(d.getAccessCourse());
-                return depMatch || courseMatch;
-            }).toList();
-        }
-        return ResponseEntity.ok(documents);
+        Page<EmployeeDocument> documentPage = employeeDocumentRepository.searchEmployeeDocumentsPageable(
+                employeeId, employeeSurname, docType, scientificDirection, query, fromDate, toDate,
+                isAdmin, userDepartment, userCourses,
+                PageRequest.of(page, size)
+        );
+        List<EmployeeDocument> documents = documentPage.getContent();
+
+        return ResponseEntity.ok(Map.of(
+                "query", query != null ? query : "",
+                "count", documents.size(),
+                "results", documents,
+                "totalPages", documentPage.getTotalPages(),
+                "totalElements", documentPage.getTotalElements(),
+                "currentPage", page
+        ));
     }
 
     @PostMapping("/reports")
