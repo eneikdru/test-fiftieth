@@ -1,0 +1,30 @@
+{
+  "epics": [
+    {
+      "existingEpicId": "923b27c2-0a60-4d19-9648-792111a139e5",
+      "sourceIndex": 0,
+      "requirements": [
+        "R1: Fix the API security configuration so that authenticated requests to /api/v1/dossier/** are accepted with HTTP 200/201.",
+        "R2: Ensure the API rejects requests with invalid or missing credentials, returning HTTP 401."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Patch SecurityConfig to resolve 401 unauthorized on valid dossier API requests",
+          "roleTag": "BARCAN-TAG-02",
+          "jtbd": "When implementing the security context fix for this epic, I want valid requests to correctly authenticate and invalid to be rejected, so that the API authentication invariants are repaired.",
+          "acceptanceCriteria": "Given valid credentials,\nWhen requesting dossier search or reports,\nThen the endpoints return the correct documented HTTP status (e.g., 200 or 201).\nGiven invalid credentials,\nWhen requesting,\nThen it returns 401.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "API authentication false negatives",
+          "sixSigmaMetric": "Reduce valid authenticated API request rejection rate to 0%",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1",
+            "R2"
+          ]
+        }
+      ]
+    }
+  ]
+}
