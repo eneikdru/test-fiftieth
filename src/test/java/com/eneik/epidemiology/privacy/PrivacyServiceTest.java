@@ -103,9 +103,9 @@ class PrivacyServiceTest {
     }
 
     @Test
-    @DisplayName("Given an employee with associated documents, When data export is initiated, Then documents are included in payload JSON")
+    @DisplayName("Given an employee with associated documents, When data export is initiated, Then complete personal data profile and documents are included in payload JSON")
     void testDataExportWithEmployeeDocuments() throws Exception {
-        User user = new User("export_emp_1", "hash123", "RESEARCHER");
+        User user = new User("export_emp_1", "hash123", "RESEARCHER", "export1@epid.org", "Иванов Иван Иванович", "moodle_101", "Эпидемиология", "COURSE_101");
         userRepository.save(user);
 
         EmployeeDocument doc1 = new EmployeeDocument("export_emp_1", "Publication", "Virology Research Paper", LocalDate.of(2025, 5, 10), "Details on virology");
@@ -121,6 +121,12 @@ class PrivacyServiceTest {
         PrivacyService.DownloadData downloadData = privacyService.getExportDownloadData(job.getRequestId());
         String payload = new String(downloadData.bytes(), java.nio.charset.StandardCharsets.UTF_8);
         Map<String, Object> map = objectMapper.readValue(payload, new TypeReference<>() {});
+
+        assertEquals("export1@epid.org", map.get("email"));
+        assertEquals("Иванов Иван Иванович", map.get("full_name"));
+        assertEquals("moodle_101", map.get("moodle_id"));
+        assertEquals("Эпидемиология", map.get("department"));
+        assertEquals("COURSE_101", map.get("courses"));
 
         assertTrue(map.containsKey("dossier_documents"));
         List<Map<String, Object>> docs = (List<Map<String, Object>>) map.get("dossier_documents");

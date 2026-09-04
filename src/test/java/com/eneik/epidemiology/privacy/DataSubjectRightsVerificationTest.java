@@ -248,7 +248,7 @@ class DataSubjectRightsVerificationTest {
     @Test
     @DisplayName("Given an export request, When the file is inspected, Then it contains all expected user properties")
     void testExportFileContainsAllExpectedUserProperties() throws Exception {
-        User user = new User("rights_export_user", "hashed_pwd_888", "ADMIN");
+        User user = new User("rights_export_user", "hashed_pwd_888", "ADMIN", "admin@epid.org", "Петров Петр Петрович", "moodle_202", "Администрация", "COURSE_202");
         user = userRepository.save(user);
 
         // Test export in JSON format
@@ -264,11 +264,21 @@ class DataSubjectRightsVerificationTest {
         assertTrue(jsonProperties.containsKey("id"), "Export payload must contain property 'id'");
         assertTrue(jsonProperties.containsKey("username"), "Export payload must contain property 'username'");
         assertTrue(jsonProperties.containsKey("role"), "Export payload must contain property 'role'");
+        assertTrue(jsonProperties.containsKey("email"), "Export payload must contain property 'email'");
+        assertTrue(jsonProperties.containsKey("full_name"), "Export payload must contain property 'full_name'");
+        assertTrue(jsonProperties.containsKey("moodle_id"), "Export payload must contain property 'moodle_id'");
+        assertTrue(jsonProperties.containsKey("department"), "Export payload must contain property 'department'");
+        assertTrue(jsonProperties.containsKey("courses"), "Export payload must contain property 'courses'");
         assertTrue(jsonProperties.containsKey("created_at"), "Export payload must contain property 'created_at'");
 
         assertEquals(user.getId().intValue(), ((Number) jsonProperties.get("id")).intValue());
         assertEquals("rights_export_user", jsonProperties.get("username"));
         assertEquals("ADMIN", jsonProperties.get("role"));
+        assertEquals("admin@epid.org", jsonProperties.get("email"));
+        assertEquals("Петров Петр Петрович", jsonProperties.get("full_name"));
+        assertEquals("moodle_202", jsonProperties.get("moodle_id"));
+        assertEquals("Администрация", jsonProperties.get("department"));
+        assertEquals("COURSE_202", jsonProperties.get("courses"));
         assertNotNull(jsonProperties.get("created_at"));
 
         // Test export in ZIP format

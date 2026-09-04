@@ -98,7 +98,7 @@ public class PrivacyService {
         job.setNotes(notes);
         job.setCreatedAt(OffsetDateTime.now(clock));
 
-        exportJobRepository.save(job);
+        exportJobRepository.saveAndFlush(job);
 
         return processExportJob(job, user, requestedFormat);
     }
@@ -109,6 +109,11 @@ public class PrivacyService {
             userDataMap.put("id", user.getId());
             userDataMap.put("username", user.getUsername());
             userDataMap.put("role", user.getRole());
+            userDataMap.put("email", user.getEmail());
+            userDataMap.put("full_name", user.getFullName());
+            userDataMap.put("moodle_id", user.getMoodleId());
+            userDataMap.put("department", user.getDepartment());
+            userDataMap.put("courses", user.getCourses());
             userDataMap.put("created_at", user.getCreatedAt() != null ? user.getCreatedAt().toString() : null);
 
             if (employeeDocumentRepository != null) {
@@ -151,17 +156,32 @@ public class PrivacyService {
             String payloadJson = objectMapper.writeValueAsString(userDataMap);
             String downloadUrl = "/api/v1/privacy/export-requests/" + job.getRequestId() + "/download";
             OffsetDateTime now = OffsetDateTime.now(clock);
+            OffsetDateTime expiresAt = now.plusDays(7);
 
             job.setStatus("COMPLETED");
             job.setDownloadUrl(downloadUrl);
             job.setExportPayload(payloadJson);
             job.setCompletedAt(now);
-            job.setExpiresAt(now.plusDays(7));
-            return exportJobRepository.save(job);
+            job.setExpiresAt(expiresAt);
+
+            int updated = exportJobRepository.updateStatusToCompleted(
+                job.getRequestId(),
+                "PENDING",
+                "COMPLETED",
+                downloadUrl,
+                payloadJson,
+                now,
+                expiresAt
+            );
+            if (updated == 0) {
+                exportJobRepository.save(job);
+            }
+            return job;
         } catch (Exception e) {
+            e.printStackTrace();
             job.setStatus("FAILED");
             job.setErrorCode("EXPORT_PROCESSING_ERROR");
-            job.setErrorMessage("Ошибка при формировании экспортного пакета данных.");
+            job.setErrorMessage("Ошибка при формировании экспортного пакета данных: " + e.getMessage());
             return exportJobRepository.save(job);
         }
     }
@@ -244,7 +264,7 @@ public class PrivacyService {
         job.setErasureScope(erasureScope);
         job.setCreatedAt(OffsetDateTime.now(clock));
 
-        erasureJobRepository.save(job);
+        erasureJobRepository.saveAndFlush(job);
 
         int totalErased = 1; // user account
 
@@ -253,6 +273,7 @@ public class PrivacyService {
             if (!docs.isEmpty()) {
                 totalErased += docs.size();
                 employeeDocumentRepository.deleteAll(docs);
+                employeeDocumentRepository.flush();
             }
         }
 
@@ -261,17 +282,31 @@ public class PrivacyService {
             if (!reports.isEmpty()) {
                 totalErased += reports.size();
                 dossierReportRepository.deleteAll(reports);
+                dossierReportRepository.flush();
             }
         }
 
         // Execute permanent removal of identifiable user data from database
         userRepository.delete(user);
+        userRepository.flush();
 
+        OffsetDateTime completedAt = OffsetDateTime.now(clock);
         job.setStatus("COMPLETED");
         job.setRecordsErasedCount(totalErased);
-        job.setCompletedAt(OffsetDateTime.now(clock));
+        job.setCompletedAt(completedAt);
 
-        return erasureJobRepository.save(job);
+        int updated = erasureJobRepository.updateStatusToCompleted(
+            job.getRequestId(),
+            "PENDING",
+            "COMPLETED",
+            totalErased,
+            completedAt
+        );
+        if (updated == 0) {
+            erasureJobRepository.save(job);
+        }
+
+        return job;
     }
 
     @Transactional(readOnly = true)
