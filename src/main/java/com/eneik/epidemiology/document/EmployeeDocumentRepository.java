@@ -34,4 +34,33 @@ public interface EmployeeDocumentRepository extends JpaRepository<EmployeeDocume
             @Param("fromDate") java.time.LocalDate fromDate,
             @Param("toDate") java.time.LocalDate toDate
     );
+
+    @Query("SELECT d FROM EmployeeDocument d WHERE (:employeeId IS NULL OR d.employeeId = :employeeId) " +
+           "AND (:employeeSurname IS NULL OR d.employeeSurname = :employeeSurname) " +
+           "AND (:docType IS NULL OR d.docType = :docType) " +
+           "AND (:scientificDirection IS NULL OR d.scientificDirection = :scientificDirection) " +
+           "AND (:query IS NULL OR LOWER(CAST(d.title AS string)) LIKE LOWER(CONCAT('%', CAST(:query AS string), '%')) OR LOWER(CAST(d.details AS string)) LIKE LOWER(CONCAT('%', CAST(:query AS string), '%'))) " +
+           "AND (CAST(:fromDate AS java.time.LocalDate) IS NULL OR d.docDate >= :fromDate) " +
+           "AND (CAST(:toDate AS java.time.LocalDate) IS NULL OR d.docDate <= :toDate) " +
+           "AND (d.docType IS NULL OR d.docType NOT IN ('STRAIN_ISOLATION', 'REPORT') OR :currentUserRole = 'ADMIN' OR " +
+           "     (:currentUserRole != 'ADMIN' AND (" +
+           "       (d.accessDepartment IS NULL AND d.accessCourse IS NULL) OR " +
+           "       (d.accessDepartment = :currentUserDepartment) OR " +
+           "       (d.accessCourse IN :currentUserCourses)" +
+           "     ))" +
+           ") " +
+           "ORDER BY d.docDate DESC")
+    org.springframework.data.domain.Page<EmployeeDocument> searchEmployeeDocumentsPaginatedFiltered(
+            @Param("employeeId") String employeeId,
+            @Param("employeeSurname") String employeeSurname,
+            @Param("docType") String docType,
+            @Param("scientificDirection") String scientificDirection,
+            @Param("query") String query,
+            @Param("fromDate") java.time.LocalDate fromDate,
+            @Param("toDate") java.time.LocalDate toDate,
+            @Param("currentUserRole") String currentUserRole,
+            @Param("currentUserDepartment") String currentUserDepartment,
+            @Param("currentUserCourses") java.util.Collection<String> currentUserCourses,
+            org.springframework.data.domain.Pageable pageable
+    );
 }
