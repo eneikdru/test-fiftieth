@@ -1,0 +1,36 @@
+{
+  "epics": [
+    {
+      "existingEpicId": "954247ab-8539-4ed2-b51b-4c8572290598",
+      "title": "Runtime Environment Initialization Repair",
+      "jtbd": "When the end customer attempts to launch the application, I want the system to start successfully without network conflicts, so that the product is actually available for use.",
+      "kanoClass": "Must-Be",
+      "cynefinDomain": "clear",
+      "sixSigmaMetric": "reduce the application launch failure rate from 100% to 0%",
+      "tocConstraintRef": "Deployment configuration network boundary",
+      "sourceIndex": 0,
+      "requirements": [
+        "R1: Fix DNS resolution for host.docker.internal in the deployment environment so the health check succeeds.",
+        "R2: Fix permission denied error for backup.sh script so the backup service starts successfully."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Fix host.docker.internal resolution and backup.sh execution permissions in deployment configuration",
+          "roleTag": "BARCAN-TAG-05",
+          "jtbd": "When implementing the network configuration and backup script permission fixes for this epic, I want the health check to successfully resolve the backend container and the backup service to start successfully, so that the application launch completes without errors.",
+          "acceptanceCriteria": "Given a fresh deployment environment,\nWhen the application is launched and the health check executes,\nThen it resolves host.docker.internal correctly and the launch completes without NameResolutionError.\nGiven a fresh deployment environment,\nWhen the application is launched and the backup service starts,\nThen backup.sh executes correctly without permission denied errors.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "Docker compose network settings",
+          "sixSigmaMetric": "reduce the occurrence of NameResolutionError and permission denied errors during application launch from 100% to 0%",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1",
+            "R2"
+          ]
+        }
+      ]
+    }
+  ]
+}
