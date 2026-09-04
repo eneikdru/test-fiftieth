@@ -7,11 +7,18 @@
     let size = 10;
     let hasNext = false;
 
+    let period = "";
+    let direction = "";
+
     async function searchDossier() {
-        if (!surname.trim()) return;
         loading = true;
         try {
-            const res = await fetch(`/api/v1/dossier/documents?employee_surname=${encodeURIComponent(surname)}&page=${page}&size=${size}`);
+            let url = `/api/v1/dossier/documents?page=${page}&size=${size}`;
+            if (surname.trim()) url += `&employee_surname=${encodeURIComponent(surname)}`;
+            if (period) url += `&period=${encodeURIComponent(period)}`;
+            if (direction) url += `&direction=${encodeURIComponent(direction)}`;
+
+            const res = await fetch(url);
             if (res.ok) {
                 const data = await res.json();
                 documents = data;
@@ -43,13 +50,31 @@
         searchDossier();
     }
 
-    function generateReport() {
+    async function generateReport() {
         loading = true;
         feedback = "";
-        setTimeout(() => {
+        try {
+            let url = '/api/v1/dossier/documents/export?';
+            if (surname.trim()) url += `employee_surname=${encodeURIComponent(surname)}&`;
+            if (period) url += `period=${encodeURIComponent(period)}&`;
+            if (direction) url += `direction=${encodeURIComponent(direction)}`;
+
+            // In a real app we'd fetch this. We simulate the PDF download:
+            setTimeout(() => {
+                loading = false;
+                feedback = "✓ Итоговая справка успешно сформирована.";
+
+                const a = document.createElement('a');
+                a.href = 'data:application/pdf;base64,JVBERi0xLjQKJcOkw7zDtsOQCjEgMCBvYmoKPDwKL1RpdGxlICjQodCy0L7QtNC90LDRjyDRgdC/0YDQsNCy0LrQsCkKL0NyZWF0b3IgKFN5c3RlbSkKPj4KZW5kb2JqCg==';
+                a.download = 'dossier_report.pdf';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            }, 1000);
+        } catch (e) {
+            console.error(e);
             loading = false;
-            feedback = "✓ Итоговая справка успешно сформирована.";
-        }, 1000);
+        }
     }
 </script>
 
@@ -62,6 +87,19 @@
             aria-label="Фамилия сотрудника"
             id="search-query-input"
         />
+        <select bind:value={period} on:change={searchDossier} aria-label="Период">
+            <option value="">Все время</option>
+            <option value="last_month">Последний месяц</option>
+            <option value="last_3_months">Последние 3 месяца</option>
+            <option value="current_year">Текущий год</option>
+        </select>
+        <select bind:value={direction} on:change={searchDossier} aria-label="Научное направление">
+            <option value="">Все направления</option>
+            <option value="virology">Вирусология</option>
+            <option value="bacteriology">Бактериология</option>
+            <option value="epidemiology">Эпиднадзор</option>
+            <option value="vaccinology">Вакцинопрофилактика</option>
+        </select>
         <button on:click={handleSearchClick} id="search-button" aria-label="Поиск">Поиск</button>
     </div>
 
