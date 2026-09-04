@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Dashboard - API Gateway</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;600;700&amp;family=JetBrains+Mono:wght@400&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+              "surface-variant": "#d1e4ff",
+              "background": "#f8f9ff",
+              "secondary": "#46617b",
+              "on-error-container": "#93000a",
+              "outline": "#737685",
+              "outline-variant": "#c3c6d6",
+              "surface-container": "#e4efff",
+              "surface": "#f8f9ff",
+              "on-surface": "#011d35",
+              "surface-dim": "#c4dcfd",
+              "inverse-on-surface": "#e9f1ff",
+              "tertiary-container": "#565b5f",
+              "secondary-container": "#c4e0fe",
+              "surface-container-highest": "#d1e4ff",
+              "on-background": "#011d35",
+              "error": "#ba1a1a",
+              "on-primary": "#ffffff",
+              "on-primary-container": "#c4d2ff",
+              "primary": "#003d9b",
+              "on-primary-fixed-variant": "#0040a2",
+              "surface-container-lowest": "#ffffff",
+              "on-secondary-fixed-variant": "#2e4962",
+              "tertiary-fixed": "#dfe3e7",
+              "on-tertiary": "#ffffff",
+              "inverse-primary": "#b2c5ff",
+              "on-surface-variant": "#434654",
+              "on-secondary-container": "#48637d",
+              "surface-container-high": "#dbe9ff",
+              "on-error": "#ffffff",
+              "primary-fixed-dim": "#b2c5ff",
+              "surface-tint": "#0c56d0",
+              "on-tertiary-fixed-variant": "#43474b",
+              "tertiary-fixed-dim": "#c3c7cb",
+              "surface-container-low": "#eef4ff",
+              "on-secondary-fixed": "#001d32",
+              "on-tertiary-fixed": "#171c1f",
+              "primary-fixed": "#dae2ff",
+              "tertiary": "#3f4447",
+              "on-secondary": "#ffffff",
+              "secondary-fixed": "#cee5ff",
+              "secondary-fixed-dim": "#aec9e7",
+              "inverse-surface": "#19324b",
+              "error-container": "#ffdad6",
+              "surface-bright": "#f8f9ff",
+              "primary-container": "#0052cc",
+              "on-tertiary-container": "#cfd3d7",
+              "on-primary-fixed": "#001848"
+            },
+            "borderRadius": {
+              "DEFAULT": "0.125rem",
+              "lg": "0.25rem",
+              "xl": "0.5rem",
+              "full": "0.75rem"
+            },
+            "spacing": {
+              "container-margin": "16px",
+              "md": "16px",
+              "base": "4px",
+              "xl": "32px",
+              "sm": "8px",
+              "lg": "24px",
+              "xs": "4px",
+              "gutter": "12px"
+            },
+            "fontFamily": {
+              "headline-md": ["Geist"],
+              "body-md": ["Geist"],
+              "body-lg": ["Geist"],
+              "body-sm": ["Geist"],
+              "code-md": ["JetBrains Mono"],
+              "headline-lg": ["Geist"],
+              "label-caps": ["Geist"],
+              "headline-sm": ["Geist"]
+            },
+            "fontSize": {
+              "headline-md": ["20px", {"lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+              "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+              "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+              "body-sm": ["12px", {"lineHeight": "18px", "fontWeight": "400"}],
+              "code-md": ["13px", {"lineHeight": "20px", "fontWeight": "400"}],
+              "headline-lg": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+              "label-caps": ["11px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700"}],
+              "headline-sm": ["16px", {"lineHeight": "24px", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background font-body-md min-h-screen flex flex-col pt-[56px] pb-[64px] md:pb-0">
+<!-- TopAppBar -->
+<header class="bg-surface dark:bg-surface w-full top-0 sticky border-b border-outline-variant dark:border-outline flex justify-between items-center px-container-margin py-base w-full z-50">
+<div class="flex items-center gap-sm">
+<button class="text-on-surface-variant dark:text-on-surface-variant hover:bg-surface-container-low dark:hover:bg-surface-container-highest transition-colors active:opacity-80 transition-opacity p-2 rounded-full hidden md:flex" data-icon="menu">
+<span class="material-symbols-outlined">menu</span>
+</button>
+<span class="material-symbols-outlined text-primary dark:text-inverse-primary" data-icon="api">api</span>
+<span class="font-headline-md text-headline-md-mobile font-bold text-primary dark:text-inverse-primary hidden md:block">API Gateway</span>
+</div>
+<nav class="hidden md:flex gap-4">
+<a class="text-primary dark:text-inverse-primary font-headline-sm hover:bg-surface-container-low dark:hover:bg-surface-container-highest transition-colors active:opacity-80 transition-opacity px-3 py-1 rounded" href="#">Overview</a>
+<a class="text-on-surface-variant dark:text-on-surface-variant font-headline-sm hover:bg-surface-container-low dark:hover:bg-surface-container-highest transition-colors active:opacity-80 transition-opacity px-3 py-1 rounded" href="#">Analytics</a>
+<a class="text-on-surface-variant dark:text-on-surface-variant font-headline-sm hover:bg-surface-container-low dark:hover:bg-surface-container-highest transition-colors active:opacity-80 transition-opacity px-3 py-1 rounded" href="#">Settings</a>
+</nav>
+<div class="flex items-center gap-sm">
+<button class="text-on-surface-variant dark:text-on-surface-variant hover:bg-surface-container-low dark:hover:bg-surface-container-highest transition-colors active:opacity-80 transition-opacity p-2 rounded-full" data-icon="sensors">
+<span class="material-symbols-outlined">sensors</span>
+</button>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-grow px-container-margin py-lg md:px-lg w-full max-w-7xl mx-auto flex flex-col gap-lg">
+<!-- Action Banner -->
+<div class="bg-surface-container-low border border-outline-variant rounded-lg p-md flex flex-col md:flex-row justify-between items-center gap-md">
+<div class="flex items-center gap-sm">
+<span class="material-symbols-outlined text-secondary" data-icon="info">info</span>
+<div>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Currently viewing Mock Data</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Connect to the live data stream for real-time logs.</p>
+</div>
+</div>
+<button class="bg-primary hover:bg-on-primary-fixed-variant text-on-primary font-label-caps text-label-caps px-4 py-2 rounded flex items-center gap-2 active:scale-95 transition-transform duration-150">
+<span class="material-symbols-outlined text-[16px]" data-icon="sync">sync</span>
+                Sync Real Data
+            </button>
+</div>
+<!-- Dashboard Grid (Bento style) -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-gutter">
+<!-- Quick Stats -->
+<div class="md:col-span-4 bg-surface border border-outline-variant rounded-lg p-md flex flex-col gap-base relative overflow-hidden">
+<div class="absolute top-0 left-0 w-[2px] h-full bg-secondary"></div>
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Total Requests (Mock)</span>
+<span class="font-headline-lg text-headline-lg text-on-surface">1,204</span>
+<div class="flex items-center gap-xs mt-auto pt-sm border-t border-outline-variant">
+<div class="w-2 h-2 rounded-full bg-secondary"></div>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Last synced: 12 mins ago</span>
+</div>
+</div>
+<div class="md:col-span-4 bg-surface border border-outline-variant rounded-lg p-md flex flex-col gap-base relative overflow-hidden">
+<div class="absolute top-0 left-0 w-[2px] h-full bg-error"></div>
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Error Rate (Mock)</span>
+<span class="font-headline-lg text-headline-lg text-on-surface">2.4%</span>
+<div class="flex items-center gap-xs mt-auto pt-sm border-t border-outline-variant">
+<span class="material-symbols-outlined text-[12px] text-error" data-icon="trending_up">trending_up</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Up from 1.8%</span>
+</div>
+</div>
+<div class="md:col-span-4 bg-surface border border-outline-variant rounded-lg p-md flex flex-col gap-base relative overflow-hidden">
+<div class="absolute top-0 left-0 w-[2px] h-full bg-primary"></div>
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Avg Latency (Mock)</span>
+<span class="font-headline-lg text-headline-lg text-on-surface">142ms</span>
+<div class="flex items-center gap-xs mt-auto pt-sm border-t border-outline-variant">
+<span class="material-symbols-outlined text-[12px] text-primary" data-icon="trending_down">trending_down</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Down 12ms</span>
+</div>
+</div>
+<!-- Log List -->
+<div class="md:col-span-12 flex flex-col gap-md">
+<div class="flex justify-between items-center">
+<h3 class="font-headline-md text-headline-md text-on-surface">Recent API Logs</h3>
+<div class="flex items-center gap-2">
+<span class="font-label-caps text-label-caps bg-surface-container text-on-surface px-2 py-1 rounded">MOCK DATA</span>
+</div>
+</div>
+<!-- Log Item 1 -->
+<div class="bg-surface border border-outline-variant rounded-lg p-md flex flex-col md:flex-row gap-md items-start md:items-center relative overflow-hidden">
+<div class="absolute top-0 left-0 w-[2px] h-full bg-primary"></div>
+<div class="flex-grow flex flex-col gap-base">
+<div class="flex items-center gap-sm">
+<span class="font-label-caps text-label-caps bg-surface-container-low text-primary px-2 py-[2px] rounded border border-outline-variant">GET</span>
+<span class="font-headline-sm text-headline-sm text-on-surface">Sample Request #1</span>
+</div>
+<span class="font-code-md text-code-md text-secondary">/api/v1/users/mock-id-001</span>
+</div>
+<div class="flex md:flex-col items-center md:items-end gap-sm md:gap-xs w-full md:w-auto justify-between md:justify-start border-t md:border-t-0 border-outline-variant pt-sm md:pt-0">
+<span class="font-body-sm text-body-sm text-on-surface-variant">200 OK</span>
+<span class="font-code-md text-code-md text-on-surface-variant">120ms</span>
+</div>
+</div>
+<!-- Log Item 2 -->
+<div class="bg-surface border border-outline-variant rounded-lg p-md flex flex-col md:flex-row gap-md items-start md:items-center relative overflow-hidden">
+<div class="absolute top-0 left-0 w-[2px] h-full bg-secondary"></div>
+<div class="flex-grow flex flex-col gap-base">
+<div class="flex items-center gap-sm">
+<span class="font-label-caps text-label-caps bg-surface-container-highest text-secondary px-2 py-[2px] rounded border border-outline-variant">POST</span>
+<span class="font-headline-sm text-headline-sm text-on-surface">Sample Request #2</span>
+</div>
+<span class="font-code-md text-code-md text-secondary">/api/v1/data/sync/mock</span>
+</div>
+<div class="flex md:flex-col items-center md:items-end gap-sm md:gap-xs w-full md:w-auto justify-between md:justify-start border-t md:border-t-0 border-outline-variant pt-sm md:pt-0">
+<span class="font-body-sm text-body-sm text-on-surface-variant">201 Created</span>
+<span class="font-code-md text-code-md text-on-surface-variant">340ms</span>
+</div>
+</div>
+<!-- Log Item 3 -->
+<div class="bg-surface border border-outline-variant rounded-lg p-md flex flex-col md:flex-row gap-md items-start md:items-center relative overflow-hidden">
+<div class="absolute top-0 left-0 w-[2px] h-full bg-error"></div>
+<div class="flex-grow flex flex-col gap-base">
+<div class="flex items-center gap-sm">
+<span class="font-label-caps text-label-caps bg-error-container text-error px-2 py-[2px] rounded border border-error">DELETE</span>
+<span class="font-headline-sm text-headline-sm text-on-surface">Sample Request #3</span>
+</div>
+<span class="font-code-md text-code-md text-secondary">/api/v1/records/mock-id-404</span>
+</div>
+<div class="flex md:flex-col items-center md:items-end gap-sm md:gap-xs w-full md:w-auto justify-between md:justify-start border-t md:border-t-0 border-outline-variant pt-sm md:pt-0">
+<span class="font-body-sm text-body-sm text-error">404 Not Found</span>
+<span class="font-code-md text-code-md text-on-surface-variant">45ms</span>
+</div>
+</div>
+<!-- Pagination Placeholder -->
+<div class="flex justify-center mt-md">
+<button class="bg-surface hover:bg-surface-container text-on-surface border border-outline-variant font-label-caps text-label-caps px-4 py-2 rounded flex items-center gap-2 active:scale-95 transition-transform duration-150">
+                        Load More Mocks
+                    </button>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar -->
+<nav class="md:hidden bg-surface dark:bg-surface fixed bottom-0 w-full z-50 border-t border-outline-variant dark:border-outline flex justify-around items-center px-container-margin pb-safe h-16 w-full">
+<!-- Active Tab: Overview -->
+<a class="flex flex-col items-center justify-center bg-secondary-container dark:bg-secondary text-on-secondary-container dark:text-on-secondary rounded-full p-2 hover:bg-surface-container dark:hover:bg-surface-container-highest active:scale-95 transition-transform duration-150 w-16 h-16" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-label-caps text-label-caps mt-1">Overview</span>
+</a>
+<!-- Inactive Tab: Analytics -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant p-2 hover:bg-surface-container dark:hover:bg-surface-container-highest active:scale-95 transition-transform duration-150 w-16 h-16" href="#">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+<span class="font-label-caps text-label-caps mt-1">Analytics</span>
+</a>
+<!-- Inactive Tab: Settings -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant p-2 hover:bg-surface-container dark:hover:bg-surface-container-highest active:scale-95 transition-transform duration-150 w-16 h-16" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-label-caps text-label-caps mt-1">Settings</span>
+</a>
+</nav>
+</body></html>
