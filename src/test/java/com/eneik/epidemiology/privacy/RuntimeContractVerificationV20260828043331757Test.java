@@ -30,7 +30,7 @@ class RuntimeContractVerificationV20260828043331757Test {
             try {
                 ScriptUtils.executeSqlScript(
                     conn,
-                    new EncodedResource(new ClassPathResource("db/migration/V20260828043331757__align_datastore_runtime_contract.sql")),
+                    new EncodedResource(new ClassPathResource("db/migration/V20260828043331757__seed_initial_strains.sql")),
                     false,
                     false,
                     ScriptUtils.DEFAULT_COMMENT_PREFIX,
