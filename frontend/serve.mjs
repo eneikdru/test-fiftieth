@@ -33,6 +33,67 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  if (pathname.startsWith('/api/v1/dossier/documents')) {
+    const surname = parsedUrl.searchParams.get('employee_surname') || '';
+    const docs = [
+      {
+        id: 1,
+        employee_id: 'EMP-1001',
+        employee_surname: surname || 'Иванов',
+        doc_type: 'REPORT',
+        title: 'Приказ о назначении №42',
+        doc_date: '2023-01-15',
+        details: 'Приказ №42'
+      },
+      {
+        id: 2,
+        employee_id: 'EMP-1001',
+        employee_surname: surname || 'Иванов',
+        doc_type: 'REPORT',
+        title: 'Выписка из учёного совета от 12.05.2023',
+        doc_date: '2023-05-12',
+        details: 'Выписка'
+      },
+      {
+        id: 3,
+        employee_id: 'EMP-1001',
+        employee_surname: surname || 'Иванов',
+        doc_type: 'REPORT',
+        title: 'Отчёт о командировке (Самара)',
+        doc_date: '2023-09-20',
+        details: 'Отчёт'
+      }
+    ];
+
+    res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+    res.end(JSON.stringify(docs));
+    return;
+  }
+
+  if (pathname === '/api/v1/dossier/reports' && req.method === 'POST') {
+    let body = '';
+    req.on('data', chunk => { body += chunk.toString(); });
+    req.on('end', () => {
+      let parsed = {};
+      try { parsed = JSON.parse(body); } catch (e) {}
+      const empId = parsed.employee_id || 'EMP-1001';
+      const templateType = parsed.template_type || 'SUMMARY';
+      const responsePayload = {
+        id: 1,
+        employee_id: empId,
+        template_type: templateType,
+        status: 'COMPLETED',
+        summary_text: `Сводная справка по сотруднику ${empId}: 3 документов.`,
+        document_count: 3,
+        download_url: '/api/v1/dossier/reports/1/download',
+        created_at: new Date().toISOString()
+      };
+      res.writeHead(201, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify(responsePayload));
+    });
+    return;
+  }
+
   if (pathname.startsWith('/api/v1/documents/search')) {
     const query = parsedUrl.searchParams.get('query') || parsedUrl.searchParams.get('q') || '';
     const docs = [

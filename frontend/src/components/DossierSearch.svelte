@@ -43,13 +43,38 @@
         searchDossier();
     }
 
-    function generateReport() {
+    async function generateReport() {
         loading = true;
         feedback = "";
-        setTimeout(() => {
+        try {
+            const empId = (documents.length > 0 && (documents[0].employee_id || documents[0].employeeId))
+                ? (documents[0].employee_id || documents[0].employeeId)
+                : (surname.trim() || "EMP-DEFAULT");
+
+            const res = await fetch('/api/v1/dossier/reports', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    employee_id: empId,
+                    template_type: 'SUMMARY'
+                })
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                feedback = data.summary_text ? `✓ ${data.summary_text}` : '✓ Итоговая справка успешно сформирована.';
+            } else {
+                const errData = await res.json().catch(() => ({}));
+                feedback = `Ошибка формирования справки: ${errData.message || res.statusText}`;
+            }
+        } catch (e) {
+            console.error(e);
+            feedback = "Ошибка сети при формировании справки.";
+        } finally {
             loading = false;
-            feedback = "✓ Итоговая справка успешно сформирована.";
-        }, 1000);
+        }
     }
 </script>
 
