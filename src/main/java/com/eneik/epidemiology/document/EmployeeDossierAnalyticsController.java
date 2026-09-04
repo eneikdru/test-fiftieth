@@ -41,9 +41,8 @@ public class EmployeeDossierAnalyticsController {
         String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
         User currentUser = userRepository.findByUsername(currentUsername).orElse(null);
 
-        List<EmployeeDocument> documents = employeeDocumentRepository.searchEmployeeDocuments(
-                employeeId, null, docType, scientificDirection, null, fromDate, toDate
-        );
+        List<EmployeeDocument> documents = employeeDocumentRepository.searchEmployeeDocuments(employeeId, null, docType, scientificDirection, null, fromDate, toDate
+        , org.springframework.data.domain.Pageable.unpaged()).getContent();
 
         if (currentUser != null && !"ADMIN".equals(currentUser.getRole())) {
             documents = documents.stream().filter(d -> {
@@ -103,9 +102,8 @@ public class EmployeeDossierAnalyticsController {
             // we use first doc_type if list provided for simpler query (the repository only supports a single docType)
             String docType = null;
 
-            List<EmployeeDocument> documents = employeeDocumentRepository.searchEmployeeDocuments(
-                employeeId, null, docType, scientificDirection, null, fromDate, toDate
-            );
+            List<EmployeeDocument> documents = employeeDocumentRepository.searchEmployeeDocuments(employeeId, null, docType, scientificDirection, null, fromDate, toDate
+            , org.springframework.data.domain.Pageable.unpaged()).getContent();
 
             // manual filtering for remaining doc types
             if (docTypes != null && !docTypes.isEmpty()) {
@@ -166,9 +164,8 @@ public class EmployeeDossierAnalyticsController {
             @RequestParam("employee_id") String employeeId,
             @RequestParam(value = "scientific_direction", required = false) String scientificDirection) {
 
-        List<EmployeeDocument> documents = employeeDocumentRepository.searchEmployeeDocuments(
-                employeeId, null, null, scientificDirection, null, null, null
-        );
+        List<EmployeeDocument> documents = employeeDocumentRepository.searchEmployeeDocuments(employeeId, null, null, scientificDirection, null, null, null
+        , org.springframework.data.domain.Pageable.unpaged()).getContent();
 
         String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
         User currentUser = userRepository.findByUsername(currentUsername).orElse(null);
