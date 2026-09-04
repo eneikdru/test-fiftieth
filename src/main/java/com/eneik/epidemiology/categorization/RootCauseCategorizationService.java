@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Set;
@@ -23,23 +24,34 @@ public class RootCauseCategorizationService {
     private final RootCausePatternRepository patternRepository;
     private final DesignReviewConcernRepository concernRepository;
     private final TelemetryService telemetryService;
+    private final Clock clock;
 
     public RootCauseCategorizationService(
         RootCausePatternRepository patternRepository,
         DesignReviewConcernRepository concernRepository
     ) {
-        this(patternRepository, concernRepository, null);
+        this(patternRepository, concernRepository, null, Clock.systemUTC());
+    }
+
+    public RootCauseCategorizationService(
+        RootCausePatternRepository patternRepository,
+        DesignReviewConcernRepository concernRepository,
+        TelemetryService telemetryService
+    ) {
+        this(patternRepository, concernRepository, telemetryService, Clock.systemUTC());
     }
 
     @Autowired
     public RootCauseCategorizationService(
         RootCausePatternRepository patternRepository,
         DesignReviewConcernRepository concernRepository,
-        TelemetryService telemetryService
+        TelemetryService telemetryService,
+        @Autowired(required = false) Clock clock
     ) {
         this.patternRepository = patternRepository;
         this.concernRepository = concernRepository;
         this.telemetryService = telemetryService;
+        this.clock = clock != null ? clock : Clock.systemUTC();
     }
 
     public boolean categorizeConcernInMemory(DesignReviewConcern concern) {
@@ -107,7 +119,7 @@ public class RootCauseCategorizationService {
                     stream,
                     "WESTERN_ELECTRIC_8_CONSECUTIVE_SAME_SIDE",
                     "RCP-REVIEW-CONCERNS-001",
-                    OffsetDateTime.now()
+                    OffsetDateTime.now(clock)
                 );
                 return patternRepository.save(newPattern);
             });
