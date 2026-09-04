@@ -6,9 +6,8 @@ services:
 
   backend:
     # Backend service definition with Dockerfile build context and actuator health check
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: eclipse-temurin:21-jre-alpine
+    command: ["java", "-jar", "/app/target/epidemiology-knowledge-base-0.0.1-SNAPSHOT.jar"]
     container_name: "${COMPOSE_PROJECT_NAME:-epidemiology}_backend"
     depends_on:
       db:
@@ -28,6 +27,7 @@ services:
       timeout: 5s
       retries: 10
     volumes:
+      - ./target:/app/target
       - app_uploads:/app/data/docs/uploads
 
   backup:
