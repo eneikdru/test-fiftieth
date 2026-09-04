@@ -46,9 +46,17 @@ test.describe('Authentication, Role Access, and Recovery E2E Tests', () => {
     await expect(page.locator('h3')).toHaveText('Инструкции отправлены');
     await expect(page.locator('main')).toContainText('Инструкции по восстановлению пароля отправлены на ваш электронный адрес.');
 
-    // Return to login
+    // Complete recovery: Return to login and verify access restoration with new restored password
     await page.click('button:has-text("Вернуться ко входу")');
     await expect(page.locator('h2')).toHaveText('Вход в систему');
+
+    // Authenticate with restored credentials
+    await page.fill('#username-input', 'locked_employee@epidemiology-inst.ru');
+    await page.fill('#password-input', 'RestoredPass123!');
+    await page.click('button[type="submit"]');
+
+    // Verify access successfully restored and logged in
+    await expect(page.locator('main')).toContainText('Каталог эпидемиологических материалов');
   });
 
   test('Given a logged-in user, When they click logout, Then they are logged out successfully', async ({ page }) => {

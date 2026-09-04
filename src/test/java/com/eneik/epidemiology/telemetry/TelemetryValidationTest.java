@@ -38,16 +38,29 @@ class TelemetryValidationTest {
     @Autowired
     private JwtTokenProvider jwtTokenProvider;
 
+    @Autowired
+    private com.eneik.epidemiology.document.DocumentRepository documentRepository;
+
     private String authToken;
+    private Long createdDocId;
 
     @BeforeEach
     void setUp() {
         telemetryEventRepository.deleteAll();
+        documentRepository.deleteAll();
         userRepository.deleteAll();
 
         User user = new User("qa_tester", "hashed_pass", "RESEARCHER");
         user.setCreatedAt(OffsetDateTime.now());
         userRepository.save(user);
+
+        com.eneik.epidemiology.document.Document doc = new com.eneik.epidemiology.document.Document();
+        doc.setTitle("Test Protocol");
+        doc.setAuthorOrganization("НИИ Эпидемиологии");
+        doc.setPublicationYear(2023);
+        doc.setFilePath("protocol.pdf");
+        com.eneik.epidemiology.document.Document savedDoc = documentRepository.save(doc);
+        createdDocId = savedDoc.getId();
 
         authToken = jwtTokenProvider.generateToken(user.getUsername(), user.getRole());
     }
@@ -73,7 +86,7 @@ class TelemetryValidationTest {
     @Test
     @DisplayName("Given a test download, When the action completes, Then exactly one successful download metric is recorded")
     void givenTestDownload_whenActionCompletes_thenExactlyOneDownloadMetricIsRecorded() throws Exception {
-        Long docId = 999L;
+        Long docId = createdDocId;
 
         mockMvc.perform(get("/api/v1/documents/" + docId + "/download")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + authToken))
