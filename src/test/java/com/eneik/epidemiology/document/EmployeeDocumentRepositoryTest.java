@@ -119,7 +119,7 @@ class EmployeeDocumentRepositoryTest {
 
         // When
         List<EmployeeDocument> virologyResults = employeeDocumentRepository.searchEmployeeDocuments(
-                employeeId, null, null, "Вирусология", null, null, null, org.springframework.data.domain.Pageable.unpaged()
+                employeeId, null, null, "Вирусология", null, null, null, false, null, null, org.springframework.data.domain.Pageable.unpaged()
         ).getContent();
 
         // Then

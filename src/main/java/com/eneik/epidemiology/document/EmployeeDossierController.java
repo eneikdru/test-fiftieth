@@ -54,7 +54,7 @@ public class EmployeeDossierController {
         User currentUser = userRepository.findByUsername(currentUsername).orElse(null);
 
         List<EmployeeDocument> documents = employeeDocumentRepository.searchEmployeeDocuments(
-                employeeId, employeeSurname, docType, scientificDirection, query, fromDate, toDate, org.springframework.data.domain.Pageable.unpaged()
+                employeeId, employeeSurname, docType, scientificDirection, query, fromDate, toDate, false, null, null, org.springframework.data.domain.Pageable.unpaged()
         ).getContent();
 
         if (currentUser != null && !"ADMIN".equals(currentUser.getRole())) {

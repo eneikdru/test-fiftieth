@@ -42,7 +42,7 @@ public class EmployeeDossierAnalyticsController {
         User currentUser = userRepository.findByUsername(currentUsername).orElse(null);
 
         List<EmployeeDocument> documents = employeeDocumentRepository.searchEmployeeDocuments(
-                employeeId, null, docType, scientificDirection, null, fromDate, toDate, org.springframework.data.domain.Pageable.unpaged()
+                employeeId, null, docType, scientificDirection, null, fromDate, toDate, false, null, null, org.springframework.data.domain.Pageable.unpaged()
         ).getContent();
 
 
@@ -96,7 +96,7 @@ public class EmployeeDossierAnalyticsController {
             String docType = null;
 
             List<EmployeeDocument> documents = employeeDocumentRepository.searchEmployeeDocuments(
-                employeeId, null, docType, scientificDirection, null, fromDate, toDate, org.springframework.data.domain.Pageable.unpaged()
+                employeeId, null, docType, scientificDirection, null, fromDate, toDate, false, null, null, org.springframework.data.domain.Pageable.unpaged()
             ).getContent();
 
             // manual filtering for remaining doc types
@@ -152,7 +152,7 @@ public class EmployeeDossierAnalyticsController {
             @RequestParam(value = "scientific_direction", required = false) String scientificDirection) {
 
         List<EmployeeDocument> documents = employeeDocumentRepository.searchEmployeeDocuments(
-                employeeId, null, null, scientificDirection, null, null, null, org.springframework.data.domain.Pageable.unpaged()
+                employeeId, null, null, scientificDirection, null, null, null, false, null, null, org.springframework.data.domain.Pageable.unpaged()
         ).getContent();
 
         String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
