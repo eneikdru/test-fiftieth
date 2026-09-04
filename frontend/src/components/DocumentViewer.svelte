@@ -43,7 +43,7 @@
 
 </script>
 
-<div class="fixed inset-0 z-50 bg-on-surface/20 backdrop-blur-md flex flex-col pt-16">
+<div class="fixed inset-0 z-50 bg-on-surface/20 backdrop-blur-md flex flex-col pt-16" role="dialog" aria-modal="true" aria-label="Document Viewer">
   <!-- TopAppBar (Floating above document) -->
   <header class="absolute top-0 w-full flex items-center justify-between px-4 sm:px-6 lg:px-8 h-16 bg-surface dark:bg-surface-dim border-b border-outline-variant dark:border-on-surface-variant shadow-sm z-30 transition-colors duration-200 ease-in-out">
     <button
@@ -97,7 +97,8 @@
   <div class="absolute bottom-6 left-1/2 transform -translate-x-1/2 bg-surface dark:bg-surface-dim rounded-full shadow-lg border border-outline-variant px-6 py-3 flex items-center gap-6 z-40">
     <button
       on:click={handleDownload}
-      class="flex flex-col items-center justify-center gap-1 text-primary hover:opacity-80 transition-opacity focus:outline-none"
+      class="flex flex-col items-center justify-center gap-1 text-primary hover:opacity-80 transition-opacity focus:outline-none focus:ring-2 focus:ring-primary/50 rounded"
+      aria-label="Download Document"
     >
       <span class="material-symbols-outlined text-[24px]" data-icon="download">download</span>
       <span class="font-label-caps text-label-caps text-[10px] uppercase font-bold tracking-wider">Download</span>
@@ -105,7 +106,8 @@
     <div class="w-[1px] h-8 bg-outline-variant"></div>
     <button
       on:click={handlePrint}
-      class="flex flex-col items-center justify-center gap-1 text-on-surface-variant hover:opacity-80 transition-opacity focus:outline-none"
+      class="flex flex-col items-center justify-center gap-1 text-on-surface-variant hover:opacity-80 transition-opacity focus:outline-none focus:ring-2 focus:ring-primary/50 rounded"
+      aria-label="Print Document"
     >
       <span class="material-symbols-outlined text-[24px]" data-icon="print">print</span>
       <span class="font-label-caps text-label-caps text-[10px] uppercase font-bold tracking-wider">Print</span>
@@ -113,7 +115,8 @@
     <div class="w-[1px] h-8 bg-outline-variant"></div>
     <button
       on:click={handleClose}
-      class="flex flex-col items-center justify-center gap-1 text-on-surface-variant hover:opacity-80 transition-opacity focus:outline-none"
+      class="flex flex-col items-center justify-center gap-1 text-on-surface-variant hover:opacity-80 transition-opacity focus:outline-none focus:ring-2 focus:ring-primary/50 rounded"
+      aria-label="Close Viewer"
     >
       <span class="material-symbols-outlined text-[24px]" data-icon="close">close</span>
       <span class="font-label-caps text-label-caps text-[10px] uppercase font-bold tracking-wider">Close</span>
