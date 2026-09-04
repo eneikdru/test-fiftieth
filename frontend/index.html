@@ -134,6 +134,9 @@
       // Dossier module state
       dossierQuery: '',
       dossierResults: [],
+      isDossierLoading: false,
+      dossierError: '',
+      dossierSearched: false,
       isReportGenerating: false,
       dossierReportNotice: '',
 
@@ -225,14 +228,37 @@
       }
     }
 
-    function handleDossierSearch() {
+    async function handleDossierSearch() {
       if (!state.dossierQuery.trim()) return;
-      state.dossierResults = [
-        { id: 1, title: 'Приказ о назначении №42', type: 'order' },
-        { id: 2, title: 'Выписка из учёного совета от 12.05.2023', type: 'extract' },
-        { id: 3, title: 'Отчёт о командировке (Самара)', type: 'report' }
-      ];
+      state.isDossierLoading = true;
+      state.dossierError = '';
+      state.dossierSearched = true;
       render();
+
+      if (state.backendStopped) {
+        setTimeout(() => {
+          state.isDossierLoading = false;
+          state.dossierResults = [];
+          state.dossierError = 'Ошибка подключения к серверу (Backend stopped). Досье недоступно.';
+          render();
+        }, 150);
+        return;
+      }
+
+      try {
+        const res = await fetch(`/api/v1/dossier/documents?employee_surname=${encodeURIComponent(state.dossierQuery.trim())}`);
+        if (!res.ok) {
+          throw new Error('Ошибка сервера при загрузке досье.');
+        }
+        const data = await res.json();
+        state.dossierResults = Array.isArray(data) ? data : [];
+      } catch (err) {
+        state.dossierResults = [];
+        state.dossierError = err.message || 'Ошибка подключения к серверу.';
+      } finally {
+        state.isDossierLoading = false;
+        render();
+      }
     }
 
     function handleGenerateDossierReport() {
@@ -725,33 +751,48 @@
                     </button>
                   </div>
 
-                  <div id="results-container" style="${state.dossierResults.length > 0 ? 'display: block;' : 'display: none;'}">
-                    <ul class="document-list space-y-2 mb-6" id="document-list">
-                      ${state.dossierResults.map(doc => `
-                        <li class="p-3 bg-[#f7f9fb] border border-[#e0e3e5] rounded-lg text-sm font-medium text-[#191c1e]">
-                          📄 ${doc.title}
-                        </li>
-                      `).join('')}
-                    </ul>
-
-                    <div class="report-section flex items-center">
-                      <button
-                        id="generate-report-button"
-                        type="button"
-                        onclick="handleGenerateDossierReport()"
-                        ${state.isReportGenerating ? 'disabled' : ''}
-                        class="min-h-[44px] min-w-[44px] px-6 py-2.5 bg-[#003f87] text-white text-xs font-bold rounded-lg hover:bg-[#002b5e] disabled:bg-[#a0c4ff] transition-colors"
-                      >
-                        ${state.isReportGenerating ? '<span id="loading-spinner">Загрузка...</span>' : 'Сформировать итоговую справку'}
-                      </button>
+                  ${state.isDossierLoading ? `
+                    <div id="dossier-loading-state" role="status" class="p-4 text-center text-[#003f87] font-medium text-sm">
+                      <span id="loading-spinner">Загрузка документов досье...</span>
                     </div>
+                  ` : state.dossierError ? `
+                    <div id="dossier-error-state" role="alert" class="p-4 bg-[#ffdad6] text-[#93000a] border border-[#ba1a1a] rounded-lg text-sm font-medium">
+                      ⚠️ ${state.dossierError}
+                    </div>
+                  ` : state.dossierSearched && state.dossierResults.length === 0 ? `
+                    <div id="dossier-empty-state" role="status" class="p-6 bg-[#eceef0] border border-[#c2c6d4] rounded-lg text-center space-y-2">
+                      <h3 class="text-base font-bold text-[#191c1e]">нет материалов</h3>
+                      <p class="text-xs text-[#424752]">По вашему запросу документы досье не найдены.</p>
+                    </div>
+                  ` : state.dossierResults.length > 0 ? `
+                    <div id="results-container">
+                      <ul class="document-list space-y-2 mb-6" id="document-list">
+                        ${state.dossierResults.map(doc => `
+                          <li class="p-3 bg-[#f7f9fb] border border-[#e0e3e5] rounded-lg text-sm font-medium text-[#191c1e]">
+                            📄 ${doc.title}
+                          </li>
+                        `).join('')}
+                      </ul>
 
-                    ${state.dossierReportNotice ? `
-                      <div role="status" aria-live="polite" class="mt-4 p-3 bg-[#d9e3f1] text-[#001a40] rounded-lg font-medium text-xs border border-[#003f87]">
-                        ${state.dossierReportNotice}
+                      <div class="report-section flex items-center">
+                        <button
+                          id="generate-report-button"
+                          type="button"
+                          onclick="handleGenerateDossierReport()"
+                          ${state.isReportGenerating ? 'disabled' : ''}
+                          class="min-h-[44px] min-w-[44px] px-6 py-2.5 bg-[#003f87] text-white text-xs font-bold rounded-lg hover:bg-[#002b5e] disabled:bg-[#a0c4ff] transition-colors"
+                        >
+                          ${state.isReportGenerating ? '<span id="loading-spinner">Загрузка...</span>' : 'Сформировать итоговую справку'}
+                        </button>
                       </div>
-                    ` : ''}
-                  </div>
+
+                      ${state.dossierReportNotice ? `
+                        <div role="status" aria-live="polite" class="mt-4 p-3 bg-[#d9e3f1] text-[#001a40] rounded-lg font-medium text-xs border border-[#003f87]">
+                          ${state.dossierReportNotice}
+                        </div>
+                      ` : ''}
+                    </div>
+                  ` : ''}
                 </div>
               </section>
             ` : state.activeTab === 'foci' ? `

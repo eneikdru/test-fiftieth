@@ -64,11 +64,7 @@
 
   // RootCause / Outbreaks categorisation state
   let fociQuery = '';
-  let fociResults = [
-    { id: 'FOC-001', location: 'г. Москва, ВАО', hazardLevel: 'HIGH', category: 'Пищевой очаг (Сальмонеллез)', status: 'ACTIVE', cases: 14 },
-    { id: 'FOC-002', location: 'Московская обл., г. Подольск', hazardLevel: 'MEDIUM', category: 'Респираторный очаг (ОРВИ/Грипп)', status: 'MONITORING', cases: 28 },
-    { id: 'FOC-003', location: 'г. Санкт-Петербург, Невский р-н', hazardLevel: 'LOW', category: 'Контактно-бытовой очаг', status: 'CLOSED', cases: 3 }
-  ];
+  let fociResults = [];
 
   function handleCategorizeFoci() {
     if (!fociQuery.trim()) return;

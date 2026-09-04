@@ -24,6 +24,28 @@ const server = http.createServer((req, res) => {
   const pathname = parsedUrl.pathname;
 
   // Mock API endpoints
+  if (pathname.startsWith('/api/v1/dossier/documents')) {
+    const surname = parsedUrl.searchParams.get('employee_surname') || '';
+    if (surname.toLowerCase() === 'error') {
+      res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify({ error: 'Internal Server Error' }));
+      return;
+    }
+    if (surname.toLowerCase() === 'empty' || surname.toLowerCase() === 'unknown') {
+      res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify([]));
+      return;
+    }
+    const docs = [
+      { id: '1', title: 'Приказ о назначении №42', author: 'НИИ Эпидемиологии', year: 2023 },
+      { id: '2', title: 'Выписка из учёного совета от 12.05.2023', author: 'Учёный совет', year: 2023 },
+      { id: '3', title: 'Отчёт о командировке (Самара)', author: 'НИИ Эпидемиологии', year: 2022 }
+    ];
+    res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+    res.end(JSON.stringify(docs));
+    return;
+  }
+
   if (pathname === '/api/v1/documents/1/download' || (pathname.startsWith('/api/v1/documents/') && pathname.endsWith('/download'))) {
     res.writeHead(200, {
       'Content-Type': 'application/pdf',
