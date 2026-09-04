@@ -148,6 +148,60 @@ class AuthControllerTest {
     }
 
     @Test
+    @DisplayName("Given Moodle SSO config request, When GET /api/v1/auth/moodle/config called, Then returns OAuth2 authorization URL")
+    void testGetMoodleConfig_ReturnsOAuth2AuthorizationUrl() throws Exception {
+        mockMvc.perform(post("/api/v1/auth/moodle/config"))
+                .andExpect(status().isMethodNotAllowed());
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/api/v1/auth/moodle/config"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.login_url", notNullValue()))
+                .andExpect(jsonPath("$.auth_url", notNullValue()));
+    }
+
+    @Test
+    @DisplayName("Given Moodle SSO callback with valid auth code, When callback endpoint called, Then exchanges code for profile and authenticates user")
+    void testMoodleCallback_ValidCode_AuthenticatesAndSyncsRole() throws Exception {
+        userService.createUser("moodle_user", "Pass123!", "moodle@inst.ru", "Moodle User", "USER");
+
+        String callbackBody = "{\"code\":\"mock_moodle_auth_code\",\"state\":\"test_state\"}";
+
+        mockMvc.perform(post("/api/v1/auth/moodle/callback")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(callbackBody))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.access_token", notNullValue()))
+                .andExpect(jsonPath("$.refresh_token", notNullValue()))
+                .andExpect(jsonPath("$.user.username", is("moodle_user")))
+                .andExpect(jsonPath("$.user.role", is("EPIDEMIOLOGIST")));
+
+        User user = userService.findByUsername("moodle_user").orElseThrow();
+        assert "EPIDEMIOLOGIST".equals(user.getRole());
+        assert "Эпидемиология".equals(user.getDepartment());
+    }
+
+    @Test
+    @DisplayName("Given external LMS is down and auth code invalid, When callback endpoint called with fallback credentials, Then authenticates locally via fallback")
+    void testMoodleCallback_LmsDown_FallbackAuthenticationSuccess() throws Exception {
+        userService.createUser("moodle_user", "MySecureFallback!", "moodle@inst.ru", "Moodle User", "USER");
+
+        String callbackBody = "{\"code\":\"invalid_code\",\"username\":\"moodle_user\",\"fallback_password\":\"MySecureFallback!\"}";
+
+        mockMvc.perform(post("/api/v1/auth/moodle/callback")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(callbackBody))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.access_token", notNullValue()))
+                .andExpect(jsonPath("$.refresh_token", notNullValue()))
+                .andExpect(jsonPath("$.user.username", is("moodle_user")));
+
+        long fallbackEvents = telemetryEventRepository.findAll().stream()
+                .filter(e -> "fallback_login_success".equals(e.getEventType()) && "moodle_user".equals(e.getQueryTerm()))
+                .count();
+        assert fallbackEvents == 1;
+    }
+
+    @Test
     @DisplayName("Given valid SSO login request, When moodle sso endpoint called, Then returns JWT tokens and records sso login telemetry")
     void testSsoLogin_ReturnsAuthTokensAndRecordsTelemetry() throws Exception {
         userService.createUser("moodle_user", "Pass123!", "moodle@inst.ru", "Moodle User", "USER");
