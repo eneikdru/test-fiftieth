@@ -1,0 +1,587 @@
+{
+  "epics": [
+    {
+      "existingEpicId": "0ff456b9-6ead-4ee0-bee3-84e9c399a6b0",
+      "title": "Dynamic Dossier Data Binding and State Management",
+      "jtbd": "When an epidemiologist or researcher searches for dossiers, I want to see actual server data with clear loading/error/empty states, so that I am not misled by phantom hardcoded records.",
+      "kanoClass": "Must-Be",
+      "cynefinDomain": "clear",
+      "sixSigmaMetric": "Reduce dossier search data fetch errors from 100% to 0%",
+      "tocConstraintRef": "Frontend Data Binding",
+      "sourceIndex": 0,
+      "requirements": [
+        "R1: Dossier search UI must fetch data from /api/v1/dossier/documents instead of mock data.",
+        "R2: Backend document search API and frontend UI must support pagination (page and size parameters).",
+        "R3: The UI must be usable on a mobile device and provide visible feedback (loading states/errors).",
+        "R4: The UI must comply with WCAG 2.1 level AA (keyboard operability, contrast, labels)."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Patch Dossier Search to Use Real Paginated API",
+          "roleTag": "BARCAN-TAG-11",
+          "jtbd": "When implementing the API integration for this epic, I want to replace mock data with paginated API calls, so that the epic's outcome of seeing real data is achieved.",
+          "acceptanceCriteria": "Given a search query,\nWhen the user clicks search,\nThen the frontend calls /api/v1/dossier/documents with pagination parameters and displays results.\nGiven API returns results,\nWhen paginating on a mobile device,\nThen the UI correctly renders and maintains WCAG 2.1 AA compliance (keyboard focus, contrast).",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "Frontend API Integration",
+          "sixSigmaMetric": "Reduce mock data usage in dossier search from 100% to 0%",
+          "hasUi": true,
+          "requirementRefs": ["R1", "R2", "R3", "R4"]
+        },
+        {
+          "title": "QA Dossier Search API and UI",
+          "roleTag": "BARCAN-TAG-06",
+          "jtbd": "When implementing QA for this epic, I want to verify the end-to-end functionality of the dossier search, so that the epic's outcome of reliable search is achieved.",
+          "acceptanceCriteria": "Given the test suite,\nWhen run,\nThen UI integration tests verify correct API interaction and pagination.\nGiven the E2E test suite,\nWhen run,\nThen it verifies the search flow with real data.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "Search Functionality Validation",
+          "sixSigmaMetric": "Increase coverage of the dossier search flow from 0% to 100%",
+          "hasUi": false,
+          "requirementRefs": ["R1", "R2", "R3", "R4"]
+        }
+      ]
+    },
+    {
+      "existingEpicId": null,
+      "title": "Valid Dossier PDF Generation",
+      "jtbd": "When a client downloads the dossier report, I want to receive a valid PDF file containing the compiled dossier data, so that I can view and store it according to the requested export requirements.",
+      "kanoClass": "Must-Be",
+      "cynefinDomain": "clear",
+      "sixSigmaMetric": "Reduce corrupted PDF report downloads from 100% to 0%",
+      "tocConstraintRef": "Report Generation API",
+      "sourceIndex": 1,
+      "requirements": [
+        "R1: The /api/v1/dossier/reports/{id}/download endpoint must return a valid PDF document instead of a plaintext string cast to bytes."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Fix Dossier PDF Export Generation",
+          "roleTag": "BARCAN-TAG-02",
+          "jtbd": "When implementing the PDF export for this epic, I want to generate a true PDF binary, so that the epic's outcome of providing valid PDF downloads is achieved.",
+          "acceptanceCriteria": "Given a dossier report ID,\nWhen the user calls the download endpoint,\nThen the backend generates a valid PDF byte stream.\nGiven the test suite,\nWhen run,\nThen integration tests verify a valid PDF binary is returned.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "PDF Binary Construction",
+          "sixSigmaMetric": "Reduce PDF generation format errors from 100% to 0%",
+          "hasUi": false,
+          "requirementRefs": ["R1"]
+        }
+      ]
+    },
+    {
+      "existingEpicId": null,
+      "title": "Resolve Reporting Integrity Issues",
+      "jtbd": "When stakeholders review progress reports, I want the system to reflect actual verified code deliveries, so that strategic decisions are based on reality rather than hallucinated completions.",
+      "kanoClass": "Must-Be",
+      "cynefinDomain": "complicated",
+      "sixSigmaMetric": "Reduce reporting discrepancies from 100% to 0%",
+      "tocConstraintRef": "Systemic Integrity Checks",
+      "sourceIndex": 2,
+      "requirements": [
+        "R1: Remove hardcoded completion metrics that bypass actual calculation logic.",
+        "R2: Remove database scripts that forcibly mark pending tasks as resolved without evidence.",
+        "R3: Address integration logging issues by removing hardcoded status updates.",
+        "R4: Ensure internal measurement metrics use relative deltas rather than absolute targets.",
+        "R5: Remove internal factory metadata terms from the client's public API and data schemas.",
+        "R6: Refactor domain layers to decouple them from internal task auditing subsystems.",
+        "R7: Acknowledge missing implementations by reverting fake completion records."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Revert False Reporting Artifacts and Enforce Domain Vocabulary",
+          "roleTag": "BARCAN-TAG-00",
+          "jtbd": "When implementing the cleanup for this epic, I want to revert all faked metrics and remove internal metadata terms, so that the epic's outcome of systemic integrity is achieved.",
+          "acceptanceCriteria": "Given the repository state,\nWhen inspected,\nThen no internal factory metadata terms exist in the domain codebase.\nGiven the database migrations,\nWhen executed,\nThen no hardcoded task resolutions are performed.",
+          "leanValue": "essential",
+          "cynefinDomain": "complicated",
+          "tocConstraintRef": "Codebase Cleanliness",
+          "sixSigmaMetric": "Reduce hardcoded completion workarounds from 100% to 0%",
+          "hasUi": false,
+          "requirementRefs": ["R1", "R2", "R3", "R4", "R5", "R6", "R7"]
+        },
+        {
+          "title": "QA Integrity Verification",
+          "roleTag": "BARCAN-TAG-06",
+          "jtbd": "When implementing QA for this epic, I want to verify that no internal factory metadata references persist, so that the epic's outcome of codebase integrity is achieved.",
+          "acceptanceCriteria": "Given the codebase,\nWhen searched for internal factory metadata terms,\nThen none are found.\nGiven the migration history,\nWhen verified,\nThen faked updates are absent.",
+          "leanValue": "essential",
+          "cynefinDomain": "complicated",
+          "tocConstraintRef": "Integrity Verification",
+          "sixSigmaMetric": "Reduce undetected internal terms from 100% to 0%",
+          "hasUi": false,
+          "requirementRefs": ["R1", "R2", "R3", "R4", "R5", "R6", "R7"]
+        }
+      ]
+    },
+    {
+      "existingEpicId": null,
+      "title": "Frontend Build and Serve Integration",
+      "jtbd": "When the end customer accesses the deployed application, I want to see the actual frontend UI rather than a bare API, so that I can use the product through a browser.",
+      "kanoClass": "Must-Be",
+      "cynefinDomain": "clear",
+      "sixSigmaMetric": "Increase frontend availability in deployed image from 0% to 100%",
+      "tocConstraintRef": "Deployment Packaging",
+      "sourceIndex": 3,
+      "requirements": [
+        "R1: Dockerfile must build the frontend during image construction.",
+        "R2: Backend must serve the built frontend static output upon startup."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Integrate Frontend Build into Docker Image",
+          "roleTag": "BARCAN-TAG-05",
+          "jtbd": "When implementing the build integration for this epic, I want to compile and serve the UI static files, so that the epic's outcome of a visible frontend is achieved.",
+          "acceptanceCriteria": "Given the Docker build process,\nWhen executed,\nThen the frontend static files are compiled.\nGiven the running container,\nWhen accessing the root URL,\nThen the backend serves the built frontend UI.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "Container Build Process",
+          "sixSigmaMetric": "Reduce UI serving failures from 100% to 0%",
+          "hasUi": false,
+          "requirementRefs": ["R1", "R2"]
+        }
+      ]
+    },
+    {
+      "existingEpicId": null,
+      "title": "Runtime Environment Initialization Repair",
+      "jtbd": "When the end customer attempts to launch the application, I want the system to start successfully without network conflicts, so that the product is actually available for use.",
+      "kanoClass": "Must-Be",
+      "cynefinDomain": "clear",
+      "sixSigmaMetric": "Reduce container initialization failures from 100% to 0%",
+      "tocConstraintRef": "Container Orchestration",
+      "sourceIndex": 4,
+      "requirements": [
+        "R1: Resolve Docker Compose network conflict where test-fiftieth_default exists but was not created for the project.",
+        "R2: Resolve Docker container name collision for /epidemiology_db."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Fix Docker Compose Runtime Conflicts",
+          "roleTag": "BARCAN-TAG-05",
+          "jtbd": "When implementing the initialization fix for this epic, I want to ensure unique container names and correct network configurations, so that the epic's outcome of a healthy launch is achieved.",
+          "acceptanceCriteria": "Given a clean Docker environment,\nWhen docker-compose up is executed,\nThen the database container starts without name conflicts.\nGiven the network configuration,\nWhen evaluated,\nThen it correctly associates with the project without requiring external pre-creation.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "Docker Network Configuration",
+          "sixSigmaMetric": "Reduce docker-compose up failure rate from 100% to 0%",
+          "hasUi": false,
+          "requirementRefs": ["R1", "R2"]
+        }
+      ]
+    },
+    {
+      "existingEpicId": "b9c3cb6d-c0a1-4178-b202-1093b5058008",
+      "title": "Recover Missing Deliverables (Subset) for Main Branch",
+      "jtbd": "When a stakeholder relies on reported progress, I want the delivered code for the specified tasks to actually exist on the main branch, so that the product functions as intended.",
+      "kanoClass": "Must-Be",
+      "cynefinDomain": "clear",
+      "sixSigmaMetric": "Reduce phantom delivered tasks from 100% to 0%",
+      "tocConstraintRef": "Code Delivery Verifiability",
+      "sourceIndex": 5,
+      "requirements": [
+        "R1: Deliver the missing code changes for API Slice D3a7a0f6 to the main branch.",
+        "R2: Deliver the missing code changes for Runtime Contract 9b58412d to the main branch."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Recover API Slice and Runtime Contract Deliverables",
+          "roleTag": "BARCAN-TAG-00",
+          "jtbd": "When implementing the recovery for this epic, I want to reconstruct and merge the missing changes, so that the epic's outcome of verified delivery is achieved.",
+          "acceptanceCriteria": "Given the repository history,\nWhen examined,\nThen the code for API Slice D3a7a0f6 is present on main.\nGiven the repository history,\nWhen examined,\nThen the code for Runtime Contract 9b58412d is present on main.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "Code Merge Integration",
+          "sixSigmaMetric": "Reduce missing code from closed tasks from 100% to 0%",
+          "hasUi": false,
+          "requirementRefs": ["R1", "R2"]
+        }
+      ]
+    },
+    {
+      "existingEpicId": null,
+      "title": "Moodle SSO and Role Synchronization Integration",
+      "jtbd": "When the end customer logs in, I want to authenticate via the existing Moodle system and have my roles seamlessly synchronized, so that I can securely access authorized epidemiological data without a separate account.",
+      "kanoClass": "Performance",
+      "cynefinDomain": "complicated",
+      "sixSigmaMetric": "Reduce manual role assignments from 100% to 0%",
+      "tocConstraintRef": "User Authentication Gateway",
+      "sourceIndex": 6,
+      "requirements": [
+        "R1: Support Single Sign-On (SSO) authentication via Moodle using OAuth2, OIDC, or LTI.",
+        "R2: Synchronize Moodle role hierarchy into the archive's role model upon login.",
+        "R3: Automatically restrict access to restricted strains and analytical reports based on synced Moodle departments and courses.",
+        "R4: Provide an autonomous fallback authentication mechanism in case the external LMS is unavailable.",
+        "R5: Provide a way for administrators to view and override synced roles in case of Moodle mapping issues.",
+        "R6: UI must be usable on mobile devices and accessible (WCAG 2.1 level AA)."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Moodle SSO Data Schema",
+          "roleTag": "BARCAN-TAG-08",
+          "jtbd": "When implementing the schema for this epic, I want to store Moodle identities and role mappings, so that the epic's outcome of secure authentication is achieved.",
+          "acceptanceCriteria": "Given a database migration,\nWhen applied,\nThen Moodle external ID columns exist.\nGiven role mapping tables,\nWhen queried,\nThen Moodle roles map to internal domain roles.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "Database Schema",
+          "sixSigmaMetric": "Reduce schema missing constraints from 100% to 0%",
+          "hasUi": false,
+          "requirementRefs": ["R1", "R2", "R4"]
+        },
+        {
+          "title": "Moodle SSO API Contract",
+          "roleTag": "BARCAN-TAG-12",
+          "jtbd": "When implementing the contract for this epic, I want to define the OAuth2 callback endpoints, so that the epic's outcome of seamless SSO is achieved.",
+          "acceptanceCriteria": "Given the API specification,\nWhen reviewed,\nThen the SSO callback endpoint is defined.\nGiven the API specification,\nWhen reviewed,\nThen the response payload includes synced user roles.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "API Contract",
+          "sixSigmaMetric": "Reduce API definition ambiguities from 100% to 0%",
+          "hasUi": false,
+          "requirementRefs": ["R1", "R2"]
+        },
+        {
+          "title": "Moodle SSO Backend Authentication Service",
+          "roleTag": "BARCAN-TAG-02",
+          "jtbd": "When implementing the backend for this epic, I want to handle OAuth2 callbacks and fallback auth, so that the epic's outcome of secure access is achieved.",
+          "acceptanceCriteria": "Given an OAuth2 authorization code,\nWhen received,\nThen the backend exchanges it for a Moodle profile.\nGiven the external LMS is down,\nWhen logging in via fallback,\nThen the user is authenticated locally.",
+          "leanValue": "essential",
+          "cynefinDomain": "complicated",
+          "tocConstraintRef": "Backend Auth Logic",
+          "sixSigmaMetric": "Reduce authentication failures from 100% to 0%",
+          "hasUi": false,
+          "requirementRefs": ["R1", "R2", "R3", "R4"]
+        },
+        {
+          "title": "Moodle SSO Frontend Login and Role Management",
+          "roleTag": "BARCAN-TAG-11",
+          "jtbd": "When implementing the UI for this epic, I want to provide SSO buttons and admin overrides, so that the epic's outcome of accessible authentication is achieved.",
+          "acceptanceCriteria": "Given the login screen,\nWhen viewed on a mobile device,\nThen a 'Login via Moodle' button is prominent and WCAG 2.1 AA compliant.\nGiven an admin user,\nWhen viewing a profile,\nThen synced Moodle roles can be overridden.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "Frontend Auth Flow",
+          "sixSigmaMetric": "Reduce UI login blockers from 100% to 0%",
+          "hasUi": true,
+          "requirementRefs": ["R1", "R5", "R6"]
+        },
+        {
+          "title": "Moodle SSO Quality Assurance and Test Automation",
+          "roleTag": "BARCAN-TAG-06",
+          "jtbd": "When implementing QA for this epic, I want to verify all auth flows end-to-end, so that the epic's outcome of reliable access is achieved.",
+          "acceptanceCriteria": "Given the SSO integration,\nWhen tested via E2E,\nThen the user successfully authenticates and receives proper roles.\nGiven the external LMS is simulated as down,\nWhen fallback login is used,\nThen it succeeds.",
+          "leanValue": "essential",
+          "cynefinDomain": "complicated",
+          "tocConstraintRef": "Test Coverage",
+          "sixSigmaMetric": "Increase e2e test coverage for auth flows from 0% to 100%",
+          "hasUi": false,
+          "requirementRefs": ["R1", "R2", "R3", "R4", "R5", "R6"]
+        }
+      ]
+    },
+    {
+      "existingEpicId": "b9c3cb6d-c0a1-4178-b202-1093b5058008",
+      "title": "Recover Missing Deliverables (Subset) for Main Branch",
+      "jtbd": "When a stakeholder relies on reported progress, I want the delivered code for the specified tasks to actually exist on the main branch, so that the product functions as intended.",
+      "kanoClass": "Must-Be",
+      "cynefinDomain": "clear",
+      "sixSigmaMetric": "Reduce phantom delivered tasks from 100% to 0%",
+      "tocConstraintRef": "Code Delivery Verifiability",
+      "sourceIndex": 7,
+      "requirements": [
+        "R1: Deliver the missing code changes for Test Coverage 830ba739 to the main branch."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Recover Test Coverage 830ba739 Deliverable",
+          "roleTag": "BARCAN-TAG-00",
+          "jtbd": "When implementing the recovery for this epic, I want to reconstruct and merge the missing changes, so that the epic's outcome of verified delivery is achieved.",
+          "acceptanceCriteria": "Given the repository history,\nWhen examined,\nThen the code for Test Coverage 830ba739 is present on main.\nGiven the PR history,\nWhen verified,\nThen the diff is readable.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "Code Merge Integration",
+          "sixSigmaMetric": "Reduce missing code from closed tasks from 100% to 0%",
+          "hasUi": false,
+          "requirementRefs": ["R1"]
+        }
+      ]
+    },
+    {
+      "existingEpicId": "b9c3cb6d-c0a1-4178-b202-1093b5058008",
+      "title": "Recover Missing Deliverables (Subset) for Main Branch",
+      "jtbd": "When a stakeholder relies on reported progress, I want the delivered code for the specified tasks to actually exist on the main branch, so that the product functions as intended.",
+      "kanoClass": "Must-Be",
+      "cynefinDomain": "clear",
+      "sixSigmaMetric": "Reduce phantom delivered tasks from 100% to 0%",
+      "tocConstraintRef": "Code Delivery Verifiability",
+      "sourceIndex": 8,
+      "requirements": [
+        "R1: Deliver the missing code changes for Access Guard A9ceebb2 to the main branch."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Recover Access Guard A9ceebb2 Deliverable",
+          "roleTag": "BARCAN-TAG-00",
+          "jtbd": "When implementing the recovery for this epic, I want to reconstruct and merge the missing changes, so that the epic's outcome of verified delivery is achieved.",
+          "acceptanceCriteria": "Given the repository history,\nWhen examined,\nThen the code for Access Guard A9ceebb2 is present on main.\nGiven the PR history,\nWhen verified,\nThen the diff is readable.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "Code Merge Integration",
+          "sixSigmaMetric": "Reduce missing code from closed tasks from 100% to 0%",
+          "hasUi": false,
+          "requirementRefs": ["R1"]
+        }
+      ]
+    },
+    {
+      "existingEpicId": null,
+      "title": "System Data Backups and Recovery",
+      "jtbd": "When the product holds data whose loss would harm the client's business, I want regular backups and a verified restore process, so that data availability is guaranteed.",
+      "kanoClass": "Must-Be",
+      "cynefinDomain": "complicated",
+      "sixSigmaMetric": "Increase verified restore success rate from 0% to 100%",
+      "tocConstraintRef": "Data Availability",
+      "sourceIndex": 0,
+      "requirements": [
+        "R1: Implement regular database and object storage backups.",
+        "R2: Implement a restore process that has been actually performed and verified."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Configure System Backups and Restore",
+          "roleTag": "BARCAN-TAG-05",
+          "jtbd": "When implementing backups for this epic, I want to automate backups and verify restore, so that the epic's outcome of data availability is achieved.",
+          "acceptanceCriteria": "Given the scheduled job,\nWhen triggered,\nThen a backup is created securely.\nGiven a backup artifact,\nWhen the restore script runs,\nThen the system is fully restored.",
+          "leanValue": "essential",
+          "cynefinDomain": "complicated",
+          "tocConstraintRef": "Backup Infrastructure",
+          "sixSigmaMetric": "Increase backup frequency from 0 to 1 per day",
+          "hasUi": false,
+          "requirementRefs": ["R1", "R2"]
+        },
+        {
+          "title": "QA Backup Verification",
+          "roleTag": "BARCAN-TAG-06",
+          "jtbd": "When implementing QA for this epic, I want to test the restore process end-to-end, so that the epic's outcome of verified recovery is achieved.",
+          "acceptanceCriteria": "Given a backed-up system state,\nWhen a failure is simulated and restore applied,\nThen all data is recovered.\nGiven the test suite,\nWhen run,\nThen it confirms successful restoration.",
+          "leanValue": "essential",
+          "cynefinDomain": "complicated",
+          "tocConstraintRef": "Restore Validation",
+          "sixSigmaMetric": "Increase automated restore verifications from 0% to 100%",
+          "hasUi": false,
+          "requirementRefs": ["R1", "R2"]
+        }
+      ]
+    },
+    {
+      "existingEpicId": "9d6bb646-d5aa-429b-bf4c-926857c78696",
+      "title": "Self-Service Account Recovery",
+      "jtbd": "When an epidemiologist or authority user is locked out, I want a secure self-service recovery path, so that I can regain access without manual support intervention.",
+      "kanoClass": "Must-Be",
+      "cynefinDomain": "complicated",
+      "sixSigmaMetric": "Increase successful self-service password resets from 0% to 100%",
+      "tocConstraintRef": "User Access Recovery",
+      "sourceIndex": 0,
+      "requirements": [
+        "R1: Provide a self-service recovery path for locked-out accounts.",
+        "R2: UI must be accessible (WCAG 2.1 level AA) and mobile responsive."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Account Recovery API Contract",
+          "roleTag": "BARCAN-TAG-12",
+          "jtbd": "When implementing the API contract for this epic, I want to define the recovery endpoints, so that the epic's outcome of self-service reset is achieved.",
+          "acceptanceCriteria": "Given the API specification,\nWhen reviewed,\nThen the password reset endpoint is defined.\nGiven the API specification,\nWhen reviewed,\nThen the payload structures are explicit.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "API Contract",
+          "sixSigmaMetric": "Reduce API definition ambiguities from 100% to 0%",
+          "hasUi": false,
+          "requirementRefs": ["R1"]
+        },
+        {
+          "title": "Implement Account Recovery Backend",
+          "roleTag": "BARCAN-TAG-02",
+          "jtbd": "When implementing the recovery backend for this epic, I want to manage secure token generation and email dispatch, so that the epic's outcome of self-service reset is achieved.",
+          "acceptanceCriteria": "Given a valid user email,\nWhen recovery is requested,\nThen a secure reset token is generated and sent.\nGiven a valid reset token,\nWhen submitted with a new password,\nThen the password is securely updated.",
+          "leanValue": "essential",
+          "cynefinDomain": "complicated",
+          "tocConstraintRef": "Recovery Token Security",
+          "sixSigmaMetric": "Reduce account lockout durations from 100% to 0%",
+          "hasUi": false,
+          "requirementRefs": ["R1"]
+        },
+        {
+          "title": "Implement Account Recovery UI",
+          "roleTag": "BARCAN-TAG-11",
+          "jtbd": "When implementing the recovery UI for this epic, I want to build accessible forms for requesting and setting passwords, so that the epic's outcome of user self-service is achieved.",
+          "acceptanceCriteria": "Given the 'forgot password' screen,\nWhen viewed on mobile,\nThen it is fully responsive and WCAG 2.1 AA compliant.\nGiven the 'set new password' screen,\nWhen submitted with errors,\nThen validation errors are clearly presented.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "Recovery UX",
+          "sixSigmaMetric": "Reduce recovery flow drop-offs from 100% to 0%",
+          "hasUi": true,
+          "requirementRefs": ["R1", "R2"]
+        },
+        {
+          "title": "QA Account Recovery",
+          "roleTag": "BARCAN-TAG-06",
+          "jtbd": "When implementing QA for this epic, I want to verify the complete recovery flow end-to-end, so that the epic's outcome of secure account access is achieved.",
+          "acceptanceCriteria": "Given a locked-out user account,\nWhen the recovery flow is executed via E2E tests,\nThen the user regains access successfully.\nGiven the test suite,\nWhen run,\nThen security invariants (token expiration) are verified.",
+          "leanValue": "essential",
+          "cynefinDomain": "complicated",
+          "tocConstraintRef": "Recovery Security Verification",
+          "sixSigmaMetric": "Increase E2E coverage of recovery flows from 0% to 100%",
+          "hasUi": false,
+          "requirementRefs": ["R1", "R2"]
+        }
+      ]
+    },
+    {
+      "existingEpicId": null,
+      "title": "Data Subject Rights Management",
+      "jtbd": "When the product stores personal data, I want data subjects to be able to request export or erasure of their data within statutory deadlines, so that privacy compliance is maintained.",
+      "kanoClass": "Must-Be",
+      "cynefinDomain": "complicated",
+      "sixSigmaMetric": "Increase timely data subject requests resolution from 0% to 100%",
+      "tocConstraintRef": "Privacy Compliance Workflow",
+      "sourceIndex": 6,
+      "requirements": [
+        "R1: Implement export of a data subject's own data upon request.",
+        "R2: Implement complete erasure of a data subject's own data upon request within the statutory deadline.",
+        "R3: Provide UI for users to easily trigger these requests, ensuring WCAG 2.1 AA compliance."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Data Subject Rights API Contract",
+          "roleTag": "BARCAN-TAG-12",
+          "jtbd": "When implementing the API contract for this epic, I want to define the export and erasure endpoints, so that the epic's outcome of self-serve privacy rights is achieved.",
+          "acceptanceCriteria": "Given the API specification,\nWhen reviewed,\nThen the export and erasure endpoints are defined.\nGiven the API specification,\nWhen reviewed,\nThen the payload structures are explicit.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "API Contract",
+          "sixSigmaMetric": "Reduce API definition ambiguities from 100% to 0%",
+          "hasUi": false,
+          "requirementRefs": ["R1", "R2"]
+        },
+        {
+          "title": "Implement Data Export and Erasure Backend",
+          "roleTag": "BARCAN-TAG-02",
+          "jtbd": "When implementing the backend for this epic, I want to aggregate and delete user data securely, so that the epic's outcome of privacy compliance is achieved.",
+          "acceptanceCriteria": "Given a data export request,\nWhen processed,\nThen all associated personal data is bundled securely.\nGiven an erasure request,\nWhen processed,\nThen all associated personal data is permanently deleted from primary stores.",
+          "leanValue": "essential",
+          "cynefinDomain": "complicated",
+          "tocConstraintRef": "Data Aggregation and Deletion",
+          "sixSigmaMetric": "Reduce unresolved data subject requests from 100% to 0%",
+          "hasUi": false,
+          "requirementRefs": ["R1", "R2"]
+        },
+        {
+          "title": "Implement Data Subject Rights UI",
+          "roleTag": "BARCAN-TAG-11",
+          "jtbd": "When implementing the UI for this epic, I want to provide accessible controls for users to manage their data, so that the epic's outcome of self-serve privacy rights is achieved.",
+          "acceptanceCriteria": "Given the user settings page,\nWhen viewed on mobile,\nThen options to 'Export Data' and 'Delete Account' are visible and WCAG 2.1 AA compliant.\nGiven a destructive action request,\nWhen triggered,\nThen explicit confirmation is required before proceeding.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "Privacy Settings UX",
+          "sixSigmaMetric": "Increase accessibility compliance of privacy settings from 0% to 100%",
+          "hasUi": true,
+          "requirementRefs": ["R1", "R2", "R3"]
+        },
+        {
+          "title": "QA Data Subject Rights",
+          "roleTag": "BARCAN-TAG-06",
+          "jtbd": "When implementing QA for this epic, I want to verify data export and complete deletion end-to-end, so that the epic's outcome of verified compliance is achieved.",
+          "acceptanceCriteria": "Given an active user with data,\nWhen an erasure request is completed,\nThen the database is verified to have no residual personal records.\nGiven an active user with data,\nWhen an export request is processed,\nThen the exported payload matches the stored data perfectly.",
+          "leanValue": "essential",
+          "cynefinDomain": "complicated",
+          "tocConstraintRef": "Compliance Verification",
+          "sixSigmaMetric": "Increase coverage of privacy operations from 0% to 100%",
+          "hasUi": false,
+          "requirementRefs": ["R1", "R2", "R3"]
+        }
+      ]
+    },
+    {
+      "existingEpicId": "e1d42df5-7452-4487-87af-8721dcff70c3",
+      "title": "Measurement: Epidemiological Analysis Speed",
+      "jtbd": "When the product is used in production, I want to measure the time it takes an epidemiologist to complete an analysis, so that we can prove the system delivers its core value of speed.",
+      "kanoClass": "Must-Be",
+      "cynefinDomain": "complicated",
+      "sixSigmaMetric": "Increase coverage of core workflow metrics from 0% to 100%",
+      "tocConstraintRef": "Product Instrumentation",
+      "sourceIndex": 0,
+      "requirements": [
+        "R1: Instrument the core epidemiological analysis workflow to measure end-to-end completion time.",
+        "R2: Expose the measured duration to an observability endpoint or log."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Instrument Workflow Analytics",
+          "roleTag": "BARCAN-TAG-02",
+          "jtbd": "When implementing the instrumentation for this epic, I want to capture the start and end times of analyses, so that the epic's outcome of measurable speed is achieved.",
+          "acceptanceCriteria": "Given an active analysis,\nWhen the workflow is completed,\nThen the system records the duration.\nGiven the recorded metrics,\nWhen queried,\nThen they accurately reflect user activity time.",
+          "leanValue": "essential",
+          "cynefinDomain": "complicated",
+          "tocConstraintRef": "Telemetry Logging",
+          "sixSigmaMetric": "Increase metric visibility from 0% to 100%",
+          "hasUi": false,
+          "requirementRefs": ["R1", "R2"]
+        },
+        {
+          "title": "QA Workflow Instrumentation",
+          "roleTag": "BARCAN-TAG-06",
+          "jtbd": "When implementing QA for this epic, I want to verify the telemetry output, so that the epic's outcome of accurate measurement is achieved.",
+          "acceptanceCriteria": "Given the measurement layer,\nWhen an analysis is completed,\nThen the metric is emitted correctly.\nGiven the metrics log,\nWhen validated,\nThen there are no missing or corrupted entries.",
+          "leanValue": "essential",
+          "cynefinDomain": "complicated",
+          "tocConstraintRef": "Telemetry Quality",
+          "sixSigmaMetric": "Increase telemetry correctness from 0% to 100%",
+          "hasUi": false,
+          "requirementRefs": ["R1", "R2"]
+        }
+      ]
+    },
+    {
+      "existingEpicId": "fa1a3417-70d7-4a64-a16a-40cc8807b877",
+      "title": "Initial Epidemiological Domain Content",
+      "jtbd": "When a client evaluates a fresh install, I want the system to be populated with real domain content, so that every step of the analytical dossier workflow is demonstrable.",
+      "kanoClass": "Must-Be",
+      "cynefinDomain": "clear",
+      "sixSigmaMetric": "Reduce un-demonstrable workflow steps from 100% to 0%",
+      "tocConstraintRef": "Initial Data Seeding",
+      "sourceIndex": 0,
+      "requirements": [
+        "R1: Seed the database with realistic epidemiological domain data on startup.",
+        "R2: Ensure every link of the core analytical workflow (discover protocol -> inspect pathogen metadata -> examine analytical dossier -> generate and export PDF -> evaluate transmission root cause -> exercise data subject rights) is walkable with the seeded data."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Implement Domain Data Seeding",
+          "roleTag": "BARCAN-TAG-08",
+          "jtbd": "When implementing the seeding for this epic, I want to insert valid domain content, so that the epic's outcome of a demonstrable workflow is achieved.",
+          "acceptanceCriteria": "Given a fresh deployment,\nWhen the application starts,\nThen domain data is automatically inserted.\nGiven the inserted data,\nWhen queried via the UI,\nThen it renders correctly as real-world scenarios and every core workflow link is walkable.\nGiven the test suite,\nWhen run,\nThen integration tests verify the core workflow runs against seeded data.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "Database Seed Scripts",
+          "sixSigmaMetric": "Reduce blank state screens from 100% to 0%",
+          "hasUi": false,
+          "requirementRefs": ["R1", "R2"]
+        }
+      ]
+    }
+  ]
+}
