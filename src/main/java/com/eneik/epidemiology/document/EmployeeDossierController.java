@@ -49,25 +49,28 @@ public class EmployeeDossierController {
             @RequestParam(value = "scientific_direction", required = false) String scientificDirection,
             @RequestParam(value = "query", required = false) String query,
             @RequestParam(value = "from_date", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
-            @RequestParam(value = "to_date", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate) {
+            @RequestParam(value = "to_date", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "20") int size) {
 
         String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
         User currentUser = userRepository.findByUsername(currentUsername).orElse(null);
 
-        List<EmployeeDocument> documents = employeeDocumentRepository.searchEmployeeDocuments(
-                employeeId, employeeSurname, docType, scientificDirection, query, fromDate, toDate
-        );
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size);
+        boolean isAdmin = currentUser != null && "ADMIN".equals(currentUser.getRole());
+        String userDepartment = currentUser != null ? currentUser.getDepartment() : null;
+        String userCourses = currentUser != null ? currentUser.getCourses() : null;
 
-        if (currentUser != null && !"ADMIN".equals(currentUser.getRole())) {
-            documents = documents.stream().filter(d -> {
-                if (!"STRAIN_ISOLATION".equals(d.getDocType()) && !"REPORT".equals(d.getDocType())) return true;
-                if (d.getAccessDepartment() == null && d.getAccessCourse() == null) return true;
-                boolean depMatch = d.getAccessDepartment() != null && d.getAccessDepartment().equals(currentUser.getDepartment());
-                boolean courseMatch = d.getAccessCourse() != null && currentUser.getCourses() != null && currentUser.getCourses().contains(d.getAccessCourse());
-                return depMatch || courseMatch;
-            }).toList();
-        }
-        return ResponseEntity.ok(documents);
+        org.springframework.data.domain.Page<EmployeeDocument> documentPage = employeeDocumentRepository.searchEmployeeDocumentsSecure(
+                employeeId, employeeSurname, docType, scientificDirection, query, fromDate, toDate, isAdmin, userDepartment, userCourses, pageable
+        );
+        List<EmployeeDocument> documents = documentPage.getContent();
+
+        org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
+        headers.add("X-Total-Count", String.valueOf(documentPage.getTotalElements()));
+        headers.add("X-Total-Pages", String.valueOf(documentPage.getTotalPages()));
+
+        return ResponseEntity.ok().headers(headers).body(documents);
     }
 
     @PostMapping("/reports")
