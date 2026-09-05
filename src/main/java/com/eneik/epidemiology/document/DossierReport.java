@@ -38,6 +38,12 @@ public class DossierReport {
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;
 
+    @Column(name = "signed_by", length = 100)
+    private String signedBy;
+
+    @Column(name = "signed_at")
+    private OffsetDateTime signedAt;
+
     public DossierReport() {
     }
 
@@ -135,5 +141,21 @@ public class DossierReport {
 
     public void setCreatedAt(OffsetDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public String getSignedBy() {
+        return signedBy;
+    }
+
+    public void setSignedBy(String signedBy) {
+        this.signedBy = signedBy;
+    }
+
+    public OffsetDateTime getSignedAt() {
+        return signedAt;
+    }
+
+    public void setSignedAt(OffsetDateTime signedAt) {
+        this.signedAt = signedAt;
     }
 }

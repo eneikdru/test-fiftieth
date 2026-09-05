@@ -197,7 +197,7 @@ public class EmployeeDossierController {
                              }
                         }
                     }
-                    return ResponseEntity.ok(Map.of(
+                    java.util.Map<String, Object> responseBody = new java.util.HashMap<>(Map.of(
                         "id", report.getId(),
                         "employee_id", report.getEmployeeId(),
                         "template_type", report.getTemplateType(),
@@ -206,7 +206,56 @@ public class EmployeeDossierController {
                         "document_count", report.getDocumentCount(),
                         "download_url", report.getDownloadUrl(),
                         "created_at", report.getCreatedAt() != null ? report.getCreatedAt().toString() : ""
-                ));
+                    ));
+                    if (report.getSignedBy() != null) {
+                        responseBody.put("signed_by", report.getSignedBy());
+                    }
+                    if (report.getSignedAt() != null) {
+                        responseBody.put("signed_at", report.getSignedAt().toString());
+                    }
+                    return ResponseEntity.ok(responseBody);
+                })
+                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
+                        "error_code", "NOT_FOUND",
+                        "message", "Справка не найдена"
+                )));
+    }
+
+    @PostMapping("/reports/{id}/sign")
+    @Transactional
+    public ResponseEntity<?> signDossierReport(@PathVariable("id") Long id) {
+        String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
+        User currentUser = userRepository.findByUsername(currentUsername).orElse(null);
+
+        if (currentUser == null || !"EPIDEMIOLOGIST".equals(currentUser.getRole())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
+                    "error_code", "FORBIDDEN",
+                    "message", "Только эпидемиолог может подписывать досье."
+            ));
+        }
+
+        return dossierReportRepository.findById(id)
+                .map(report -> {
+                    if (!"COMPLETED".equals(report.getStatus())) {
+                        return ResponseEntity.status(HttpStatus.CONFLICT).body((Object) Map.of(
+                                "error_code", "CONFLICT",
+                                "message", "Подписать можно только завершенное досье."
+                        ));
+                    }
+
+                    int updatedCount = dossierReportRepository.signReport(id, "COMPLETED", "SIGNED", currentUsername, OffsetDateTime.now());
+
+                    if (updatedCount == 0) {
+                        return ResponseEntity.status(HttpStatus.CONFLICT).body((Object) Map.of(
+                                "error_code", "CONFLICT",
+                                "message", "Досье уже подписано или его статус изменился."
+                        ));
+                    }
+
+                    return ResponseEntity.ok(Map.of(
+                            "message", "Досье успешно подписано.",
+                            "status", "SIGNED"
+                    ));
                 })
                 .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
                         "error_code", "NOT_FOUND",
