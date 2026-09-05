@@ -1,6 +1,7 @@
 <script>
   import { createEventDispatcher, onMount } from 'svelte';
   import ImprintModal from './ImprintModal.svelte';
+  import MoodleRoleOverride from './MoodleRoleOverride.svelte';
 
   const dispatch = createEventDispatcher();
 
@@ -282,15 +283,20 @@
           </button>
         </div>
 
-        <div class="pt-2">
+        <div class="pt-2 flex flex-col gap-4 w-full">
+          <div class="relative flex items-center py-4 w-full">
+            <div aria-hidden="true" class="flex-grow border-t border-outline-variant"></div>
+            <span class="flex-shrink-0 mx-4 font-medium text-xs text-on-surface-variant uppercase tracking-wider">Или</span>
+            <div aria-hidden="true" class="flex-grow border-t border-outline-variant"></div>
+          </div>
           <button
             type="button"
             on:click={async () => { try { isLoading = true; const r = await fetch(getApiBaseUrl() + '/auth/moodle/config'); if (r.ok) { const d = await r.json(); window.location.href = d.auth_url; } } catch(e) { errorMessage = 'Ошибка инициализации SSO'; } finally { isLoading = false; } }}
             disabled={isLoading}
-            class="w-full h-13 bg-primary text-on-primary rounded-lg font-medium text-base py-3 flex items-center justify-center hover:bg-primary-container active:scale-[0.98] transition-all disabled:opacity-60 disabled:cursor-not-allowed shadow-sm"
+            class="w-full h-[48px] bg-primary text-on-primary font-semibold text-base rounded-lg flex items-center justify-center gap-2 hover:bg-on-primary-fixed-variant transition-colors active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed shadow-sm"
           >
-            <span class="mr-2">Login with Moodle</span>
-            <span class="material-symbols-outlined" class="text-lg">login</span>
+            <span aria-hidden="true" class="material-symbols-outlined text-on-primary">domain</span>
+            <span>Login via Moodle</span>
           </button>
         </div>
       </form>
@@ -346,15 +352,20 @@
           </button>
         </div>
 
-        <div class="pt-2">
+        <div class="pt-2 flex flex-col gap-4 w-full">
+          <div class="relative flex items-center py-4 w-full">
+            <div aria-hidden="true" class="flex-grow border-t border-outline-variant"></div>
+            <span class="flex-shrink-0 mx-4 font-medium text-xs text-on-surface-variant uppercase tracking-wider">Или</span>
+            <div aria-hidden="true" class="flex-grow border-t border-outline-variant"></div>
+          </div>
           <button
             type="button"
             on:click={async () => { try { isLoading = true; const r = await fetch(getApiBaseUrl() + '/auth/moodle/config'); if (r.ok) { const d = await r.json(); window.location.href = d.auth_url; } } catch(e) { errorMessage = 'Ошибка инициализации SSO'; } finally { isLoading = false; } }}
             disabled={isLoading}
-            class="w-full h-13 bg-primary text-on-primary rounded-lg font-medium text-base py-3 flex items-center justify-center hover:bg-primary-container active:scale-[0.98] transition-all disabled:opacity-60 disabled:cursor-not-allowed shadow-sm"
+            class="w-full h-[48px] bg-primary text-on-primary font-semibold text-base rounded-lg flex items-center justify-center gap-2 hover:bg-on-primary-fixed-variant transition-colors active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed shadow-sm"
           >
-            <span class="mr-2">Login with Moodle</span>
-            <span class="material-symbols-outlined" class="text-lg">login</span>
+            <span aria-hidden="true" class="material-symbols-outlined text-on-primary">domain</span>
+            <span>Login via Moodle</span>
           </button>
         </div>
       </form>
@@ -394,17 +405,18 @@
         </div>
 
         <div class="space-y-3">
-          <h4 class="text-sm font-semibold text-[#1a1c1e]">Каталог эпидемиологических материалов</h4>
-          <p class="text-xs text-[#434653]">
+          <h4 class="text-sm font-semibold text-on-surface">Каталог эпидемиологических материалов</h4>
+          <p class="text-xs text-on-surface-variant">
             Вам доступен просмотр и поиск протоколов расследований вспышек, отчетов эпиднадзора и методических руководств.
           </p>
 
           <!-- Explicit constraint: Upload and delete controls MUST be entirely hidden for non-admin employees -->
           {#if isAdmin}
-            <div class="p-3 bg-[#f3f3f6] rounded border border-[#c3c6d6] flex space-x-2">
-              <button class="px-3 py-1.5 bg-[#00328a] text-white text-xs rounded font-medium">Загрузить документ</button>
-              <button class="px-3 py-1.5 bg-[#ba1a1a] text-white text-xs rounded font-medium">Удалить</button>
+            <div class="p-3 bg-surface-container-low rounded border border-outline-variant flex space-x-2">
+              <button class="px-3 py-1.5 bg-primary text-on-primary text-xs rounded font-medium">Загрузить документ</button>
+              <button class="px-3 py-1.5 bg-error text-on-primary text-xs rounded font-medium">Удалить</button>
             </div>
+            <MoodleRoleOverride {currentUser} {getApiBaseUrl} />
           {/if}
         </div>
 
