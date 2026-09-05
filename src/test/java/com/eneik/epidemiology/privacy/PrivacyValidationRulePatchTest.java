@@ -18,7 +18,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 @Transactional
-class TaskPlanValidationRulePatchTest {
+class PrivacyValidationRulePatchTest {
 
     @Autowired
     private DataExportJobRepository exportJobRepository;
