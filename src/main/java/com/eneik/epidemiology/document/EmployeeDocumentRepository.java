@@ -24,14 +24,38 @@ public interface EmployeeDocumentRepository extends JpaRepository<EmployeeDocume
            "AND (:query IS NULL OR LOWER(CAST(d.title AS string)) LIKE LOWER(CONCAT('%', CAST(:query AS string), '%')) OR LOWER(CAST(d.details AS string)) LIKE LOWER(CONCAT('%', CAST(:query AS string), '%'))) " +
            "AND (CAST(:fromDate AS java.time.LocalDate) IS NULL OR d.docDate >= :fromDate) " +
            "AND (CAST(:toDate AS java.time.LocalDate) IS NULL OR d.docDate <= :toDate) " +
+           "AND (:isAdmin = true OR d.docType NOT IN ('STRAIN_ISOLATION', 'REPORT') OR (d.accessDepartment IS NULL AND d.accessCourse IS NULL) OR d.accessDepartment = :userDepartment OR (:userCourses IS NOT NULL AND d.accessCourse IS NOT NULL AND LOWER(CAST(:userCourses AS string)) LIKE LOWER(CONCAT('%', CAST(d.accessCourse AS string), '%')))) " +
            "ORDER BY d.docDate DESC")
-    List<EmployeeDocument> searchEmployeeDocuments(
+    org.springframework.data.domain.Page<EmployeeDocument> searchEmployeeDocumentsSecure(
             @Param("employeeId") String employeeId,
             @Param("employeeSurname") String employeeSurname,
             @Param("docType") String docType,
             @Param("scientificDirection") String scientificDirection,
             @Param("query") String query,
             @Param("fromDate") java.time.LocalDate fromDate,
-            @Param("toDate") java.time.LocalDate toDate
+            @Param("toDate") java.time.LocalDate toDate,
+            @Param("isAdmin") boolean isAdmin,
+            @Param("userDepartment") String userDepartment,
+            @Param("userCourses") String userCourses,
+            org.springframework.data.domain.Pageable pageable
+    );
+
+    @Query("SELECT d FROM EmployeeDocument d WHERE (:employeeId IS NULL OR d.employeeId = :employeeId) " +
+           "AND (:employeeSurname IS NULL OR d.employeeSurname = :employeeSurname) " +
+           "AND (:docType IS NULL OR d.docType = :docType) " +
+           "AND (:scientificDirection IS NULL OR d.scientificDirection = :scientificDirection) " +
+           "AND (:query IS NULL OR LOWER(CAST(d.title AS string)) LIKE LOWER(CONCAT('%', CAST(:query AS string), '%')) OR LOWER(CAST(d.details AS string)) LIKE LOWER(CONCAT('%', CAST(:query AS string), '%'))) " +
+           "AND (CAST(:fromDate AS java.time.LocalDate) IS NULL OR d.docDate >= :fromDate) " +
+           "AND (CAST(:toDate AS java.time.LocalDate) IS NULL OR d.docDate <= :toDate) " +
+           "ORDER BY d.docDate DESC")
+    org.springframework.data.domain.Page<EmployeeDocument> searchEmployeeDocuments(
+            @Param("employeeId") String employeeId,
+            @Param("employeeSurname") String employeeSurname,
+            @Param("docType") String docType,
+            @Param("scientificDirection") String scientificDirection,
+            @Param("query") String query,
+            @Param("fromDate") java.time.LocalDate fromDate,
+            @Param("toDate") java.time.LocalDate toDate,
+            org.springframework.data.domain.Pageable pageable
     );
 }

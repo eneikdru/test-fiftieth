@@ -33,6 +33,28 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+
+  if (pathname.startsWith('/api/v1/dossier/documents')) {
+    res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+    res.end(JSON.stringify([
+      { id: 1, title: 'Приказ о назначении №42', employee_id: 'EMP-999' },
+      { id: 2, title: 'Выписка из учёного совета от 12.05.2023', employee_id: 'EMP-999' },
+      { id: 3, title: 'Отчёт о командировке (Самара)', employee_id: 'EMP-999' }
+    ]));
+    return;
+  }
+
+  if (pathname === '/api/v1/dossier/reports') {
+    setTimeout(() => {
+        res.writeHead(201, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({
+            status: 'COMPLETED',
+            download_url: '/api/v1/dossier/reports/1/download'
+        }));
+    }, 100);
+    return;
+  }
+
   if (pathname.startsWith('/api/v1/documents/search')) {
     const query = parsedUrl.searchParams.get('query') || parsedUrl.searchParams.get('q') || '';
     const docs = [

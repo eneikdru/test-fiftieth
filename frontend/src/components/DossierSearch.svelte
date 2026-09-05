@@ -43,13 +43,37 @@
         searchDossier();
     }
 
-    function generateReport() {
+    async function generateReport() {
+        if (documents.length === 0) return;
         loading = true;
         feedback = "";
-        setTimeout(() => {
+        try {
+            const employeeId = documents[0].employee_id || surname;
+            const res = await fetch("/api/v1/dossier/reports", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    employee_id: employeeId,
+                    template_type: "SUMMARY_STANDARD"
+                })
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                if (data.status === "COMPLETED" && data.download_url) {
+                    feedback = `✓ Итоговая справка успешно сформирована. Скачать: ${data.download_url}`;
+                } else {
+                    feedback = "✓ Итоговая справка сформирована, но ссылка недоступна.";
+                }
+            } else {
+                feedback = "Ошибка при формировании справки.";
+            }
+        } catch (e) {
+            console.error(e);
+            feedback = "Ошибка при формировании справки.";
+        } finally {
             loading = false;
-            feedback = "✓ Итоговая справка успешно сформирована.";
-        }, 1000);
+        }
     }
 </script>
 

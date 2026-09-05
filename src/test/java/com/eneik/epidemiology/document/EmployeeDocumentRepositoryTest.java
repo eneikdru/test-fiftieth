@@ -118,9 +118,7 @@ class EmployeeDocumentRepositoryTest {
         employeeDocumentRepository.save(bacteriologyDoc);
 
         // When
-        List<EmployeeDocument> virologyResults = employeeDocumentRepository.searchEmployeeDocuments(
-                employeeId, null, null, "Вирусология", null, null, null
-        );
+        List<EmployeeDocument> virologyResults = employeeDocumentRepository.searchEmployeeDocuments(employeeId, null, null, "Вирусология", null, null, null, org.springframework.data.domain.Pageable.unpaged()).getContent();
 
         // Then
         assertThat(virologyResults).hasSize(1);

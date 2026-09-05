@@ -37,30 +37,75 @@
         const documentList = document.getElementById('document-list');
         const generateReportButton = document.getElementById('generate-report-button');
 
-        searchButton.addEventListener('click', () => {
-            if (!searchInput.value.trim()) return;
-            documentList.innerHTML = `
-                <li>Приказ о назначении №42</li>
-                <li>Выписка из учёного совета от 12.05.2023</li>
-                <li>Отчёт о командировке (Самара)</li>
-            `;
-            resultsContainer.style.display = 'block';
+
+        searchButton.addEventListener('click', async () => {
+            const surname = searchInput.value.trim();
+            if (!surname) return;
+
+            try {
+                const res = await fetch(`/api/v1/dossier/documents?employee_surname=${encodeURIComponent(surname)}&page=0&size=10`);
+                if (res.ok) {
+                    const data = await res.json();
+                    documentList.innerHTML = '';
+                    if (data.length > 0) {
+                        data.forEach(doc => {
+                            const li = document.createElement('li');
+                            li.textContent = doc.title || `Документ ${doc.id}`;
+                            documentList.appendChild(li);
+                        });
+                        resultsContainer.dataset.employeeId = data[0].employee_id || surname;
+                    } else {
+                        documentList.innerHTML = '<li>Нет документов</li>';
+                        resultsContainer.dataset.employeeId = surname;
+                    }
+                    resultsContainer.style.display = 'block';
+                } else {
+                    documentList.innerHTML = '<li>Ошибка загрузки</li>';
+                    resultsContainer.style.display = 'block';
+                }
+            } catch (e) {
+                console.error(e);
+                documentList.innerHTML = '<li>Ошибка загрузки</li>';
+                resultsContainer.style.display = 'block';
+            }
         });
 
-        generateReportButton.addEventListener('click', () => {
+
+
+        generateReportButton.addEventListener('click', async () => {
             generateReportButton.disabled = true;
             generateReportButton.innerHTML = '<span id="loading-spinner">Загрузка...</span>';
-            setTimeout(() => {
+            const employeeId = resultsContainer.dataset.employeeId;
+            try {
+                const res = await fetch("/api/v1/dossier/reports", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        employee_id: employeeId,
+                        template_type: "SUMMARY_STANDARD"
+                    })
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    const notice = document.createElement('div');
+                    notice.setAttribute('role', 'status');
+                    notice.setAttribute('aria-live', 'polite');
+                    notice.classList.add('feedback-notice');
+                    if (data.status === "COMPLETED" && data.download_url) {
+                        notice.innerText = `✓ Итоговая справка успешно сформирована. Скачать: ${data.download_url}`;
+                    } else {
+                        notice.innerText = '✓ Итоговая справка сформирована, но ссылка недоступна.';
+                    }
+                    resultsContainer.appendChild(notice);
+                }
+            } catch (e) {
+                console.error(e);
+            } finally {
                 generateReportButton.disabled = false;
                 generateReportButton.innerHTML = 'Сформировать итоговую справку';
-                const notice = document.createElement('div');
-                notice.setAttribute('role', 'status');
-                notice.setAttribute('aria-live', 'polite');
-                notice.style.cssText = 'margin-top: 15px; padding: 10px; background-color: #d9e3f1; color: #001a40; border-radius: 4px; font-size: 14px; border: 1px solid #003f87;';
-                notice.innerText = '✓ Итоговая справка успешно сформирована.';
-                resultsContainer.appendChild(notice);
-            }, 1000);
+            }
         });
+
     </script>
 
     <footer style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; text-align: center; font-size: 12px; color: #666; display: flex; justify-content: space-between; align-items: center;">
