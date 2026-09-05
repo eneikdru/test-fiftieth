@@ -81,6 +81,11 @@ class EmployeeDossierControllerTest {
         otherUser.setRole("USER");
         otherUser.setDepartment("Вирусология");
         when(userRepository.findByUsername("other")).thenReturn(Optional.of(otherUser));
+
+        User epiUser = new User();
+        epiUser.setUsername("epidemiologist");
+        epiUser.setRole("EPIDEMIOLOGIST");
+        when(userRepository.findByUsername("epidemiologist")).thenReturn(Optional.of(epiUser));
     }
 
 
@@ -166,5 +171,64 @@ class EmployeeDossierControllerTest {
 
         org.junit.jupiter.api.Assertions.assertTrue(pdfBytes.length > 4);
         org.junit.jupiter.api.Assertions.assertEquals("%PDF", new String(pdfBytes, 0, 4));
+    }
+
+    @WithMockUser(username = "epidemiologist", roles = "USER")
+    @Test
+    @DisplayName("Given an Epidemiologist user and a completed dossier report, when they submit a signature request, then the report is marked as signed.")
+    void testSignDossierReportSuccess() throws Exception {
+        DossierReport report = new DossierReport("EMP-777", "FULL", "COMPLETED", "Test summary", 1, "/api/v1/dossier/reports/1/download");
+        report = dossierReportRepository.save(report);
+
+        Map<String, Object> request = Map.of(
+                "signature", "Dr. Ivanov Signature"
+        );
+
+        mockMvc.perform(post("/api/v1/dossier/reports/{id}/sign", report.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("Report signed successfully"));
+
+        DossierReport updatedReport = dossierReportRepository.findById(report.getId()).orElseThrow();
+        org.junit.jupiter.api.Assertions.assertTrue(updatedReport.getIsSigned());
+        org.junit.jupiter.api.Assertions.assertEquals("Dr. Ivanov Signature", updatedReport.getSignature());
+    }
+
+    @WithMockUser(username = "epidemiologist", roles = "USER")
+    @Test
+    @DisplayName("Given an invalid signature request, when they submit it, then the system rejects it and returns a 400 Bad Request.")
+    void testSignDossierReportInvalidRequest() throws Exception {
+        DossierReport report = new DossierReport("EMP-777", "FULL", "COMPLETED", "Test summary", 1, "/api/v1/dossier/reports/1/download");
+        report = dossierReportRepository.save(report);
+
+        Map<String, Object> request = Map.of(); // missing signature
+
+        mockMvc.perform(post("/api/v1/dossier/reports/{id}/sign", report.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error_code").value("BAD_REQUEST"));
+
+        DossierReport updatedReport = dossierReportRepository.findById(report.getId()).orElseThrow();
+        org.junit.jupiter.api.Assertions.assertFalse(updatedReport.getIsSigned());
+    }
+
+    @WithMockUser(username = "user", roles = "USER")
+    @Test
+    @DisplayName("Given a non-epidemiologist user, when they attempt to sign a report, then the system returns a 403 Forbidden.")
+    void testSignDossierReportForbidden() throws Exception {
+        DossierReport report = new DossierReport("EMP-777", "FULL", "COMPLETED", "Test summary", 1, "/api/v1/dossier/reports/1/download");
+        report = dossierReportRepository.save(report);
+
+        Map<String, Object> request = Map.of(
+                "signature", "User Signature"
+        );
+
+        mockMvc.perform(post("/api/v1/dossier/reports/{id}/sign", report.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.error_code").value("FORBIDDEN"));
     }
 }
