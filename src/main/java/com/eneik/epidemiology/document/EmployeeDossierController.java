@@ -264,9 +264,13 @@ public class EmployeeDossierController {
                 )));
     }
 
+
     @PostMapping("/reports/{id}/sign")
     @Transactional
     public ResponseEntity<?> signDossierReport(@PathVariable("id") Long id, @RequestBody(required = false) Map<String, Object> requestBody) {
+        if (SecurityContextHolder.getContext().getAuthentication() == null) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error_code", "FORBIDDEN", "message", "Access denied"));
+        }
         String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
         User currentUser = userRepository.findByUsername(currentUsername).orElse(null);
 
@@ -302,4 +306,5 @@ public class EmployeeDossierController {
             )))
             .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());
     }
+
 }

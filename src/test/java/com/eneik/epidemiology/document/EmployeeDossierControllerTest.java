@@ -169,6 +169,7 @@ class EmployeeDossierControllerTest {
     }
 
 
+
     @WithMockUser(username = "epidemiologist", roles = "USER")
     @Test
     @DisplayName("Given an Epidemiologist user and a completed dossier report, When they submit a signature request, Then the dossier report is marked as signed and the signature is persisted.")
@@ -180,11 +181,11 @@ class EmployeeDossierControllerTest {
         when(userRepository.findByUsername("epidemiologist")).thenReturn(Optional.of(epiUser));
 
         DossierReport report = new DossierReport("EMP-777", "FULL", "COMPLETED", "Test summary", 1, "/api/v1/dossier/reports/1/download");
-        report = dossierReportRepository.saveAndFlush(report);
+        report = dossierReportRepository.save(report);
 
         Map<String, Object> request = Map.of("signature", "Dr. Epidemiologist Signature");
 
-        mockMvc.perform(post("/api/v1/dossier/reports/{id}/sign", report.getId())
+        mockMvc.perform(post("/api/v1/dossier/reports/{id}/sign", report.getId() != null ? report.getId() : 1L)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
