@@ -49,21 +49,29 @@ public class EmployeeDossierController {
             @RequestParam(value = "scientific_direction", required = false) String scientificDirection,
             @RequestParam(value = "query", required = false) String query,
             @RequestParam(value = "from_date", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
-            @RequestParam(value = "to_date", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate) {
+            @RequestParam(value = "to_date", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "20") int size) {
 
         String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
         User currentUser = userRepository.findByUsername(currentUsername).orElse(null);
 
-        List<EmployeeDocument> documents = employeeDocumentRepository.searchEmployeeDocuments(
-                employeeId, employeeSurname, docType, scientificDirection, query, fromDate, toDate
-        );
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size);
 
-        if (currentUser != null && !"ADMIN".equals(currentUser.getRole())) {
+        org.springframework.data.domain.Page<EmployeeDocument> documentPage = employeeDocumentRepository.searchEmployeeDocuments(
+                employeeId, employeeSurname, docType, scientificDirection, query, fromDate, toDate, pageable
+        );
+        List<EmployeeDocument> documents = documentPage.getContent();
+
+        boolean isAdmin = currentUser != null && "ADMIN".equals(currentUser.getRole());
+        if (!isAdmin) {
+            String userDept = currentUser != null ? currentUser.getDepartment() : null;
+            String userCourses = currentUser != null ? currentUser.getCourses() : null;
             documents = documents.stream().filter(d -> {
                 if (!"STRAIN_ISOLATION".equals(d.getDocType()) && !"REPORT".equals(d.getDocType())) return true;
                 if (d.getAccessDepartment() == null && d.getAccessCourse() == null) return true;
-                boolean depMatch = d.getAccessDepartment() != null && d.getAccessDepartment().equals(currentUser.getDepartment());
-                boolean courseMatch = d.getAccessCourse() != null && currentUser.getCourses() != null && currentUser.getCourses().contains(d.getAccessCourse());
+                boolean depMatch = d.getAccessDepartment() != null && d.getAccessDepartment().equals(userDept);
+                boolean courseMatch = d.getAccessCourse() != null && userCourses != null && userCourses.contains(d.getAccessCourse());
                 return depMatch || courseMatch;
             }).toList();
         }
@@ -131,11 +139,15 @@ public class EmployeeDossierController {
             String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
             User currentUser = userRepository.findByUsername(currentUsername).orElse(null);
 
-            if (currentUser != null && !"ADMIN".equals(currentUser.getRole())) {
+            boolean isAdmin = currentUser != null && "ADMIN".equals(currentUser.getRole());
+            if (!isAdmin) {
+                String userDept = currentUser != null ? currentUser.getDepartment() : null;
+                String userCourses = currentUser != null ? currentUser.getCourses() : null;
                 documents = documents.stream().filter(d -> {
                     if (!"STRAIN_ISOLATION".equals(d.getDocType()) && !"REPORT".equals(d.getDocType())) return true;
-                    boolean depMatch = d.getAccessDepartment() != null && d.getAccessDepartment().equals(currentUser.getDepartment());
-                    boolean courseMatch = d.getAccessCourse() != null && currentUser.getCourses() != null && currentUser.getCourses().contains(d.getAccessCourse());
+                    if (d.getAccessDepartment() == null && d.getAccessCourse() == null) return true;
+                    boolean depMatch = d.getAccessDepartment() != null && d.getAccessDepartment().equals(userDept);
+                    boolean courseMatch = d.getAccessCourse() != null && userCourses != null && userCourses.contains(d.getAccessCourse());
                     return depMatch || courseMatch;
                 }).toList();
             }
@@ -183,11 +195,15 @@ public class EmployeeDossierController {
         String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
         User currentUser = userRepository.findByUsername(currentUsername).orElse(null);
 
+        boolean isAdmin = currentUser != null && "ADMIN".equals(currentUser.getRole());
+        String userDept = currentUser != null ? currentUser.getDepartment() : null;
+        String userCourses = currentUser != null ? currentUser.getCourses() : null;
+
         return dossierReportRepository.findById(id)
                 .map(report -> {
-                    if (currentUser != null && !"ADMIN".equals(currentUser.getRole())) {
-                        boolean depMatch = report.getAccessDepartment() != null && report.getAccessDepartment().equals(currentUser.getDepartment());
-                        boolean courseMatch = report.getAccessCourse() != null && currentUser.getCourses() != null && currentUser.getCourses().contains(report.getAccessCourse());
+                    if (!isAdmin) {
+                        boolean depMatch = report.getAccessDepartment() != null && report.getAccessDepartment().equals(userDept);
+                        boolean courseMatch = report.getAccessCourse() != null && userCourses != null && userCourses.contains(report.getAccessCourse());
                         if (report.getAccessDepartment() != null || report.getAccessCourse() != null) {
                              if (!depMatch && !courseMatch) {
                                   return ResponseEntity.status(HttpStatus.FORBIDDEN).body((Object) Map.of("error_code", "FORBIDDEN", "message", "Access denied"));
@@ -216,11 +232,15 @@ public class EmployeeDossierController {
         String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
         User currentUser = userRepository.findByUsername(currentUsername).orElse(null);
 
+        boolean isAdmin = currentUser != null && "ADMIN".equals(currentUser.getRole());
+        String userDept = currentUser != null ? currentUser.getDepartment() : null;
+        String userCourses = currentUser != null ? currentUser.getCourses() : null;
+
         return dossierReportRepository.findById(id)
                 .map(report -> {
-                    if (currentUser != null && !"ADMIN".equals(currentUser.getRole())) {
-                        boolean depMatch = report.getAccessDepartment() != null && report.getAccessDepartment().equals(currentUser.getDepartment());
-                        boolean courseMatch = report.getAccessCourse() != null && currentUser.getCourses() != null && currentUser.getCourses().contains(report.getAccessCourse());
+                    if (!isAdmin) {
+                        boolean depMatch = report.getAccessDepartment() != null && report.getAccessDepartment().equals(userDept);
+                        boolean courseMatch = report.getAccessCourse() != null && userCourses != null && userCourses.contains(report.getAccessCourse());
                         if (report.getAccessDepartment() != null || report.getAccessCourse() != null) {
                              if (!depMatch && !courseMatch) {
                                   return ResponseEntity.status(HttpStatus.FORBIDDEN).body((Object) Map.of("error_code", "FORBIDDEN", "message", "Access denied"));

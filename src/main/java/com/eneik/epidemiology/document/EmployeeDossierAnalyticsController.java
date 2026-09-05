@@ -41,16 +41,18 @@ public class EmployeeDossierAnalyticsController {
         String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
         User currentUser = userRepository.findByUsername(currentUsername).orElse(null);
 
-        List<EmployeeDocument> documents = employeeDocumentRepository.searchEmployeeDocuments(
-                employeeId, null, docType, scientificDirection, null, fromDate, toDate
-        );
+        List<EmployeeDocument> documents = employeeDocumentRepository.searchEmployeeDocuments(employeeId, null, docType, scientificDirection, null, fromDate, toDate
+        , org.springframework.data.domain.Pageable.unpaged()).getContent();
 
-        if (currentUser != null && !"ADMIN".equals(currentUser.getRole())) {
+        boolean isAdmin = currentUser != null && "ADMIN".equals(currentUser.getRole());
+        if (!isAdmin) {
+            String userDept = currentUser != null ? currentUser.getDepartment() : null;
+            String userCourses = currentUser != null ? currentUser.getCourses() : null;
             documents = documents.stream().filter(d -> {
                 if (!"STRAIN_ISOLATION".equals(d.getDocType()) && !"REPORT".equals(d.getDocType())) return true;
                 if (d.getAccessDepartment() == null && d.getAccessCourse() == null) return true;
-                boolean depMatch = d.getAccessDepartment() != null && d.getAccessDepartment().equals(currentUser.getDepartment());
-                boolean courseMatch = d.getAccessCourse() != null && currentUser.getCourses() != null && currentUser.getCourses().contains(d.getAccessCourse());
+                boolean depMatch = d.getAccessDepartment() != null && d.getAccessDepartment().equals(userDept);
+                boolean courseMatch = d.getAccessCourse() != null && userCourses != null && userCourses.contains(d.getAccessCourse());
                 return depMatch || courseMatch;
             }).toList();
         }
@@ -103,9 +105,8 @@ public class EmployeeDossierAnalyticsController {
             // we use first doc_type if list provided for simpler query (the repository only supports a single docType)
             String docType = null;
 
-            List<EmployeeDocument> documents = employeeDocumentRepository.searchEmployeeDocuments(
-                employeeId, null, docType, scientificDirection, null, fromDate, toDate
-            );
+            List<EmployeeDocument> documents = employeeDocumentRepository.searchEmployeeDocuments(employeeId, null, docType, scientificDirection, null, fromDate, toDate
+            , org.springframework.data.domain.Pageable.unpaged()).getContent();
 
             // manual filtering for remaining doc types
             if (docTypes != null && !docTypes.isEmpty()) {
@@ -116,11 +117,14 @@ public class EmployeeDossierAnalyticsController {
             String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
             User currentUser = userRepository.findByUsername(currentUsername).orElse(null);
 
-            if (currentUser != null && !"ADMIN".equals(currentUser.getRole())) {
+            boolean isAdmin = currentUser != null && "ADMIN".equals(currentUser.getRole());
+            if (!isAdmin) {
+                String userDept = currentUser != null ? currentUser.getDepartment() : null;
+                String userCourses = currentUser != null ? currentUser.getCourses() : null;
                 documents = documents.stream().filter(d -> {
                     if (!"STRAIN_ISOLATION".equals(d.getDocType()) && !"REPORT".equals(d.getDocType())) return true;
-                    boolean depMatch = d.getAccessDepartment() != null && d.getAccessDepartment().equals(currentUser.getDepartment());
-                    boolean courseMatch = d.getAccessCourse() != null && currentUser.getCourses() != null && currentUser.getCourses().contains(d.getAccessCourse());
+                    boolean depMatch = d.getAccessDepartment() != null && d.getAccessDepartment().equals(userDept);
+                    boolean courseMatch = d.getAccessCourse() != null && userCourses != null && userCourses.contains(d.getAccessCourse());
                     return depMatch || courseMatch;
                 }).toList();
             }
@@ -166,19 +170,21 @@ public class EmployeeDossierAnalyticsController {
             @RequestParam("employee_id") String employeeId,
             @RequestParam(value = "scientific_direction", required = false) String scientificDirection) {
 
-        List<EmployeeDocument> documents = employeeDocumentRepository.searchEmployeeDocuments(
-                employeeId, null, null, scientificDirection, null, null, null
-        );
+        List<EmployeeDocument> documents = employeeDocumentRepository.searchEmployeeDocuments(employeeId, null, null, scientificDirection, null, null, null
+        , org.springframework.data.domain.Pageable.unpaged()).getContent();
 
         String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
         User currentUser = userRepository.findByUsername(currentUsername).orElse(null);
 
-        if (currentUser != null && !"ADMIN".equals(currentUser.getRole())) {
+        boolean isAdmin = currentUser != null && "ADMIN".equals(currentUser.getRole());
+        if (!isAdmin) {
+            String userDept = currentUser != null ? currentUser.getDepartment() : null;
+            String userCourses = currentUser != null ? currentUser.getCourses() : null;
             documents = documents.stream().filter(d -> {
                 if (!"STRAIN_ISOLATION".equals(d.getDocType()) && !"REPORT".equals(d.getDocType())) return true;
                 if (d.getAccessDepartment() == null && d.getAccessCourse() == null) return true;
-                boolean depMatch = d.getAccessDepartment() != null && d.getAccessDepartment().equals(currentUser.getDepartment());
-                boolean courseMatch = d.getAccessCourse() != null && currentUser.getCourses() != null && currentUser.getCourses().contains(d.getAccessCourse());
+                boolean depMatch = d.getAccessDepartment() != null && d.getAccessDepartment().equals(userDept);
+                boolean courseMatch = d.getAccessCourse() != null && userCourses != null && userCourses.contains(d.getAccessCourse());
                 return depMatch || courseMatch;
             }).toList();
         }
@@ -222,11 +228,15 @@ public class EmployeeDossierAnalyticsController {
         String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
         User currentUser = userRepository.findByUsername(currentUsername).orElse(null);
 
+        boolean isAdmin = currentUser != null && "ADMIN".equals(currentUser.getRole());
+        String userDept = currentUser != null ? currentUser.getDepartment() : null;
+        String userCourses = currentUser != null ? currentUser.getCourses() : null;
+
         return dossierReportRepository.findById(id)
                 .map(report -> {
-                    if (currentUser != null && !"ADMIN".equals(currentUser.getRole())) {
-                        boolean depMatch = report.getAccessDepartment() != null && report.getAccessDepartment().equals(currentUser.getDepartment());
-                        boolean courseMatch = report.getAccessCourse() != null && currentUser.getCourses() != null && currentUser.getCourses().contains(report.getAccessCourse());
+                    if (!isAdmin) {
+                        boolean depMatch = report.getAccessDepartment() != null && report.getAccessDepartment().equals(userDept);
+                        boolean courseMatch = report.getAccessCourse() != null && userCourses != null && userCourses.contains(report.getAccessCourse());
                         if (report.getAccessDepartment() != null || report.getAccessCourse() != null) {
                              if (!depMatch && !courseMatch) {
                                   return ResponseEntity.status(HttpStatus.FORBIDDEN).body((Object) Map.of("error_code", "FORBIDDEN", "message", "Access denied"));
