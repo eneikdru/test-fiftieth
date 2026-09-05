@@ -19,9 +19,47 @@ const MIME_TYPES = {
   '.pdf': 'application/pdf',
 };
 
+const allDossierDocs = Array.from({ length: 25 }, (_, i) => ({
+  id: i + 1,
+  employee_id: "EMP-00" + (i % 5 + 1),
+  employee_surname: "Иванов",
+  doc_type: i % 2 === 0 ? "Приказ" : "Отчёт",
+  title: `Документ личного дела №${i + 1}`,
+  doc_date: `2023-0${(i % 9) + 1}-15`,
+  details: `Подробные сведения по документу ${i + 1}`,
+  scientific_direction: "Эпидемиология"
+}));
+
 const server = http.createServer((req, res) => {
   const parsedUrl = new URL(req.url, `http://localhost:${PORT}`);
   const pathname = parsedUrl.pathname;
+
+  // Mock Dossier API endpoint
+  if (pathname.startsWith('/api/v1/dossier/documents')) {
+    const surname = parsedUrl.searchParams.get('employee_surname') || '';
+    const page = parseInt(parsedUrl.searchParams.get('page') || '0', 10);
+    const size = parseInt(parsedUrl.searchParams.get('size') || '10', 10);
+
+    let filtered = allDossierDocs;
+    if (surname.trim()) {
+      filtered = allDossierDocs.filter(d => d.employee_surname.toLowerCase().includes(surname.trim().toLowerCase()));
+    }
+
+    const totalCount = filtered.length;
+    const totalPages = Math.ceil(totalCount / size);
+    const startIndex = page * size;
+    const pageData = filtered.slice(startIndex, startIndex + size);
+
+    res.writeHead(200, {
+      'Content-Type': 'application/json; charset=utf-8',
+      'X-Total-Count': String(totalCount),
+      'X-Total-Pages': String(totalPages),
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Expose-Headers': 'X-Total-Count, X-Total-Pages'
+    });
+    res.end(JSON.stringify(pageData));
+    return;
+  }
 
   // Mock API endpoints
   if (pathname === '/api/v1/documents/1/download' || (pathname.startsWith('/api/v1/documents/') && pathname.endsWith('/download'))) {

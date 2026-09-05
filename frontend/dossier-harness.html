@@ -1,50 +1,174 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dossier Search Mock</title>
+    <title>Поиск досье сотрудников</title>
     <style>
-        .dossier-container { padding: 20px; font-family: sans-serif; }
+        body { margin: 0; padding: 0; font-family: sans-serif; background-color: #f8f9ff; color: #011d35; }
+        .dossier-container { padding: 20px; max-w: 800px; margin: 0 auto; }
         .search-section { margin-bottom: 20px; display: flex; gap: 10px; }
-        input { padding: 8px; flex-grow: 1; border: 1px solid #ccc; border-radius: 4px; }
-        button { padding: 8px 16px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
-        button:disabled { background-color: #a0c4ff; cursor: not-allowed; }
+        input { padding: 8px 12px; flex-grow: 1; border: 1px solid #737685; border-radius: 4px; color: #011d35; background-color: #ffffff; font-size: 14px; }
+        input:focus { outline: 2px solid #003d9b; outline-offset: 2px; }
+        button { padding: 8px 16px; background-color: #003d9b; color: #ffffff; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: 600; min-height: 44px; min-width: 44px; }
+        button:focus { outline: 2px solid #003d9b; outline-offset: 2px; }
+        button:disabled { background-color: #c3c6d6; color: #434654; cursor: not-allowed; }
         .document-list { list-style: none; padding: 0; margin-bottom: 20px; }
-        .document-list li { padding: 8px; border-bottom: 1px solid #eee; }
-        .report-section { display: flex; align-items: center; }
+        .document-list li { padding: 12px; border: 1px solid #c3c6d6; border-radius: 6px; margin-bottom: 8px; background-color: #ffffff; color: #011d35; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+        .doc-title { font-weight: 600; }
+        .doc-badge { background-color: #d1e4ff; color: #003d9b; padding: 2px 8px; border-radius: 12px; font-size: 12px; }
+        .doc-date { color: #434654; font-size: 12px; }
+        .report-section { display: flex; align-items: center; margin-top: 16px; }
+        .feedback-notice { margin-top: 15px; padding: 10px; background-color: #d1e4ff; color: #011d35; border-radius: 4px; font-size: 14px; border: 1px solid #003d9b; }
+        .empty-notice { margin-top: 15px; padding: 15px; background-color: #ffffff; color: #434654; border-radius: 4px; font-size: 14px; border: 1px solid #c3c6d6; text-align: center; }
+        .error-notice { margin-top: 15px; padding: 10px; background-color: #ffdad6; color: #93000a; border-radius: 4px; font-size: 14px; border: 1px solid #ba1a1a; }
+        .pagination-section { margin-top: 20px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; color: #011d35; }
+        .page-indicator { font-size: 14px; font-weight: 500; }
+        .dossier-footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #c3c6d6; text-align: center; font-size: 12px; color: #434654; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+        .imprint-btn { background: none; border: none; color: #003d9b; text-decoration: underline; cursor: pointer; padding: 0; min-height: auto; min-width: auto; }
     </style>
 </head>
 <body>
     <div id="app">
         <div class="dossier-container">
             <div class="search-section">
-                <input type="text" id="search-query-input" placeholder="Фамилия сотрудника" />
-                <button id="search-button">Поиск</button>
+                <input
+                    type="text"
+                    id="search-query-input"
+                    placeholder="Фамилия сотрудника"
+                    aria-label="Фамилия сотрудника"
+                />
+                <button id="search-button" aria-label="Поиск">Поиск</button>
             </div>
+
+            <div id="error-notice" role="alert" class="error-notice" style="display: none;"></div>
+            <div id="empty-notice" role="status" class="empty-notice" style="display: none;">Документы не найдены</div>
+
             <div id="results-container" style="display: none;">
                 <ul class="document-list" id="document-list"></ul>
+
+                <div class="pagination-section">
+                    <button id="prev-page-btn" aria-label="Предыдущая страница" disabled>Назад</button>
+                    <span id="page-indicator" class="page-indicator">Страница 1</span>
+                    <button id="next-page-btn" aria-label="Следующая страница" disabled>Вперед</button>
+                </div>
+
                 <div class="report-section">
-                    <button id="generate-report-button">Сформировать итоговую справку</button>
+                    <button id="generate-report-button" aria-label="Сформировать итоговую справку">Сформировать итоговую справку</button>
+                </div>
+                <div id="feedback-notice" role="status" aria-live="polite" class="feedback-notice" style="display: none;">
+                    ✓ Итоговая справка успешно сформирована.
                 </div>
             </div>
+
+            <footer class="dossier-footer">
+                <span>Российский научно-исследовательский институт эпидемиологии</span>
+                <button onclick="alert('Выходные данные (Imprint / Impressum):\nФБУН «НИИ Эпидемиологии»\nг. Москва, ул. Новогиреевская, 3А')" class="imprint-btn" aria-label="Выходные данные">
+                    Выходные данные (Imprint / Impressum)
+                </button>
+            </footer>
         </div>
     </div>
+
     <script>
+        let page = 0;
+        let size = 10;
+        let totalPages = 0;
+        let hasNext = false;
+        let currentSurname = '';
+
         const searchButton = document.getElementById('search-button');
         const searchInput = document.getElementById('search-query-input');
         const resultsContainer = document.getElementById('results-container');
         const documentList = document.getElementById('document-list');
         const generateReportButton = document.getElementById('generate-report-button');
+        const prevPageBtn = document.getElementById('prev-page-btn');
+        const nextPageBtn = document.getElementById('next-page-btn');
+        const pageIndicator = document.getElementById('page-indicator');
+        const emptyNotice = document.getElementById('empty-notice');
+        const errorNotice = document.getElementById('error-notice');
+        const feedbackNotice = document.getElementById('feedback-notice');
+
+        async function fetchDossier() {
+            if (!currentSurname.trim()) return;
+            errorNotice.style.display = 'none';
+            emptyNotice.style.display = 'none';
+
+            try {
+                const res = await fetch(`/api/v1/dossier/documents?employee_surname=${encodeURIComponent(currentSurname.trim())}&page=${page}&size=${size}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    const docs = Array.isArray(data) ? data : (data.content || []);
+
+                    const headerTotalCount = res.headers.get("X-Total-Count");
+                    const headerTotalPages = res.headers.get("X-Total-Pages");
+
+                    if (headerTotalPages !== null && headerTotalPages !== "") {
+                        totalPages = parseInt(headerTotalPages, 10);
+                        hasNext = page + 1 < totalPages;
+                    } else if (headerTotalCount !== null && headerTotalCount !== "") {
+                        const totalCount = parseInt(headerTotalCount, 10);
+                        totalPages = Math.ceil(totalCount / size);
+                        hasNext = page + 1 < totalPages;
+                    } else {
+                        hasNext = docs.length === size;
+                    }
+
+                    if (docs.length === 0) {
+                        resultsContainer.style.display = 'none';
+                        emptyNotice.style.display = 'block';
+                    } else {
+                        emptyNotice.style.display = 'none';
+                        resultsContainer.style.display = 'block';
+                        documentList.innerHTML = docs.map(doc => `
+                            <li>
+                                <span class="doc-title">${doc.title || 'Документ ' + doc.id}</span>
+                                ${doc.doc_type || doc.docType ? `<span class="doc-badge">${doc.doc_type || doc.docType}</span>` : ''}
+                                ${doc.doc_date || doc.docDate ? `<span class="doc-date">от ${doc.doc_date || doc.docDate}</span>` : ''}
+                            </li>
+                        `).join('');
+
+                        pageIndicator.textContent = `Страница ${page + 1}` + (totalPages > 0 ? ` из ${totalPages}` : '');
+                        prevPageBtn.disabled = (page === 0);
+                        nextPageBtn.disabled = !hasNext;
+                    }
+                } else {
+                    errorNotice.textContent = "Ошибка при загрузке документов.";
+                    errorNotice.style.display = 'block';
+                }
+            } catch (e) {
+                console.error(e);
+                errorNotice.textContent = "Ошибка подключения к серверу.";
+                errorNotice.style.display = 'block';
+            }
+        }
 
         searchButton.addEventListener('click', () => {
-            if (!searchInput.value.trim()) return;
-            documentList.innerHTML = `
-                <li>Приказ о назначении №42</li>
-                <li>Выписка из учёного совета от 12.05.2023</li>
-                <li>Отчёт о командировке (Самара)</li>
-            `;
-            resultsContainer.style.display = 'block';
+            currentSurname = searchInput.value;
+            page = 0;
+            fetchDossier();
+        });
+
+        searchInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                currentSurname = searchInput.value;
+                page = 0;
+                fetchDossier();
+            }
+        });
+
+        prevPageBtn.addEventListener('click', () => {
+            if (page > 0) {
+                page--;
+                fetchDossier();
+            }
+        });
+
+        nextPageBtn.addEventListener('click', () => {
+            if (hasNext) {
+                page++;
+                fetchDossier();
+            }
         });
 
         generateReportButton.addEventListener('click', () => {
@@ -53,21 +177,9 @@
             setTimeout(() => {
                 generateReportButton.disabled = false;
                 generateReportButton.innerHTML = 'Сформировать итоговую справку';
-                const notice = document.createElement('div');
-                notice.setAttribute('role', 'status');
-                notice.setAttribute('aria-live', 'polite');
-                notice.style.cssText = 'margin-top: 15px; padding: 10px; background-color: #d9e3f1; color: #001a40; border-radius: 4px; font-size: 14px; border: 1px solid #003f87;';
-                notice.innerText = '✓ Итоговая справка успешно сформирована.';
-                resultsContainer.appendChild(notice);
+                feedbackNotice.style.display = 'block';
             }, 1000);
         });
     </script>
-
-    <footer style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; text-align: center; font-size: 12px; color: #666; display: flex; justify-content: space-between; align-items: center;">
-        <span>Российский научно-исследовательский институт эпидемиологии</span>
-        <button onclick="alert('Выходные данные (Imprint / Impressum):\nФБУН «НИИ Эпидемиологии»\nг. Москва, ул. Новогиреевская, 3А\nТел: +7 (495) 123-45-67')" style="background: none; border: none; color: #007bff; text-decoration: underline; cursor: pointer; padding: 0;">
-            Выходные данные (Imprint / Impressum)
-        </button>
-    </footer>
 </body>
 </html>
