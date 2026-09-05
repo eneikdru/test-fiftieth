@@ -1,0 +1,7 @@
+CREATE TABLE IF NOT EXISTS revoked_tokens (
+    id BIGSERIAL PRIMARY KEY,
+    token VARCHAR(500) NOT NULL UNIQUE,
+    revoked_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_revoked_tokens_token ON revoked_tokens(token);
