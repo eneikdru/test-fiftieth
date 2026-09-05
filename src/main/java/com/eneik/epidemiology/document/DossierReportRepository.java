@@ -17,7 +17,7 @@ public interface DossierReportRepository extends JpaRepository<DossierReport, Lo
     @Query("UPDATE DossierReport d SET d.status = :newStatus WHERE d.id = :id AND d.status = :oldStatus")
     int updateStatus(@Param("id") Long id, @Param("oldStatus") String oldStatus, @Param("newStatus") String newStatus);
 
-    @Modifying
+    @Modifying(clearAutomatically = true)
     @Query("UPDATE DossierReport d SET d.isSigned = true, d.signature = :signature WHERE d.id = :id AND d.isSigned = false AND d.status = 'COMPLETED'")
     int signReport(@Param("id") Long id, @Param("signature") String signature);
 }

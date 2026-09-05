@@ -265,6 +265,7 @@ public class EmployeeDossierController {
     }
 
 
+
     @PostMapping("/reports/{id}/sign")
     @Transactional
     public ResponseEntity<?> signDossierReport(@PathVariable("id") Long id, @RequestBody(required = false) Map<String, Object> requestBody) {
@@ -272,6 +273,10 @@ public class EmployeeDossierController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error_code", "FORBIDDEN", "message", "Access denied"));
         }
         String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
+        if (currentUsername == null) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error_code", "FORBIDDEN", "message", "Access denied"));
+        }
+
         User currentUser = userRepository.findByUsername(currentUsername).orElse(null);
 
         if (currentUser == null || (!"Эпидемиология".equals(currentUser.getDepartment()) && !"ADMIN".equals(currentUser.getRole()))) {
@@ -295,16 +300,21 @@ public class EmployeeDossierController {
             ));
         }
 
+
         return dossierReportRepository.findById(id)
-            .map(report -> ResponseEntity.ok(Map.of(
-                    "id", report.getId(),
-                    "employee_id", report.getEmployeeId(),
-                    "template_type", report.getTemplateType(),
-                    "status", report.getStatus(),
-                    "is_signed", report.getIsSigned(),
-                    "signature", report.getSignature()
-            )))
+            .map(report -> {
+                java.util.Map<String, Object> response = new java.util.HashMap<>();
+                response.put("id", report.getId());
+                response.put("employee_id", report.getEmployeeId());
+                response.put("template_type", report.getTemplateType());
+                response.put("status", report.getStatus());
+                response.put("is_signed", report.getIsSigned());
+                response.put("signature", report.getSignature());
+                return ResponseEntity.ok((Object) response);
+            })
             .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());
+
     }
+
 
 }
