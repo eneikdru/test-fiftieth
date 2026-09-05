@@ -1,14 +1,16 @@
--- Flyway Migration V20260828075430517: Datastore Runtime Contract alignment for missing API slice and runtime contract
--- Mandatory Flyway version: V20260828075430517
+-- Flyway Migration V20260828075430517: Datastore Runtime Contract alignment
+CREATE TABLE background_processes (
+    id UUID PRIMARY KEY,
+    subject_id VARCHAR(100),
+    title VARCHAR(255),
+    status VARCHAR(50) NOT NULL,
+    failure_reason VARCHAR(500),
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL
+);
 
-UPDATE privacy_export_requests
-SET status = 'RESOLVED',
-    notes = 'Automated patch: Restored missing API slice D3a7a0f6 and runtime contract 9b58412d'
-WHERE subject_id IN ('5421d1f0-ec82-43a9-ad0c-9a94345450af', '8bd0dbae-41f6-466a-95a7-aff680ed0866')
-  AND status IN ('PENDING', 'PROCESSING', 'FLAGGED_FOR_HUMAN_REVIEW');
-
-UPDATE privacy_erasure_requests
-SET status = 'RESOLVED',
-    reason = 'Automated patch: Restored missing API slice D3a7a0f6 and runtime contract 9b58412d'
-WHERE subject_id IN ('5421d1f0-ec82-43a9-ad0c-9a94345450af', '8bd0dbae-41f6-466a-95a7-aff680ed0866')
-  AND status IN ('PENDING', 'PROCESSING', 'FLAGGED_FOR_HUMAN_REVIEW');
+INSERT INTO background_processes (id, subject_id, title, status, failure_reason, created_at, updated_at)
+VALUES
+('5421d1f0-ec82-43a9-ad0c-9a94345450af', '5421d1f0-ec82-43a9-ad0c-9a94345450af', 'API Slice D3a7a0f6', 'FAILED', 'data_processing_error', NOW(), NOW()),
+('8bd0dbae-41f6-466a-95a7-aff680ed0866', '8bd0dbae-41f6-466a-95a7-aff680ed0866', 'Runtime Contract 9b58412d', 'FAILED', 'data_processing_error', NOW(), NOW())
+ON CONFLICT (id) DO UPDATE SET status = 'FAILED';

@@ -1,4 +1,4 @@
-package com.eneik.epidemiology.privacy;
+package com.eneik.epidemiology.process;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -21,37 +21,37 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @Transactional
-class TaskRecoveryControllerTest {
+class ProcessRecoveryControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
 
     @Autowired
-    private RecoveryTaskRepository recoveryTaskRepository;
+    private BackgroundProcessRepository recoveryProcessRepository;
 
     @Autowired
     private ObjectMapper objectMapper;
 
-    private UUID eligibleTaskId;
-    private UUID nonEligibleTaskId;
+    private UUID eligibleProcessId;
+    private UUID nonEligibleProcessId;
 
     @BeforeEach
     void setUp() {
-        eligibleTaskId = UUID.fromString("5421d1f0-ec82-43a9-ad0c-9a94345450af");
-        RecoveryTask eligibleTask = new RecoveryTask(
-                eligibleTaskId,
+        eligibleProcessId = UUID.fromString("5421d1f0-ec82-43a9-ad0c-9a94345450af");
+        BackgroundProcess eligibleProcess = new BackgroundProcess(
+                eligibleProcessId,
                 "5421d1f0-ec82-43a9-ad0c-9a94345450af",
                 "API Slice D3a7a0f6",
                 "FAILED",
-                "Task failed due to reconcileClosedUnmergedPullRequest",
+                "Process failed due to data_processing_error",
                 OffsetDateTime.now(),
                 OffsetDateTime.now()
         );
-        recoveryTaskRepository.save(eligibleTask);
+        recoveryProcessRepository.save(eligibleProcess);
 
-        nonEligibleTaskId = UUID.fromString("8bd0dbae-41f6-466a-95a7-aff680ed0866");
-        RecoveryTask nonEligibleTask = new RecoveryTask(
-                nonEligibleTaskId,
+        nonEligibleProcessId = UUID.fromString("8bd0dbae-41f6-466a-95a7-aff680ed0866");
+        BackgroundProcess nonEligibleProcess = new BackgroundProcess(
+                nonEligibleProcessId,
                 "8bd0dbae-41f6-466a-95a7-aff680ed0866",
                 "Runtime Contract 9b58412d",
                 "FAILED",
@@ -59,28 +59,28 @@ class TaskRecoveryControllerTest {
                 OffsetDateTime.now(),
                 OffsetDateTime.now()
         );
-        recoveryTaskRepository.save(nonEligibleTask);
+        recoveryProcessRepository.save(nonEligibleProcess);
     }
 
     @Test
-    @DisplayName("Given valid task ID and REVIVE_FAILED_TASK action, When POST /api/v1/recovery/tasks/{taskId}/resume, Then 200 OK and task status IN_PROGRESS returned")
-    void testResumeTask_Success() throws Exception {
+    @DisplayName("Given valid process ID and REVIVE_FAILED_TASK action, When POST /api/v1/recovery/processes/{processId}/resume, Then 200 OK and process status IN_PROGRESS returned")
+    void testResumeProcess_Success() throws Exception {
         Map<String, String> body = Map.of("action", "REVIVE_FAILED_TASK");
 
-        mockMvc.perform(post("/api/v1/recovery/tasks/{taskId}/resume", eligibleTaskId)
+        mockMvc.perform(post("/api/v1/recovery/processes/{processId}/resume", eligibleProcessId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(body)))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.status").value("IN_PROGRESS"))
-            .andExpect(jsonPath("$.message").value("Task successfully revived"));
+            .andExpect(jsonPath("$.message").value("Process successfully revived"));
     }
 
     @Test
-    @DisplayName("Given invalid operational action, When POST /api/v1/recovery/tasks/{taskId}/resume, Then 400 Bad Request returned")
-    void testResumeTask_InvalidAction() throws Exception {
+    @DisplayName("Given invalid operational action, When POST /api/v1/recovery/processes/{processId}/resume, Then 400 Bad Request returned")
+    void testResumeProcess_InvalidAction() throws Exception {
         Map<String, String> body = Map.of("action", "INVALID_ACTION");
 
-        mockMvc.perform(post("/api/v1/recovery/tasks/{taskId}/resume", eligibleTaskId)
+        mockMvc.perform(post("/api/v1/recovery/processes/{processId}/resume", eligibleProcessId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(body)))
             .andExpect(status().isBadRequest())
@@ -90,11 +90,11 @@ class TaskRecoveryControllerTest {
     }
 
     @Test
-    @DisplayName("Given non-eligible task, When POST /api/v1/recovery/tasks/{taskId}/resume, Then 409 Conflict returned")
-    void testResumeTask_ConflictIneligible() throws Exception {
+    @DisplayName("Given non-eligible process, When POST /api/v1/recovery/processes/{processId}/resume, Then 409 Conflict returned")
+    void testResumeProcess_ConflictIneligible() throws Exception {
         Map<String, String> body = Map.of("action", "REVIVE_FAILED_TASK");
 
-        mockMvc.perform(post("/api/v1/recovery/tasks/{taskId}/resume", nonEligibleTaskId)
+        mockMvc.perform(post("/api/v1/recovery/processes/{processId}/resume", nonEligibleProcessId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(body)))
             .andExpect(status().isConflict())
@@ -104,16 +104,16 @@ class TaskRecoveryControllerTest {
     }
 
     @Test
-    @DisplayName("Given unknown task UUID, When POST /api/v1/recovery/tasks/{taskId}/resume, Then 404 Not Found returned")
-    void testResumeTask_NotFound() throws Exception {
+    @DisplayName("Given unknown process UUID, When POST /api/v1/recovery/processes/{processId}/resume, Then 404 Not Found returned")
+    void testResumeProcess_NotFound() throws Exception {
         UUID unknownId = UUID.randomUUID();
         Map<String, String> body = Map.of("action", "REVIVE_FAILED_TASK");
 
-        mockMvc.perform(post("/api/v1/recovery/tasks/{taskId}/resume", unknownId)
+        mockMvc.perform(post("/api/v1/recovery/processes/{processId}/resume", unknownId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(body)))
             .andExpect(status().isNotFound())
-            .andExpect(jsonPath("$.error_code").value("TASK_NOT_FOUND"))
+            .andExpect(jsonPath("$.error_code").value("PROCESS_NOT_FOUND"))
             .andExpect(jsonPath("$.message").exists())
             .andExpect(jsonPath("$.timestamp").exists());
     }

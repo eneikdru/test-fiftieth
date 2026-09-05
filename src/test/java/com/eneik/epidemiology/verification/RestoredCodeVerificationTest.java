@@ -5,9 +5,9 @@ import com.eneik.epidemiology.categorization.ExternalSchemaEvent;
 import com.eneik.epidemiology.categorization.RootCauseCategorizationService;
 import com.eneik.epidemiology.categorization.RootCausePattern;
 import com.eneik.epidemiology.categorization.RootCausePatternRepository;
-import com.eneik.epidemiology.privacy.RecoveryTask;
-import com.eneik.epidemiology.privacy.RecoveryTaskRepository;
-import com.eneik.epidemiology.privacy.TaskRecoveryService;
+import com.eneik.epidemiology.process.BackgroundProcess;
+import com.eneik.epidemiology.process.BackgroundProcessRepository;
+import com.eneik.epidemiology.process.ProcessRecoveryService;
 import com.eneik.epidemiology.telemetry.TelemetryService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -32,8 +32,8 @@ class RestoredCodeVerificationTest {
     private RootCauseCategorizationService rootCauseCategorizationService;
     private RootCausePatternRepository patternRepository;
     private TelemetryService telemetryService;
-    private TaskRecoveryService taskRecoveryService;
-    private RecoveryTaskRepository recoveryTaskRepository;
+    private ProcessRecoveryService processRecoveryService;
+    private BackgroundProcessRepository recoveryProcessRepository;
     private Clock fixedClock;
     private static final Instant FIXED_INSTANT = Instant.parse("2026-08-28T12:00:00Z");
 
@@ -43,9 +43,9 @@ class RestoredCodeVerificationTest {
         telemetryService = mock(TelemetryService.class);
         rootCauseCategorizationService = new RootCauseCategorizationService(patternRepository, null, telemetryService);
 
-        recoveryTaskRepository = mock(RecoveryTaskRepository.class);
+        recoveryProcessRepository = mock(BackgroundProcessRepository.class);
         fixedClock = Clock.fixed(FIXED_INSTANT, ZoneOffset.UTC);
-        taskRecoveryService = new TaskRecoveryService(recoveryTaskRepository, fixedClock);
+        processRecoveryService = new ProcessRecoveryService(recoveryProcessRepository, fixedClock);
     }
 
     @Test
@@ -71,31 +71,31 @@ class RestoredCodeVerificationTest {
     }
 
     @Test
-    @DisplayName("Given restored TaskRecoveryService, When resuming an eligible retired task, Then status updates atomically to IN_PROGRESS")
-    void testRestoredTaskRecoveryService() {
-        UUID taskId = UUID.randomUUID();
+    @DisplayName("Given restored ProcessRecoveryService, When resuming an eligible retired process, Then status updates atomically to IN_PROGRESS")
+    void testRestoredProcessRecoveryService() {
+        UUID processId = UUID.randomUUID();
         OffsetDateTime now = OffsetDateTime.now(fixedClock);
-        RecoveryTask task = new RecoveryTask(
-                taskId,
+        BackgroundProcess process = new BackgroundProcess(
+                processId,
                 "SUB-QA-1",
-                "API Slice Verification Task",
+                "API Slice Verification Process",
                 "FAILED",
-                "Failed due to reconcileClosedUnmergedPullRequest",
+                "Failed due to data_processing_error",
                 now,
                 now
         );
 
-        when(recoveryTaskRepository.findById(taskId)).thenReturn(Optional.of(task));
-        when(recoveryTaskRepository.updateStatusAtomically(eq(taskId), eq("FAILED"), eq("IN_PROGRESS"), any(OffsetDateTime.class)))
+        when(recoveryProcessRepository.findById(processId)).thenReturn(Optional.of(process));
+        when(recoveryProcessRepository.updateStatusAtomically(eq(processId), eq("FAILED"), eq("IN_PROGRESS"), any(OffsetDateTime.class)))
                 .thenReturn(1);
 
-        RecoveryTask updated = taskRecoveryService.resumeTask(taskId, "REVIVE_FAILED_TASK");
+        BackgroundProcess updated = processRecoveryService.resumeProcess(processId, "REVIVE_FAILED_TASK");
 
         assertNotNull(updated);
         assertEquals("IN_PROGRESS", updated.getStatus());
         assertEquals(now, updated.getUpdatedAt());
 
-        verify(recoveryTaskRepository, times(1))
-                .updateStatusAtomically(taskId, "FAILED", "IN_PROGRESS", now);
+        verify(recoveryProcessRepository, times(1))
+                .updateStatusAtomically(processId, "FAILED", "IN_PROGRESS", now);
     }
 }

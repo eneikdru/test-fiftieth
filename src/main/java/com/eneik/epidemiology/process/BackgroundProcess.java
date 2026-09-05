@@ -1,12 +1,12 @@
-package com.eneik.epidemiology.privacy;
+package com.eneik.epidemiology.process;
 
 import jakarta.persistence.*;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "recovery_tasks")
-public class RecoveryTask {
+@Table(name = "background_processes")
+public class BackgroundProcess {
 
     @Id
     @Column(name = "id", nullable = false)
@@ -30,10 +30,10 @@ public class RecoveryTask {
     @Column(name = "updated_at", nullable = false)
     private OffsetDateTime updatedAt;
 
-    public RecoveryTask() {
+    public BackgroundProcess() {
     }
 
-    public RecoveryTask(UUID id, String subjectId, String title, String status, String failureReason, OffsetDateTime createdAt, OffsetDateTime updatedAt) {
+    public BackgroundProcess(UUID id, String subjectId, String title, String status, String failureReason, OffsetDateTime createdAt, OffsetDateTime updatedAt) {
         this.id = id;
         this.subjectId = subjectId;
         this.title = title;
