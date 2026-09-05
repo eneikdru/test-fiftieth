@@ -302,6 +302,35 @@ class AuthControllerTest {
     }
 
     @Test
+    @DisplayName("Given an authenticated user with a refresh token, When they call the logout endpoint, Then the token is revoked and subsequent refresh attempts with it fail")
+    void testLogout_RevokesTokensAndRefreshFails() throws Exception {
+        userService.createUser("logout_user", "RefPass123!", "USER");
+        String accessToken = jwtTokenProvider.generateToken("logout_user", "USER");
+        String refreshToken = "ref_logout_user_" + System.currentTimeMillis();
+
+        String logoutBody = String.format("{\"refresh_token\":\"%s\"}", refreshToken);
+
+        // Perform logout with access token
+        mockMvc.perform(post("/api/v1/auth/logout")
+                .header("Authorization", "Bearer " + accessToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(logoutBody))
+                .andExpect(status().isOk());
+
+        // Refresh attempt with revoked refresh token
+        mockMvc.perform(post("/api/v1/auth/refresh")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(logoutBody))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.error_code", is("INVALID_TOKEN")));
+
+        // Auth attempt with revoked access token
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/api/v1/dossier/documents")
+                .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
     @DisplayName("Given a user requests password reset with valid identity, When recovery endpoint is called, Then secure recovery link is generated and sent")
     void testRequestPasswordRecovery_GeneratesSecureRecoveryLink() throws Exception {
         User user = userService.createUser("petrov_sm", "Pass12345!", "petrov@inst.ru", "Петров С.М.", "RESEARCHER");
