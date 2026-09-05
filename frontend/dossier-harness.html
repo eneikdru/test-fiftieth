@@ -13,6 +13,10 @@
         .document-list { list-style: none; padding: 0; margin-bottom: 20px; }
         .document-list li { padding: 8px; border-bottom: 1px solid #eee; }
         .report-section { display: flex; align-items: center; }
+        .pagination-section { margin-top: 20px; display: flex; justify-content: space-between; align-items: center; color: #111; }
+        .pagination-section button { background-color: #f0f0f0; color: #333; border: 1px solid #ccc; }
+        .pagination-section button:focus { outline: 2px solid #007bff; outline-offset: 2px; }
+        .pagination-section button:disabled { opacity: 0.5; cursor: not-allowed; }
     </style>
 </head>
 <body>
@@ -27,6 +31,11 @@
                 <div class="report-section">
                     <button id="generate-report-button">Сформировать итоговую справку</button>
                 </div>
+                <div class="pagination-section" id="pagination-section" style="display: none;">
+                    <button id="prev-page-btn" aria-label="Предыдущая страница">Назад</button>
+                    <span id="page-indicator">Страница 1</span>
+                    <button id="next-page-btn" aria-label="Следующая страница">Вперед</button>
+                </div>
             </div>
         </div>
     </div>
@@ -36,15 +45,67 @@
         const resultsContainer = document.getElementById('results-container');
         const documentList = document.getElementById('document-list');
         const generateReportButton = document.getElementById('generate-report-button');
+        const prevPageBtn = document.getElementById('prev-page-btn');
+        const nextPageBtn = document.getElementById('next-page-btn');
+        const pageIndicator = document.getElementById('page-indicator');
+        const paginationSection = document.getElementById('pagination-section');
+
+        let currentPage = 0;
+        const pageSize = 10;
+        let hasNextPage = false;
+
+        async function fetchDossier() {
+            const query = searchInput.value.trim();
+            if (!query) return;
+
+            try {
+                const res = await fetch(`/api/v1/dossier/documents?employee_surname=${encodeURIComponent(query)}&page=${currentPage}&size=${pageSize}`);
+                if (res.ok) {
+                    const data = await res.json();
+
+                    // Securely create DOM elements to prevent XSS
+                    documentList.innerHTML = '';
+                    data.forEach(doc => {
+                        const li = document.createElement('li');
+                        li.textContent = doc.title || doc.id;
+                        documentList.appendChild(li);
+                    });
+
+                    resultsContainer.style.display = 'block';
+
+                    hasNextPage = data.length === pageSize;
+
+                    if (currentPage > 0 || hasNextPage || data.length > 0) {
+                        paginationSection.style.display = 'flex';
+                        pageIndicator.innerText = `Страница ${currentPage + 1}`;
+                        prevPageBtn.disabled = currentPage === 0;
+                        nextPageBtn.disabled = !hasNextPage;
+                    } else {
+                        paginationSection.style.display = 'none';
+                    }
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
 
         searchButton.addEventListener('click', () => {
-            if (!searchInput.value.trim()) return;
-            documentList.innerHTML = `
-                <li>Приказ о назначении №42</li>
-                <li>Выписка из учёного совета от 12.05.2023</li>
-                <li>Отчёт о командировке (Самара)</li>
-            `;
-            resultsContainer.style.display = 'block';
+            currentPage = 0;
+            fetchDossier();
+        });
+
+        prevPageBtn.addEventListener('click', () => {
+            if (currentPage > 0) {
+                currentPage--;
+                fetchDossier();
+            }
+        });
+
+        nextPageBtn.addEventListener('click', () => {
+            if (hasNextPage) {
+                currentPage++;
+                fetchDossier();
+            }
         });
 
         generateReportButton.addEventListener('click', () => {
