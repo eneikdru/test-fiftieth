@@ -110,6 +110,83 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
 
   /dossier/reports:
+    get:
+      summary: Получение пагинированного списка отчетов
+      description: Возвращает пагинированный список сформированных отчетов досье с опциональной фильтрацией по сотруднику и статусу.
+      operationId: getDossierReportsList
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: employee_id
+          in: query
+          description: Идентификатор сотрудника / табельный номер
+          required: false
+          schema:
+            type: string
+            example: "EMP-001"
+        - name: status
+          in: query
+          description: Фильтр по статусу отчета (например, PENDING, COMPLETED, FAILED)
+          required: false
+          schema:
+            type: string
+            example: "COMPLETED"
+        - name: page
+          in: query
+          description: Номер страницы (начиная с 0)
+          required: false
+          schema:
+            type: integer
+            default: 0
+        - name: size
+          in: query
+          description: Количество элементов на странице
+          required: false
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Успешное получение списка отчетов
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  content:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DossierReportResponse'
+                  totalElements:
+                    type: integer
+                    description: Общее количество элементов
+                  totalPages:
+                    type: integer
+                    description: Общее количество страниц
+                  size:
+                    type: integer
+                    description: Размер страницы
+                  number:
+                    type: integer
+                    description: Текущий номер страницы
+        '400':
+          description: Некорректные параметры запроса
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Пользователь не авторизован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
     post:
       summary: Запрос на генерацию сводной справки по досье сотрудника
       description: Формирует итоговую сводную справку по персоналии/сотруднику на основе выбранных документов и указанного шаблона.

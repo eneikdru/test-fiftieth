@@ -151,6 +151,35 @@ class EmployeeDossierControllerTest {
     }
 
 
+    @WithMockUser(username = "user", roles = "USER")
+    @Test
+    @DisplayName("Given multiple reports, when listing reports with pagination, then returns paginated list of reports.")
+    void testGetDossierReportsListPaginated() throws Exception {
+        DossierReport report1 = new DossierReport("EMP-999", "SUMMARY_STANDARD", "COMPLETED", "Summary 1", 2, "/api/v1/dossier/reports/1/download");
+        report1.setAccessDepartment("Эпидемиология");
+        DossierReport report2 = new DossierReport("EMP-999", "FULL_DOSSIER", "PENDING", "Summary 2", 1, "/api/v1/dossier/reports/2/download");
+        DossierReport report3 = new DossierReport("EMP-888", "SUMMARY_STANDARD", "COMPLETED", "Summary 3", 3, "/api/v1/dossier/reports/3/download");
+        dossierReportRepository.saveAll(List.of(report1, report2, report3));
+
+        mockMvc.perform(get("/api/v1/dossier/reports")
+                        .param("page", "0")
+                        .param("size", "2"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content", hasSize(2)))
+                .andExpect(jsonPath("$.totalElements").value(3))
+                .andExpect(jsonPath("$.totalPages").value(2))
+                .andExpect(jsonPath("$.number").value(0))
+                .andExpect(jsonPath("$.size").value(2));
+
+        mockMvc.perform(get("/api/v1/dossier/reports")
+                        .param("employee_id", "EMP-999")
+                        .param("status", "COMPLETED"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content", hasSize(1)))
+                .andExpect(jsonPath("$.content[0].employee_id").value("EMP-999"))
+                .andExpect(jsonPath("$.content[0].status").value("COMPLETED"));
+    }
+
     @WithMockUser(roles = "USER")
     @Test
     @DisplayName("Given a completed report, when downloaded, then returns file content.")

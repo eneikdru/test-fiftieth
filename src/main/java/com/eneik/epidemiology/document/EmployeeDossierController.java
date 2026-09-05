@@ -41,6 +41,47 @@ public class EmployeeDossierController {
         this.userRepository = userRepository;
     }
 
+    @GetMapping("/reports")
+    public ResponseEntity<?> getDossierReportsList(
+            @RequestParam(value = "employee_id", required = false) String employeeId,
+            @RequestParam(value = "status", required = false) String status,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "20") int size) {
+
+        String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
+        User currentUser = userRepository.findByUsername(currentUsername).orElse(null);
+
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size);
+        boolean isAdmin = currentUser != null && "ADMIN".equals(currentUser.getRole());
+        String userDepartment = currentUser != null ? currentUser.getDepartment() : null;
+        String userCourses = currentUser != null ? currentUser.getCourses() : null;
+
+        org.springframework.data.domain.Page<DossierReport> reportsPage = dossierReportRepository.searchDossierReportsSecure(
+                employeeId, status, isAdmin, userDepartment, userCourses, pageable
+        );
+
+        List<Map<String, Object>> responseContent = reportsPage.getContent().stream().map(report -> Map.<String, Object>of(
+                "id", report.getId(),
+                "employee_id", report.getEmployeeId(),
+                "template_type", report.getTemplateType(),
+                "status", report.getStatus(),
+                "summary_text", report.getSummaryText() != null ? report.getSummaryText() : "",
+                "document_count", report.getDocumentCount() != null ? report.getDocumentCount() : 0,
+                "download_url", report.getDownloadUrl() != null ? report.getDownloadUrl() : "",
+                "created_at", report.getCreatedAt() != null ? report.getCreatedAt().toString() : ""
+        )).toList();
+
+        Map<String, Object> response = Map.of(
+                "content", responseContent,
+                "totalElements", reportsPage.getTotalElements(),
+                "totalPages", reportsPage.getTotalPages(),
+                "size", reportsPage.getSize(),
+                "number", reportsPage.getNumber()
+        );
+
+        return ResponseEntity.ok(response);
+    }
+
     @GetMapping("/documents")
     public ResponseEntity<?> searchEmployeeDocuments(
             @RequestParam(value = "employee_id", required = false) String employeeId,
