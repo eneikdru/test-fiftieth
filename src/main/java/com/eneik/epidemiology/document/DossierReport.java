@@ -38,6 +38,13 @@ public class DossierReport {
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;
 
+
+    @Column(name = "is_signed", nullable = false)
+    private Boolean isSigned = false;
+
+    @Column(name = "signature", columnDefinition = "TEXT")
+    private String signature;
+
     public DossierReport() {
     }
 
@@ -135,5 +142,21 @@ public class DossierReport {
 
     public void setCreatedAt(OffsetDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public Boolean getIsSigned() {
+        return isSigned;
+    }
+
+    public void setIsSigned(Boolean isSigned) {
+        this.isSigned = isSigned;
+    }
+
+    public String getSignature() {
+        return signature;
+    }
+
+    public void setSignature(String signature) {
+        this.signature = signature;
     }
 }

@@ -167,4 +167,53 @@ class EmployeeDossierControllerTest {
         org.junit.jupiter.api.Assertions.assertTrue(pdfBytes.length > 4);
         org.junit.jupiter.api.Assertions.assertEquals("%PDF", new String(pdfBytes, 0, 4));
     }
+
+
+
+
+    @WithMockUser(username = "epidemiologist", roles = "USER")
+    @Test
+    @DisplayName("Given an Epidemiologist user and a completed dossier report, When they submit a signature request, Then the dossier report is marked as signed and the signature is persisted.")
+    void testSignDossierReportSuccess() throws Exception {
+        User epiUser = new User();
+        epiUser.setUsername("epidemiologist");
+        epiUser.setRole("USER");
+        epiUser.setDepartment("Эпидемиология");
+        when(userRepository.findByUsername("epidemiologist")).thenReturn(Optional.of(epiUser));
+
+        DossierReport report = new DossierReport("EMP-777", "FULL", "COMPLETED", "Test summary", 1, "/api/v1/dossier/reports/1/download");
+        report = dossierReportRepository.saveAndFlush(report); // Try saveAndFlush instead of save
+
+        Map<String, Object> request = Map.of("signature", "Dr. Epidemiologist Signature");
+
+        mockMvc.perform(post("/api/v1/dossier/reports/{id}/sign", report.getId() != null ? report.getId() : 1L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.is_signed").value(true))
+                .andExpect(jsonPath("$.signature").value("Dr. Epidemiologist Signature"));
+    }
+
+    @WithMockUser(username = "epidemiologist", roles = "USER")
+    @Test
+    @DisplayName("Given an invalid signature request, When they submit it, Then the system rejects it and returns a 400 Bad Request.")
+    void testSignDossierReportInvalidRequest() throws Exception {
+        User epiUser = new User();
+        epiUser.setUsername("epidemiologist");
+        epiUser.setRole("USER");
+        epiUser.setDepartment("Эпидемиология");
+        when(userRepository.findByUsername("epidemiologist")).thenReturn(Optional.of(epiUser));
+
+        DossierReport report = new DossierReport("EMP-777", "FULL", "COMPLETED", "Test summary", 1, "/api/v1/dossier/reports/1/download");
+        report = dossierReportRepository.saveAndFlush(report);
+
+        Map<String, Object> request = Map.of("signature", ""); // Invalid empty signature
+
+        mockMvc.perform(post("/api/v1/dossier/reports/{id}/sign", report.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error_code").value("VALIDATION_ERROR"));
+    }
+
 }

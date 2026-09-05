@@ -263,4 +263,58 @@ public class EmployeeDossierController {
                         "message", "Справка не найдена"
                 )));
     }
+
+
+
+    @PostMapping("/reports/{id}/sign")
+    @Transactional
+    public ResponseEntity<?> signDossierReport(@PathVariable("id") Long id, @RequestBody(required = false) Map<String, Object> requestBody) {
+        if (SecurityContextHolder.getContext().getAuthentication() == null) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error_code", "FORBIDDEN", "message", "Access denied"));
+        }
+        String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
+        if (currentUsername == null) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error_code", "FORBIDDEN", "message", "Access denied"));
+        }
+
+        User currentUser = userRepository.findByUsername(currentUsername).orElse(null);
+
+        if (currentUser == null || (!"Эпидемиология".equals(currentUser.getDepartment()) && !"ADMIN".equals(currentUser.getRole()))) {
+             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error_code", "FORBIDDEN", "message", "Access denied"));
+        }
+
+        if (requestBody == null || !requestBody.containsKey("signature") || requestBody.get("signature") == null || requestBody.get("signature").toString().trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "error_code", "VALIDATION_ERROR",
+                    "message", "Не указан обязательный параметр signature."
+            ));
+        }
+
+        String signature = requestBody.get("signature").toString();
+
+        int updatedCount = dossierReportRepository.signReport(id, signature);
+        if (updatedCount == 0) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of(
+                    "error_code", "CONFLICT",
+                    "message", "Невозможно подписать справку: справка не найдена, не завершена или уже подписана."
+            ));
+        }
+
+
+        return dossierReportRepository.findById(id)
+            .map(report -> {
+                java.util.Map<String, Object> response = new java.util.HashMap<>();
+                response.put("id", report.getId());
+                response.put("employee_id", report.getEmployeeId());
+                response.put("template_type", report.getTemplateType());
+                response.put("status", report.getStatus());
+                response.put("is_signed", report.getIsSigned());
+                response.put("signature", report.getSignature());
+                return ResponseEntity.ok((Object) response);
+            })
+            .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());
+
+    }
+
+
 }
