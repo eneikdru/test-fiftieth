@@ -7,6 +7,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.util.StringUtils;
 import com.eneik.epidemiology.telemetry.TelemetryService;
 import org.springframework.security.core.context.SecurityContextHolder;
 import com.eneik.epidemiology.user.User;
@@ -205,6 +206,8 @@ public class EmployeeDossierController {
                         "summary_text", report.getSummaryText(),
                         "document_count", report.getDocumentCount(),
                         "download_url", report.getDownloadUrl(),
+                        "is_signed", report.getIsSigned(),
+                        "signature", report.getSignature(),
                         "created_at", report.getCreatedAt() != null ? report.getCreatedAt().toString() : ""
                 ));
                 })
@@ -212,6 +215,58 @@ public class EmployeeDossierController {
                         "error_code", "NOT_FOUND",
                         "message", "Справка не найдена"
                 )));
+    }
+
+    @Transactional
+    @PostMapping("/reports/{id}/sign")
+    public ResponseEntity<?> signDossierReport(@PathVariable("id") Long id, @RequestBody Map<String, Object> requestBody) {
+        String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
+        User currentUser = userRepository.findByUsername(currentUsername).orElse(null);
+
+        if (currentUser == null || !"EPIDEMIOLOGIST".equals(currentUser.getRole())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
+                    "error_code", "FORBIDDEN",
+                    "message", "Access denied: Only Epidemiologists can sign dossiers"
+            ));
+        }
+
+        String signature = requestBody.containsKey("signature") ? (String) requestBody.get("signature") : null;
+        if (!StringUtils.hasText(signature)) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
+                    "error_code", "BAD_REQUEST",
+                    "message", "Signature is required"
+            ));
+        }
+
+        int updatedCount = dossierReportRepository.signReport(id, signature);
+
+        if (updatedCount == 0) {
+            return dossierReportRepository.findById(id).map(report -> {
+                if (!"COMPLETED".equals(report.getStatus())) {
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body((Object) Map.of(
+                            "error_code", "BAD_REQUEST",
+                            "message", "Report cannot be signed because it is not COMPLETED"
+                    ));
+                }
+                if (report.getIsSigned()) {
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body((Object) Map.of(
+                            "error_code", "BAD_REQUEST",
+                            "message", "Report is already signed"
+                    ));
+                }
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body((Object) Map.of(
+                        "error_code", "BAD_REQUEST",
+                        "message", "Unable to sign report"
+                ));
+            }).orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
+                    "error_code", "NOT_FOUND",
+                    "message", "Report not found"
+            )));
+        }
+
+        return ResponseEntity.ok(Map.of(
+                "message", "Report signed successfully"
+        ));
     }
 
     @GetMapping("/reports/{id}/download")

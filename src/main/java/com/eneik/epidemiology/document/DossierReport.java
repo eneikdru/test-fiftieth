@@ -35,6 +35,12 @@ public class DossierReport {
     @Column(name = "access_course", length = 255)
     private String accessCourse;
 
+    @Column(name = "is_signed", nullable = false)
+    private Boolean isSigned = false;
+
+    @Column(name = "signature", length = 255)
+    private String signature;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;
 
@@ -48,6 +54,7 @@ public class DossierReport {
         this.summaryText = summaryText;
         this.documentCount = documentCount;
         this.downloadUrl = downloadUrl;
+        this.isSigned = false;
     }
 
     @PrePersist
@@ -135,5 +142,21 @@ public class DossierReport {
 
     public void setCreatedAt(OffsetDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public Boolean getIsSigned() {
+        return isSigned;
+    }
+
+    public void setIsSigned(Boolean isSigned) {
+        this.isSigned = isSigned;
+    }
+
+    public String getSignature() {
+        return signature;
+    }
+
+    public void setSignature(String signature) {
+        this.signature = signature;
     }
 }
