@@ -216,4 +216,67 @@ class EmployeeDossierControllerTest {
                 .andExpect(jsonPath("$.error_code").value("VALIDATION_ERROR"));
     }
 
+    @WithMockUser(username = "other_user", roles = "USER")
+    @Test
+    @DisplayName("Given a user outside Epidemiology department, When they submit a signature request, Then returns 403 Forbidden.")
+    void testSignDossierReportForbiddenUser() throws Exception {
+        User otherUser = new User();
+        otherUser.setUsername("other_user");
+        otherUser.setRole("USER");
+        otherUser.setDepartment("Вирусология");
+        when(userRepository.findByUsername("other_user")).thenReturn(Optional.of(otherUser));
+
+        DossierReport report = new DossierReport("EMP-777", "FULL", "COMPLETED", "Test summary", 1, "/api/v1/dossier/reports/1/download");
+        report = dossierReportRepository.saveAndFlush(report);
+
+        Map<String, Object> request = Map.of("signature", "Dr. Virologist");
+
+        mockMvc.perform(post("/api/v1/dossier/reports/{id}/sign", report.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.error_code").value("FORBIDDEN"));
+    }
+
+    @WithMockUser(username = "epidemiologist", roles = "USER")
+    @Test
+    @DisplayName("Given a non-existent report ID, When signing, Then returns 404 Not Found.")
+    void testSignDossierReportNotFound() throws Exception {
+        User epiUser = new User();
+        epiUser.setUsername("epidemiologist");
+        epiUser.setRole("USER");
+        epiUser.setDepartment("Эпидемиология");
+        when(userRepository.findByUsername("epidemiologist")).thenReturn(Optional.of(epiUser));
+
+        Map<String, Object> request = Map.of("signature", "Dr. Epidemiologist Signature");
+
+        mockMvc.perform(post("/api/v1/dossier/reports/999999/sign")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error_code").value("NOT_FOUND"));
+    }
+
+    @WithMockUser(username = "epidemiologist", roles = "USER")
+    @Test
+    @DisplayName("Given an uncompleted report, When signing, Then returns 409 Conflict.")
+    void testSignDossierReportConflictUncompleted() throws Exception {
+        User epiUser = new User();
+        epiUser.setUsername("epidemiologist");
+        epiUser.setRole("USER");
+        epiUser.setDepartment("Эпидемиология");
+        when(userRepository.findByUsername("epidemiologist")).thenReturn(Optional.of(epiUser));
+
+        DossierReport report = new DossierReport("EMP-777", "FULL", "PENDING", "Test summary", 1, null);
+        report = dossierReportRepository.saveAndFlush(report);
+
+        Map<String, Object> request = Map.of("signature", "Dr. Epidemiologist Signature");
+
+        mockMvc.perform(post("/api/v1/dossier/reports/{id}/sign", report.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.error_code").value("CONFLICT"));
+    }
+
 }

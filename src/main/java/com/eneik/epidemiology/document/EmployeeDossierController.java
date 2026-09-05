@@ -292,14 +292,20 @@ public class EmployeeDossierController {
 
         String signature = requestBody.get("signature").toString();
 
+        if (!dossierReportRepository.existsById(id)) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
+                    "error_code", "NOT_FOUND",
+                    "message", "Справка не найдена"
+            ));
+        }
+
         int updatedCount = dossierReportRepository.signReport(id, signature);
         if (updatedCount == 0) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of(
                     "error_code", "CONFLICT",
-                    "message", "Невозможно подписать справку: справка не найдена, не завершена или уже подписана."
+                    "message", "Невозможно подписать справку: справка не завершена или уже подписана."
             ));
         }
-
 
         return dossierReportRepository.findById(id)
             .map(report -> {
