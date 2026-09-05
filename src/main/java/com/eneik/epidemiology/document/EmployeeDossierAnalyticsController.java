@@ -45,7 +45,7 @@ public class EmployeeDossierAnalyticsController {
                 employeeId, null, docType, scientificDirection, null, fromDate, toDate
         );
 
-        if (currentUser != null && !"ADMIN".equals(currentUser.getRole())) {
+        if (currentUser == null || !"ADMIN".equals(currentUser.getRole())) {
             documents = documents.stream().filter(d -> {
                 if (!"STRAIN_ISOLATION".equals(d.getDocType()) && !"REPORT".equals(d.getDocType())) return true;
                 if (d.getAccessDepartment() == null && d.getAccessCourse() == null) return true;
@@ -116,7 +116,7 @@ public class EmployeeDossierAnalyticsController {
             String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
             User currentUser = userRepository.findByUsername(currentUsername).orElse(null);
 
-            if (currentUser != null && !"ADMIN".equals(currentUser.getRole())) {
+            if (currentUser == null || !"ADMIN".equals(currentUser.getRole())) {
                 documents = documents.stream().filter(d -> {
                     if (!"STRAIN_ISOLATION".equals(d.getDocType()) && !"REPORT".equals(d.getDocType())) return true;
                     boolean depMatch = d.getAccessDepartment() != null && d.getAccessDepartment().equals(currentUser.getDepartment());
@@ -173,7 +173,7 @@ public class EmployeeDossierAnalyticsController {
         String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
         User currentUser = userRepository.findByUsername(currentUsername).orElse(null);
 
-        if (currentUser != null && !"ADMIN".equals(currentUser.getRole())) {
+        if (currentUser == null || !"ADMIN".equals(currentUser.getRole())) {
             documents = documents.stream().filter(d -> {
                 if (!"STRAIN_ISOLATION".equals(d.getDocType()) && !"REPORT".equals(d.getDocType())) return true;
                 if (d.getAccessDepartment() == null && d.getAccessCourse() == null) return true;
@@ -224,7 +224,7 @@ public class EmployeeDossierAnalyticsController {
 
         return dossierReportRepository.findById(id)
                 .map(report -> {
-                    if (currentUser != null && !"ADMIN".equals(currentUser.getRole())) {
+                    if (currentUser == null || !"ADMIN".equals(currentUser.getRole())) {
                         boolean depMatch = report.getAccessDepartment() != null && report.getAccessDepartment().equals(currentUser.getDepartment());
                         boolean courseMatch = report.getAccessCourse() != null && currentUser.getCourses() != null && currentUser.getCourses().contains(report.getAccessCourse());
                         if (report.getAccessDepartment() != null || report.getAccessCourse() != null) {
