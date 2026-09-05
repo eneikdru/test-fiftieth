@@ -60,4 +60,33 @@ test.describe('Authentication, Role Access, and Recovery E2E Tests', () => {
     await page.click('button:has-text("Выйти из системы")');
     await expect(page.locator('h2')).toHaveText('Вход в систему');
   });
+
+  test('Given the set new password screen, When submitted with errors, Then validation errors are clearly presented', async ({ page }) => {
+    // We can simulate the reset password view either via the URL param logic we added to LoginRecovery or via the harness mode directly.
+    // The harness was modified to accept mode=reset_password
+    await page.goto('/test-harness.html?mode=reset_password');
+
+    // Wait for the form to appear
+    await expect(page.locator('h2')).toHaveText('Новый пароль');
+
+    // Submit with passwords that don't match
+    await page.fill('#new-password-input', 'Short1!');
+    await page.fill('#confirm-password-input', 'Different!');
+
+    // In our test harness we implemented simple alerts for this, let's capture the alert
+    page.once('dialog', dialog => {
+      expect(dialog.message()).toContain('не совпадают');
+      dialog.dismiss().catch(() => {});
+    });
+    await page.click('button[type="submit"]');
+
+    // Submit with passwords that match but are too short
+    await page.fill('#new-password-input', 'Short1');
+    await page.fill('#confirm-password-input', 'Short1');
+    page.once('dialog', dialog => {
+      expect(dialog.message()).toContain('минимум 8 символов');
+      dialog.dismiss().catch(() => {});
+    });
+    await page.click('button[type="submit"]');
+  });
 });

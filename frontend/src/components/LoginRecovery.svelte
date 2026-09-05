@@ -8,7 +8,12 @@
   onMount(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const errorParam = urlParams.get('error');
-    if (errorParam === 'sso_failed') {
+    const tokenParam = urlParams.get('token');
+
+    if (tokenParam) {
+      resetToken = tokenParam;
+      mode = 'reset_password';
+    } else if (errorParam === 'sso_failed') {
       errorMessage = 'Ошибка аутентификации через Moodle. Пожалуйста, используйте локальный вход.';
     } else if (errorParam) {
       errorMessage = 'Ошибка SSO: ' + errorParam;
@@ -21,10 +26,13 @@
   }
 
   // State
-  let mode = 'login'; // 'login' | 'recovery' | 'recovery_sent' | 'authenticated'
+  let mode = 'login'; // 'login' | 'recovery' | 'recovery_sent' | 'reset_password' | 'authenticated'
   let username = '';
   let password = '';
   let recoveryIdentity = '';
+  let newPassword = '';
+  let confirmPassword = '';
+  let resetToken = '';
   let isLoading = false;
   let errorMessage = '';
   let successMessage = '';
@@ -133,6 +141,53 @@
       mode = 'recovery_sent';
     } catch (err) {
       errorMessage = err.message || 'Произошла ошибка при запросе восстановления пароля.';
+    } finally {
+      isLoading = false;
+    }
+  }
+
+  async function handleResetPassword(event) {
+    event.preventDefault();
+    errorMessage = '';
+    successMessage = '';
+
+    if (!newPassword || !confirmPassword) {
+      errorMessage = 'Пожалуйста, заполните оба поля пароля.';
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      errorMessage = 'Пароли не совпадают.';
+      return;
+    }
+
+    if (newPassword.length < 8) {
+      errorMessage = 'Пароль должен содержать минимум 8 символов.';
+      return;
+    }
+
+    isLoading = true;
+    try {
+      const response = await fetch(`${getApiBaseUrl()}/auth/recovery/reset`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          token: resetToken,
+          newPassword: newPassword
+        })
+      });
+
+      if (!response.ok) {
+        let errData = {};
+        try { errData = await response.json(); } catch(e) {}
+        throw new Error(errData.message || 'Не удалось сбросить пароль. Возможно, ссылка устарела.');
+      }
+
+      const data = await response.json();
+      successMessage = data.message || 'Пароль успешно изменен.';
+      mode = 'login';
+    } catch (err) {
+      errorMessage = err.message || 'Произошла ошибка при сбросе пароля.';
     } finally {
       isLoading = false;
     }
@@ -377,6 +432,75 @@
           Вернуться ко входу
         </button>
       </div>
+
+    {:else if mode === 'reset_password'}
+      <!-- RESET PASSWORD VIEW -->
+      <div class="mb-8">
+        <h2 class="text-3xl font-bold text-[#1a1c1e] mb-2 tracking-tight">Новый пароль</h2>
+        <p class="text-base text-[#434653]">
+          Пожалуйста, установите новый пароль для вашей учетной записи.
+        </p>
+      </div>
+
+      {#if errorMessage}
+        <div role="alert" class="mb-6 p-4 rounded-lg bg-[#ffdad6] text-[#93000a] text-sm border border-[#ba1a1a]/20 flex items-start space-x-2">
+          <span class="font-bold">!</span>
+          <span>{errorMessage}</span>
+        </div>
+      {/if}
+
+      <form on:submit={handleResetPassword} class="flex flex-col space-y-5" novalidate>
+        <div>
+          <label for="new-password-input" class="block text-sm font-semibold text-[#1a1c1e] mb-2">
+            Новый пароль
+          </label>
+          <div class="relative rounded-md border border-[#c3c6d6] bg-white focus-within:border-[#00328a] focus-within:ring-2 focus-within:ring-[#00328a]/10 transition-all {errorMessage && errorMessage.includes('пароль') ? 'border-[#ba1a1a] shadow-[0_0_0_2px_#ffdad6]' : ''}">
+            <input
+              id="new-password-input"
+              type="password"
+              bind:value={newPassword}
+              placeholder="Минимум 8 символов"
+              required
+              disabled={isLoading}
+              class="w-full h-14 px-4 bg-transparent border-none rounded-md focus:outline-none text-base text-[#1a1c1e] placeholder-[#737685]"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label for="confirm-password-input" class="block text-sm font-semibold text-[#1a1c1e] mb-2">
+            Подтвердите пароль
+          </label>
+          <div class="relative rounded-md border border-[#c3c6d6] bg-white focus-within:border-[#00328a] focus-within:ring-2 focus-within:ring-[#00328a]/10 transition-all {errorMessage && errorMessage.includes('не совпадают') ? 'border-[#ba1a1a] shadow-[0_0_0_2px_#ffdad6]' : ''}">
+            <input
+              id="confirm-password-input"
+              type="password"
+              bind:value={confirmPassword}
+              placeholder="Повторите пароль"
+              required
+              disabled={isLoading}
+              class="w-full h-14 px-4 bg-transparent border-none rounded-md focus:outline-none text-base text-[#1a1c1e] placeholder-[#737685]"
+            />
+          </div>
+        </div>
+
+        <div class="pt-4">
+          <button
+            type="submit"
+            disabled={isLoading}
+            class="w-full h-13 bg-[#00328a] text-white rounded-lg font-medium text-base py-3 flex items-center justify-center hover:bg-[#002566] active:scale-[0.98] transition-all disabled:opacity-60 disabled:cursor-not-allowed shadow-sm"
+          >
+            {#if isLoading}
+              <svg class="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" fill="currentColor"></path>
+              </svg>
+            {:else}
+              <span>Сохранить пароль</span>
+            {/if}
+          </button>
+        </div>
+      </form>
 
     {:else if mode === 'authenticated'}
       <!-- AUTHENTICATED USER VIEW -->

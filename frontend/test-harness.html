@@ -90,7 +90,7 @@
     ];
 
     let state = {
-      mode: initialMode, // 'catalog' | 'login' | 'recovery'
+      mode: initialMode, // 'catalog' | 'login' | 'recovery' | 'reset_password'
       currentUser: {
         id: 101,
         username: 'admin_user',
@@ -237,6 +237,45 @@
                   class="w-full h-10 bg-[#003f87] text-white font-medium text-sm rounded-md transition-colors"
                 >
                   Войти
+                </button>
+              </form>
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      if (state.mode === 'reset_password') {
+        app.innerHTML = `
+          <div class="min-h-screen flex items-center justify-center p-4">
+            <div class="bg-white p-8 rounded-xl border border-[#e0e3e5] shadow-lg max-w-md w-full">
+              <h2 class="text-2xl font-bold text-[#003f87] mb-6">Новый пароль</h2>
+              <p class="text-sm text-[#424752] mb-6">Пожалуйста, установите новый пароль для вашей учетной записи.</p>
+
+              <form onsubmit="handleResetPasswordSubmit(event)" class="space-y-4">
+                <div>
+                  <label class="block text-xs font-semibold text-[#191c1e] mb-1">Новый пароль</label>
+                  <input
+                    id="new-password-input"
+                    type="password"
+                    required
+                    class="w-full h-10 px-3 bg-[#f7f9fb] border border-[#c2c6d4] rounded-md text-sm text-[#191c1e]"
+                  />
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-[#191c1e] mb-1">Подтвердите пароль</label>
+                  <input
+                    id="confirm-password-input"
+                    type="password"
+                    required
+                    class="w-full h-10 px-3 bg-[#f7f9fb] border border-[#c2c6d4] rounded-md text-sm text-[#191c1e]"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  class="w-full h-10 bg-[#003f87] text-white rounded-md text-sm font-medium hover:bg-[#002b5e] transition-colors mt-4"
+                >
+                  Сохранить пароль
                 </button>
               </form>
             </div>
@@ -755,6 +794,22 @@
     function handleRecoverySubmit(event) {
       if (event) event.preventDefault();
       state.recoverySent = true;
+      render();
+    }
+
+    function handleResetPasswordSubmit(event) {
+      if (event) event.preventDefault();
+      const newPassword = document.getElementById('new-password-input').value;
+      const confirmPassword = document.getElementById('confirm-password-input').value;
+      if (newPassword !== confirmPassword) {
+        alert('Пароли не совпадают.');
+        return;
+      }
+      if (newPassword.length < 8) {
+        alert('Пароль должен содержать минимум 8 символов.');
+        return;
+      }
+      state.mode = 'login';
       render();
     }
 
