@@ -7,6 +7,10 @@ services:
   backend:
     # Backend service definition with Dockerfile build context and actuator health check
     image: eclipse-temurin:21-jre-alpine
+    networks:
+      default:
+        aliases:
+          - host.docker.internal
     command: ["java", "-jar", "/app/target/epidemiology-knowledge-base-0.0.1-SNAPSHOT.jar"]
     container_name: "${COMPOSE_PROJECT_NAME:-epidemiology}_backend"
     depends_on:
@@ -36,6 +40,15 @@ services:
       UPLOADS_DIR: /app/data/docs/uploads
     volumes:
       - app_uploads:/app/data/docs/uploads:ro
+    entrypoint: >
+      /bin/sh -c "
+      apk add --no-cache bash tar gzip findutils;
+      echo \"$${BACKUP_SCHEDULE} bash /usr/local/bin/backup.sh >> /var/log/backup.log 2>&1\" > /etc/crontabs/root;
+      echo 'Running initial startup backup check...';
+      bash /usr/local/bin/backup.sh;
+      echo 'Starting cron daemon with schedule: $${BACKUP_SCHEDULE}';
+      crond -f -l 2
+      "
 
 networks:
   default:
