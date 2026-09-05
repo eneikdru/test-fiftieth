@@ -1,3 +1,3 @@
-ALTER TABLE telemetry_events ADD COLUMN workflow_duration_ms BIGINT;
-ALTER TABLE telemetry_events ADD COLUMN start_time TIMESTAMP WITH TIME ZONE;
-ALTER TABLE telemetry_events ADD COLUMN end_time TIMESTAMP WITH TIME ZONE;
+ALTER TABLE telemetry_events ADD COLUMN IF NOT EXISTS workflow_duration_ms BIGINT;
+ALTER TABLE telemetry_events ADD COLUMN IF NOT EXISTS start_time TIMESTAMP WITH TIME ZONE;
+ALTER TABLE telemetry_events ADD COLUMN IF NOT EXISTS end_time TIMESTAMP WITH TIME ZONE;
