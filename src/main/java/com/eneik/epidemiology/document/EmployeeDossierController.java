@@ -58,10 +58,11 @@ public class EmployeeDossierController {
                 employeeId, employeeSurname, docType, scientificDirection, query, fromDate, toDate
         );
 
-        if (currentUser != null && !"ADMIN".equals(currentUser.getRole())) {
+        if (currentUser == null || !"ADMIN".equals(currentUser.getRole())) {
             documents = documents.stream().filter(d -> {
                 if (!"STRAIN_ISOLATION".equals(d.getDocType()) && !"REPORT".equals(d.getDocType())) return true;
                 if (d.getAccessDepartment() == null && d.getAccessCourse() == null) return true;
+                if (currentUser == null) return false;
                 boolean depMatch = d.getAccessDepartment() != null && d.getAccessDepartment().equals(currentUser.getDepartment());
                 boolean courseMatch = d.getAccessCourse() != null && currentUser.getCourses() != null && currentUser.getCourses().contains(d.getAccessCourse());
                 return depMatch || courseMatch;
@@ -131,9 +132,11 @@ public class EmployeeDossierController {
             String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
             User currentUser = userRepository.findByUsername(currentUsername).orElse(null);
 
-            if (currentUser != null && !"ADMIN".equals(currentUser.getRole())) {
+            if (currentUser == null || !"ADMIN".equals(currentUser.getRole())) {
                 documents = documents.stream().filter(d -> {
                     if (!"STRAIN_ISOLATION".equals(d.getDocType()) && !"REPORT".equals(d.getDocType())) return true;
+                    if (d.getAccessDepartment() == null && d.getAccessCourse() == null) return true;
+                    if (currentUser == null) return false;
                     boolean depMatch = d.getAccessDepartment() != null && d.getAccessDepartment().equals(currentUser.getDepartment());
                     boolean courseMatch = d.getAccessCourse() != null && currentUser.getCourses() != null && currentUser.getCourses().contains(d.getAccessCourse());
                     return depMatch || courseMatch;
@@ -185,10 +188,13 @@ public class EmployeeDossierController {
 
         return dossierReportRepository.findById(id)
                 .map(report -> {
-                    if (currentUser != null && !"ADMIN".equals(currentUser.getRole())) {
-                        boolean depMatch = report.getAccessDepartment() != null && report.getAccessDepartment().equals(currentUser.getDepartment());
-                        boolean courseMatch = report.getAccessCourse() != null && currentUser.getCourses() != null && currentUser.getCourses().contains(report.getAccessCourse());
+                    if (currentUser == null || !"ADMIN".equals(currentUser.getRole())) {
                         if (report.getAccessDepartment() != null || report.getAccessCourse() != null) {
+                             if (currentUser == null) {
+                                  return ResponseEntity.status(HttpStatus.FORBIDDEN).body((Object) Map.of("error_code", "FORBIDDEN", "message", "Access denied"));
+                             }
+                             boolean depMatch = report.getAccessDepartment() != null && report.getAccessDepartment().equals(currentUser.getDepartment());
+                             boolean courseMatch = report.getAccessCourse() != null && currentUser.getCourses() != null && currentUser.getCourses().contains(report.getAccessCourse());
                              if (!depMatch && !courseMatch) {
                                   return ResponseEntity.status(HttpStatus.FORBIDDEN).body((Object) Map.of("error_code", "FORBIDDEN", "message", "Access denied"));
                              }
@@ -218,10 +224,13 @@ public class EmployeeDossierController {
 
         return dossierReportRepository.findById(id)
                 .map(report -> {
-                    if (currentUser != null && !"ADMIN".equals(currentUser.getRole())) {
-                        boolean depMatch = report.getAccessDepartment() != null && report.getAccessDepartment().equals(currentUser.getDepartment());
-                        boolean courseMatch = report.getAccessCourse() != null && currentUser.getCourses() != null && currentUser.getCourses().contains(report.getAccessCourse());
+                    if (currentUser == null || !"ADMIN".equals(currentUser.getRole())) {
                         if (report.getAccessDepartment() != null || report.getAccessCourse() != null) {
+                             if (currentUser == null) {
+                                  return ResponseEntity.status(HttpStatus.FORBIDDEN).body((Object) Map.of("error_code", "FORBIDDEN", "message", "Access denied"));
+                             }
+                             boolean depMatch = report.getAccessDepartment() != null && report.getAccessDepartment().equals(currentUser.getDepartment());
+                             boolean courseMatch = report.getAccessCourse() != null && currentUser.getCourses() != null && currentUser.getCourses().contains(report.getAccessCourse());
                              if (!depMatch && !courseMatch) {
                                   return ResponseEntity.status(HttpStatus.FORBIDDEN).body((Object) Map.of("error_code", "FORBIDDEN", "message", "Access denied"));
                              }
