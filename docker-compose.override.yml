@@ -7,6 +7,8 @@ services:
   backend:
     # Backend service definition with Dockerfile build context and actuator health check
     image: eclipse-temurin:21-jre-alpine
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     networks:
       default:
         aliases:
@@ -43,9 +45,10 @@ services:
     entrypoint: >
       /bin/sh -c "
       apk add --no-cache bash tar gzip findutils;
+      chmod +x /usr/local/bin/backup.sh;
       echo \"$${BACKUP_SCHEDULE} bash /usr/local/bin/backup.sh >> /var/log/backup.log 2>&1\" > /etc/crontabs/root;
       echo 'Running initial startup backup check...';
-      bash /usr/local/bin/backup.sh;
+      /usr/local/bin/backup.sh;
       echo 'Starting cron daemon with schedule: $${BACKUP_SCHEDULE}';
       crond -f -l 2
       "
