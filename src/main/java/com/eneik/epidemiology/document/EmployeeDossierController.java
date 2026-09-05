@@ -217,6 +217,7 @@ public class EmployeeDossierController {
                 )));
     }
 
+    @Transactional
     @PostMapping("/reports/{id}/sign")
     public ResponseEntity<?> signDossierReport(@PathVariable("id") Long id, @RequestBody Map<String, Object> requestBody) {
         String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
