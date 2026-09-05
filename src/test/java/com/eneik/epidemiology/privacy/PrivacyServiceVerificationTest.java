@@ -179,6 +179,7 @@ class PrivacyServiceVerificationTest {
         pendingJob.setStatus("PENDING");
         pendingJob.setConfirmationToken("CONFIRM_ERASURE_active_erasure_user");
         pendingJob.setErasureScope("ALL_PERSONAL_DATA");
+        pendingJob.setReason("Test Reason");
         pendingJob.setCreatedAt(java.time.OffsetDateTime.now(fixedClock));
         erasureJobRepository.save(pendingJob);
 
