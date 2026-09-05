@@ -180,6 +180,44 @@ public class EmployeeDossierController {
                 "created_at", report.getCreatedAt() != null ? report.getCreatedAt().toString() : ""
         ));
     }
+    @GetMapping("/reports")
+    public ResponseEntity<?> listDossierReports(
+            @RequestParam(value = "employee_id", required = false) String employeeId,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "20") int size) {
+
+        String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
+        User currentUser = userRepository.findByUsername(currentUsername).orElse(null);
+
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size);
+        boolean isAdmin = currentUser != null && "ADMIN".equals(currentUser.getRole());
+        String userDepartment = currentUser != null ? currentUser.getDepartment() : null;
+        String userCourses = currentUser != null ? currentUser.getCourses() : null;
+
+        org.springframework.data.domain.Page<DossierReport> reportPage = dossierReportRepository.searchReportsSecure(
+                employeeId, isAdmin, userDepartment, userCourses, pageable
+        );
+
+        List<Map<String, Object>> reports = reportPage.getContent().stream()
+                .map(report -> Map.<String, Object>of(
+                        "id", report.getId(),
+                        "employee_id", report.getEmployeeId(),
+                        "template_type", report.getTemplateType(),
+                        "status", report.getStatus(),
+                        "summary_text", report.getSummaryText() != null ? report.getSummaryText() : "",
+                        "document_count", report.getDocumentCount(),
+                        "download_url", report.getDownloadUrl() != null ? report.getDownloadUrl() : "",
+                        "created_at", report.getCreatedAt() != null ? report.getCreatedAt().toString() : ""
+                )).toList();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("X-Total-Count", String.valueOf(reportPage.getTotalElements()));
+        headers.add("X-Total-Pages", String.valueOf(reportPage.getTotalPages()));
+
+        return ResponseEntity.ok().headers(headers).body(reports);
+    }
+
+
 
     @GetMapping("/reports/{id}")
     public ResponseEntity<?> getDossierReportStatus(@PathVariable("id") Long id) {

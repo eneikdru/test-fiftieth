@@ -82,6 +82,26 @@ class EmployeeDossierControllerTest {
         otherUser.setDepartment("Вирусология");
         when(userRepository.findByUsername("other")).thenReturn(Optional.of(otherUser));
     }
+    @WithMockUser(username = "user", roles = "USER")
+    @Test
+    @DisplayName("Given valid reports, when paginated list requested, then return correct page.")
+    void testListDossierReports() throws Exception {
+        DossierReport report1 = new DossierReport("EMP-777", "FULL", "COMPLETED", "Test summary", 1, "/api/v1/dossier/reports/1/download");
+        report1.setAccessDepartment("Эпидемиология");
+        DossierReport report2 = new DossierReport("EMP-888", "FULL", "COMPLETED", "Test summary", 1, "/api/v1/dossier/reports/2/download");
+        report2.setAccessDepartment("Вирусология");
+
+        dossierReportRepository.saveAll(List.of(report1, report2));
+
+        mockMvc.perform(get("/api/v1/dossier/reports")
+                        .param("page", "0")
+                        .param("size", "10"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].employee_id").value("EMP-777"));
+    }
+
+
 
 
     @WithMockUser(username = "other", roles = "USER")
