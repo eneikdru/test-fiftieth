@@ -36,23 +36,22 @@ public class EmployeeDossierAnalyticsController {
             @RequestParam(value = "doc_type", required = false) String docType,
             @RequestParam(value = "scientific_direction", required = false) String scientificDirection,
             @RequestParam(value = "from_date", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
-            @RequestParam(value = "to_date", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate) {
+            @RequestParam(value = "to_date", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "20") int size) {
 
         String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
         User currentUser = userRepository.findByUsername(currentUsername).orElse(null);
 
-        List<EmployeeDocument> documents = employeeDocumentRepository.searchEmployeeDocuments(employeeId, null, docType, scientificDirection, null, fromDate, toDate
-        , org.springframework.data.domain.Pageable.unpaged()).getContent();
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size);
+        boolean isAdmin = currentUser != null && "ADMIN".equals(currentUser.getRole());
+        String userDepartment = currentUser != null ? currentUser.getDepartment() : null;
+        String userCourses = currentUser != null ? currentUser.getCourses() : null;
 
-        if (currentUser != null && !"ADMIN".equals(currentUser.getRole())) {
-            documents = documents.stream().filter(d -> {
-                if (!"STRAIN_ISOLATION".equals(d.getDocType()) && !"REPORT".equals(d.getDocType())) return true;
-                if (d.getAccessDepartment() == null && d.getAccessCourse() == null) return true;
-                boolean depMatch = d.getAccessDepartment() != null && d.getAccessDepartment().equals(currentUser.getDepartment());
-                boolean courseMatch = d.getAccessCourse() != null && currentUser.getCourses() != null && currentUser.getCourses().contains(d.getAccessCourse());
-                return depMatch || courseMatch;
-            }).toList();
-        }
+        org.springframework.data.domain.Page<EmployeeDocument> documentPage = employeeDocumentRepository.searchEmployeeDocumentsSecure(
+                employeeId, null, docType, scientificDirection, null, fromDate, toDate, isAdmin, userDepartment, userCourses, pageable
+        );
+        List<EmployeeDocument> documents = documentPage.getContent();
 
         List<Map<String, Object>> response = documents.stream().map(d -> (Map<String, Object>) Map.<String, Object>of(
                 "id", d.getId(),
@@ -64,7 +63,11 @@ public class EmployeeDossierAnalyticsController {
                 "scientific_direction", d.getScientificDirection() != null ? d.getScientificDirection() : ""
         )).toList();
 
-        return ResponseEntity.ok(response);
+        org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
+        headers.add("X-Total-Count", String.valueOf(documentPage.getTotalElements()));
+        headers.add("X-Total-Pages", String.valueOf(documentPage.getTotalPages()));
+
+        return ResponseEntity.ok().headers(headers).body(response);
     }
 
     @PostMapping("/export")
@@ -99,6 +102,28 @@ public class EmployeeDossierAnalyticsController {
         DossierReport report = null;
 
         try {
+            if (requestBody.containsKey("session_id") || requestBody.containsKey("session_start_time") || requestBody.containsKey("session_duration_ms")) {
+                String sessionId = requestBody.containsKey("session_id") ? (String) requestBody.get("session_id") : "session_" + employeeId;
+                java.time.OffsetDateTime sessionStart = null;
+                java.time.OffsetDateTime sessionEnd = null;
+                Long sessionDurationMs = null;
+
+                if (requestBody.containsKey("session_start_time") && requestBody.get("session_start_time") != null) {
+                    sessionStart = java.time.OffsetDateTime.parse(requestBody.get("session_start_time").toString());
+                }
+                if (requestBody.containsKey("session_end_time") && requestBody.get("session_end_time") != null) {
+                    sessionEnd = java.time.OffsetDateTime.parse(requestBody.get("session_end_time").toString());
+                } else if (sessionStart != null) {
+                    sessionEnd = java.time.OffsetDateTime.now();
+                }
+
+                if (requestBody.containsKey("session_duration_ms") && requestBody.get("session_duration_ms") != null) {
+                    sessionDurationMs = ((Number) requestBody.get("session_duration_ms")).longValue();
+                }
+
+                telemetryService.recordAnalysisSpeedTelemetry(sessionId, sessionStart, sessionEnd, sessionDurationMs);
+            }
+
             // we use first doc_type if list provided for simpler query (the repository only supports a single docType)
             String docType = null;
 
