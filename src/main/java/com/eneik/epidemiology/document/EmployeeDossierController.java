@@ -263,4 +263,43 @@ public class EmployeeDossierController {
                         "message", "Справка не найдена"
                 )));
     }
+
+    @PostMapping("/reports/{id}/sign")
+    @Transactional
+    public ResponseEntity<?> signDossierReport(@PathVariable("id") Long id, @RequestBody(required = false) Map<String, Object> requestBody) {
+        String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
+        User currentUser = userRepository.findByUsername(currentUsername).orElse(null);
+
+        if (currentUser == null || (!"Эпидемиология".equals(currentUser.getDepartment()) && !"ADMIN".equals(currentUser.getRole()))) {
+             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error_code", "FORBIDDEN", "message", "Access denied"));
+        }
+
+        if (requestBody == null || !requestBody.containsKey("signature") || requestBody.get("signature") == null || requestBody.get("signature").toString().trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "error_code", "VALIDATION_ERROR",
+                    "message", "Не указан обязательный параметр signature."
+            ));
+        }
+
+        String signature = requestBody.get("signature").toString();
+
+        int updatedCount = dossierReportRepository.signReport(id, signature);
+        if (updatedCount == 0) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of(
+                    "error_code", "CONFLICT",
+                    "message", "Невозможно подписать справку: справка не найдена, не завершена или уже подписана."
+            ));
+        }
+
+        return dossierReportRepository.findById(id)
+            .map(report -> ResponseEntity.ok(Map.of(
+                    "id", report.getId(),
+                    "employee_id", report.getEmployeeId(),
+                    "template_type", report.getTemplateType(),
+                    "status", report.getStatus(),
+                    "is_signed", report.getIsSigned(),
+                    "signature", report.getSignature()
+            )))
+            .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());
+    }
 }
