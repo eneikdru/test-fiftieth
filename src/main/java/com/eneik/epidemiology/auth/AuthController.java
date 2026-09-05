@@ -22,13 +22,15 @@ public class AuthController {
     private final PasswordRecoveryService passwordRecoveryService;
     private final com.eneik.epidemiology.telemetry.TelemetryService telemetryService;
     private final JdbcTemplate jdbcTemplate;
+    private final RevokedTokenRepository revokedTokenRepository;
 
-    public AuthController(UserService userService, JwtTokenProvider jwtTokenProvider, PasswordRecoveryService passwordRecoveryService, com.eneik.epidemiology.telemetry.TelemetryService telemetryService, JdbcTemplate jdbcTemplate) {
+    public AuthController(UserService userService, JwtTokenProvider jwtTokenProvider, PasswordRecoveryService passwordRecoveryService, com.eneik.epidemiology.telemetry.TelemetryService telemetryService, JdbcTemplate jdbcTemplate, RevokedTokenRepository revokedTokenRepository) {
         this.userService = userService;
         this.jwtTokenProvider = jwtTokenProvider;
         this.passwordRecoveryService = passwordRecoveryService;
         this.telemetryService = telemetryService;
         this.jdbcTemplate = jdbcTemplate;
+        this.revokedTokenRepository = revokedTokenRepository;
     }
 
     public record RegistrationRequest(String username, String password, String email, String full_name) {}
@@ -311,6 +313,15 @@ public class AuthController {
         }
 
         String token = request.refresh_token().trim();
+
+        if (revokedTokenRepository.existsByToken(token)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
+                    "error_code", "INVALID_TOKEN",
+                    "message", "Токен обновления был отозван.",
+                    "timestamp", OffsetDateTime.now().toString()
+            ));
+        }
+
         String username = extractUsernameFromRefreshToken(token);
         User user = userService.findByUsername(username).orElse(null);
 
@@ -337,13 +348,25 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<?> logout(@RequestBody LogoutRequest request) {
+    public ResponseEntity<?> logout(@RequestBody LogoutRequest request, @RequestHeader(value = "Authorization", required = false) String authHeader) {
         if (request == null || isBlank(request.refresh_token())) {
             return ResponseEntity.badRequest().body(Map.of(
                     "error_code", "INVALID_REQUEST",
                     "message", "Укажите refresh_token.",
                     "timestamp", OffsetDateTime.now().toString()
             ));
+        }
+
+        String refreshToken = request.refresh_token().trim();
+        if (!revokedTokenRepository.existsByToken(refreshToken)) {
+            revokedTokenRepository.save(new RevokedToken(refreshToken, OffsetDateTime.now()));
+        }
+
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            String accessToken = authHeader.substring(7);
+            if (!revokedTokenRepository.existsByToken(accessToken)) {
+                revokedTokenRepository.save(new RevokedToken(accessToken, OffsetDateTime.now()));
+            }
         }
 
         return ResponseEntity.ok(Map.of(
