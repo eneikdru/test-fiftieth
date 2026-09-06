@@ -346,7 +346,7 @@ public class EmployeeDossierController {
 
         User currentUser = userRepository.findByUsername(currentUsername).orElse(null);
 
-        if (currentUser == null || (!"Эпидемиология".equals(currentUser.getDepartment()) && !"ADMIN".equals(currentUser.getRole()))) {
+        if (currentUser == null || (!"EPIDEMIOLOGIST".equals(currentUser.getRole()) && !"ADMIN".equals(currentUser.getRole()))) {
              return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error_code", "FORBIDDEN", "message", "Access denied"));
         }
 
