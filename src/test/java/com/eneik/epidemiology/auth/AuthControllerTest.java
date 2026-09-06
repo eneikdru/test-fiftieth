@@ -56,10 +56,16 @@ class AuthControllerTest {
     private com.eneik.epidemiology.telemetry.TelemetryEventRepository telemetryEventRepository;
 
     @Autowired
+    private AuthController authController;
+
+    @Autowired
     private ObjectMapper objectMapper;
+
+    private org.springframework.test.web.client.MockRestServiceServer mockServer;
 
     @BeforeEach
     void setUp() {
+        mockServer = org.springframework.test.web.client.MockRestServiceServer.createServer(authController.getRestTemplate());
         telemetryEventRepository.deleteAll();
         recoveryTokenRepository.deleteAll();
         userRepository.deleteAll();
@@ -162,6 +168,11 @@ class AuthControllerTest {
     @Test
     @DisplayName("Given Moodle SSO callback with valid auth code, When callback endpoint called, Then exchanges code for profile and authenticates user")
     void testMoodleCallback_ValidCode_AuthenticatesAndSyncsRole() throws Exception {
+        mockServer.expect(org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo("https://moodle.epidemiology-inst.ru/oauth2/userinfo?code=mock_moodle_auth_code"))
+                .andRespond(org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess(
+                        "{\"username\":\"moodle_user\",\"moodle_role\":\"Старший научный сотрудник\",\"department\":\"Эпидемиология\",\"email\":\"moodle@inst.ru\",\"full_name\":\"Moodle User\",\"courses\":\"BIO-101\"}",
+                        MediaType.APPLICATION_JSON));
+
         userService.createUser("moodle_user", "Pass123!", "moodle@inst.ru", "Moodle User", "USER");
 
         String callbackBody = "{\"code\":\"mock_moodle_auth_code\",\"state\":\"test_state\"}";
@@ -183,6 +194,9 @@ class AuthControllerTest {
     @Test
     @DisplayName("Given external LMS is down and auth code invalid, When callback endpoint called with fallback credentials, Then authenticates locally via fallback")
     void testMoodleCallback_LmsDown_FallbackAuthenticationSuccess() throws Exception {
+        mockServer.expect(org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo("https://moodle.epidemiology-inst.ru/oauth2/userinfo?code=invalid_code"))
+                .andRespond(org.springframework.test.web.client.response.MockRestResponseCreators.withServerError());
+
         userService.createUser("moodle_user", "MySecureFallback!", "moodle@inst.ru", "Moodle User", "USER");
 
         String callbackBody = "{\"code\":\"invalid_code\",\"username\":\"moodle_user\",\"fallback_password\":\"MySecureFallback!\"}";
@@ -204,6 +218,11 @@ class AuthControllerTest {
     @Test
     @DisplayName("Given valid SSO login request, When moodle sso endpoint called, Then returns JWT tokens and records sso login telemetry")
     void testSsoLogin_ReturnsAuthTokensAndRecordsTelemetry() throws Exception {
+        mockServer.expect(org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo("https://moodle.epidemiology-inst.ru/oauth2/userinfo?code=mock_valid_moodle_token"))
+                .andRespond(org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess(
+                        "{\"username\":\"moodle_user\",\"moodle_role\":\"Старший научный сотрудник\",\"department\":\"Эпидемиология\",\"email\":\"moodle@inst.ru\",\"full_name\":\"Moodle User\",\"courses\":\"BIO-101\"}",
+                        MediaType.APPLICATION_JSON));
+
         userService.createUser("moodle_user", "Pass123!", "moodle@inst.ru", "Moodle User", "USER");
 
         String ssoBody = "{\"username\":\"moodle_user\",\"moodle_token\":\"mock_valid_moodle_token\"}";
@@ -230,6 +249,9 @@ class AuthControllerTest {
     @Test
     @DisplayName("Given LMS is unreachable, When moodle sso endpoint is called with fallback password, Then user is authenticated locally")
     void testSsoLogin_LmsUnreachable_FallbacksToLocalAuth() throws Exception {
+        mockServer.expect(org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo("https://moodle.epidemiology-inst.ru/oauth2/userinfo?code=mock_invalid_token"))
+                .andRespond(org.springframework.test.web.client.response.MockRestResponseCreators.withServerError());
+
         userService.createUser("moodle_user", "MySecureFallback!", "moodle@inst.ru", "Moodle User", "USER");
 
         String ssoBody = "{\"username\":\"moodle_user\",\"moodle_token\":\"mock_invalid_token\",\"fallback_password\":\"MySecureFallback!\"}";
@@ -251,6 +273,11 @@ class AuthControllerTest {
     @Test
     @DisplayName("Given SSO login request for new user, When moodle sso endpoint called, Then user is auto-provisioned with fallback password")
     void testSsoLogin_NewUserAutoProvisioning() throws Exception {
+        mockServer.expect(org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo("https://moodle.epidemiology-inst.ru/oauth2/userinfo?code=mock_valid_new_moodle_token"))
+                .andRespond(org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess(
+                        "{\"username\":\"new_moodle_user\",\"moodle_role\":\"Администратор\",\"department\":\"IT\",\"email\":\"new_moodle@inst.ru\",\"full_name\":\"New Moodle Admin\",\"courses\":\"\"}",
+                        MediaType.APPLICATION_JSON));
+
         String ssoBody = "{\"username\":\"new_moodle_user\",\"moodle_token\":\"mock_valid_new_moodle_token\",\"fallback_password\":\"MySecureFallback!\"}";
 
         mockMvc.perform(post("/api/v1/auth/sso/moodle")
@@ -269,6 +296,33 @@ class AuthControllerTest {
         assert "new_moodle_user".equals(user.getMoodleId());
 
         assert userService.verifyPassword("MySecureFallback!", user.getPasswordHash());
+    }
+
+    @Test
+    @DisplayName("Given invalid credentials, When login endpoint called, Then returns 401 Unauthorized")
+    void testLogin_InvalidCredentials_ReturnsUnauthorized() throws Exception {
+        String invalidLogin = "{\"username\":\"unknown_user\",\"password\":\"WrongPassword!\"}";
+
+        mockMvc.perform(post("/api/v1/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(invalidLogin))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.error_code", is("INVALID_CREDENTIALS")));
+    }
+
+    @Test
+    @DisplayName("Given invalid SSO token and no fallback, When sso endpoint called, Then returns 401 Unauthorized")
+    void testSsoLogin_InvalidTokenNoFallback_ReturnsUnauthorized() throws Exception {
+        mockServer.expect(org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo("https://moodle.epidemiology-inst.ru/oauth2/userinfo?code=bad_token"))
+                .andRespond(org.springframework.test.web.client.response.MockRestResponseCreators.withUnauthorizedRequest());
+
+        String ssoBody = "{\"username\":\"unknown_user\",\"moodle_token\":\"bad_token\"}";
+
+        mockMvc.perform(post("/api/v1/auth/sso/moodle")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(ssoBody))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.error_code", is("INVALID_SSO_TOKEN")));
     }
 
     @Test

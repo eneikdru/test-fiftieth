@@ -28,9 +28,24 @@ public class MoodleSsoIntegrationVerificationTest {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private AuthController authController;
+
+    private org.springframework.test.web.client.MockRestServiceServer mockServer;
+
+    @org.junit.jupiter.api.BeforeEach
+    void setUp() {
+        mockServer = org.springframework.test.web.client.MockRestServiceServer.createServer(authController.getRestTemplate());
+    }
+
     @Test
     @DisplayName("Given an integration test suite, When the Moodle OAuth2 mock responds with valid roles, Then the user is successfully logged in and granted appropriate archive access")
     void testMoodleSsoValidRolesArchiveAccess() throws Exception {
+        mockServer.expect(org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo("https://moodle.epidemiology-inst.ru/oauth2/userinfo?code=mock_valid_new_moodle_token"))
+                .andRespond(org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess(
+                        "{\"username\":\"new_moodle_user\",\"moodle_role\":\"Администратор\",\"department\":\"IT\",\"email\":\"new_moodle@inst.ru\",\"full_name\":\"New Moodle Admin\",\"courses\":\"\"}",
+                        MediaType.APPLICATION_JSON));
+
         String ssoBody = "{\"username\":\"new_moodle_user\",\"moodle_token\":\"mock_valid_new_moodle_token\",\"fallback_password\":\"MySecureFallback!\"}";
 
         mockMvc.perform(post("/api/v1/auth/sso/moodle")

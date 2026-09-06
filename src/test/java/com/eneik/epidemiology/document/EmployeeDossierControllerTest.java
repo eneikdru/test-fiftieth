@@ -171,11 +171,11 @@ class EmployeeDossierControllerTest {
     }
 
 
-    @WithMockUser(roles = "USER")
+    @WithMockUser(username = "user", roles = "USER")
     @Test
-    @DisplayName("Given a completed report, when downloaded, then returns file content.")
+    @DisplayName("Given a completed report, when downloaded, then returns multi-page PDF document.")
     void testDownloadDossierReport() throws Exception {
-        DossierReport report = new DossierReport("EMP-777", "FULL", "COMPLETED", "Test summary", 1, "/api/v1/dossier/reports/1/download");
+        DossierReport report = new DossierReport("EMP-999", "FULL", "COMPLETED", "Test summary", 2, "/api/v1/dossier/reports/1/download");
         report = dossierReportRepository.save(report);
 
         byte[] pdfBytes = mockMvc.perform(get("/api/v1/dossier/reports/{id}/download", report.getId()))
@@ -184,8 +184,39 @@ class EmployeeDossierControllerTest {
                 .andExpect(content().contentType(MediaType.APPLICATION_PDF))
                 .andReturn().getResponse().getContentAsByteArray();
 
-        org.junit.jupiter.api.Assertions.assertTrue(pdfBytes.length > 4);
-        org.junit.jupiter.api.Assertions.assertEquals("%PDF", new String(pdfBytes, 0, 4));
+        com.itextpdf.text.pdf.PdfReader reader = new com.itextpdf.text.pdf.PdfReader(pdfBytes);
+        org.junit.jupiter.api.Assertions.assertTrue(reader.getNumberOfPages() >= 2);
+    }
+
+    @Test
+    @DisplayName("Given unauthenticated user, When accessing dossier reports, Then returns 401 Unauthorized.")
+    void testGetDossierReportUnauthorized() throws Exception {
+        mockMvc.perform(get("/api/v1/dossier/reports/1"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @WithMockUser(username = "other", roles = "USER")
+    @Test
+    @DisplayName("Given unauthorized department user, When accessing restricted report, Then returns 403 Forbidden.")
+    void testGetDossierReportForbidden() throws Exception {
+        DossierReport report = new DossierReport("EMP-777", "FULL", "COMPLETED", "Restricted summary", 1, null);
+        report.setAccessDepartment("Эпидемиология");
+        report = dossierReportRepository.save(report);
+
+        mockMvc.perform(get("/api/v1/dossier/reports/{id}", report.getId()))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.error_code").value("FORBIDDEN"));
+    }
+
+    @WithMockUser(username = "user", roles = "USER")
+    @Test
+    @DisplayName("Given missing mandatory parameters, When generating dossier report, Then returns 400 Bad Request.")
+    void testGenerateDossierReportBadRequest() throws Exception {
+        mockMvc.perform(post("/api/v1/dossier/reports")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error_code").value("VALIDATION_ERROR"));
     }
 
 
