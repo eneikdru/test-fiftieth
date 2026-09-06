@@ -1,0 +1,36 @@
+{
+  "epics": [
+    {
+      "existingEpicId": null,
+      "title": "Resolve Self-Falsification Cycle Findings",
+      "jtbd": "When a self-falsification audit identifies unresolved findings, I want the root causes to be fixed directly, so that the container starts and the CI pipeline passes without inventing adjacent scope.",
+      "kanoClass": "Must-Be",
+      "cynefinDomain": "clear",
+      "sixSigmaMetric": "Defect Resolution Rate",
+      "tocConstraintRef": "CI Pipeline Stability",
+      "sourceIndex": 0,
+      "requirements": [
+        "R1: Restore the 'image' and 'command' declarations for the backend container in docker-compose.override.yml and correct the healthcheck path to resolve the connection refused error.",
+        "R2: Fix the 15 test failures on the main branch so that the CI pipeline passes."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Patch Container Startup and CI Pipeline Failures",
+          "roleTag": "BARCAN-TAG-05",
+          "jtbd": "When implementing the repairs for this epic, I want to fix the missing container declarations, the incorrect healthcheck path, and the failing tests in a single work item, so that the CI pipeline passes and the container starts.",
+          "acceptanceCriteria": "Given the backend container fails to start and tests are failing,\nWhen the image and command declarations are restored and test failures are resolved,\nThen the container starts successfully and QA coverage verifies that the CI pipeline passes.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "CI Pipeline Stability",
+          "sixSigmaMetric": "Pipeline Pass Rate",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1",
+            "R2"
+          ]
+        }
+      ]
+    }
+  ]
+}
