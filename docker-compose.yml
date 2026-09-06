@@ -35,15 +35,15 @@ services:
       BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-7}
       BACKUP_SCHEDULE: ${BACKUP_SCHEDULE:-0 2 * * *}
     volumes:
-      - ./scripts/backup.sh:/usr/local/bin/backup.sh:ro
+      - ./scripts:/scripts:ro
       - app_uploads:/app/data/uploads:ro
       - backup_data:/backups
     entrypoint: >
       /bin/sh -c "
       apk add --no-cache bash tar gzip findutils;
-      echo \"$${BACKUP_SCHEDULE} /usr/local/bin/backup.sh >> /var/log/backup.log 2>&1\" > /etc/crontabs/root;
+      echo \"$${BACKUP_SCHEDULE} bash /scripts/backup.sh >> /var/log/backup.log 2>&1\" > /etc/crontabs/root;
       echo 'Running initial startup backup check...';
-      /usr/local/bin/backup.sh;
+      bash /scripts/backup.sh;
       echo 'Starting cron daemon with schedule: $${BACKUP_SCHEDULE}';
       crond -f -l 2
       "

@@ -60,7 +60,7 @@ public class EmployeeDossierController {
         boolean isAdmin = currentUser != null && "ADMIN".equals(currentUser.getRole());
         String userDepartment = currentUser != null ? currentUser.getDepartment() : null;
         List<String> userCoursesList = currentUser != null && currentUser.getCourses() != null && !currentUser.getCourses().isEmpty()
-                ? java.util.Arrays.asList(currentUser.getCourses().split("\\s*,\\s*"))
+                ? java.util.Arrays.stream(currentUser.getCourses().split("\\s*,\\s*")).filter(s -> !s.isEmpty()).collect(java.util.stream.Collectors.toList())
                 : java.util.Collections.emptyList();
 
         org.springframework.data.domain.Page<EmployeeDocument> documentPage = employeeDocumentRepository.searchEmployeeDocumentsSecure(
@@ -138,7 +138,7 @@ public class EmployeeDossierController {
 
             if (currentUser != null && !"ADMIN".equals(currentUser.getRole())) {
                 List<String> userCoursesList = currentUser.getCourses() != null && !currentUser.getCourses().isEmpty()
-                        ? java.util.Arrays.asList(currentUser.getCourses().split("\\s*,\\s*"))
+                        ? java.util.Arrays.stream(currentUser.getCourses().split("\\s*,\\s*")).filter(s -> !s.isEmpty()).collect(java.util.stream.Collectors.toList())
                         : java.util.Collections.emptyList();
                 documents = documents.stream().filter(d -> {
                     if (!"STRAIN_ISOLATION".equals(d.getDocType()) && !"REPORT".equals(d.getDocType())) return true;
@@ -198,7 +198,7 @@ public class EmployeeDossierController {
         boolean isAdmin = currentUser != null && "ADMIN".equals(currentUser.getRole());
         String userDepartment = currentUser != null ? currentUser.getDepartment() : null;
         List<String> userCoursesList = currentUser != null && currentUser.getCourses() != null && !currentUser.getCourses().isEmpty()
-                ? java.util.Arrays.asList(currentUser.getCourses().split("\\s*,\\s*"))
+                ? java.util.Arrays.stream(currentUser.getCourses().split("\\s*,\\s*")).filter(s -> !s.isEmpty()).collect(java.util.stream.Collectors.toList())
                 : java.util.Collections.emptyList();
 
         org.springframework.data.domain.Page<DossierReport> reportPage = dossierReportRepository.searchReportsSecure(
@@ -227,7 +227,10 @@ public class EmployeeDossierController {
 
 
     private boolean isAccessDenied(User currentUser, DossierReport report) {
-        if (currentUser == null || "ADMIN".equals(currentUser.getRole())) {
+        if (currentUser == null) {
+            return true;
+        }
+        if ("ADMIN".equals(currentUser.getRole())) {
             return false;
         }
         if (report.getAccessDepartment() == null && report.getAccessCourse() == null) {
@@ -235,7 +238,7 @@ public class EmployeeDossierController {
         }
         boolean depMatch = report.getAccessDepartment() != null && report.getAccessDepartment().equals(currentUser.getDepartment());
         List<String> userCoursesList = currentUser.getCourses() != null && !currentUser.getCourses().isEmpty()
-                ? java.util.Arrays.asList(currentUser.getCourses().split("\\s*,\\s*"))
+                ? java.util.Arrays.stream(currentUser.getCourses().split("\\s*,\\s*")).filter(s -> !s.isEmpty()).collect(java.util.stream.Collectors.toList())
                 : java.util.Collections.emptyList();
         boolean courseMatch = report.getAccessCourse() != null && userCoursesList.contains(report.getAccessCourse());
         return !depMatch && !courseMatch;
