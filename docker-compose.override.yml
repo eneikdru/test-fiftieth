@@ -19,6 +19,11 @@ services:
       - "18080:18080"
     environment:
       SERVER_PORT: "18080"
+      DB_HOST: db
+      DB_PORT: 5432
+      POSTGRES_DB: ${POSTGRES_DB:-epidemiology_db}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
     healthcheck:
       # updated to actuator/health
       test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:18080/actuator/health || exit 1"]
@@ -40,9 +45,9 @@ services:
       /bin/sh -c "
       apk add --no-cache bash tar gzip findutils;
       chmod +x /usr/local/bin/backup.sh /scripts/backup.sh 2>/dev/null || true;
-      echo \"$${BACKUP_SCHEDULE} /scripts/backup.sh >> /var/log/backup.log 2>&1\" > /etc/crontabs/root;
+      echo \"$${BACKUP_SCHEDULE} bash /scripts/backup.sh >> /var/log/backup.log 2>&1\" > /etc/crontabs/root;
       echo 'Running initial startup backup check...';
-      /scripts/backup.sh;
+      bash /scripts/backup.sh;
       echo 'Starting cron daemon with schedule: $${BACKUP_SCHEDULE}';
       crond -f -l 2
       "
