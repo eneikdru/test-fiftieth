@@ -218,6 +218,36 @@ class AuthControllerTest {
     }
 
     @Test
+    @DisplayName("Given an OIDC SSO request, When the mock responds with valid profile data, Then the user is successfully logged in via OIDC")
+    void testOidcLogin_Success() throws Exception {
+        mockServer.expect(org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo("https://moodle.epidemiology-inst.ru/oauth2/userinfo"))
+                .andExpect(org.springframework.test.web.client.match.MockRestRequestMatchers.header("Authorization", "Bearer mock_oidc_token"))
+                .andRespond(org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess(
+                        "{\"username\":\"oidc_user\",\"moodle_role\":\"Исследователь\",\"department\":\"Lab\",\"email\":\"oidc@inst.ru\",\"full_name\":\"OIDC User\",\"courses\":\"\"}",
+                        MediaType.APPLICATION_JSON));
+
+        String ssoBody = "{\"username\":\"oidc_user\",\"oidc_token\":\"mock_oidc_token\"}";
+
+        mockMvc.perform(post("/api/v1/auth/sso/oidc")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(ssoBody))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.access_token", notNullValue()))
+                .andExpect(jsonPath("$.refresh_token", notNullValue()))
+                .andExpect(jsonPath("$.user.username", is("oidc_user")))
+                .andExpect(jsonPath("$.user.role", is("RESEARCHER")));
+
+        long ssoEvents = telemetryEventRepository.findAll().stream()
+                .filter(e -> "sso_login_success".equals(e.getEventType()) && "oidc_user".equals(e.getQueryTerm()))
+                .count();
+        assert ssoEvents == 1;
+
+        User user = userService.findByUsername("oidc_user").orElseThrow();
+        assert "RESEARCHER".equals(user.getRole());
+        assert "Lab".equals(user.getDepartment());
+    }
+
+    @Test
     @DisplayName("Given Moodle SSO callback with valid auth code, When callback endpoint called, Then exchanges code for profile and authenticates user")
     void testMoodleCallback_ValidCode_AuthenticatesAndSyncsRole() throws Exception {
         mockServer.expect(org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo("https://moodle.epidemiology-inst.ru/oauth2/userinfo?code=mock_moodle_auth_code"))
