@@ -27,12 +27,12 @@ public interface DossierReportRepository extends JpaRepository<DossierReport, Lo
            "(:isAdmin = true OR " +
            " (r.accessDepartment IS NULL AND r.accessCourse IS NULL) OR " +
            " (r.accessDepartment = :userDepartment) OR " +
-           " (:userCourses IS NOT NULL AND r.accessCourse IS NOT NULL AND LOWER(CAST(:userCourses AS string)) LIKE LOWER(CONCAT('%', CAST(r.accessCourse AS string), '%')))) " +
+           " (r.accessCourse IN :userCoursesList)) " +
            "ORDER BY r.createdAt DESC")
     org.springframework.data.domain.Page<DossierReport> searchReportsSecure(
             @Param("employeeId") String employeeId,
             @Param("isAdmin") boolean isAdmin,
             @Param("userDepartment") String userDepartment,
-            @Param("userCourses") String userCourses,
+            @Param("userCoursesList") List<String> userCoursesList,
             org.springframework.data.domain.Pageable pageable);
 }

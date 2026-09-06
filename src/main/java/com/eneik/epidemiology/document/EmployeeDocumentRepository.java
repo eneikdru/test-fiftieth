@@ -24,7 +24,7 @@ public interface EmployeeDocumentRepository extends JpaRepository<EmployeeDocume
            "AND (:query IS NULL OR LOWER(CAST(d.title AS string)) LIKE LOWER(CONCAT('%', CAST(:query AS string), '%')) OR LOWER(CAST(d.details AS string)) LIKE LOWER(CONCAT('%', CAST(:query AS string), '%'))) " +
            "AND (CAST(:fromDate AS java.time.LocalDate) IS NULL OR d.docDate >= :fromDate) " +
            "AND (CAST(:toDate AS java.time.LocalDate) IS NULL OR d.docDate <= :toDate) " +
-           "AND (:isAdmin = true OR d.docType NOT IN ('STRAIN_ISOLATION', 'REPORT') OR (d.accessDepartment IS NULL AND d.accessCourse IS NULL) OR d.accessDepartment = :userDepartment OR (:userCourses IS NOT NULL AND d.accessCourse IS NOT NULL AND LOWER(CAST(:userCourses AS string)) LIKE LOWER(CONCAT('%', CAST(d.accessCourse AS string), '%')))) " +
+           "AND (:isAdmin = true OR d.docType NOT IN ('STRAIN_ISOLATION', 'REPORT') OR (d.accessDepartment IS NULL AND d.accessCourse IS NULL) OR d.accessDepartment = :userDepartment OR (d.accessCourse IN :userCoursesList)) " +
            "ORDER BY d.docDate DESC")
     org.springframework.data.domain.Page<EmployeeDocument> searchEmployeeDocumentsSecure(
             @Param("employeeId") String employeeId,
@@ -36,7 +36,7 @@ public interface EmployeeDocumentRepository extends JpaRepository<EmployeeDocume
             @Param("toDate") java.time.LocalDate toDate,
             @Param("isAdmin") boolean isAdmin,
             @Param("userDepartment") String userDepartment,
-            @Param("userCourses") String userCourses,
+            @Param("userCoursesList") List<String> userCoursesList,
             org.springframework.data.domain.Pageable pageable
     );
 
