@@ -57,6 +57,8 @@ public class EmployeeDossierAuthorizationTest {
         exactDoc.setDocType("REPORT");
         exactDoc.setDocDate(LocalDate.now());
         exactDoc.setAccessCourse("MATH-101");
+
+        exactDoc.setTitle("Test Doc");
         documentRepository.save(exactDoc);
 
         // Document that would false-positive match on "MATH-1" if using LIKE '%MATH-1%'
@@ -84,6 +86,8 @@ public class EmployeeDossierAuthorizationTest {
         docRequiringMath1.setDocType("REPORT");
         docRequiringMath1.setDocDate(LocalDate.now());
         docRequiringMath1.setAccessCourse("MATH-1");
+
+        docRequiringMath1.setTitle("Test Doc 2");
         documentRepository.save(docRequiringMath1);
 
         // As user with "MATH-101"
