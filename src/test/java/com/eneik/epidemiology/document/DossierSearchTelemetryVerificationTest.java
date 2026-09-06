@@ -98,7 +98,7 @@ class DossierSearchTelemetryVerificationTest {
 
         when(employeeDocumentRepository.searchEmployeeDocumentsSecure(
                 eq(null), eq("Иванов"), eq(null), eq(null), eq(null),
-                eq(null), eq(null), eq(true), eq(null), eq(null),
+                eq(null), eq(null), eq(true), eq(null), any(),
                 any(Pageable.class)
         )).thenReturn(mockPage);
 
