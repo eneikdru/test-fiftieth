@@ -7,6 +7,11 @@ services:
   backend:
     # Backend service definition with Dockerfile build context and actuator health check
     container_name: "${COMPOSE_PROJECT_NAME:-epidemiology}_backend"
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: "${COMPOSE_PROJECT_NAME:-epidemiology}_backend:latest"
+    command: ["java", "-jar", "/app/app.jar"]
     depends_on:
       db:
         condition: service_healthy
@@ -20,7 +25,7 @@ services:
       SPRING_JPA_DATABASE_PLATFORM: org.hibernate.dialect.PostgreSQLDialect
       SPRING_DATASOURCE_DRIVER_CLASS_NAME: org.postgresql.Driver
     healthcheck:
-      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:18080/health || exit 1"]
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:18080/actuator/health || exit 1"]
       interval: 5s
       timeout: 5s
       retries: 10
