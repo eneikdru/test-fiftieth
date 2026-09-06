@@ -227,10 +227,7 @@ public class EmployeeDossierController {
 
 
     private boolean isAccessDenied(User currentUser, DossierReport report) {
-        if (currentUser == null) {
-            return true;
-        }
-        if ("ADMIN".equals(currentUser.getRole())) {
+        if (currentUser == null || "ADMIN".equals(currentUser.getRole())) {
             return false;
         }
         if (report.getAccessDepartment() == null && report.getAccessCourse() == null) {
