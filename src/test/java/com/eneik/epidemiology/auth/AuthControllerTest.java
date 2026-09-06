@@ -424,4 +424,65 @@ class AuthControllerTest {
         User updatedUser = userService.findByUsername("sidorov_v").orElseThrow();
         assert userService.verifyPassword("NewStrongPass2026!", updatedUser.getPasswordHash());
     }
+
+    @Test
+    @DisplayName("Given GET /api/v1/auth/moodle/override-role, When called by admin, Then returns mappings")
+    void testGetMoodleRoleMappings() throws Exception {
+        User admin = userService.createUser("admin_user1", "Pass123!", "ADMIN");
+        String accessToken = jwtTokenProvider.generateToken(admin.getUsername(), admin.getRole());
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/api/v1/auth/moodle/override-role")
+                .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray());
+    }
+
+    @Test
+    @DisplayName("Given GET /api/v1/auth/moodle/override-role, When called by non-admin, Then returns 403 Forbidden")
+    void testGetMoodleRoleMappings_Forbidden() throws Exception {
+        User user = userService.createUser("normal_user1", "Pass123!", "USER");
+        String accessToken = jwtTokenProvider.generateToken(user.getUsername(), user.getRole());
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/api/v1/auth/moodle/override-role")
+                .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DisplayName("Given POST /api/v1/auth/moodle/override-role, When called by admin, Then updates user role")
+    void testOverrideRole() throws Exception {
+        User admin = userService.createUser("admin_user2", "Pass123!", "ADMIN");
+        String accessToken = jwtTokenProvider.generateToken(admin.getUsername(), admin.getRole());
+
+        User targetUser = userService.createUser("target_user1", "Pass123!", "USER");
+
+        String requestBody = String.format("{\"userId\":%d,\"role\":\"EPIDEMIOLOGIST\"}", targetUser.getId());
+
+        mockMvc.perform(post("/api/v1/auth/moodle/override-role")
+                .header("Authorization", "Bearer " + accessToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(requestBody))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success", is(true)));
+
+        User updatedUser = userService.findByUsername("target_user1").orElseThrow();
+        assert "EPIDEMIOLOGIST".equals(updatedUser.getRole());
+    }
+
+    @Test
+    @DisplayName("Given POST /api/v1/auth/moodle/override-role, When called by non-admin, Then returns 403 Forbidden")
+    void testOverrideRole_Forbidden() throws Exception {
+        User user = userService.createUser("normal_user2", "Pass123!", "USER");
+        String accessToken = jwtTokenProvider.generateToken(user.getUsername(), user.getRole());
+
+        User targetUser = userService.createUser("target_user2", "Pass123!", "USER");
+
+        String requestBody = String.format("{\"userId\":%d,\"role\":\"EPIDEMIOLOGIST\"}", targetUser.getId());
+
+        mockMvc.perform(post("/api/v1/auth/moodle/override-role")
+                .header("Authorization", "Bearer " + accessToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(requestBody))
+                .andExpect(status().isForbidden());
+    }
 }

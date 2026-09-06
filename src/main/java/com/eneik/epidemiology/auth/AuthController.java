@@ -8,6 +8,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.*;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.security.access.prepost.PreAuthorize;
+
 import java.time.OffsetDateTime;
 import java.util.HashMap;
 import java.util.List;
@@ -16,6 +20,8 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/v1/auth")
 public class AuthController {
+
+    private static final Logger log = LoggerFactory.getLogger(AuthController.class);
 
     @org.springframework.beans.factory.annotation.Value("${moodle.server.url:https://moodle.epidemiology-inst.ru}")
     private String moodleServerUrl = "https://moodle.epidemiology-inst.ru";
@@ -59,6 +65,7 @@ public class AuthController {
     public record LogoutRequest(String refresh_token) {}
     public record PasswordRecoveryRequest(String identity) {}
     public record PasswordResetConfirmationRequest(String recovery_token, String new_password) {}
+    public record RoleOverrideRequest(Long userId, String role) {}
 
     @GetMapping("/moodle/config")
     public ResponseEntity<?> getMoodleConfig() {
@@ -67,6 +74,73 @@ public class AuthController {
                 "login_url", loginUrl,
                 "auth_url", loginUrl
         ));
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/moodle/override-role")
+    public ResponseEntity<?> getMoodleRoleMappings() {
+        try {
+            List<Map<String, Object>> mappings = jdbcTemplate.queryForList("SELECT moodle_role_pattern, internal_role FROM moodle_role_mappings");
+            return ResponseEntity.ok(mappings);
+        } catch (Exception e) {
+            log.error("Error fetching Moodle role mappings", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                    "error_code", "MAPPING_FETCH_FAILED",
+                    "message", "Не удалось получить сопоставления ролей.",
+                    "timestamp", OffsetDateTime.now().toString()
+            ));
+        }
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/moodle/override-role")
+    public ResponseEntity<?> overrideRole(@RequestBody RoleOverrideRequest request) {
+        if (request == null || request.userId() == null || isBlank(request.role())) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "error_code", "INVALID_REQUEST",
+                    "message", "Укажите ID пользователя и новую роль.",
+                    "timestamp", OffsetDateTime.now().toString()
+            ));
+        }
+
+        try {
+            String oldRole = userService.resolveRoleById(request.userId()).orElse(null);
+            if (oldRole == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
+                        "error_code", "USER_NOT_FOUND",
+                        "message", "Пользователь не найден.",
+                        "timestamp", OffsetDateTime.now().toString()
+                ));
+            }
+
+            if (oldRole.equals(request.role())) {
+                return ResponseEntity.ok(Map.of(
+                        "success", true,
+                        "message", "Роль пользователя успешно обновлена."
+                ));
+            }
+
+            int updatedRows = userService.updateRoleAtomically(request.userId(), oldRole, request.role());
+            if (updatedRows > 0) {
+                return ResponseEntity.ok(Map.of(
+                        "success", true,
+                        "message", "Роль пользователя успешно обновлена."
+                ));
+            } else {
+                return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of(
+                        "error_code", "CONCURRENT_MODIFICATION",
+                        "message", "Не удалось обновить роль пользователя.",
+                        "timestamp", OffsetDateTime.now().toString()
+                ));
+            }
+        } catch (Exception e) {
+            log.error("Error overriding role for user ID: " + request.userId(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                    "error_code", "INTERNAL_ERROR",
+                    "message", "Внутренняя ошибка сервера.",
+                    "timestamp", OffsetDateTime.now().toString()
+            ));
+        }
     }
 
     @PostMapping("/moodle/callback")
