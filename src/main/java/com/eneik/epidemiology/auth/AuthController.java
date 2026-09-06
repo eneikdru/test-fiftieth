@@ -73,36 +73,15 @@ public class AuthController {
         User user = null;
 
         if (targetUserId != null) {
-            user = userService.findByUsernameOrEmail(targetUserId.toString()).orElse(null);
+            user = userService.findById(targetUserId).orElse(null);
+            if (user == null) {
+                user = userService.findByUsernameOrEmail(targetUserId.toString()).orElse(null);
+            }
             if (user == null) {
                 user = userService.findByMoodleId(targetUserId.toString()).orElse(null);
             }
-            if (user == null) {
-                user = userService.resolveRoleById(targetUserId)
-                        .map(r -> {
-                            User u = new User();
-                            u.setId(targetUserId);
-                            u.setRole(r);
-                            return u;
-                        }).orElse(null);
-            }
         } else if (!isBlank(request.username())) {
             user = userService.findByUsernameOrEmail(request.username().trim()).orElse(null);
-        }
-
-        if (user == null && targetUserId != null) {
-            // Find by primary key ID via repository query if user not found yet
-            try {
-                List<Map<String, Object>> rows = jdbcTemplate.queryForList("SELECT id, username, role FROM users WHERE id = ?", targetUserId);
-                if (!rows.isEmpty()) {
-                    Map<String, Object> row = rows.get(0);
-                    user = new User();
-                    user.setId(((Number) row.get("id")).longValue());
-                    user.setUsername((String) row.get("username"));
-                    user.setRole((String) row.get("role"));
-                }
-            } catch (Exception ignored) {
-            }
         }
 
         if (user == null) {
