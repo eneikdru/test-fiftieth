@@ -17,10 +17,11 @@ class FlywayMigrationPatternConfigurationTest {
     private Flyway flyway;
 
     @Test
-    @DisplayName("Given Flyway configuration, When inspected, Then ignoreMigrationPatterns includes missing migration pattern")
+    @DisplayName("Given Flyway configuration, When inspected, Then ignoreMigrationPatterns does not include missing migration pattern")
     void testFlywayIgnoreMigrationPatternsConfigured() {
-        boolean matchesMissing = Arrays.stream(flyway.getConfiguration().getIgnoreMigrationPatterns())
+        boolean matchesMissing = flyway.getConfiguration().getIgnoreMigrationPatterns() != null &&
+                Arrays.stream(flyway.getConfiguration().getIgnoreMigrationPatterns())
                 .anyMatch(pattern -> pattern != null && pattern.toString().contains("missing"));
-        assertTrue(matchesMissing, "Flyway ignoreMigrationPatterns should include missing migration pattern");
+        assertTrue(!matchesMissing, "Flyway ignoreMigrationPatterns should not suppress missing migrations");
     }
 }
