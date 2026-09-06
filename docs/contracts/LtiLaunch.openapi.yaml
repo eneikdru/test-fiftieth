@@ -1,0 +1,181 @@
+openapi: 3.0.3
+info:
+  title: LTI Launch Single Sign-On API Contract
+  description: Shared API contract for Moodle LTI (Learning Tools Interoperability) launch parameter processing, signature validation, role and department synchronization, and JWT token issuance.
+  version: 1.0.0
+servers:
+  - url: /api/v1
+    description: Primary API endpoint base path
+
+paths:
+  /auth/lti/launch:
+    post:
+      summary: Process LTI launch request from Moodle LMS
+      description: Validates LTI 1.0/1.1/1.3 launch parameters and OAuth signature or LTI token, authenticates the user, synchronizes domain role and department, and returns JWT session tokens.
+      operationId: processLtiLaunch
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/LtiLaunchFormParams'
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LtiLaunchJsonRequest'
+      responses:
+        '200':
+          description: Successful LTI launch authentication with synchronized user session and JWT tokens
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthTokenResponse'
+        '400':
+          description: Missing or invalid mandatory LTI launch parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Invalid LTI signature or OAuth consumer verification failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    LtiLaunchFormParams:
+      type: object
+      required:
+        - lti_message_type
+        - lti_version
+        - resource_link_id
+      properties:
+        lti_message_type:
+          type: string
+          example: "basic-lti-launch-request"
+        lti_version:
+          type: string
+          example: "LTI-1p0"
+        resource_link_id:
+          type: string
+          example: "res_12345"
+        user_id:
+          type: string
+          example: "moodle_user_001"
+        ext_user_username:
+          type: string
+          example: "moodle_researcher"
+        lis_person_name_full:
+          type: string
+          example: "Иванов Иван Иванович"
+        lis_person_contact_email_primary:
+          type: string
+          example: "ivanov@inst.ru"
+        roles:
+          type: string
+          example: "Instructor,Researcher"
+        tool_consumer_instance_name:
+          type: string
+          example: "Кафедра Эпидемиологии"
+        context_title:
+          type: string
+          example: "BIO-101"
+        oauth_consumer_key:
+          type: string
+          example: "moodle_key"
+        oauth_signature:
+          type: string
+          example: "valid_signature_hash"
+
+    LtiLaunchJsonRequest:
+      type: object
+      properties:
+        lti_message_type:
+          type: string
+          example: "basic-lti-launch-request"
+        lti_version:
+          type: string
+          example: "LTI-1p0"
+        resource_link_id:
+          type: string
+          example: "res_12345"
+        user_id:
+          type: string
+          example: "moodle_user_001"
+        ext_user_username:
+          type: string
+          example: "moodle_researcher"
+        lis_person_name_full:
+          type: string
+          example: "Иванов Иван Иванович"
+        lis_person_contact_email_primary:
+          type: string
+          example: "ivanov@inst.ru"
+        roles:
+          type: string
+          example: "Instructor,Researcher"
+        tool_consumer_instance_name:
+          type: string
+          example: "Кафедра Эпидемиологии"
+        context_title:
+          type: string
+          example: "BIO-101"
+        oauth_consumer_key:
+          type: string
+          example: "moodle_key"
+        oauth_signature:
+          type: string
+          example: "valid_signature_hash"
+
+    AuthTokenResponse:
+      type: object
+      required:
+        - access_token
+        - refresh_token
+        - token_type
+        - expires_in
+        - user
+      properties:
+        access_token:
+          type: string
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        refresh_token:
+          type: string
+          example: "ref_moodle_user_1700000000000"
+        token_type:
+          type: string
+          example: "Bearer"
+        expires_in:
+          type: integer
+          example: 3600
+        user:
+          type: object
+          properties:
+            id:
+              type: integer
+            username:
+              type: string
+            role:
+              type: string
+            full_name:
+              type: string
+            email:
+              type: string
+
+    ErrorResponse:
+      type: object
+      required:
+        - error_code
+        - message
+        - timestamp
+      properties:
+        error_code:
+          type: string
+          example: "INVALID_LTI_SIGNATURE"
+        message:
+          type: string
+          example: "Недействительная подпись LTI запроса."
+        timestamp:
+          type: string
+          format: date-time

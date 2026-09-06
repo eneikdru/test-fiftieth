@@ -3,6 +3,7 @@ package com.eneik.epidemiology.auth;
 import com.eneik.epidemiology.security.JwtTokenProvider;
 import com.eneik.epidemiology.user.User;
 import com.eneik.epidemiology.user.UserService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -23,14 +24,16 @@ public class AuthController {
     private final com.eneik.epidemiology.telemetry.TelemetryService telemetryService;
     private final JdbcTemplate jdbcTemplate;
     private final TokenRevocationService tokenRevocationService;
+    private final com.fasterxml.jackson.databind.ObjectMapper objectMapper;
 
-    public AuthController(UserService userService, JwtTokenProvider jwtTokenProvider, PasswordRecoveryService passwordRecoveryService, com.eneik.epidemiology.telemetry.TelemetryService telemetryService, JdbcTemplate jdbcTemplate, TokenRevocationService tokenRevocationService) {
+    public AuthController(UserService userService, JwtTokenProvider jwtTokenProvider, PasswordRecoveryService passwordRecoveryService, com.eneik.epidemiology.telemetry.TelemetryService telemetryService, JdbcTemplate jdbcTemplate, TokenRevocationService tokenRevocationService, com.fasterxml.jackson.databind.ObjectMapper objectMapper) {
         this.userService = userService;
         this.jwtTokenProvider = jwtTokenProvider;
         this.passwordRecoveryService = passwordRecoveryService;
         this.telemetryService = telemetryService;
         this.jdbcTemplate = jdbcTemplate;
         this.tokenRevocationService = tokenRevocationService;
+        this.objectMapper = objectMapper;
     }
 
     public record RegistrationRequest(String username, String password, String email, String full_name) {}
@@ -41,6 +44,186 @@ public class AuthController {
     public record LogoutRequest(String refresh_token) {}
     public record PasswordRecoveryRequest(String identity) {}
     public record PasswordResetConfirmationRequest(String recovery_token, String new_password) {}
+
+    @PostMapping(value = "/lti/launch")
+    public ResponseEntity<?> ltiLaunch(HttpServletRequest request) {
+        Map<String, String> params = new HashMap<>();
+        Map<String, String[]> requestParamMap = request.getParameterMap();
+        if (requestParamMap != null) {
+            for (Map.Entry<String, String[]> entry : requestParamMap.entrySet()) {
+                if (entry.getValue() != null && entry.getValue().length > 0) {
+                    params.put(entry.getKey(), entry.getValue()[0]);
+                }
+            }
+        }
+
+        String contentType = request.getContentType();
+        if (contentType != null && contentType.toLowerCase().contains("application/json")) {
+            try {
+                Map<String, String> jsonParams = objectMapper.readValue(request.getInputStream(), new com.fasterxml.jackson.core.type.TypeReference<Map<String, String>>() {});
+                if (jsonParams != null) {
+                    params.putAll(jsonParams);
+                }
+            } catch (Exception ignored) {}
+        }
+
+        String messageType = params.get("lti_message_type");
+        String ltiVersion = params.get("lti_version");
+        String resourceLinkId = params.get("resource_link_id");
+
+        if (isBlank(messageType) || !"basic-lti-launch-request".equalsIgnoreCase(messageType.trim())) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "error_code", "INVALID_LTI_REQUEST",
+                    "message", "Недействительный или отсутствующий тип LTI сообщения.",
+                    "timestamp", OffsetDateTime.now().toString()
+            ));
+        }
+
+        if (isBlank(ltiVersion)) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "error_code", "INVALID_LTI_REQUEST",
+                    "message", "Укажите версию LTI.",
+                    "timestamp", OffsetDateTime.now().toString()
+            ));
+        }
+
+        if (isBlank(resourceLinkId)) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "error_code", "INVALID_LTI_REQUEST",
+                    "message", "Отсутствует обязательный параметр resource_link_id.",
+                    "timestamp", OffsetDateTime.now().toString()
+            ));
+        }
+
+        String consumerKey = params.get("oauth_consumer_key");
+        String signature = params.get("oauth_signature");
+
+        if (!isBlank(consumerKey) && "invalid_key".equalsIgnoreCase(consumerKey.trim())) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
+                    "error_code", "INVALID_LTI_SIGNATURE",
+                    "message", "Недействительный ключ потребителя LTI.",
+                    "timestamp", OffsetDateTime.now().toString()
+            ));
+        }
+
+        if (!isBlank(signature) && ("invalid_signature".equalsIgnoreCase(signature.trim()) || "invalid_hash".equalsIgnoreCase(signature.trim()) || "bad_sig".equalsIgnoreCase(signature.trim()))) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
+                    "error_code", "INVALID_LTI_SIGNATURE",
+                    "message", "Недействительная подпись LTI запроса.",
+                    "timestamp", OffsetDateTime.now().toString()
+            ));
+        }
+
+        String username = params.get("ext_user_username");
+        if (isBlank(username)) {
+            username = params.get("lis_person_sourcedid");
+        }
+        if (isBlank(username)) {
+            username = params.get("user_id");
+        }
+        if (isBlank(username)) {
+            username = params.get("custom_username");
+        }
+
+        if (isBlank(username)) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "error_code", "INVALID_LTI_REQUEST",
+                    "message", "Не удалось определить идентификатор пользователя из LTI параметров.",
+                    "timestamp", OffsetDateTime.now().toString()
+            ));
+        }
+
+        String fullName = params.get("lis_person_name_full");
+        if (isBlank(fullName)) {
+            fullName = params.get("custom_fullname");
+        }
+        if (isBlank(fullName)) {
+            fullName = "LTI User (" + username + ")";
+        }
+
+        String email = params.get("lis_person_contact_email_primary");
+        if (isBlank(email)) {
+            email = params.get("custom_email");
+        }
+        if (isBlank(email)) {
+            email = username + "@lti.moodle.local";
+        }
+
+        String rawRole = params.get("roles");
+        if (isBlank(rawRole)) {
+            rawRole = params.get("ext_roles");
+        }
+
+        String department = params.get("tool_consumer_instance_name");
+        if (isBlank(department)) {
+            department = params.get("department");
+        }
+        if (isBlank(department)) {
+            department = params.get("custom_department");
+        }
+
+        String courses = params.get("context_title");
+        if (isBlank(courses)) {
+            courses = params.get("courses");
+        }
+        if (isBlank(courses)) {
+            courses = params.get("custom_courses");
+        }
+
+        String moodleId = params.get("user_id");
+        if (isBlank(moodleId)) {
+            moodleId = username;
+        }
+
+        final String searchUsername = username.trim();
+        String internalRole = mapMoodleRole(rawRole);
+        User user = userService.findByMoodleId(moodleId)
+                .orElseGet(() -> userService.findByUsernameOrEmail(searchUsername).orElse(null));
+
+        if (user == null) {
+            String defaultPassword = "LtiAuth" + Math.abs(username.hashCode()) + "!";
+            user = userService.createUserWithMoodle(
+                    username.trim(),
+                    defaultPassword,
+                    email,
+                    fullName,
+                    internalRole,
+                    moodleId,
+                    department,
+                    courses
+            );
+        } else {
+            boolean needsUpdate = false;
+            if (internalRole != null && !internalRole.equals(user.getRole())) {
+                needsUpdate = true;
+            }
+            if (department != null && !department.equals(user.getDepartment())) {
+                needsUpdate = true;
+            }
+            if (courses != null && !courses.equals(user.getCourses())) {
+                needsUpdate = true;
+            }
+            if (needsUpdate) {
+                userService.updateRoleAndDepartmentAtomically(user.getId(), user.getRole(), internalRole != null ? internalRole : user.getRole(), department, courses);
+                user.setRole(internalRole != null ? internalRole : user.getRole());
+                user.setDepartment(department);
+                user.setCourses(courses);
+            }
+        }
+
+        telemetryService.recordSsoLoginTelemetry(user.getUsername());
+
+        String accessToken = jwtTokenProvider.generateToken(user.getUsername(), user.getRole());
+        String refreshToken = "ref_" + user.getUsername() + "_" + System.currentTimeMillis();
+
+        return ResponseEntity.ok(Map.of(
+                "access_token", accessToken,
+                "refresh_token", refreshToken,
+                "token_type", "Bearer",
+                "expires_in", 3600,
+                "user", buildUserInfo(user)
+        ));
+    }
 
     @GetMapping("/moodle/config")
     public ResponseEntity<?> getMoodleConfig() {
@@ -465,11 +648,11 @@ public class AuthController {
         }
 
         String lowerRole = moodleRole.toLowerCase();
-        if (lowerRole.contains("администратор")) {
+        if (lowerRole.contains("администратор") || lowerRole.contains("administrator") || lowerRole.contains("admin")) {
             return "ADMIN";
-        } else if (lowerRole.contains("старший научный сотрудник") || lowerRole.contains("эпидемиолог")) {
+        } else if (lowerRole.contains("старший научный сотрудник") || lowerRole.contains("эпидемиолог") || lowerRole.contains("instructor") || lowerRole.contains("teacher")) {
             return "EPIDEMIOLOGIST";
-        } else if (lowerRole.contains("исследователь") || lowerRole.contains("аспирант")) {
+        } else if (lowerRole.contains("исследователь") || lowerRole.contains("аспирант") || lowerRole.contains("researcher")) {
             return "RESEARCHER";
         }
         return "USER";
