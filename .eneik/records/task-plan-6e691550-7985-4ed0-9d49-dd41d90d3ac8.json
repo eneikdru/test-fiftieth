@@ -1,0 +1,64 @@
+{
+  "epics": [
+    {
+      "existingEpicId": null,
+      "title": "Closed Strains Access Control",
+      "jtbd": "When I query closed strains, I want the system to filter access based on my Moodle department and courses, so that access restrictions are automatically enforced.",
+      "kanoClass": "Must-Be",
+      "cynefinDomain": "clear",
+      "sixSigmaMetric": "Defect rate in unauthorized closed strain access attempts",
+      "tocConstraintRef": "API strain filtering step",
+      "sourceIndex": 0,
+      "requirements": [
+        "R1: Automatically restrict access to closed strains based on the user's Moodle department and courses."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Implement Closed Strains Access Control API logic",
+          "roleTag": "BARCAN-TAG-02",
+          "jtbd": "When implementing strains access for this epic, I want to filter strains by Moodle department and courses, so that access restrictions are automatically enforced.",
+          "acceptanceCriteria": "Given a user authenticated via Moodle, When they request closed strains, Then the system only returns strains matching their department or courses.\nGiven a user requests closed strains, When they do not have matching department or courses, Then the unauthorized strains are omitted from the result.\nGiven a developer verifies the implementation, When tests are run, Then positive, negative, and boundary test scenarios pass successfully.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "Strains endpoint filtering logic",
+          "sixSigmaMetric": "Test coverage for closed strains access control",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1"
+          ]
+        }
+      ]
+    },
+    {
+      "existingEpicId": "5078a4cd-e666-4072-ae61-86ad77de814a",
+      "title": null,
+      "jtbd": null,
+      "kanoClass": null,
+      "cynefinDomain": null,
+      "sixSigmaMetric": null,
+      "tocConstraintRef": null,
+      "sourceIndex": 1,
+      "requirements": [
+        "R1: Verify EPIDEMIOLOGIST role instead of 'Эпидемиология' department when signing a dossier."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Fix dossier signature role validation in EmployeeDossierController",
+          "roleTag": "BARCAN-TAG-02",
+          "jtbd": "When implementing dossier signing authorization for this epic, I want to verify the user role instead of department, so that the signature right is correctly bound.",
+          "acceptanceCriteria": "Given a user with the EPIDEMIOLOGIST role, When they submit a signature for a dossier, Then the system accepts it.\nGiven a user without the role, When they submit a signature, Then the system denies it.\nGiven a developer verifies the implementation, When tests are run, Then positive, negative, and boundary test scenarios pass successfully.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "EmployeeDossierController signature role check",
+          "sixSigmaMetric": "Defect rate in dossier signature authorization",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1"
+          ]
+        }
+      ]
+    }
+  ]
+}
