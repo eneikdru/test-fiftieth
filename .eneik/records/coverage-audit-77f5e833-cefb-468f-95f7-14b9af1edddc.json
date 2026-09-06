@@ -1,0 +1,18 @@
+{
+  "gaps": [
+    {
+      "title": "Missing closed strains application layer and access control",
+      "roleTag": "BARCAN-TAG-02",
+      "jtbd": "When I query closed strains, I want the system to filter access based on my Moodle department and courses, so that access restrictions are automatically enforced.",
+      "acceptanceCriteria": "Given a user authenticated via Moodle, When they request closed strains, Then the system only returns strains matching their department or courses.",
+      "reason": "literal brief requirement: 'Автоматическое разграничение прав доступа к закрытым штаммам'. The application codebase completely lacks any API endpoints or logic to query or restrict access to strains."
+    },
+    {
+      "title": "Dossier signature right incorrectly bound to department instead of role",
+      "roleTag": "BARCAN-TAG-02",
+      "jtbd": "When I attempt to sign a dossier, I want the system to verify my role, so that only an Epidemiologist or Admin can sign.",
+      "acceptanceCriteria": "Given a user with the EPIDEMIOLOGIST role, When they submit a signature for a dossier, Then the system accepts it. Given a user without the role, Then the system denies it.",
+      "reason": "literal brief requirement: 'Старший научный сотрудник / Эпидемиолог с правом подписи досье'. EmployeeDossierController.signDossierReport checks if department equals 'Эпидемиология' instead of checking if the user role is EPIDEMIOLOGIST."
+    }
+  ]
+}
