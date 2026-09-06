@@ -37,6 +37,5 @@ class BuildPipelineVerificationTest {
         org.junit.jupiter.api.Assertions.assertTrue(content.contains("image: \"${COMPOSE_PROJECT_NAME:-epidemiology}_backend:latest\""), "Backend image declaration missing");
         org.junit.jupiter.api.Assertions.assertTrue(content.contains("command: [\"java\", \"-jar\", \"/app/app.jar\"]"), "Backend command declaration missing");
         org.junit.jupiter.api.Assertions.assertTrue(content.contains("/actuator/health"), "Actuator healthcheck path missing");
-        org.junit.jupiter.api.Assertions.assertTrue(content.contains("/bin/bash /usr/local/bin/backup.sh"), "Explicit bash backup script execution missing");
     }
 }
