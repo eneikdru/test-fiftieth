@@ -60,7 +60,7 @@ public class StrainControllerIntegrationTest {
         strainRepository.save(strainOtherDept);
 
         // Users
-        User userBio = new User();
+        User userBio = new User(); userBio.setCreatedAt(java.time.OffsetDateTime.now());
         userBio.setUsername("userBio");
         userBio.setPasswordHash("hash");
         userBio.setRole("RESEARCHER");
@@ -68,7 +68,7 @@ public class StrainControllerIntegrationTest {
         userBio.setCourses("BIO101,BIO102");
         userRepository.save(userBio);
 
-        User userChem = new User();
+        User userChem = new User(); userChem.setCreatedAt(java.time.OffsetDateTime.now());
         userChem.setUsername("userChem");
         userChem.setPasswordHash("hash");
         userChem.setRole("RESEARCHER");
@@ -76,7 +76,7 @@ public class StrainControllerIntegrationTest {
         userChem.setCourses("CHEM101");
         userRepository.save(userChem);
 
-        User userAdmin = new User();
+        User userAdmin = new User(); userAdmin.setCreatedAt(java.time.OffsetDateTime.now());
         userAdmin.setUsername("admin");
         userAdmin.setPasswordHash("hash");
         userAdmin.setRole("ADMIN");
