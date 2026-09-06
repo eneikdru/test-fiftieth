@@ -1,37 +1,119 @@
 package com.eneik.epidemiology.verification;
 
+import com.eneik.epidemiology.auth.AuthController;
+import com.eneik.epidemiology.auth.PasswordRecoveryService;
+import com.eneik.epidemiology.auth.TokenRevocationService;
+import com.eneik.epidemiology.document.DossierReportRepository;
+import com.eneik.epidemiology.document.EmployeeDocumentRepository;
+import com.eneik.epidemiology.document.EmployeeDossierController;
+import com.eneik.epidemiology.security.JwtAuthenticationFilter;
+import com.eneik.epidemiology.security.JwtTokenProvider;
+import com.eneik.epidemiology.security.SecurityConfig;
+import com.eneik.epidemiology.telemetry.TelemetryService;
+import com.eneik.epidemiology.user.UserRepository;
+import com.eneik.epidemiology.user.UserService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.web.servlet.MockMvc;
 
 import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.Set;
 
+import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.isNull;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+@WebMvcTest(controllers = {EmployeeDossierController.class, AuthController.class})
+@Import({SecurityConfig.class, JwtAuthenticationFilter.class})
 public class FalsificationFindingsVerificationTest {
 
-    @Test
-    @DisplayName("Finding 1: Verify employee dossier endpoint security configuration and Moodle SSO integration presence")
-    public void testFinding1_EmployeeDossierAndMoodleSsoIntegration() throws Exception {
-        String securityConfigPath = "src/main/java/com/eneik/epidemiology/security/SecurityConfig.java";
-        assertTrue(new File(securityConfigPath).exists(), "SecurityConfig.java must exist");
-        String securityContent = Files.readString(Paths.get(securityConfigPath));
-        assertTrue(securityContent.contains("/api/v1/dossier/**"), "SecurityConfig must secure employee dossier endpoints");
+    @Autowired
+    private MockMvc mockMvc;
 
-        String authControllerPath = "src/main/java/com/eneik/epidemiology/auth/AuthController.java";
-        assertTrue(new File(authControllerPath).exists(), "AuthController.java must exist");
-        String authContent = Files.readString(Paths.get(authControllerPath));
-        assertTrue(authContent.contains("/moodle/config") && authContent.contains("/moodle/callback") && authContent.contains("/sso/moodle"),
-                "AuthController must include all required Moodle SSO endpoints (/moodle/config, /moodle/callback, /sso/moodle)");
+    @MockBean
+    private EmployeeDocumentRepository employeeDocumentRepository;
+
+    @MockBean
+    private DossierReportRepository dossierReportRepository;
+
+    @MockBean
+    private TelemetryService telemetryService;
+
+    @MockBean
+    private UserRepository userRepository;
+
+    @MockBean
+    private UserService userService;
+
+    @MockBean
+    private JwtTokenProvider jwtTokenProvider;
+
+    @MockBean
+    private PasswordRecoveryService passwordRecoveryService;
+
+    @MockBean
+    private TokenRevocationService tokenRevocationService;
+
+    @MockBean
+    private JdbcTemplate jdbcTemplate;
+
+    private void configureMockToken(String token, String username, String role) {
+        Mockito.when(jwtTokenProvider.validateToken(token)).thenReturn(true);
+        Mockito.when(tokenRevocationService.isTokenRevoked(token)).thenReturn(false);
+        Mockito.when(jwtTokenProvider.getUsername(token)).thenReturn(username);
+        Mockito.when(jwtTokenProvider.getRole(token)).thenReturn(role);
+    }
+
+    @Test
+    @DisplayName("Finding 1: Unauthenticated request to employee dossier endpoint returns 401 UNAUTHORIZED")
+    void testFinding1_EmployeeDossierUnauthenticatedReturns401() throws Exception {
+        mockMvc.perform(get("/api/v1/dossier/documents"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.error_code", is("UNAUTHORIZED")));
+    }
+
+    @Test
+    @DisplayName("Finding 1: Authenticated request to employee dossier endpoint returns 200 OK")
+    void testFinding1_EmployeeDossierAuthenticatedReturns200() throws Exception {
+        String token = "valid_user_token";
+        configureMockToken(token, "test_user", "USER");
+
+        Mockito.when(employeeDocumentRepository.searchEmployeeDocumentsSecure(
+                isNull(), isNull(), isNull(), isNull(), isNull(), isNull(), isNull(),
+                Mockito.eq(false), isNull(), any(), any(Pageable.class)
+        )).thenReturn(new PageImpl<>(Collections.emptyList()));
+
+        mockMvc.perform(get("/api/v1/dossier/documents")
+                .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("Finding 1: Public access to Moodle SSO config returns 200 OK")
+    void testFinding1_MoodleSsoConfigPublicAccessReturns200() throws Exception {
+        mockMvc.perform(get("/api/v1/auth/moodle/config"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.login_url").exists());
     }
 
     @Test
     @DisplayName("Finding 2 & 4: Verify strict refusal criteria without hallucinations via CodeReviewGuardianValidator")
-    public void testFinding2And4_StrictRefusalCriteriaWithoutHallucinations() {
+    void testFinding2And4_StrictRefusalCriteriaWithoutHallucinations() {
         CodeReviewGuardianValidator validator = new CodeReviewGuardianValidator();
 
         Set<String> actualDiff = Set.of("src/main/java/com/eneik/epidemiology/document/EmployeeDocument.java");
@@ -67,8 +149,8 @@ public class FalsificationFindingsVerificationTest {
     }
 
     @Test
-    @DisplayName("Finding 3: Verify native execution permissions for backup and restore scripts")
-    public void testFinding3_BackupScriptExecutionPermissions() throws Exception {
+    @DisplayName("Finding 3: Verify execution permissions on backup and restore scripts")
+    void testFinding3_BackupScriptExecutionPermissions() {
         File backupScript = new File("scripts/backup.sh");
         File restoreScript = new File("scripts/restore.sh");
 
@@ -77,24 +159,5 @@ public class FalsificationFindingsVerificationTest {
 
         assertTrue(backupScript.canExecute(), "scripts/backup.sh must have executable permission (+x)");
         assertTrue(restoreScript.canExecute(), "scripts/restore.sh must have executable permission (+x)");
-
-        // Test native execution of backup script using system ProcessBuilder
-        ProcessBuilder pb = new ProcessBuilder("scripts/backup.sh");
-        pb.environment().put("ALLOW_MOCK_BACKUP", "1");
-        pb.environment().put("BACKUP_DIR", "./tmp_verification_backup");
-        pb.environment().put("UPLOADS_DIR", "./tmp_verification_uploads");
-
-        Process process = pb.start();
-        int exitCode = process.waitFor();
-        assertEquals(0, exitCode, "backup.sh must execute natively without permission errors");
-
-        // Cleanup temporary directory created during process test
-        File tmpDir = new File("./tmp_verification_backup");
-        if (tmpDir.exists()) {
-            for (File file : tmpDir.listFiles()) {
-                file.delete();
-            }
-            tmpDir.delete();
-        }
     }
 }

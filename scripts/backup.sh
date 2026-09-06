@@ -23,7 +23,7 @@ echo "Retention Policy: ${BACKUP_RETENTION_DAYS} days"
 mkdir -p "${BACKUP_DIR}"
 mkdir -p "${UPLOADS_DIR}"
 
-# 1. Database Backup (pg_dump without locking)
+# 1. Database Backup
 DB_BACKUP_FILE="${BACKUP_DIR}/db_${POSTGRES_DB}_${TIMESTAMP}.sql.gz"
 echo "Backing up database '${POSTGRES_DB}' to ${DB_BACKUP_FILE}..."
 
@@ -44,7 +44,7 @@ elif command -v pg_dump &> /dev/null; then
         | gzip > "${DB_BACKUP_FILE}"
     echo "Database backup completed successfully."
 elif [ "${ALLOW_MOCK_BACKUP:-0}" -eq 1 ]; then
-    echo "pg_dump not found in environment, creating mock database dump for verification..."
+    echo "pg_dump or sqlite3 not found, creating mock database dump for verification..."
     echo "-- Mock DB Backup for ${POSTGRES_DB} created at ${TIMESTAMP}" | gzip > "${DB_BACKUP_FILE}"
     echo "Mock database backup completed."
 else
