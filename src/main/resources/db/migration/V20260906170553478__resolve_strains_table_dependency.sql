@@ -1,3 +1,4 @@
+-- Resolve strains table dependency and access control columns
 CREATE TABLE IF NOT EXISTS strains (
     id UUID PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
