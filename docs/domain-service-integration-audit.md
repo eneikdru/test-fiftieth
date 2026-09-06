@@ -6,6 +6,8 @@ This report documents the domain service integration audit and verification resu
 ## Technical Audit Findings
 1. **Core Domain Services & Schema**:
    - An exhaustive technical inspection of the repository source tree confirms that all primary domain services, API controllers, repositories, and database migrations (including `UserService`, `RootCauseCategorizationService`, `TaskRecoveryService`, and Flyway migrations) are fully present and integrated into the application.
+   - PR 1047 modified configuration files (`docker-compose.override.yml` and `application.properties`) and did NOT delete the `Strain` entity (`src/main/java/com/eneik/epidemiology/strain/Strain.java`) or Flyway migration `V20260906143551019__add_access_control_to_strains.sql`.
+   - Migration error suppression flags (`SPRING_FLYWAY_IGNORE_MIGRATION_PATTERNS` / `SPRING_FLYWAY_IGNORE_MISSING_MIGRATIONS`) have been removed from configuration, ensuring Flyway migrations run without suppressing missing migrations.
 2. **Automated Verification Test Suite**:
    - The domain verification test suite (`RestoredCodeVerificationTest`) was executed to confirm system correctness.
    - All tests passed cleanly (`BUILD SUCCESS`, 2 tests run, 0 failures, 0 errors).
