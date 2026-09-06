@@ -57,6 +57,7 @@ public class AuthController {
 
     public record RegistrationRequest(String username, String password, String email, String full_name) {}
     public record SsoLoginRequest(String username, String moodle_token, String fallback_password) {}
+    public record OidcLoginRequest(String username, String oidc_token, String fallback_password) {}
     public record MoodleCallbackRequest(String code, String state, String username, String fallback_password) {}
     public record MoodleRoleOverrideRequest(
             Long userId,
@@ -505,6 +506,101 @@ public class AuthController {
         }
     }
 
+    @PostMapping("/sso/oidc")
+    public ResponseEntity<?> oidcLogin(@RequestBody OidcLoginRequest request) {
+        if (request == null || isBlank(request.username()) || isBlank(request.oidc_token())) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "error_code", "INVALID_REQUEST",
+                    "message", "Необходимо указать имя пользователя и OIDC токен.",
+                    "timestamp", OffsetDateTime.now().toString()
+            ));
+        }
+
+        MoodleProfile profile = fetchOidcProfile(request.oidc_token());
+
+        if (profile == null || !profile.username().equals(request.username())) {
+            if (request.fallback_password() != null && !request.fallback_password().trim().isEmpty()) {
+                User user = userService.findByUsernameOrEmail(request.username().trim()).orElse(null);
+                if (user != null && userService.verifyPassword(request.fallback_password().trim(), user.getPasswordHash())) {
+                    telemetryService.recordFallbackLoginTelemetry(user.getUsername());
+                    String accessToken = jwtTokenProvider.generateToken(user.getUsername(), user.getRole());
+                    String refreshToken = "ref_" + user.getUsername() + "_" + System.currentTimeMillis();
+
+                    Map<String, Object> response = Map.of(
+                            "access_token", accessToken,
+                            "refresh_token", refreshToken,
+                            "token_type", "Bearer",
+                            "expires_in", 3600,
+                            "user", buildUserInfo(user)
+                    );
+
+                    return ResponseEntity.ok(response);
+                }
+            }
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
+                    "error_code", "INVALID_SSO_TOKEN",
+                    "message", "Недействительный токен OIDC или имя пользователя.",
+                    "timestamp", OffsetDateTime.now().toString()
+            ));
+        }
+
+        String internalRole = mapMoodleRole(profile.moodleRole());
+        User user = userService.findByUsernameOrEmail(request.username().trim()).orElse(null);
+
+        if (user == null) {
+            String defaultPassword;
+            if (request.fallback_password() != null && !request.fallback_password().trim().isEmpty()) {
+                defaultPassword = request.fallback_password().trim();
+            } else {
+                byte[] randomBytes = new byte[16];
+                new java.security.SecureRandom().nextBytes(randomBytes);
+                defaultPassword = java.util.Base64.getEncoder().encodeToString(randomBytes);
+            }
+            user = userService.createUserWithMoodle(
+                profile.username().trim(),
+                defaultPassword,
+                profile.email(),
+                profile.fullName(),
+                internalRole,
+                profile.username().trim(),
+                profile.department(),
+                profile.courses()
+            );
+        } else {
+            boolean needsUpdate = false;
+            if (internalRole != null && !internalRole.equals(user.getRole())) {
+                needsUpdate = true;
+            }
+            if (profile.department() != null && !profile.department().equals(user.getDepartment())) {
+                needsUpdate = true;
+            }
+            if (profile.courses() != null && !profile.courses().equals(user.getCourses())) {
+                needsUpdate = true;
+            }
+            if (needsUpdate) {
+                userService.updateRoleAndDepartmentAtomically(user.getId(), user.getRole(), internalRole != null ? internalRole : user.getRole(), profile.department(), profile.courses());
+                user.setRole(internalRole != null ? internalRole : user.getRole());
+                user.setDepartment(profile.department());
+                user.setCourses(profile.courses());
+            }
+        }
+
+        telemetryService.recordSsoLoginTelemetry(user.getUsername());
+
+        String accessToken = jwtTokenProvider.generateToken(user.getUsername(), user.getRole());
+        String refreshToken = "ref_" + user.getUsername() + "_" + System.currentTimeMillis();
+
+        Map<String, Object> response = Map.of(
+                "access_token", accessToken,
+                "refresh_token", refreshToken,
+                "token_type", "Bearer",
+                "expires_in", 3600,
+                "user", buildUserInfo(user)
+        );
+
+        return ResponseEntity.ok(response);
+    }
+
     @PostMapping("/sso/moodle")
     public ResponseEntity<?> ssoLogin(@RequestBody SsoLoginRequest request) {
         if (request == null || isBlank(request.username()) || isBlank(request.moodle_token())) {
@@ -762,6 +858,42 @@ public class AuthController {
 
     private MoodleProfile fetchMoodleProfile(String token) {
         return exchangeCodeForProfile(token);
+    }
+
+    private MoodleProfile fetchOidcProfile(String token) {
+        if (isBlank(token)) {
+            return null;
+        }
+        try {
+            String url = moodleServerUrl + "/oauth2/userinfo";
+            org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
+            headers.setBearerAuth(token);
+            org.springframework.http.HttpEntity<String> entity = new org.springframework.http.HttpEntity<>("", headers);
+            ResponseEntity<Map> response = restTemplate.exchange(url, org.springframework.http.HttpMethod.GET, entity, Map.class);
+            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                Map<String, Object> body = response.getBody();
+                String username = (String) body.getOrDefault("username", body.get("preferred_username"));
+                String moodleRole = (String) body.getOrDefault("moodle_role", body.get("role"));
+                String department = (String) body.get("department");
+                String email = (String) body.get("email");
+                String fullName = (String) body.getOrDefault("full_name", body.get("name"));
+                String courses = (String) body.get("courses");
+
+                if (username != null && !username.isBlank()) {
+                    return new MoodleProfile(
+                            username,
+                            moodleRole != null ? moodleRole : "Пользователь",
+                            department != null ? department : "",
+                            email != null ? email : "",
+                            fullName != null ? fullName : username,
+                            courses != null ? courses : ""
+                    );
+                }
+            }
+        } catch (Exception e) {
+            // Log or handle OIDC validation failure securely
+        }
+        return null;
     }
 
     private String mapMoodleRole(String moodleRole) {
