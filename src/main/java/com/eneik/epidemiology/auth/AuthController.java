@@ -58,6 +58,14 @@ public class AuthController {
     public record RegistrationRequest(String username, String password, String email, String full_name) {}
     public record SsoLoginRequest(String username, String moodle_token, String fallback_password) {}
     public record MoodleCallbackRequest(String code, String state, String username, String fallback_password) {}
+    public record MoodleRoleOverrideRequest(
+            Long userId,
+            Long user_id,
+            String username,
+            String role,
+            String moodle_role_pattern,
+            String internal_role
+    ) {}
     public record LtiLaunchRequest(
             String user_id,
             String ext_user_username,
@@ -85,6 +93,101 @@ public class AuthController {
     public record LogoutRequest(String refresh_token) {}
     public record PasswordRecoveryRequest(String identity) {}
     public record PasswordResetConfirmationRequest(String recovery_token, String new_password) {}
+
+    @GetMapping("/moodle/override-role")
+    public ResponseEntity<?> getMoodleRoleHierarchyMappings() {
+        List<Map<String, Object>> mappings = jdbcTemplate.queryForList(
+                "SELECT id, moodle_role_pattern, internal_role FROM moodle_role_mappings ORDER BY id ASC"
+        );
+        return ResponseEntity.ok(Map.of(
+                "mappings", mappings,
+                "total", mappings.size()
+        ));
+    }
+
+    @PostMapping("/moodle/override-role")
+    public ResponseEntity<?> overrideMoodleRole(@RequestBody(required = false) MoodleRoleOverrideRequest request) {
+        if (request == null) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "error_code", "INVALID_REQUEST",
+                    "message", "Необходимо указать параметры запроса для изменения роли.",
+                    "timestamp", OffsetDateTime.now().toString()
+            ));
+        }
+
+        Long targetUserId = request.userId() != null ? request.userId() : request.user_id();
+        String username = request.username();
+        String newRole = request.role();
+
+        if (request.moodle_role_pattern() != null && !request.moodle_role_pattern().trim().isEmpty() &&
+            request.internal_role() != null && !request.internal_role().trim().isEmpty()) {
+            String pattern = request.moodle_role_pattern().trim();
+            String internalRole = request.internal_role().trim();
+            jdbcTemplate.update(
+                    "INSERT INTO moodle_role_mappings (moodle_role_pattern, internal_role) VALUES (?, ?) " +
+                    "ON CONFLICT (moodle_role_pattern) DO UPDATE SET internal_role = EXCLUDED.internal_role",
+                    pattern, internalRole
+            );
+            List<Map<String, Object>> mappings = jdbcTemplate.queryForList(
+                    "SELECT id, moodle_role_pattern, internal_role FROM moodle_role_mappings ORDER BY id ASC"
+            );
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", "Правило сопоставления ролей Moodle успешно обновлено.",
+                    "mappings", mappings
+            ));
+        }
+
+        if ((username == null || username.trim().isEmpty()) && targetUserId == null) {
+            org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+            if (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getPrincipal())) {
+                username = auth.getName();
+            }
+        }
+
+        if ((targetUserId != null || (username != null && !username.trim().isEmpty())) && newRole != null && !newRole.trim().isEmpty()) {
+            String targetRole = newRole.trim();
+            User user = null;
+            if (targetUserId != null) {
+                user = jdbcTemplate.query("SELECT id, username, role FROM users WHERE id = ?", (rs, rowNum) -> {
+                    User u = new User();
+                    u.setId(rs.getLong("id"));
+                    u.setUsername(rs.getString("username"));
+                    u.setRole(rs.getString("role"));
+                    return u;
+                }, targetUserId).stream().findFirst().orElse(null);
+            } else if (username != null && !username.trim().isEmpty()) {
+                user = userService.findByUsernameOrEmail(username.trim()).orElse(null);
+            }
+
+            if (user == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
+                        "error_code", "USER_NOT_FOUND",
+                        "message", "Пользователь с указанным идентификатором не найден.",
+                        "timestamp", OffsetDateTime.now().toString()
+                ));
+            }
+
+            int updatedCount = userService.updateRoleAtomically(user.getId(), user.getRole(), targetRole);
+            if (updatedCount == 0) {
+                jdbcTemplate.update("UPDATE users SET role = ? WHERE id = ?", targetRole, user.getId());
+            }
+
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", "Роль пользователя успешно изменена.",
+                    "user_id", user.getId(),
+                    "username", user.getUsername(),
+                    "role", targetRole
+            ));
+        }
+
+        return ResponseEntity.badRequest().body(Map.of(
+                "error_code", "INVALID_OVERRIDE_REQUEST",
+                "message", "Необходимо указать идентификатор пользователя и новую роль.",
+                "timestamp", OffsetDateTime.now().toString()
+        ));
+    }
 
     @GetMapping("/moodle/config")
     public ResponseEntity<?> getMoodleConfig() {
