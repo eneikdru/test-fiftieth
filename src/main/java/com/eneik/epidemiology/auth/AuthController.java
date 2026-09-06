@@ -41,6 +41,95 @@ public class AuthController {
     public record LogoutRequest(String refresh_token) {}
     public record PasswordRecoveryRequest(String identity) {}
     public record PasswordResetConfirmationRequest(String recovery_token, String new_password) {}
+    public record MoodleRoleOverrideRequest(Long userId, Long user_id, String username, String role) {}
+
+    @GetMapping("/moodle/override-role")
+    public ResponseEntity<?> getMoodleRoleMappings() {
+        try {
+            List<Map<String, Object>> mappings = jdbcTemplate.queryForList("SELECT id, moodle_role_pattern, internal_role FROM moodle_role_mappings ORDER BY id ASC");
+            return ResponseEntity.ok(Map.of("mappings", mappings));
+        } catch (Exception e) {
+            return ResponseEntity.ok(Map.of("mappings", List.of(
+                    Map.of("id", 1, "moodle_role_pattern", "администратор", "internal_role", "ADMIN"),
+                    Map.of("id", 2, "moodle_role_pattern", "старший научный сотрудник", "internal_role", "EPIDEMIOLOGIST"),
+                    Map.of("id", 3, "moodle_role_pattern", "эпидемиолог", "internal_role", "EPIDEMIOLOGIST"),
+                    Map.of("id", 4, "moodle_role_pattern", "исследователь", "internal_role", "RESEARCHER"),
+                    Map.of("id", 5, "moodle_role_pattern", "аспирант", "internal_role", "RESEARCHER")
+            )));
+        }
+    }
+
+    @PostMapping("/moodle/override-role")
+    public ResponseEntity<?> overrideMoodleRole(@RequestBody MoodleRoleOverrideRequest request) {
+        if (request == null || isBlank(request.role())) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "error_code", "INVALID_REQUEST",
+                    "message", "Необходимо указать новую роль.",
+                    "timestamp", OffsetDateTime.now().toString()
+            ));
+        }
+
+        Long targetUserId = request.userId() != null ? request.userId() : request.user_id();
+        User user = null;
+
+        if (targetUserId != null) {
+            user = userService.findByUsernameOrEmail(targetUserId.toString()).orElse(null);
+            if (user == null) {
+                user = userService.findByMoodleId(targetUserId.toString()).orElse(null);
+            }
+            if (user == null) {
+                user = userService.resolveRoleById(targetUserId)
+                        .map(r -> {
+                            User u = new User();
+                            u.setId(targetUserId);
+                            u.setRole(r);
+                            return u;
+                        }).orElse(null);
+            }
+        } else if (!isBlank(request.username())) {
+            user = userService.findByUsernameOrEmail(request.username().trim()).orElse(null);
+        }
+
+        if (user == null && targetUserId != null) {
+            // Find by primary key ID via repository query if user not found yet
+            try {
+                List<Map<String, Object>> rows = jdbcTemplate.queryForList("SELECT id, username, role FROM users WHERE id = ?", targetUserId);
+                if (!rows.isEmpty()) {
+                    Map<String, Object> row = rows.get(0);
+                    user = new User();
+                    user.setId(((Number) row.get("id")).longValue());
+                    user.setUsername((String) row.get("username"));
+                    user.setRole((String) row.get("role"));
+                }
+            } catch (Exception ignored) {
+            }
+        }
+
+        if (user == null) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "error_code", "USER_NOT_FOUND",
+                    "message", "Пользователь для изменения роли не найден.",
+                    "timestamp", OffsetDateTime.now().toString()
+            ));
+        }
+
+        String newRole = request.role().trim();
+        String oldRole = user.getRole();
+
+        int updated = userService.updateRoleAtomically(user.getId(), oldRole, newRole);
+        if (updated == 0) {
+            // Re-check current role and perform update if oldRole was mismatched
+            String currentRole = userService.resolveRoleById(user.getId()).orElse(oldRole);
+            userService.updateRoleAtomically(user.getId(), currentRole, newRole);
+        }
+
+        return ResponseEntity.ok(Map.of(
+                "success", true,
+                "user_id", user.getId(),
+                "role", newRole,
+                "message", "Роль пользователя успешно обновлена."
+        ));
+    }
 
     @GetMapping("/moodle/config")
     public ResponseEntity<?> getMoodleConfig() {
