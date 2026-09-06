@@ -23,11 +23,11 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     Optional<User> findByMoodleId(String moodleId);
 
-    @Modifying
+    @Modifying(clearAutomatically = true)
     @Query("UPDATE User u SET u.role = :newRole WHERE u.id = :id AND u.role = :oldRole")
     int updateRoleAtomically(@Param("id") Long id, @Param("oldRole") String oldRole, @Param("newRole") String newRole);
 
-    @Modifying
+    @Modifying(clearAutomatically = true)
     @Query("UPDATE User u SET u.role = :newRole, u.department = :newDepartment, u.courses = :courses WHERE u.id = :id AND (u.role = :oldRole OR u.department IS NULL OR u.department != :newDepartment OR (:courses IS NULL OR u.courses IS NULL OR u.courses != :courses))")
     int updateRoleAndDepartmentAtomically(@Param("id") Long id, @Param("oldRole") String oldRole, @Param("newRole") String newRole, @Param("newDepartment") String newDepartment, @Param("courses") String courses);
 
