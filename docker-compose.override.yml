@@ -10,12 +10,6 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-    networks:
-      default:
-        aliases:
-          - host.docker.internal
     ports:
       - "18080:18080"
     environment:
@@ -38,6 +32,7 @@ services:
     environment:
       UPLOADS_DIR: /app/data/docs/uploads
     volumes:
+      - ./scripts/backup.sh:/usr/local/bin/backup.sh:ro
       - app_uploads:/app/data/docs/uploads:ro
     entrypoint: >
       /bin/sh -c "
