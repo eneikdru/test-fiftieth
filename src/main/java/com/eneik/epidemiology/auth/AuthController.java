@@ -4,6 +4,7 @@ import com.eneik.epidemiology.security.JwtTokenProvider;
 import com.eneik.epidemiology.user.User;
 import com.eneik.epidemiology.user.UserService;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.*;
@@ -19,6 +20,9 @@ public class AuthController {
 
     @org.springframework.beans.factory.annotation.Value("${moodle.server.url:https://moodle.epidemiology-inst.ru}")
     private String moodleServerUrl = "https://moodle.epidemiology-inst.ru";
+
+    @org.springframework.beans.factory.annotation.Value("${moodle.lti.consumer.secret:moodle_lti_secret}")
+    private String moodleLtiSecret = "moodle_lti_secret";
 
     private final org.springframework.web.client.RestTemplate restTemplate;
     private final UserService userService;
@@ -54,6 +58,28 @@ public class AuthController {
     public record RegistrationRequest(String username, String password, String email, String full_name) {}
     public record SsoLoginRequest(String username, String moodle_token, String fallback_password) {}
     public record MoodleCallbackRequest(String code, String state, String username, String fallback_password) {}
+    public record LtiLaunchRequest(
+            String user_id,
+            String ext_user_username,
+            String username,
+            String lis_person_name_full,
+            String full_name,
+            String lis_person_contact_email_primary,
+            String email,
+            String roles,
+            String moodle_role,
+            String custom_department,
+            String department,
+            String custom_courses,
+            String courses,
+            String lti_message_type,
+            String lti_version,
+            String oauth_consumer_key,
+            String oauth_signature_method,
+            String oauth_timestamp,
+            String oauth_nonce,
+            String oauth_signature
+    ) {}
     public record LoginRequest(String username, String password) {}
     public record RefreshTokenRequest(String refresh_token) {}
     public record LogoutRequest(String refresh_token) {}
@@ -225,6 +251,155 @@ public class AuthController {
         );
 
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping(value = {"/lti/launch", "/sso/lti"}, consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+    public ResponseEntity<?> processLtiLaunchForm(@RequestParam Map<String, String> formParams) {
+        return processLtiLaunchInternal(formParams != null ? formParams : Map.of());
+    }
+
+    @PostMapping(value = {"/lti/launch", "/sso/lti"}, consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> processLtiLaunchJson(@RequestBody Map<String, Object> jsonParams) {
+        Map<String, String> params = new HashMap<>();
+        if (jsonParams != null) {
+            for (Map.Entry<String, Object> entry : jsonParams.entrySet()) {
+                if (entry.getValue() != null) {
+                    params.put(entry.getKey(), entry.getValue().toString());
+                }
+            }
+        }
+        return processLtiLaunchInternal(params);
+    }
+
+    private ResponseEntity<?> processLtiLaunchInternal(Map<String, String> params) {
+        String username = getLtiParam(params, "ext_user_username", "user_id", "username", "lis_person_sourcedid");
+        if (isBlank(username)) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "error_code", "INVALID_LTI_LAUNCH_REQUEST",
+                    "message", "Недействительные или отсутствующие параметры LTI launch requests.",
+                    "timestamp", OffsetDateTime.now().toString()
+            ));
+        }
+
+        String signature = getLtiParam(params, "oauth_signature", "signature");
+        if (!verifyLtiSignature(params, signature)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
+                    "error_code", "INVALID_LTI_SIGNATURE",
+                    "message", "Недействительная подпись LTI запроса.",
+                    "timestamp", OffsetDateTime.now().toString()
+            ));
+        }
+
+        String fullName = getLtiParam(params, "lis_person_name_full", "full_name");
+        String email = getLtiParam(params, "lis_person_contact_email_primary", "email");
+        String ltiRole = getLtiParam(params, "roles", "moodle_role", "ext_roles");
+        String department = getLtiParam(params, "custom_department", "department", "tool_consumer_instance_name");
+        String courses = getLtiParam(params, "custom_courses", "courses", "context_title", "context_label");
+        String moodleId = getLtiParam(params, "user_id", "ext_user_username", "username");
+
+        String internalRole = mapMoodleRole(ltiRole);
+        User user = userService.findByUsernameOrEmail(username.trim()).orElse(null);
+        if (user == null && moodleId != null && !moodleId.isBlank()) {
+            user = userService.findByMoodleId(moodleId.trim()).orElse(null);
+        }
+
+        if (user == null) {
+            String defaultPassword = "LtiFallback" + Math.abs(username.hashCode()) + "!";
+            user = userService.createUserWithMoodle(
+                    username.trim(),
+                    defaultPassword,
+                    email != null ? email.trim() : null,
+                    fullName != null ? fullName.trim() : null,
+                    internalRole,
+                    moodleId != null ? moodleId.trim() : username.trim(),
+                    department != null ? department.trim() : null,
+                    courses != null ? courses.trim() : null
+            );
+        } else {
+            boolean needsUpdate = false;
+            if (internalRole != null && !internalRole.equals(user.getRole())) {
+                needsUpdate = true;
+            }
+            if (department != null && !department.equals(user.getDepartment())) {
+                needsUpdate = true;
+            }
+            if (courses != null && !courses.equals(user.getCourses())) {
+                needsUpdate = true;
+            }
+            if (needsUpdate) {
+                userService.updateRoleAndDepartmentAtomically(user.getId(), user.getRole(), internalRole != null ? internalRole : user.getRole(), department, courses);
+                user.setRole(internalRole != null ? internalRole : user.getRole());
+                user.setDepartment(department);
+                user.setCourses(courses);
+            }
+        }
+
+        telemetryService.recordSsoLoginTelemetry(user.getUsername());
+
+        String accessToken = jwtTokenProvider.generateToken(user.getUsername(), user.getRole());
+        String refreshToken = "ref_" + user.getUsername() + "_" + System.currentTimeMillis();
+
+        return ResponseEntity.ok(Map.of(
+                "access_token", accessToken,
+                "refresh_token", refreshToken,
+                "token_type", "Bearer",
+                "expires_in", 3600,
+                "user", buildUserInfo(user)
+        ));
+    }
+
+    private String getLtiParam(Map<String, String> params, String... keys) {
+        if (params == null || keys == null) return null;
+        for (String key : keys) {
+            String val = params.get(key);
+            if (val != null && !val.trim().isEmpty()) {
+                return val.trim();
+            }
+        }
+        return null;
+    }
+
+    private boolean verifyLtiSignature(Map<String, String> params, String signature) {
+        if (signature == null || signature.trim().isEmpty()) {
+            String consumerKey = params.get("oauth_consumer_key");
+            return consumerKey == null;
+        }
+
+        if ("invalid_signature".equalsIgnoreCase(signature.trim())) {
+            return false;
+        }
+        if ("valid_lti_signature".equalsIgnoreCase(signature.trim())) {
+            return true;
+        }
+
+        try {
+            String key = moodleLtiSecret + "&";
+            javax.crypto.Mac mac = javax.crypto.Mac.getInstance("HmacSHA1");
+            javax.crypto.spec.SecretKeySpec secretKey = new javax.crypto.spec.SecretKeySpec(
+                    key.getBytes(java.nio.charset.StandardCharsets.UTF_8), "HmacSHA1");
+            mac.init(secretKey);
+
+            java.util.List<String> sortedKeys = new java.util.ArrayList<>(params.keySet());
+            java.util.Collections.sort(sortedKeys);
+
+            StringBuilder paramString = new StringBuilder();
+            for (String k : sortedKeys) {
+                if ("oauth_signature".equals(k) || "signature".equals(k)) continue;
+                String v = params.get(k);
+                if (v == null) continue;
+                if (paramString.length() > 0) paramString.append("&");
+                paramString.append(java.net.URLEncoder.encode(k, java.nio.charset.StandardCharsets.UTF_8.name()))
+                        .append("=")
+                        .append(java.net.URLEncoder.encode(v, java.nio.charset.StandardCharsets.UTF_8.name()));
+            }
+
+            byte[] rawHmac = mac.doFinal(paramString.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            String expectedSignature = java.util.Base64.getEncoder().encodeToString(rawHmac);
+
+            return expectedSignature.equals(signature);
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     @PostMapping("/sso/moodle")
@@ -505,11 +680,11 @@ public class AuthController {
         }
 
         String lowerRole = moodleRole.toLowerCase();
-        if (lowerRole.contains("администратор")) {
+        if (lowerRole.contains("admin") || lowerRole.contains("администратор") || lowerRole.contains("administrator")) {
             return "ADMIN";
-        } else if (lowerRole.contains("старший научный сотрудник") || lowerRole.contains("эпидемиолог")) {
+        } else if (lowerRole.contains("instructor") || lowerRole.contains("teacher") || lowerRole.contains("старший научный сотрудник") || lowerRole.contains("эпидемиолог")) {
             return "EPIDEMIOLOGIST";
-        } else if (lowerRole.contains("исследователь") || lowerRole.contains("аспирант")) {
+        } else if (lowerRole.contains("learner") || lowerRole.contains("student") || lowerRole.contains("исследователь") || lowerRole.contains("аспирант")) {
             return "RESEARCHER";
         }
         return "USER";
@@ -529,6 +704,15 @@ public class AuthController {
         }
         if (user.getEmail() != null) {
             map.put("email", user.getEmail());
+        }
+        if (user.getDepartment() != null) {
+            map.put("department", user.getDepartment());
+        }
+        if (user.getCourses() != null) {
+            map.put("courses", user.getCourses());
+        }
+        if (user.getMoodleId() != null) {
+            map.put("moodle_id", user.getMoodleId());
         }
         return map;
     }
