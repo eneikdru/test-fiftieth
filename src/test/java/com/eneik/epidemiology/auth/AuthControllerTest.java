@@ -192,6 +192,32 @@ class AuthControllerTest {
     }
 
     @Test
+    @DisplayName("Given a Moodle role containing 'Аспирант', When mapMoodleRole is evaluated, Then it returns the 'RESEARCHER' internal role.")
+    void testMoodleCallback_AspirantRole_MapsToResearcher() throws Exception {
+        mockServer.expect(org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo("https://moodle.epidemiology-inst.ru/oauth2/userinfo?code=mock_moodle_aspirant_code"))
+                .andRespond(org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess(
+                        "{\"username\":\"moodle_aspirant\",\"moodle_role\":\"Аспирант первого года\",\"department\":\"Эпидемиология\",\"email\":\"aspirant@inst.ru\",\"full_name\":\"Аспирант Тестович\",\"courses\":\"BIO-101\"}",
+                        MediaType.APPLICATION_JSON));
+
+        userService.createUser("moodle_aspirant", "Pass123!", "aspirant@inst.ru", "Аспирант Тестович", "USER");
+
+        String callbackBody = "{\"code\":\"mock_moodle_aspirant_code\",\"state\":\"test_state\"}";
+
+        mockMvc.perform(post("/api/v1/auth/moodle/callback")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(callbackBody))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.access_token", notNullValue()))
+                .andExpect(jsonPath("$.refresh_token", notNullValue()))
+                .andExpect(jsonPath("$.user.username", is("moodle_aspirant")))
+                .andExpect(jsonPath("$.user.role", is("RESEARCHER")));
+
+        User user = userService.findByUsername("moodle_aspirant").orElseThrow();
+        assert "RESEARCHER".equals(user.getRole());
+        assert "Эпидемиология".equals(user.getDepartment());
+    }
+
+    @Test
     @DisplayName("Given Moodle SSO callback with valid auth code, When callback endpoint called, Then exchanges code for profile and authenticates user")
     void testMoodleCallback_ValidCode_AuthenticatesAndSyncsRole() throws Exception {
         mockServer.expect(org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo("https://moodle.epidemiology-inst.ru/oauth2/userinfo?code=mock_moodle_auth_code"))
