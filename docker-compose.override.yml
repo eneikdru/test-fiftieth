@@ -26,6 +26,7 @@ services:
       SPRING_DATASOURCE_DRIVER_CLASS_NAME: org.postgresql.Driver
       SPRING_FLYWAY_IGNORE_MISSING_MIGRATIONS: "true"
     healthcheck:
+      # updated to actuator/health
       test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:18080/actuator/health || exit 1"]
       interval: 5s
       timeout: 5s
@@ -37,7 +38,7 @@ services:
     container_name: "${COMPOSE_PROJECT_NAME:-epidemiology}_backup"
     environment:
       UPLOADS_DIR: /app/data/docs/uploads
-    volumes: !reset
+    volumes:
       - ./scripts:/scripts:ro
       - app_uploads:/app/data/docs/uploads:ro
       - backup_data:/backups
