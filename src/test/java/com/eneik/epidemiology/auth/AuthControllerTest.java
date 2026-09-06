@@ -129,6 +129,32 @@ class AuthControllerTest {
     }
 
     @Test
+    @DisplayName("Given valid LTI launch request via JSON body, When POST /api/v1/auth/lti/launch called, Then authenticates user and returns session tokens")
+    void testLtiLaunch_JsonPayload_Success() throws Exception {
+        String ltiJson = "{" +
+                "\"username\":\"json_lti_user\"," +
+                "\"full_name\":\"Иван Провайдеров\"," +
+                "\"email\":\"json_lti@epidemiology-inst.ru\"," +
+                "\"roles\":\"Learner\"," +
+                "\"department\":\"Вирусология\"," +
+                "\"oauth_signature\":\"valid_lti_signature\"" +
+                "}";
+
+        mockMvc.perform(post("/api/v1/auth/lti/launch")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(ltiJson))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.access_token", notNullValue()))
+                .andExpect(jsonPath("$.user.username", is("json_lti_user")))
+                .andExpect(jsonPath("$.user.role", is("RESEARCHER")))
+                .andExpect(jsonPath("$.user.department", is("Вирусология")));
+
+        User user = userService.findByUsername("json_lti_user").orElseThrow();
+        assert "RESEARCHER".equals(user.getRole());
+        assert "Вирусология".equals(user.getDepartment());
+    }
+
+    @Test
     @DisplayName("Given valid login credentials with email, When login endpoint called, Then returns JWT tokens and user info")
     void testLogin_ByEmail_ReturnsAuthTokens() throws Exception {
         userService.createUser("katya_exp", "KatyaPass123!", "katya@inst.ru", "Екатерина Сергеевна", "RESEARCHER");
