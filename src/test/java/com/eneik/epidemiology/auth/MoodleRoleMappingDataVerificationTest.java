@@ -30,5 +30,9 @@ public class MoodleRoleMappingDataVerificationTest {
         List<String> researcherRoles = jdbcTemplate.queryForList("SELECT internal_role FROM moodle_role_mappings WHERE moodle_role_pattern = 'исследователь'", String.class);
         assertEquals(1, researcherRoles.size());
         assertEquals("RESEARCHER", researcherRoles.get(0));
+
+        List<String> aspirantRoles = jdbcTemplate.queryForList("SELECT internal_role FROM moodle_role_mappings WHERE moodle_role_pattern = 'аспирант'", String.class);
+        assertEquals(1, aspirantRoles.size());
+        assertEquals("RESEARCHER", aspirantRoles.get(0));
     }
 }

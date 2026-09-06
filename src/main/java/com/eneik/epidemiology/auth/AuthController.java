@@ -764,22 +764,24 @@ public class AuthController {
         return exchangeCodeForProfile(token);
     }
 
-    private String mapMoodleRole(String moodleRole) {
+    String mapMoodleRole(String moodleRole) {
         if (moodleRole == null) {
             return "USER";
         }
-        try {
-            List<Map<String, Object>> mappings = jdbcTemplate.queryForList("SELECT moodle_role_pattern, internal_role FROM moodle_role_mappings");
-            String lowerRole = moodleRole.toLowerCase();
-            for (Map<String, Object> map : mappings) {
-                String pattern = (String) map.get("moodle_role_pattern");
-                String internalRole = (String) map.get("internal_role");
-                if (pattern != null && lowerRole.contains(pattern.toLowerCase())) {
-                    return internalRole;
+        if (jdbcTemplate != null) {
+            try {
+                List<Map<String, Object>> mappings = jdbcTemplate.queryForList("SELECT moodle_role_pattern, internal_role FROM moodle_role_mappings");
+                String lowerRole = moodleRole.toLowerCase();
+                for (Map<String, Object> map : mappings) {
+                    String pattern = (String) map.get("moodle_role_pattern");
+                    String internalRole = (String) map.get("internal_role");
+                    if (pattern != null && lowerRole.contains(pattern.toLowerCase())) {
+                        return internalRole;
+                    }
                 }
+            } catch (Exception e) {
+                // Fallback to static mapping if DB query fails or table unpopulated
             }
-        } catch (Exception e) {
-            // Fallback to static mapping if DB query fails or table unpopulated
         }
 
         String lowerRole = moodleRole.toLowerCase();
