@@ -20,8 +20,7 @@ services:
     environment:
       SERVER_PORT: "18080"
     healthcheck:
-      # updated to actuator/health
-      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:18080/actuator/health || exit 1"]
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:18080/health || wget --no-verbose --tries=1 --spider http://localhost:18080/actuator/health || exit 1"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -39,11 +38,11 @@ services:
     entrypoint: >
       /bin/sh -c "
       apk add --no-cache bash tar gzip findutils;
-      cp /scripts/backup.sh /usr/local/bin/backup.sh 2>/dev/null || true;
-      chmod +x /usr/local/bin/backup.sh 2>/dev/null || true;
-      echo \"$${BACKUP_SCHEDULE} /usr/local/bin/backup.sh >> /var/log/backup.log 2>&1\" > /etc/crontabs/root;
+      cp /scripts/backup.sh /usr/local/bin/run_backup.sh 2>/dev/null || true;
+      chmod +x /usr/local/bin/run_backup.sh 2>/dev/null || true;
+      echo \"$${BACKUP_SCHEDULE} /bin/bash /usr/local/bin/run_backup.sh >> /var/log/backup.log 2>&1\" > /etc/crontabs/root;
       echo 'Running initial startup backup check...';
-      /usr/local/bin/backup.sh;
+      /bin/bash /usr/local/bin/run_backup.sh || /bin/bash /scripts/backup.sh || /bin/bash /usr/local/bin/backup.sh;
       echo 'Starting cron daemon with schedule: $${BACKUP_SCHEDULE}';
       crond -f -l 2
       "
