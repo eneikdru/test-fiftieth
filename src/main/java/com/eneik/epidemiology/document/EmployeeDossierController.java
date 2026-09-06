@@ -219,6 +219,18 @@ public class EmployeeDossierController {
 
 
 
+    private boolean isAccessDenied(User currentUser, DossierReport report) {
+        if (currentUser == null || "ADMIN".equals(currentUser.getRole())) {
+            return false;
+        }
+        if (report.getAccessDepartment() == null && report.getAccessCourse() == null) {
+            return false;
+        }
+        boolean depMatch = report.getAccessDepartment() != null && report.getAccessDepartment().equals(currentUser.getDepartment());
+        boolean courseMatch = report.getAccessCourse() != null && currentUser.getCourses() != null && currentUser.getCourses().contains(report.getAccessCourse());
+        return !depMatch && !courseMatch;
+    }
+
     @GetMapping("/reports/{id}")
     public ResponseEntity<?> getDossierReportStatus(@PathVariable("id") Long id) {
         String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -226,25 +238,19 @@ public class EmployeeDossierController {
 
         return dossierReportRepository.findById(id)
                 .map(report -> {
-                    if (currentUser != null && !"ADMIN".equals(currentUser.getRole())) {
-                        boolean depMatch = report.getAccessDepartment() != null && report.getAccessDepartment().equals(currentUser.getDepartment());
-                        boolean courseMatch = report.getAccessCourse() != null && currentUser.getCourses() != null && currentUser.getCourses().contains(report.getAccessCourse());
-                        if (report.getAccessDepartment() != null || report.getAccessCourse() != null) {
-                             if (!depMatch && !courseMatch) {
-                                  return ResponseEntity.status(HttpStatus.FORBIDDEN).body((Object) Map.of("error_code", "FORBIDDEN", "message", "Access denied"));
-                             }
-                        }
+                    if (isAccessDenied(currentUser, report)) {
+                        return ResponseEntity.status(HttpStatus.FORBIDDEN).body((Object) Map.of("error_code", "FORBIDDEN", "message", "Access denied"));
                     }
                     return ResponseEntity.ok(Map.of(
-                        "id", report.getId(),
-                        "employee_id", report.getEmployeeId(),
-                        "template_type", report.getTemplateType(),
-                        "status", report.getStatus(),
-                        "summary_text", report.getSummaryText(),
-                        "document_count", report.getDocumentCount(),
-                        "download_url", report.getDownloadUrl(),
-                        "created_at", report.getCreatedAt() != null ? report.getCreatedAt().toString() : ""
-                ));
+                            "id", report.getId(),
+                            "employee_id", report.getEmployeeId(),
+                            "template_type", report.getTemplateType(),
+                            "status", report.getStatus(),
+                            "summary_text", report.getSummaryText() != null ? report.getSummaryText() : "",
+                            "document_count", report.getDocumentCount(),
+                            "download_url", report.getDownloadUrl() != null ? report.getDownloadUrl() : "",
+                            "created_at", report.getCreatedAt() != null ? report.getCreatedAt().toString() : ""
+                    ));
                 })
                 .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
                         "error_code", "NOT_FOUND",
@@ -259,14 +265,8 @@ public class EmployeeDossierController {
 
         return dossierReportRepository.findById(id)
                 .map(report -> {
-                    if (currentUser != null && !"ADMIN".equals(currentUser.getRole())) {
-                        boolean depMatch = report.getAccessDepartment() != null && report.getAccessDepartment().equals(currentUser.getDepartment());
-                        boolean courseMatch = report.getAccessCourse() != null && currentUser.getCourses() != null && currentUser.getCourses().contains(report.getAccessCourse());
-                        if (report.getAccessDepartment() != null || report.getAccessCourse() != null) {
-                             if (!depMatch && !courseMatch) {
-                                  return ResponseEntity.status(HttpStatus.FORBIDDEN).body((Object) Map.of("error_code", "FORBIDDEN", "message", "Access denied"));
-                             }
-                        }
+                    if (isAccessDenied(currentUser, report)) {
+                        return ResponseEntity.status(HttpStatus.FORBIDDEN).body((Object) Map.of("error_code", "FORBIDDEN", "message", "Access denied"));
                     }
 
                     if (!"COMPLETED".equals(report.getStatus())) {
@@ -278,12 +278,41 @@ public class EmployeeDossierController {
 
                     try {
                         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                        com.itextpdf.text.Document document = new com.itextpdf.text.Document();
-                        com.itextpdf.text.pdf.PdfWriter.getInstance(document, baos);
+                        Document document = new Document();
+                        PdfWriter.getInstance(document, baos);
                         document.open();
-                        String text = report.getSummaryText() != null ? report.getSummaryText() : "Отчет пуст";
-                        Font font = FontFactory.getFont(FontFactory.HELVETICA, "Cp1251", BaseFont.NOT_EMBEDDED, 12);
-                        document.add(new Paragraph(text, font));
+
+                        Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, "Cp1251", BaseFont.NOT_EMBEDDED, 16);
+                        Font headerFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, "Cp1251", BaseFont.NOT_EMBEDDED, 12);
+                        Font bodyFont = FontFactory.getFont(FontFactory.HELVETICA, "Cp1251", BaseFont.NOT_EMBEDDED, 11);
+
+                        // Page 1: Dossier Cover and Summary
+                        document.add(new Paragraph("Досье сотрудника: " + report.getEmployeeId(), titleFont));
+                        document.add(new Paragraph("Тип отчета: " + report.getTemplateType(), bodyFont));
+                        document.add(new Paragraph("Статус: " + report.getStatus(), bodyFont));
+                        document.add(new Paragraph("Количество документов: " + report.getDocumentCount(), bodyFont));
+                        document.add(new Paragraph("Сводное резюме: " + (report.getSummaryText() != null ? report.getSummaryText() : "Отчет пуст"), bodyFont));
+
+                        // Page 2: Detailed Document Inventory
+                        document.newPage();
+                        document.add(new Paragraph("Полный перечень документов досье (" + report.getEmployeeId() + "):", headerFont));
+
+                        List<EmployeeDocument> documents = employeeDocumentRepository.findUnifiedEmployeeDossier(report.getEmployeeId());
+                        if (documents.isEmpty()) {
+                            document.add(new Paragraph("Документы в досье отсутствуют.", bodyFont));
+                        } else {
+                            for (EmployeeDocument doc : documents) {
+                                String docInfo = String.format("• [%s] %s (от %s)", doc.getDocType(), doc.getTitle(), doc.getDocDate());
+                                document.add(new Paragraph(docInfo, bodyFont));
+                                if (doc.getScientificDirection() != null) {
+                                    document.add(new Paragraph("  Научное направление: " + doc.getScientificDirection(), bodyFont));
+                                }
+                                if (doc.getDetails() != null) {
+                                    document.add(new Paragraph("  Детали: " + doc.getDetails(), bodyFont));
+                                }
+                            }
+                        }
+
                         document.close();
 
                         byte[] content = baos.toByteArray();

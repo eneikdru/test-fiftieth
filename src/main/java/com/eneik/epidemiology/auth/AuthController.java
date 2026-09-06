@@ -17,6 +17,10 @@ import java.util.Map;
 @RequestMapping("/api/v1/auth")
 public class AuthController {
 
+    @org.springframework.beans.factory.annotation.Value("${moodle.server.url:https://moodle.epidemiology-inst.ru}")
+    private String moodleServerUrl = "https://moodle.epidemiology-inst.ru";
+
+    private final org.springframework.web.client.RestTemplate restTemplate;
     private final UserService userService;
     private final JwtTokenProvider jwtTokenProvider;
     private final PasswordRecoveryService passwordRecoveryService;
@@ -24,13 +28,27 @@ public class AuthController {
     private final JdbcTemplate jdbcTemplate;
     private final TokenRevocationService tokenRevocationService;
 
+    @org.springframework.beans.factory.annotation.Autowired
     public AuthController(UserService userService, JwtTokenProvider jwtTokenProvider, PasswordRecoveryService passwordRecoveryService, com.eneik.epidemiology.telemetry.TelemetryService telemetryService, JdbcTemplate jdbcTemplate, TokenRevocationService tokenRevocationService) {
+        this(userService, jwtTokenProvider, passwordRecoveryService, telemetryService, jdbcTemplate, tokenRevocationService, new org.springframework.web.client.RestTemplate());
+    }
+
+    public AuthController(UserService userService, JwtTokenProvider jwtTokenProvider, PasswordRecoveryService passwordRecoveryService, com.eneik.epidemiology.telemetry.TelemetryService telemetryService, JdbcTemplate jdbcTemplate, TokenRevocationService tokenRevocationService, org.springframework.web.client.RestTemplate restTemplate) {
         this.userService = userService;
         this.jwtTokenProvider = jwtTokenProvider;
         this.passwordRecoveryService = passwordRecoveryService;
         this.telemetryService = telemetryService;
         this.jdbcTemplate = jdbcTemplate;
         this.tokenRevocationService = tokenRevocationService;
+        this.restTemplate = restTemplate != null ? restTemplate : new org.springframework.web.client.RestTemplate();
+    }
+
+    public org.springframework.web.client.RestTemplate getRestTemplate() {
+        return restTemplate;
+    }
+
+    public void setMoodleServerUrl(String moodleServerUrl) {
+        this.moodleServerUrl = moodleServerUrl;
     }
 
     public record RegistrationRequest(String username, String password, String email, String full_name) {}
@@ -434,10 +452,32 @@ public class AuthController {
         if (isBlank(code)) {
             return null;
         }
-        if ("mock_moodle_auth_code".equals(code) || "mock_valid_moodle_token".equals(code)) {
-            return new MoodleProfile("moodle_user", "Старший научный сотрудник", "Эпидемиология", "moodle@inst.ru", "Moodle User", "BIO-101");
-        } else if ("mock_new_moodle_auth_code".equals(code) || "mock_valid_new_moodle_token".equals(code)) {
-            return new MoodleProfile("new_moodle_user", "Администратор", "IT", "new_moodle@inst.ru", "New Moodle Admin", "");
+
+        try {
+            String url = moodleServerUrl + "/oauth2/userinfo?code=" + code;
+            ResponseEntity<Map> response = restTemplate.getForEntity(url, Map.class);
+            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                Map<String, Object> body = response.getBody();
+                String username = (String) body.getOrDefault("username", body.get("preferred_username"));
+                String moodleRole = (String) body.getOrDefault("moodle_role", body.get("role"));
+                String department = (String) body.get("department");
+                String email = (String) body.get("email");
+                String fullName = (String) body.getOrDefault("full_name", body.get("name"));
+                String courses = (String) body.get("courses");
+
+                if (username != null && !username.isBlank()) {
+                    return new MoodleProfile(
+                            username,
+                            moodleRole != null ? moodleRole : "Пользователь",
+                            department != null ? department : "",
+                            email != null ? email : "",
+                            fullName != null ? fullName : username,
+                            courses != null ? courses : ""
+                    );
+                }
+            }
+        } catch (Exception e) {
+            // External network request failed or LMS offline -> return null so fallback auth handles or returns 401
         }
         return null;
     }
