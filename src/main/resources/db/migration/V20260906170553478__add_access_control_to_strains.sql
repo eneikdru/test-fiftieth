@@ -1,0 +1,2 @@
+ALTER TABLE strains ADD COLUMN IF NOT EXISTS access_department VARCHAR(255);
+ALTER TABLE strains ADD COLUMN IF NOT EXISTS access_course VARCHAR(255);
