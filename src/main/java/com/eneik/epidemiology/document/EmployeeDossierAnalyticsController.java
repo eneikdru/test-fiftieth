@@ -46,10 +46,10 @@ public class EmployeeDossierAnalyticsController {
         org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size);
         boolean isAdmin = currentUser != null && "ADMIN".equals(currentUser.getRole());
         String userDepartment = currentUser != null ? currentUser.getDepartment() : null;
-        String userCourses = currentUser != null ? currentUser.getCourses() : null;
+        List<String> userCoursesList = currentUser != null && currentUser.getCourses() != null && !currentUser.getCourses().isEmpty() ? java.util.Arrays.asList(currentUser.getCourses().split("\\s*,\\s*")) : java.util.Collections.emptyList();
 
         org.springframework.data.domain.Page<EmployeeDocument> documentPage = employeeDocumentRepository.searchEmployeeDocumentsSecure(
-                employeeId, null, docType, scientificDirection, null, fromDate, toDate, isAdmin, userDepartment, userCourses, pageable
+                employeeId, null, docType, scientificDirection, null, fromDate, toDate, isAdmin, userDepartment, userCoursesList, pageable
         );
         List<EmployeeDocument> documents = documentPage.getContent();
 
@@ -140,10 +140,13 @@ public class EmployeeDossierAnalyticsController {
             User currentUser = userRepository.findByUsername(currentUsername).orElse(null);
 
             if (currentUser != null && !"ADMIN".equals(currentUser.getRole())) {
+                List<String> userCoursesList = currentUser.getCourses() != null && !currentUser.getCourses().isEmpty()
+                        ? java.util.Arrays.asList(currentUser.getCourses().split("\\s*,\\s*"))
+                        : java.util.Collections.emptyList();
                 documents = documents.stream().filter(d -> {
                     if (!"STRAIN_ISOLATION".equals(d.getDocType()) && !"REPORT".equals(d.getDocType())) return true;
                     boolean depMatch = d.getAccessDepartment() != null && d.getAccessDepartment().equals(currentUser.getDepartment());
-                    boolean courseMatch = d.getAccessCourse() != null && currentUser.getCourses() != null && currentUser.getCourses().contains(d.getAccessCourse());
+                    boolean courseMatch = d.getAccessCourse() != null && userCoursesList.contains(d.getAccessCourse());
                     return depMatch || courseMatch;
                 }).toList();
             }
@@ -196,11 +199,14 @@ public class EmployeeDossierAnalyticsController {
         User currentUser = userRepository.findByUsername(currentUsername).orElse(null);
 
         if (currentUser != null && !"ADMIN".equals(currentUser.getRole())) {
+            List<String> userCoursesList = currentUser.getCourses() != null && !currentUser.getCourses().isEmpty()
+                    ? java.util.Arrays.asList(currentUser.getCourses().split("\\s*,\\s*"))
+                    : java.util.Collections.emptyList();
             documents = documents.stream().filter(d -> {
                 if (!"STRAIN_ISOLATION".equals(d.getDocType()) && !"REPORT".equals(d.getDocType())) return true;
                 if (d.getAccessDepartment() == null && d.getAccessCourse() == null) return true;
                 boolean depMatch = d.getAccessDepartment() != null && d.getAccessDepartment().equals(currentUser.getDepartment());
-                boolean courseMatch = d.getAccessCourse() != null && currentUser.getCourses() != null && currentUser.getCourses().contains(d.getAccessCourse());
+                boolean courseMatch = d.getAccessCourse() != null && userCoursesList.contains(d.getAccessCourse());
                 return depMatch || courseMatch;
             }).toList();
         }
@@ -248,7 +254,10 @@ public class EmployeeDossierAnalyticsController {
                 .map(report -> {
                     if (currentUser != null && !"ADMIN".equals(currentUser.getRole())) {
                         boolean depMatch = report.getAccessDepartment() != null && report.getAccessDepartment().equals(currentUser.getDepartment());
-                        boolean courseMatch = report.getAccessCourse() != null && currentUser.getCourses() != null && currentUser.getCourses().contains(report.getAccessCourse());
+                        List<String> userCoursesList = currentUser.getCourses() != null && !currentUser.getCourses().isEmpty()
+                                ? java.util.Arrays.asList(currentUser.getCourses().split("\\s*,\\s*"))
+                                : java.util.Collections.emptyList();
+                        boolean courseMatch = report.getAccessCourse() != null && userCoursesList.contains(report.getAccessCourse());
                         if (report.getAccessDepartment() != null || report.getAccessCourse() != null) {
                              if (!depMatch && !courseMatch) {
                                   return ResponseEntity.status(HttpStatus.FORBIDDEN).body((Object) Map.of("error_code", "FORBIDDEN", "message", "Access denied"));
