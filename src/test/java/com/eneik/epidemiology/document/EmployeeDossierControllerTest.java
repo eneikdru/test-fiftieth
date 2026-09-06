@@ -228,7 +228,7 @@ class EmployeeDossierControllerTest {
     void testSignDossierReportSuccess() throws Exception {
         User epiUser = new User();
         epiUser.setUsername("epidemiologist");
-        epiUser.setRole("USER");
+        epiUser.setRole("EPIDEMIOLOGIST");
         epiUser.setDepartment("Эпидемиология");
         when(userRepository.findByUsername("epidemiologist")).thenReturn(Optional.of(epiUser));
 
@@ -251,7 +251,7 @@ class EmployeeDossierControllerTest {
     void testSignDossierReportInvalidRequest() throws Exception {
         User epiUser = new User();
         epiUser.setUsername("epidemiologist");
-        epiUser.setRole("USER");
+        epiUser.setRole("EPIDEMIOLOGIST");
         epiUser.setDepartment("Эпидемиология");
         when(userRepository.findByUsername("epidemiologist")).thenReturn(Optional.of(epiUser));
 
@@ -295,7 +295,7 @@ class EmployeeDossierControllerTest {
     void testSignDossierReportNotFound() throws Exception {
         User epiUser = new User();
         epiUser.setUsername("epidemiologist");
-        epiUser.setRole("USER");
+        epiUser.setRole("EPIDEMIOLOGIST");
         epiUser.setDepartment("Эпидемиология");
         when(userRepository.findByUsername("epidemiologist")).thenReturn(Optional.of(epiUser));
 
@@ -314,7 +314,7 @@ class EmployeeDossierControllerTest {
     void testSignDossierReportConflictUncompleted() throws Exception {
         User epiUser = new User();
         epiUser.setUsername("epidemiologist");
-        epiUser.setRole("USER");
+        epiUser.setRole("EPIDEMIOLOGIST");
         epiUser.setDepartment("Эпидемиология");
         when(userRepository.findByUsername("epidemiologist")).thenReturn(Optional.of(epiUser));
 
