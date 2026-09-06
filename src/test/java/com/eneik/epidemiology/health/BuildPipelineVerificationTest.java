@@ -27,4 +27,15 @@ class BuildPipelineVerificationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("UP"));
     }
+
+    @Test
+    @DisplayName("Given docker-compose override configuration, When inspected, Then contains image, command, and actuator healthcheck path")
+    void verifyDockerComposeOverrideConfiguration() throws java.io.IOException {
+        java.nio.file.Path composePath = java.nio.file.Paths.get("docker-compose.override.yml");
+        org.junit.jupiter.api.Assertions.assertTrue(java.nio.file.Files.exists(composePath), "docker-compose.override.yml must exist");
+        String content = java.nio.file.Files.readString(composePath);
+        org.junit.jupiter.api.Assertions.assertTrue(content.contains("image: \"${COMPOSE_PROJECT_NAME:-epidemiology}_backend:latest\""), "Backend image declaration missing");
+        org.junit.jupiter.api.Assertions.assertTrue(content.contains("command: [\"java\", \"-jar\", \"/app/app.jar\"]"), "Backend command declaration missing");
+        org.junit.jupiter.api.Assertions.assertTrue(content.contains("/actuator/health"), "Actuator healthcheck path missing");
+    }
 }
