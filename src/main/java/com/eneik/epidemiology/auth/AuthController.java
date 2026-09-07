@@ -828,8 +828,11 @@ public class AuthController {
         }
 
         try {
-            String url = moodleServerUrl + "/oauth2/userinfo?code=" + code;
-            ResponseEntity<Map> response = restTemplate.getForEntity(url, Map.class);
+            String url = moodleServerUrl + "/oauth2/userinfo";
+            org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
+            headers.setBearerAuth(code);
+            org.springframework.http.HttpEntity<String> entity = new org.springframework.http.HttpEntity<>("", headers);
+            ResponseEntity<Map> response = restTemplate.exchange(url, org.springframework.http.HttpMethod.GET, entity, Map.class);
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                 Map<String, Object> body = response.getBody();
                 String username = (String) body.getOrDefault("username", body.get("preferred_username"));
