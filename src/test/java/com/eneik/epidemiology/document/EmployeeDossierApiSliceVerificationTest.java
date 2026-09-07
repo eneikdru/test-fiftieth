@@ -13,6 +13,8 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 import com.eneik.epidemiology.telemetry.TelemetryService;
+import com.eneik.epidemiology.user.User;
+import com.eneik.epidemiology.user.UserRepository;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -37,6 +39,9 @@ public class EmployeeDossierApiSliceVerificationTest {
     @Autowired
     private DossierReportRepository dossierReportRepository;
 
+    @Autowired
+    private UserRepository userRepository;
+
     @MockBean
     private TelemetryService telemetryService;
 
@@ -47,10 +52,23 @@ public class EmployeeDossierApiSliceVerificationTest {
     void setUp() {
         employeeDocumentRepository.deleteAll();
         dossierReportRepository.deleteAll();
+        userRepository.deleteAll();
+
+
+        User testUser = new User();
+        testUser.setUsername("user");
+        testUser.setRole("USER");
+        testUser.setDepartment("Эпидемиология");
+        testUser.setEmail("test@test.com");
+        testUser.setFullName("Test User");
+        testUser.setPasswordHash("hash");
+        testUser.setCreatedAt(java.time.OffsetDateTime.now());
+        userRepository.save(testUser);
 
         EmployeeDocument doc1 = new EmployeeDocument("EMP-101", "ORDER", "Приказ о назначении исследователем", LocalDate.of(2024, 1, 10), "Приказ №101/К");
         doc1.setScientificDirection("EPIDEMIOLOGY");
         EmployeeDocument doc2 = new EmployeeDocument("EMP-101", "REPORT", "Годовой эпидемиологический отчет", LocalDate.of(2024, 5, 12), "Итоговый отчет 2024");
+        doc2.setAccessDepartment("Эпидемиология");
         doc2.setScientificDirection("EPIDEMIOLOGY");
 
         employeeDocumentRepository.saveAll(List.of(doc1, doc2));

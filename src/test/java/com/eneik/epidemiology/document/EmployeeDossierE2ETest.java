@@ -12,6 +12,8 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 import com.eneik.epidemiology.EpidemiologyApplication;
+import com.eneik.epidemiology.user.User;
+import com.eneik.epidemiology.user.UserRepository;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -37,15 +39,31 @@ public class EmployeeDossierE2ETest {
     private DossierReportRepository dossierReportRepository;
 
     @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
     private ObjectMapper objectMapper;
 
     @BeforeEach
     void setUp() {
         employeeDocumentRepository.deleteAll();
         dossierReportRepository.deleteAll();
+        userRepository.deleteAll();
+
+
+        User testUser = new User();
+        testUser.setUsername("user");
+        testUser.setRole("USER");
+        testUser.setDepartment("Эпидемиология");
+        testUser.setEmail("test@test.com");
+        testUser.setFullName("Test User");
+        testUser.setPasswordHash("hash");
+        testUser.setCreatedAt(java.time.OffsetDateTime.now());
+        userRepository.save(testUser);
 
         EmployeeDocument doc1 = new EmployeeDocument("EMP-E2E-1", "ORDER", "Initial Order E2E", LocalDate.of(2023, 1, 1), "Content 1");
         EmployeeDocument doc2 = new EmployeeDocument("EMP-E2E-1", "REPORT", "Initial Report E2E", LocalDate.of(2023, 2, 1), "Content 2");
+        doc2.setAccessDepartment("Эпидемиология");
         EmployeeDocument doc3 = new EmployeeDocument("EMP-E2E-2", "EXAM", "Exam E2E", LocalDate.of(2023, 3, 1), "Content 3");
 
         employeeDocumentRepository.saveAll(List.of(doc1, doc2, doc3));
