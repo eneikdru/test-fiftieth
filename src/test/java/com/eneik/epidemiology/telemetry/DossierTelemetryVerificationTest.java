@@ -59,10 +59,10 @@ class DossierTelemetryVerificationTest {
 
 
         User testUser = new User();
-        testUser.setUsername("dossier_telemetry_user");
+        testUser.setUsername("user");
         testUser.setRole("USER");
         testUser.setDepartment("Эпидемиология");
-        testUser.setEmail("dossier_telemetry@test.com");
+        testUser.setEmail("test@test.com");
         testUser.setFullName("Test User");
         testUser.setPasswordHash("hash");
         testUser.setCreatedAt(java.time.OffsetDateTime.now());
