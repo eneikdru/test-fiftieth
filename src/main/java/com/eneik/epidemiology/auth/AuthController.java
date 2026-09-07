@@ -266,7 +266,11 @@ public class AuthController {
                 needsUpdate = true;
             }
             if (needsUpdate) {
-                userService.updateRoleAndDepartmentAtomically(user.getId(), user.getRole(), internalRole != null ? internalRole : user.getRole(), profile.department(), profile.courses());
+                int updated = userService.updateRoleAndDepartmentAtomically(user.getId(), user.getRole(), internalRole != null ? internalRole : user.getRole(), profile.department(), profile.courses());
+                if (updated == 0) {
+                    jdbcTemplate.update("UPDATE users SET role = ?, department = ?, courses = ? WHERE id = ?",
+                            internalRole != null ? internalRole : user.getRole(), profile.department(), profile.courses(), user.getId());
+                }
                 user.setRole(internalRole != null ? internalRole : user.getRole());
                 user.setDepartment(profile.department());
                 user.setCourses(profile.courses());
@@ -431,7 +435,11 @@ public class AuthController {
                 needsUpdate = true;
             }
             if (needsUpdate) {
-                userService.updateRoleAndDepartmentAtomically(user.getId(), user.getRole(), internalRole != null ? internalRole : user.getRole(), department, courses);
+                int updated = userService.updateRoleAndDepartmentAtomically(user.getId(), user.getRole(), internalRole != null ? internalRole : user.getRole(), department, courses);
+                if (updated == 0) {
+                    jdbcTemplate.update("UPDATE users SET role = ?, department = ?, courses = ? WHERE id = ?",
+                            internalRole != null ? internalRole : user.getRole(), department, courses, user.getId());
+                }
                 user.setRole(internalRole != null ? internalRole : user.getRole());
                 user.setDepartment(department);
                 user.setCourses(courses);
@@ -518,7 +526,7 @@ public class AuthController {
 
         MoodleProfile profile = fetchOidcProfile(request.oidc_token());
 
-        if (profile == null || !profile.username().equals(request.username())) {
+        if (profile == null || !profile.username().trim().equalsIgnoreCase(request.username().trim())) {
             if (request.fallback_password() != null && !request.fallback_password().trim().isEmpty()) {
                 User user = userService.findByUsernameOrEmail(request.username().trim()).orElse(null);
                 if (user != null && userService.verifyPassword(request.fallback_password().trim(), user.getPasswordHash())) {
@@ -578,7 +586,11 @@ public class AuthController {
                 needsUpdate = true;
             }
             if (needsUpdate) {
-                userService.updateRoleAndDepartmentAtomically(user.getId(), user.getRole(), internalRole != null ? internalRole : user.getRole(), profile.department(), profile.courses());
+                int updated = userService.updateRoleAndDepartmentAtomically(user.getId(), user.getRole(), internalRole != null ? internalRole : user.getRole(), profile.department(), profile.courses());
+                if (updated == 0) {
+                    jdbcTemplate.update("UPDATE users SET role = ?, department = ?, courses = ? WHERE id = ?",
+                            internalRole != null ? internalRole : user.getRole(), profile.department(), profile.courses(), user.getId());
+                }
                 user.setRole(internalRole != null ? internalRole : user.getRole());
                 user.setDepartment(profile.department());
                 user.setCourses(profile.courses());
@@ -616,7 +628,7 @@ public class AuthController {
         // against the Moodle identity provider's public keys and fetching the user profile securely.
         MoodleProfile profile = fetchMoodleProfile(request.moodle_token());
 
-        if (profile == null || !profile.username().equals(request.username())) {
+        if (profile == null || !profile.username().trim().equalsIgnoreCase(request.username().trim())) {
             if (request.fallback_password() != null && !request.fallback_password().trim().isEmpty()) {
                 User user = userService.findByUsernameOrEmail(request.username().trim()).orElse(null);
                 if (user != null && userService.verifyPassword(request.fallback_password().trim(), user.getPasswordHash())) {
@@ -671,7 +683,11 @@ public class AuthController {
                 needsUpdate = true;
             }
             if (needsUpdate) {
-                userService.updateRoleAndDepartmentAtomically(user.getId(), user.getRole(), internalRole != null ? internalRole : user.getRole(), profile.department(), profile.courses());
+                int updated = userService.updateRoleAndDepartmentAtomically(user.getId(), user.getRole(), internalRole != null ? internalRole : user.getRole(), profile.department(), profile.courses());
+                if (updated == 0) {
+                    jdbcTemplate.update("UPDATE users SET role = ?, department = ?, courses = ? WHERE id = ?",
+                            internalRole != null ? internalRole : user.getRole(), profile.department(), profile.courses(), user.getId());
+                }
                 user.setRole(internalRole != null ? internalRole : user.getRole());
                 user.setDepartment(profile.department());
                 user.setCourses(profile.courses());

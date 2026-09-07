@@ -55,18 +55,18 @@ class DossierTelemetryVerificationTest {
         telemetryEventRepository.deleteAll();
         employeeDocumentRepository.deleteAll();
         dossierReportRepository.deleteAll();
-        userRepository.deleteAll();
 
-
-        User testUser = new User();
-        testUser.setUsername("user");
-        testUser.setRole("USER");
-        testUser.setDepartment("Эпидемиология");
-        testUser.setEmail("test@test.com");
-        testUser.setFullName("Test User");
-        testUser.setPasswordHash("hash");
-        testUser.setCreatedAt(java.time.OffsetDateTime.now());
-        userRepository.save(testUser);
+        if (!userRepository.existsByUsername("user")) {
+            User testUser = new User();
+            testUser.setUsername("user");
+            testUser.setRole("USER");
+            testUser.setDepartment("Эпидемиология");
+            testUser.setEmail("test@test.com");
+            testUser.setFullName("Test User");
+            testUser.setPasswordHash("hash");
+            testUser.setCreatedAt(java.time.OffsetDateTime.now());
+            userRepository.save(testUser);
+        }
 
         EmployeeDocument doc1 = new EmployeeDocument("EMP-TEL-100", "VIROLOGY", "Order 1", LocalDate.of(2023, 5, 10), "Content 1");
         EmployeeDocument doc2 = new EmployeeDocument("EMP-TEL-100", "BACTERIOLOGY", "Report 2", LocalDate.of(2023, 6, 12), "Content 2");
