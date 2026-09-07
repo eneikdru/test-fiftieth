@@ -32,20 +32,30 @@ public class JwtTokenProvider {
     }
 
     public String generateToken(String username, String role) {
+        return generateToken(username, role, null, null);
+    }
+
+    public String generateToken(String username, String role, String department, String courses) {
         Instant now = clock.instant();
         Instant exp = now.plusSeconds(accessTokenValidityInSeconds);
 
         String headerJson = "{\"alg\":\"HS256\",\"typ\":\"JWT\"}";
-        String payloadJson = String.format(
-                "{\"sub\":\"%s\",\"role\":\"%s\",\"iat\":%d,\"exp\":%d}",
+        StringBuilder payloadBuilder = new StringBuilder();
+        payloadBuilder.append(String.format(
+                "{\"sub\":\"%s\",\"role\":\"%s\"",
                 escapeJson(username),
-                escapeJson(role),
-                now.getEpochSecond(),
-                exp.getEpochSecond()
-        );
+                escapeJson(role)
+        ));
+        if (department != null && !department.trim().isEmpty()) {
+            payloadBuilder.append(String.format(",\"department\":\"%s\"", escapeJson(department.trim())));
+        }
+        if (courses != null && !courses.trim().isEmpty()) {
+            payloadBuilder.append(String.format(",\"courses\":\"%s\"", escapeJson(courses.trim())));
+        }
+        payloadBuilder.append(String.format(",\"iat\":%d,\"exp\":%d}", now.getEpochSecond(), exp.getEpochSecond()));
 
         String encodedHeader = base64UrlEncode(headerJson.getBytes(StandardCharsets.UTF_8));
-        String encodedPayload = base64UrlEncode(payloadJson.getBytes(StandardCharsets.UTF_8));
+        String encodedPayload = base64UrlEncode(payloadBuilder.toString().getBytes(StandardCharsets.UTF_8));
 
         String contentToSign = encodedHeader + "." + encodedPayload;
         String signature = hmacSha256(contentToSign, secretKey);

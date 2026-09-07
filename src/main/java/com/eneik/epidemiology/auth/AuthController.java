@@ -1016,11 +1016,13 @@ public class AuthController {
             String moodleRole = claims.has("moodle_role") ? claims.get("moodle_role").asText() :
                               (claims.has("role") ? claims.get("role").asText() : "Пользователь");
 
-            String department = claims.has("department") ? claims.get("department").asText() : "";
+            String department = claims.has("department") ? claims.get("department").asText() :
+                              (claims.has("custom_department") ? claims.get("custom_department").asText() : "");
             String email = claims.has("email") ? claims.get("email").asText() : "";
             String fullName = claims.has("full_name") ? claims.get("full_name").asText() :
                             (claims.has("name") ? claims.get("name").asText() : username);
-            String courses = claims.has("courses") ? claims.get("courses").asText() : "";
+            String courses = claims.has("courses") ? claims.get("courses").asText() :
+                           (claims.has("custom_courses") ? claims.get("custom_courses").asText() : "");
 
             return new MoodleProfile(username, moodleRole, department, email, fullName, courses);
         } catch (Exception e) {

@@ -251,6 +251,29 @@ class AuthControllerTest {
     }
 
     @Test
+    @DisplayName("Given an OIDC token containing department and courses claims, When OIDC auth endpoint called, Then department and courses are wired into user profile and returned in response")
+    void testOidcLogin_ExtractsDepartmentAndCourses_WiresToUserProfile() throws Exception {
+        String validOidcToken = jwtTokenProvider.generateToken("oidc_dept_user", "Исследователь", "Лаборатория геномики", "EPID-101,EPID-102");
+
+        String ssoBody = String.format("{\"username\":\"oidc_dept_user\",\"oidc_token\":\"%s\"}", validOidcToken);
+
+        mockMvc.perform(post("/api/v1/auth/sso/oidc")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(ssoBody))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.access_token", notNullValue()))
+                .andExpect(jsonPath("$.user.username", is("oidc_dept_user")))
+                .andExpect(jsonPath("$.user.role", is("RESEARCHER")))
+                .andExpect(jsonPath("$.user.department", is("Лаборатория геномики")))
+                .andExpect(jsonPath("$.user.courses", is("EPID-101,EPID-102")));
+
+        User user = userService.findByUsername("oidc_dept_user").orElseThrow();
+        assert "RESEARCHER".equals(user.getRole());
+        assert "Лаборатория геномики".equals(user.getDepartment());
+        assert "EPID-101,EPID-102".equals(user.getCourses());
+    }
+
+    @Test
     @DisplayName("Given an OIDC token with invalid or missing signature, When OIDC auth endpoint called, Then rejects request with 401 Unauthorized")
     void testOidcLogin_InvalidSignature_Returns401() throws Exception {
         String invalidOidcToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJvaWRjX3VzZXIiLCJyb2xlIjoiSU5WQUxJRCJ9.invalid_signature_hash";
