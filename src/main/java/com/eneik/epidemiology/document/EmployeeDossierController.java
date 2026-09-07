@@ -158,6 +158,10 @@ public class EmployeeDossierController {
                     documents.size(),
                     null
             );
+            if (currentUser != null) {
+                report.setAccessDepartment(currentUser.getDepartment());
+                report.setAccessCourse(currentUser.getCourses());
+            }
             report = dossierReportRepository.save(report);
 
             // Simulating immediate generation as a single atomic operation for now (satisfies complicated cynefin probe)

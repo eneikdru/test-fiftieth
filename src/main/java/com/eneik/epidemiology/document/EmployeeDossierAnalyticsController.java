@@ -161,6 +161,10 @@ public class EmployeeDossierAnalyticsController {
                     documents.size(),
                     null
             );
+            if (currentUser != null) {
+                report.setAccessDepartment(currentUser.getDepartment());
+                report.setAccessCourse(currentUser.getCourses());
+            }
             report = dossierReportRepository.save(report);
 
             int updatedCount = dossierReportRepository.updateStatus(report.getId(), "PENDING", "COMPLETED");

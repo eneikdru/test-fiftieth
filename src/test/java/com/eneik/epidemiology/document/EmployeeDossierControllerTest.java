@@ -150,22 +150,37 @@ class EmployeeDossierControllerTest {
     }
 
 
-    @WithMockUser(roles = "USER")
+    @WithMockUser(username = "user", roles = "USER")
     @Test
-    @DisplayName("Given a report generation request, when processed, then the backend successfully generates and returns the report file metadata.")
+    @DisplayName("Given a report generation request, when processed, then the backend successfully generates and returns the report file metadata and sets access fields.")
     void testGenerateDossierReport() throws Exception {
+        User userWithCourses = new User();
+        userWithCourses.setUsername("user");
+        userWithCourses.setRole("USER");
+        userWithCourses.setDepartment("Эпидемиология");
+        userWithCourses.setCourses("EPID-101, EPID-102");
+        when(userRepository.findByUsername("user")).thenReturn(Optional.of(userWithCourses));
+
         Map<String, Object> request = Map.of(
                 "employee_id", "EMP-999",
                 "template_type", "SUMMARY_STANDARD"
         );
 
-        mockMvc.perform(post("/api/v1/dossier/reports")
+        String responseJson = mockMvc.perform(post("/api/v1/dossier/reports")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.status").value("COMPLETED"))
                 .andExpect(jsonPath("$.document_count").value(2))
-                .andExpect(jsonPath("$.employee_id").value("EMP-999"));
+                .andExpect(jsonPath("$.employee_id").value("EMP-999"))
+                .andReturn().getResponse().getContentAsString();
+
+        Map<String, Object> responseMap = objectMapper.readValue(responseJson, Map.class);
+        Long reportId = ((Number) responseMap.get("id")).longValue();
+
+        DossierReport savedReport = dossierReportRepository.findById(reportId).orElseThrow();
+        org.junit.jupiter.api.Assertions.assertEquals("Эпидемиология", savedReport.getAccessDepartment());
+        org.junit.jupiter.api.Assertions.assertEquals("EPID-101, EPID-102", savedReport.getAccessCourse());
 
         verify(telemetryService, times(1)).recordDossierGenerationTelemetry(anyLong(), eq(true));
     }
