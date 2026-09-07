@@ -73,6 +73,40 @@ class AuthControllerTest {
     }
 
     @Test
+    @DisplayName("Given an authenticated request, When the user has department and courses in their OIDC token, Then integration tests must assert they are successfully wired into the application's access control.")
+    void testOidcLogin_ExtractsDepartmentAndCourses_WiresToJwt() throws Exception {
+        String validOidcToken = jwtTokenProvider.generateToken("oidc_jwt_user", "Исследователь", "Лаборатория геномики", "EPID-101,EPID-102");
+
+        String ssoBody = String.format("{\"username\":\"oidc_jwt_user\",\"oidc_token\":\"%s\"}", validOidcToken);
+
+        org.springframework.test.web.servlet.MvcResult result = mockMvc.perform(post("/api/v1/auth/sso/oidc")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(ssoBody))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        String jsonResponse = result.getResponse().getContentAsString();
+        com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+        com.fasterxml.jackson.databind.JsonNode root = mapper.readTree(jsonResponse);
+        String accessToken = root.get("access_token").asText();
+
+        // Assert the generated access token contains the department and courses
+        String[] parts = accessToken.split("\\.");
+        String payloadJson = new String(java.util.Base64.getUrlDecoder().decode(parts[1]), java.nio.charset.StandardCharsets.UTF_8);
+        com.fasterxml.jackson.databind.JsonNode payload = mapper.readTree(payloadJson);
+
+        org.junit.jupiter.api.Assertions.assertEquals("Лаборатория геномики", payload.get("department").asText());
+        org.junit.jupiter.api.Assertions.assertEquals("EPID-101,EPID-102", payload.get("courses").asText());
+
+        // Assert they are successfully wired into the application's access control by accessing a protected endpoint.
+        // We will call the dossier reports endpoint and verify access works.
+        // This endpoint requires authentication and enforces access control rules based on courses/department.
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/api/v1/dossier/reports")
+                .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isOk());
+    }
+
+    @Test
     @DisplayName("Given valid registration request, When register endpoint called, Then user is created and 201 response returned")
     void testRegisterUser_Success() throws Exception {
         String regBody = "{" +
