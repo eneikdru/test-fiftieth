@@ -203,8 +203,16 @@ public class AuthController {
     }
 
     @GetMapping("/moodle/config")
-    public ResponseEntity<?> getMoodleConfig() {
-        String loginUrl = moodleServerUrl + "/oauth2/authorize?client_id=" + moodleClientId + "&response_type=code&redirect_uri=" + moodleRedirectUri;
+    public ResponseEntity<?> getMoodleConfig(jakarta.servlet.http.HttpServletResponse response) {
+        String state = java.util.UUID.randomUUID().toString();
+        jakarta.servlet.http.Cookie cookie = new jakarta.servlet.http.Cookie("oauth2_state", state);
+        cookie.setHttpOnly(true);
+        cookie.setSecure(true);
+        cookie.setPath("/");
+        cookie.setMaxAge(300);
+        response.addCookie(cookie);
+
+        String loginUrl = moodleServerUrl + "/oauth2/authorize?client_id=" + moodleClientId + "&response_type=code&redirect_uri=" + moodleRedirectUri + "&state=" + state;
         return ResponseEntity.ok(Map.of(
                 "login_url", loginUrl,
                 "auth_url", loginUrl
@@ -212,13 +220,23 @@ public class AuthController {
     }
 
     @PostMapping("/moodle/callback")
-    public ResponseEntity<?> moodleCallback(@RequestBody MoodleCallbackRequest request) {
+    public ResponseEntity<?> moodleCallback(@RequestBody MoodleCallbackRequest request, @CookieValue(name = "oauth2_state", required = false) String cookieState) {
         if (request == null || (isBlank(request.code()) && isBlank(request.username()))) {
             return ResponseEntity.badRequest().body(Map.of(
                     "error_code", "INVALID_CALLBACK_REQUEST",
                     "message", "Укажите код авторизации Moodle.",
                     "timestamp", OffsetDateTime.now().toString()
             ));
+        }
+
+        if (!isBlank(request.code())) {
+            if (cookieState == null || request.state() == null || !cookieState.equals(request.state())) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
+                        "error_code", "INVALID_STATE",
+                        "message", "Несовпадение параметра state (возможна CSRF атака).",
+                        "timestamp", OffsetDateTime.now().toString()
+                ));
+            }
         }
 
         MoodleProfile profile = null;
