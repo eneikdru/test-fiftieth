@@ -1,0 +1,21 @@
+{
+  "verdicts": [
+    {
+      "sourceIndex": 0,
+      "verdict": "approve",
+      "criticalReason": "",
+      "concerns": [
+        {
+          "text": "Local OIDC token signature validation uses dual verification fallback (JwtTokenProvider then secret HMAC), which could be streamlined into a single validation strategy in a follow-up.",
+          "severity": "low"
+        }
+      ]
+    },
+    {
+      "sourceIndex": 1,
+      "verdict": "block",
+      "criticalReason": "OAuth2 callback endpoint receives the state parameter in MoodleCallbackRequest but completely ignores it without validating it against the stored session/cookie state. This directly violates the PR's Acceptance Criteria ('validates it against the stored session/cookie state and rejects the request if they do not match or if the state is missing') and leaves the system vulnerable to CSRF attacks.",
+      "concerns": []
+    }
+  ]
+}
