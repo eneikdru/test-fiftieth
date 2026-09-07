@@ -22,6 +22,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
+@io.zonky.test.db.AutoConfigureEmbeddedDatabase
 @Transactional
 public class LtiSsoIntegrationTest {
 

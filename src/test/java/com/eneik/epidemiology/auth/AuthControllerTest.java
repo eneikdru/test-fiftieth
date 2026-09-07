@@ -31,6 +31,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
+@io.zonky.test.db.AutoConfigureEmbeddedDatabase
 @Transactional
 class AuthControllerTest {
 
@@ -223,15 +224,11 @@ class AuthControllerTest {
     }
 
     @Test
-    @DisplayName("Given an OIDC SSO request, When the mock responds with valid profile data, Then the user is successfully logged in via OIDC")
+    @DisplayName("Given an OIDC SSO request, When a valid signed OIDC token is provided, Then system verifies JWT signature locally and authenticates user")
     void testOidcLogin_Success() throws Exception {
-        mockServer.expect(org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo("https://moodle.epidemiology-inst.ru/oauth2/userinfo"))
-                .andExpect(org.springframework.test.web.client.match.MockRestRequestMatchers.header("Authorization", "Bearer mock_oidc_token"))
-                .andRespond(org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess(
-                        "{\"username\":\"oidc_user\",\"moodle_role\":\"Исследователь\",\"department\":\"Lab\",\"email\":\"oidc@inst.ru\",\"full_name\":\"OIDC User\",\"courses\":\"\"}",
-                        MediaType.APPLICATION_JSON));
+        String validOidcToken = jwtTokenProvider.generateToken("oidc_user", "Исследователь");
 
-        String ssoBody = "{\"username\":\"oidc_user\",\"oidc_token\":\"mock_oidc_token\"}";
+        String ssoBody = String.format("{\"username\":\"oidc_user\",\"oidc_token\":\"%s\"}", validOidcToken);
 
         mockMvc.perform(post("/api/v1/auth/sso/oidc")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -249,7 +246,36 @@ class AuthControllerTest {
 
         User user = userService.findByUsername("oidc_user").orElseThrow();
         assert "RESEARCHER".equals(user.getRole());
-        assert "Lab".equals(user.getDepartment());
+    }
+
+    @Test
+    @DisplayName("Given an OIDC token with invalid or missing signature, When OIDC auth endpoint called, Then rejects request with 401 Unauthorized")
+    void testOidcLogin_InvalidSignature_Returns401() throws Exception {
+        String invalidOidcToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJvaWRjX3VzZXIiLCJyb2xlIjoiSU5WQUxJRCJ9.invalid_signature_hash";
+
+        String ssoBody = String.format("{\"username\":\"oidc_user\",\"oidc_token\":\"%s\"}", invalidOidcToken);
+
+        mockMvc.perform(post("/api/v1/auth/sso/oidc")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(ssoBody))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.error_code", is("INVALID_SSO_TOKEN")))
+                .andExpect(jsonPath("$.message", is("Недействительный токен OIDC или имя пользователя.")));
+    }
+
+    @Test
+    @DisplayName("Given a tampered OIDC token, When validation occurs, Then token is rejected and 401 response returned")
+    void testOidcLogin_TamperedToken_Returns401() throws Exception {
+        String validToken = jwtTokenProvider.generateToken("oidc_user", "RESEARCHER");
+        String tamperedToken = validToken + "tampered_extra_bytes";
+
+        String ssoBody = String.format("{\"username\":\"oidc_user\",\"oidc_token\":\"%s\"}", tamperedToken);
+
+        mockMvc.perform(post("/api/v1/auth/sso/oidc")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(ssoBody))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.error_code", is("INVALID_SSO_TOKEN")));
     }
 
     @Test
