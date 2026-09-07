@@ -207,9 +207,11 @@ class AuthControllerTest {
         userService.createUser("moodle_aspirant", "Pass123!", "aspirant@inst.ru", "Аспирант Тестович", "USER");
 
         String callbackBody = "{\"code\":\"mock_moodle_aspirant_code\",\"state\":\"test_state\"}";
+        jakarta.servlet.http.Cookie cookie = new jakarta.servlet.http.Cookie("oauth2_state", "test_state");
 
         mockMvc.perform(post("/api/v1/auth/moodle/callback")
                 .contentType(MediaType.APPLICATION_JSON)
+                .cookie(cookie)
                 .content(callbackBody))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.access_token", notNullValue()))
@@ -268,9 +270,11 @@ class AuthControllerTest {
         userService.createUser("moodle_user", "Pass123!", "moodle@inst.ru", "Moodle User", "USER");
 
         String callbackBody = "{\"code\":\"mock_moodle_auth_code\",\"state\":\"test_state\"}";
+        jakarta.servlet.http.Cookie cookie = new jakarta.servlet.http.Cookie("oauth2_state", "test_state");
 
         mockMvc.perform(post("/api/v1/auth/moodle/callback")
                 .contentType(MediaType.APPLICATION_JSON)
+                .cookie(cookie)
                 .content(callbackBody))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.access_token", notNullValue()))
@@ -291,10 +295,12 @@ class AuthControllerTest {
 
         userService.createUser("moodle_user", "MySecureFallback!", "moodle@inst.ru", "Moodle User", "USER");
 
-        String callbackBody = "{\"code\":\"invalid_code\",\"username\":\"moodle_user\",\"fallback_password\":\"MySecureFallback!\"}";
+        String callbackBody = "{\"code\":\"invalid_code\",\"username\":\"moodle_user\",\"fallback_password\":\"MySecureFallback!\",\"state\":\"test_state\"}";
+        jakarta.servlet.http.Cookie cookie = new jakarta.servlet.http.Cookie("oauth2_state", "test_state");
 
         mockMvc.perform(post("/api/v1/auth/moodle/callback")
                 .contentType(MediaType.APPLICATION_JSON)
+                .cookie(cookie)
                 .content(callbackBody))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.access_token", notNullValue()))
@@ -520,4 +526,20 @@ class AuthControllerTest {
         User updatedUser = userService.findByUsername("sidorov_v").orElseThrow();
         assert userService.verifyPassword("NewStrongPass2026!", updatedUser.getPasswordHash());
     }
+
+
+    @Test
+    @DisplayName("Given an OAuth2 callback request, When the state parameter is provided but mismatches the cookie, Then it rejects the request")
+    void testMoodleCallback_MismatchedState_ReturnsUnauthorized() throws Exception {
+        String callbackBody = "{\"code\":\"mock_code\",\"state\":\"wrong_state\"}";
+        jakarta.servlet.http.Cookie cookie = new jakarta.servlet.http.Cookie("oauth2_state", "correct_state");
+
+        mockMvc.perform(post("/api/v1/auth/moodle/callback")
+                .contentType(MediaType.APPLICATION_JSON)
+                .cookie(cookie)
+                .content(callbackBody))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.error_code", is("INVALID_STATE")));
+    }
+
 }
