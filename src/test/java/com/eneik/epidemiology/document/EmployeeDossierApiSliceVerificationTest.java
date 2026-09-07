@@ -68,6 +68,7 @@ public class EmployeeDossierApiSliceVerificationTest {
         EmployeeDocument doc1 = new EmployeeDocument("EMP-101", "ORDER", "Приказ о назначении исследователем", LocalDate.of(2024, 1, 10), "Приказ №101/К");
         doc1.setScientificDirection("EPIDEMIOLOGY");
         EmployeeDocument doc2 = new EmployeeDocument("EMP-101", "REPORT", "Годовой эпидемиологический отчет", LocalDate.of(2024, 5, 12), "Итоговый отчет 2024");
+        doc2.setAccessDepartment("Эпидемиология");
         doc2.setScientificDirection("EPIDEMIOLOGY");
 
         employeeDocumentRepository.saveAll(List.of(doc1, doc2));

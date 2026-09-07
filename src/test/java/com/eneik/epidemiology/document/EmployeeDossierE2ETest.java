@@ -63,6 +63,7 @@ public class EmployeeDossierE2ETest {
 
         EmployeeDocument doc1 = new EmployeeDocument("EMP-E2E-1", "ORDER", "Initial Order E2E", LocalDate.of(2023, 1, 1), "Content 1");
         EmployeeDocument doc2 = new EmployeeDocument("EMP-E2E-1", "REPORT", "Initial Report E2E", LocalDate.of(2023, 2, 1), "Content 2");
+        doc2.setAccessDepartment("Эпидемиология");
         EmployeeDocument doc3 = new EmployeeDocument("EMP-E2E-2", "EXAM", "Exam E2E", LocalDate.of(2023, 3, 1), "Content 3");
 
         employeeDocumentRepository.saveAll(List.of(doc1, doc2, doc3));
