@@ -39,9 +39,16 @@ public class ApiSliceA35b025bVerificationTest {
     }
 
     @Test
-    @DisplayName("Given valid SSO login, When authenticating, Then the missing test coverage module A35b025b is verified (Happy Path)")
+    @DisplayName("Given valid SSO login, When authenticating, Then token is passed in Authorization header and not query param")
     void testA35b025bCoverageHappyPath() throws Exception {
-        mockServer.expect(org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo("https://moodle.epidemiology-inst.ru/oauth2/userinfo?code=mock_valid_new_moodle_token"))
+        mockServer.expect(org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo("https://moodle.epidemiology-inst.ru/oauth2/userinfo"))
+                .andExpect(org.springframework.test.web.client.match.MockRestRequestMatchers.header("Authorization", "Bearer mock_valid_new_moodle_token"))
+                .andExpect(request -> {
+                    String query = request.getURI().getQuery();
+                    if (query != null && query.contains("code=")) {
+                        throw new AssertionError("Token must not be transmitted in URL query parameters");
+                    }
+                })
                 .andRespond(org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess(
                         "{\"username\":\"new_moodle_user\",\"moodle_role\":\"Администратор\",\"department\":\"IT\",\"email\":\"new_moodle@inst.ru\",\"full_name\":\"New Moodle Admin\",\"courses\":\"\"}",
                         MediaType.APPLICATION_JSON));
@@ -58,7 +65,8 @@ public class ApiSliceA35b025bVerificationTest {
     @Test
     @DisplayName("Given invalid moodle token, When authenticating, Then return unauthorized (Negative 1)")
     void testA35b025bCoverageNegative1() throws Exception {
-        mockServer.expect(org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo("https://moodle.epidemiology-inst.ru/oauth2/userinfo?code=mock_invalid_token"))
+        mockServer.expect(org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo("https://moodle.epidemiology-inst.ru/oauth2/userinfo"))
+                .andExpect(org.springframework.test.web.client.match.MockRestRequestMatchers.header("Authorization", "Bearer mock_invalid_token"))
                 .andRespond(org.springframework.test.web.client.response.MockRestResponseCreators.withServerError());
 
         String ssoBody = "{\"username\":\"new_moodle_user\",\"moodle_token\":\"mock_invalid_token\",\"fallback_password\":\"wrong_password\"}";
@@ -83,7 +91,8 @@ public class ApiSliceA35b025bVerificationTest {
     @Test
     @DisplayName("Given empty fallback password, When authenticating, Then fallback to generated (Boundary)")
     void testA35b025bCoverageBoundary() throws Exception {
-        mockServer.expect(org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo("https://moodle.epidemiology-inst.ru/oauth2/userinfo?code=mock_valid_new_moodle_token"))
+        mockServer.expect(org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo("https://moodle.epidemiology-inst.ru/oauth2/userinfo"))
+                .andExpect(org.springframework.test.web.client.match.MockRestRequestMatchers.header("Authorization", "Bearer mock_valid_new_moodle_token"))
                 .andRespond(org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess(
                         "{\"username\":\"new_moodle_user\",\"moodle_role\":\"Администратор\",\"department\":\"IT\",\"email\":\"new_moodle@inst.ru\",\"full_name\":\"New Moodle Admin\",\"courses\":\"\"}",
                         MediaType.APPLICATION_JSON));
