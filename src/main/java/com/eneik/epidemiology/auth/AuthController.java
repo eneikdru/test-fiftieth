@@ -13,13 +13,25 @@ import java.time.OffsetDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @RestController
 @RequestMapping("/api/v1/auth")
 public class AuthController {
+    private static final Logger log = LoggerFactory.getLogger(AuthController.class);
 
     @org.springframework.beans.factory.annotation.Value("${moodle.server.url:https://moodle.epidemiology-inst.ru}")
     private String moodleServerUrl = "https://moodle.epidemiology-inst.ru";
+
+    @org.springframework.beans.factory.annotation.Value("${moodle.client.id:epidemiology_portal}")
+    private String moodleClientId = "epidemiology_portal";
+
+    @org.springframework.beans.factory.annotation.Value("${moodle.client.secret:}")
+    private String moodleClientSecret = "";
+
+    @org.springframework.beans.factory.annotation.Value("${moodle.redirect.uri:http://localhost:8080/auth/moodle/callback}")
+    private String moodleRedirectUri = "http://localhost:8080/auth/moodle/callback";
 
     @org.springframework.beans.factory.annotation.Value("${moodle.lti.consumer.secret:moodle_lti_secret}")
     private String moodleLtiSecret = "moodle_lti_secret";
@@ -192,7 +204,7 @@ public class AuthController {
 
     @GetMapping("/moodle/config")
     public ResponseEntity<?> getMoodleConfig() {
-        String loginUrl = "https://moodle.epidemiology-inst.ru/oauth2/authorize?client_id=epidemiology_portal&response_type=code&redirect_uri=http://localhost:8080/auth/moodle/callback";
+        String loginUrl = moodleServerUrl + "/oauth2/authorize?client_id=" + moodleClientId + "&response_type=code&redirect_uri=" + moodleRedirectUri;
         return ResponseEntity.ok(Map.of(
                 "login_url", loginUrl,
                 "auth_url", loginUrl
@@ -212,7 +224,10 @@ public class AuthController {
         MoodleProfile profile = null;
         boolean isServerError = false;
         try {
-            profile = exchangeCodeForProfile(request.code());
+            String accessToken = exchangeCodeForToken(request.code());
+            if (accessToken != null) {
+                profile = fetchProfileWithToken(accessToken);
+            }
         } catch (LmsServerException e) {
             isServerError = true;
         }
@@ -877,15 +892,47 @@ public class AuthController {
 
     private record MoodleProfile(String username, String moodleRole, String department, String email, String fullName, String courses) {}
 
-    private MoodleProfile exchangeCodeForProfile(String code) {
+    private String exchangeCodeForToken(String code) {
         if (isBlank(code)) {
+            return null;
+        }
+        try {
+            String url = moodleServerUrl + "/oauth2/token";
+            org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
+            headers.setContentType(org.springframework.http.MediaType.APPLICATION_FORM_URLENCODED);
+            org.springframework.util.MultiValueMap<String, String> map = new org.springframework.util.LinkedMultiValueMap<>();
+            map.add("grant_type", "authorization_code");
+            map.add("client_id", moodleClientId);
+            if (moodleClientSecret != null && !moodleClientSecret.isEmpty()) {
+                map.add("client_secret", moodleClientSecret);
+            }
+            map.add("redirect_uri", moodleRedirectUri);
+            map.add("code", code);
+
+            org.springframework.http.HttpEntity<org.springframework.util.MultiValueMap<String, String>> request = new org.springframework.http.HttpEntity<>(map, headers);
+            ResponseEntity<Map> response = restTemplate.postForEntity(url, request, Map.class);
+            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                return (String) response.getBody().get("access_token");
+            }
+        } catch (org.springframework.web.client.HttpServerErrorException | org.springframework.web.client.ResourceAccessException e) {
+            log.error("LMS is unreachable or returned server error during token exchange", e);
+            throw new LmsServerException("LMS is unreachable or returned server error", e);
+        } catch (Exception e) {
+            log.error("Error exchanging authorization code for token", e);
+            // Return null so fallback auth handles it
+        }
+        return null;
+    }
+
+    private MoodleProfile fetchProfileWithToken(String token) {
+        if (isBlank(token)) {
             return null;
         }
 
         try {
             String url = moodleServerUrl + "/oauth2/userinfo";
             org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
-            headers.setBearerAuth(code);
+            headers.setBearerAuth(token);
             org.springframework.http.HttpEntity<String> entity = new org.springframework.http.HttpEntity<>("", headers);
             ResponseEntity<Map> response = restTemplate.exchange(url, org.springframework.http.HttpMethod.GET, entity, Map.class);
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
@@ -918,11 +965,11 @@ public class AuthController {
     }
 
     private MoodleProfile fetchMoodleProfile(String token) {
-        return exchangeCodeForProfile(token);
+        return fetchProfileWithToken(token);
     }
 
     private MoodleProfile fetchOidcProfile(String token) {
-        return exchangeCodeForProfile(token);
+        return fetchProfileWithToken(token);
     }
 
     private String mapMoodleRole(String moodleRole) {

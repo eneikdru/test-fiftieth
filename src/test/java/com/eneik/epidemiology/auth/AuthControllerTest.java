@@ -194,8 +194,12 @@ class AuthControllerTest {
     @Test
     @DisplayName("Given a Moodle role containing 'Аспирант', When mapMoodleRole is evaluated, Then it returns the 'RESEARCHER' internal role.")
     void testMoodleCallback_AspirantRole_MapsToResearcher() throws Exception {
+        mockServer.expect(org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo("https://moodle.epidemiology-inst.ru/oauth2/token"))
+                .andRespond(org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess(
+                        "{\"access_token\":\"mock_moodle_aspirant_token\"}", MediaType.APPLICATION_JSON));
+
         mockServer.expect(org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo("https://moodle.epidemiology-inst.ru/oauth2/userinfo"))
-                .andExpect(org.springframework.test.web.client.match.MockRestRequestMatchers.header("Authorization", "Bearer mock_moodle_aspirant_code"))
+                .andExpect(org.springframework.test.web.client.match.MockRestRequestMatchers.header("Authorization", "Bearer mock_moodle_aspirant_token"))
                 .andRespond(org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess(
                         "{\"username\":\"moodle_aspirant\",\"moodle_role\":\"Аспирант первого года\",\"department\":\"Эпидемиология\",\"email\":\"aspirant@inst.ru\",\"full_name\":\"Аспирант Тестович\",\"courses\":\"BIO-101\"}",
                         MediaType.APPLICATION_JSON));
@@ -251,8 +255,12 @@ class AuthControllerTest {
     @Test
     @DisplayName("Given Moodle SSO callback with valid auth code, When callback endpoint called, Then exchanges code for profile and authenticates user")
     void testMoodleCallback_ValidCode_AuthenticatesAndSyncsRole() throws Exception {
+        mockServer.expect(org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo("https://moodle.epidemiology-inst.ru/oauth2/token"))
+                .andRespond(org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess(
+                        "{\"access_token\":\"mock_moodle_auth_token\"}", MediaType.APPLICATION_JSON));
+
         mockServer.expect(org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo("https://moodle.epidemiology-inst.ru/oauth2/userinfo"))
-                .andExpect(org.springframework.test.web.client.match.MockRestRequestMatchers.header("Authorization", "Bearer mock_moodle_auth_code"))
+                .andExpect(org.springframework.test.web.client.match.MockRestRequestMatchers.header("Authorization", "Bearer mock_moodle_auth_token"))
                 .andRespond(org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess(
                         "{\"username\":\"moodle_user\",\"moodle_role\":\"Старший научный сотрудник\",\"department\":\"Эпидемиология\",\"email\":\"moodle@inst.ru\",\"full_name\":\"Moodle User\",\"courses\":\"BIO-101\"}",
                         MediaType.APPLICATION_JSON));
@@ -278,8 +286,7 @@ class AuthControllerTest {
     @Test
     @DisplayName("Given external LMS is down and auth code invalid, When callback endpoint called with fallback credentials, Then authenticates locally via fallback")
     void testMoodleCallback_LmsDown_FallbackAuthenticationSuccess() throws Exception {
-        mockServer.expect(org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo("https://moodle.epidemiology-inst.ru/oauth2/userinfo"))
-                .andExpect(org.springframework.test.web.client.match.MockRestRequestMatchers.header("Authorization", "Bearer invalid_code"))
+        mockServer.expect(org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo("https://moodle.epidemiology-inst.ru/oauth2/token"))
                 .andRespond(org.springframework.test.web.client.response.MockRestResponseCreators.withServerError());
 
         userService.createUser("moodle_user", "MySecureFallback!", "moodle@inst.ru", "Moodle User", "USER");
