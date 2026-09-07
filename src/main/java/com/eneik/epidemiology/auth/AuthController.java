@@ -257,7 +257,7 @@ public class AuthController {
                 User user = userService.findByUsernameOrEmail(request.username().trim()).orElse(null);
                 if (user != null && userService.verifyPassword(request.fallback_password().trim(), user.getPasswordHash())) {
                     telemetryService.recordFallbackLoginTelemetry(user.getUsername());
-                    String accessToken = jwtTokenProvider.generateToken(user.getUsername(), user.getRole());
+                    String accessToken = jwtTokenProvider.generateToken(user.getUsername(), user.getRole(), user.getDepartment(), user.getCourses());
                     String refreshToken = "ref_" + user.getUsername() + "_" + System.currentTimeMillis();
 
                     return ResponseEntity.ok(Map.of(
@@ -325,7 +325,7 @@ public class AuthController {
 
         telemetryService.recordSsoLoginTelemetry(user.getUsername());
 
-        String accessToken = jwtTokenProvider.generateToken(user.getUsername(), user.getRole());
+        String accessToken = jwtTokenProvider.generateToken(user.getUsername(), user.getRole(), user.getDepartment(), user.getCourses());
         String refreshToken = "ref_" + user.getUsername() + "_" + System.currentTimeMillis();
 
         return ResponseEntity.ok(Map.of(
@@ -393,7 +393,7 @@ public class AuthController {
 
         telemetryService.recordFallbackLoginTelemetry(user.getUsername());
 
-        String accessToken = jwtTokenProvider.generateToken(user.getUsername(), user.getRole());
+        String accessToken = jwtTokenProvider.generateToken(user.getUsername(), user.getRole(), user.getDepartment(), user.getCourses());
         String refreshToken = "ref_" + user.getUsername() + "_" + System.currentTimeMillis();
 
         Map<String, Object> response = Map.of(
@@ -494,7 +494,7 @@ public class AuthController {
 
         telemetryService.recordSsoLoginTelemetry(user.getUsername());
 
-        String accessToken = jwtTokenProvider.generateToken(user.getUsername(), user.getRole());
+        String accessToken = jwtTokenProvider.generateToken(user.getUsername(), user.getRole(), user.getDepartment(), user.getCourses());
         String refreshToken = "ref_" + user.getUsername() + "_" + System.currentTimeMillis();
 
         return ResponseEntity.ok(Map.of(
@@ -583,7 +583,7 @@ public class AuthController {
                 User user = userService.findByUsernameOrEmail(request.username().trim()).orElse(null);
                 if (user != null && userService.verifyPassword(request.fallback_password().trim(), user.getPasswordHash())) {
                     telemetryService.recordFallbackLoginTelemetry(user.getUsername());
-                    String accessToken = jwtTokenProvider.generateToken(user.getUsername(), user.getRole());
+                    String accessToken = jwtTokenProvider.generateToken(user.getUsername(), user.getRole(), user.getDepartment(), user.getCourses());
                     String refreshToken = "ref_" + user.getUsername() + "_" + System.currentTimeMillis();
 
                     Map<String, Object> response = Map.of(
@@ -658,7 +658,7 @@ public class AuthController {
 
         telemetryService.recordSsoLoginTelemetry(user.getUsername());
 
-        String accessToken = jwtTokenProvider.generateToken(user.getUsername(), user.getRole());
+        String accessToken = jwtTokenProvider.generateToken(user.getUsername(), user.getRole(), user.getDepartment(), user.getCourses());
         String refreshToken = "ref_" + user.getUsername() + "_" + System.currentTimeMillis();
 
         Map<String, Object> response = Map.of(
@@ -698,7 +698,7 @@ public class AuthController {
                 User user = userService.findByUsernameOrEmail(request.username().trim()).orElse(null);
                 if (user != null && userService.verifyPassword(request.fallback_password().trim(), user.getPasswordHash())) {
                     telemetryService.recordFallbackLoginTelemetry(user.getUsername());
-                    String accessToken = jwtTokenProvider.generateToken(user.getUsername(), user.getRole());
+                    String accessToken = jwtTokenProvider.generateToken(user.getUsername(), user.getRole(), user.getDepartment(), user.getCourses());
                     String refreshToken = "ref_" + user.getUsername() + "_" + System.currentTimeMillis();
 
                     Map<String, Object> response = Map.of(
@@ -768,7 +768,7 @@ public class AuthController {
 
         telemetryService.recordSsoLoginTelemetry(user.getUsername());
 
-        String accessToken = jwtTokenProvider.generateToken(user.getUsername(), user.getRole());
+        String accessToken = jwtTokenProvider.generateToken(user.getUsername(), user.getRole(), user.getDepartment(), user.getCourses());
         String refreshToken = "ref_" + user.getUsername() + "_" + System.currentTimeMillis();
 
         Map<String, Object> response = Map.of(
@@ -812,7 +812,7 @@ public class AuthController {
             ));
         }
 
-        String newAccessToken = jwtTokenProvider.generateToken(user.getUsername(), user.getRole());
+        String newAccessToken = jwtTokenProvider.generateToken(user.getUsername(), user.getRole(), user.getDepartment(), user.getCourses());
         String newRefreshToken = "ref_" + user.getUsername() + "_" + System.currentTimeMillis();
 
         Map<String, Object> response = Map.of(
