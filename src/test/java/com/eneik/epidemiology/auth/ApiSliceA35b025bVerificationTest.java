@@ -63,18 +63,18 @@ public class ApiSliceA35b025bVerificationTest {
     }
 
     @Test
-    @DisplayName("Given invalid moodle token, When authenticating, Then return unauthorized (Negative 1)")
+    @DisplayName("Given server error from LMS, When authenticating with invalid fallback, Then return internal server error (Negative 1)")
     void testA35b025bCoverageNegative1() throws Exception {
         mockServer.expect(org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo("https://moodle.epidemiology-inst.ru/oauth2/userinfo"))
                 .andExpect(org.springframework.test.web.client.match.MockRestRequestMatchers.header("Authorization", "Bearer mock_invalid_token"))
-                .andRespond(org.springframework.test.web.client.response.MockRestResponseCreators.withUnauthorizedRequest());
+                .andRespond(org.springframework.test.web.client.response.MockRestResponseCreators.withServerError());
 
         String ssoBody = "{\"username\":\"new_moodle_user\",\"moodle_token\":\"mock_invalid_token\",\"fallback_password\":\"wrong_password\"}";
 
         mockMvc.perform(post("/api/v1/auth/sso/moodle")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(ssoBody))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isInternalServerError());
     }
 
     @Test

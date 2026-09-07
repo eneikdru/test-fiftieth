@@ -209,7 +209,13 @@ public class AuthController {
             ));
         }
 
-        MoodleProfile profile = exchangeCodeForProfile(request.code());
+        MoodleProfile profile = null;
+        boolean isServerError = false;
+        try {
+            profile = exchangeCodeForProfile(request.code());
+        } catch (LmsServerException e) {
+            isServerError = true;
+        }
 
         if (profile == null) {
             // LMS is unreachable or authorization code exchange failed -> Check fallback auth
@@ -229,6 +235,13 @@ public class AuthController {
                             "user", buildUserInfo(user)
                     ));
                 }
+            }
+            if (isServerError) {
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                        "error_code", "INTERNAL_SERVER_ERROR",
+                        "message", "Сбой внешней LMS, вход с резервным паролем не удался.",
+                        "timestamp", OffsetDateTime.now().toString()
+                ));
             }
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
                     "error_code", "INVALID_AUTHORIZATION_CODE",
@@ -524,7 +537,13 @@ public class AuthController {
             ));
         }
 
-        MoodleProfile profile = fetchOidcProfile(request.oidc_token());
+        MoodleProfile profile = null;
+        boolean isServerError = false;
+        try {
+            profile = fetchOidcProfile(request.oidc_token());
+        } catch (LmsServerException e) {
+            isServerError = true;
+        }
 
         if (profile == null || !profile.username().trim().equalsIgnoreCase(request.username().trim())) {
             if (request.fallback_password() != null && !request.fallback_password().trim().isEmpty()) {
@@ -544,6 +563,13 @@ public class AuthController {
 
                     return ResponseEntity.ok(response);
                 }
+            }
+            if (isServerError) {
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                        "error_code", "INTERNAL_SERVER_ERROR",
+                        "message", "Сбой внешней LMS, вход с резервным паролем не удался.",
+                        "timestamp", OffsetDateTime.now().toString()
+                ));
             }
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
                     "error_code", "INVALID_SSO_TOKEN",
@@ -626,7 +652,13 @@ public class AuthController {
         // Minimal mock validation for SSO token to prevent arbitrary auth bypass.
         // In a real implementation, this would involve verifying an OAuth2/OIDC token or SAML assertion
         // against the Moodle identity provider's public keys and fetching the user profile securely.
-        MoodleProfile profile = fetchMoodleProfile(request.moodle_token());
+        MoodleProfile profile = null;
+        boolean isServerError = false;
+        try {
+            profile = fetchMoodleProfile(request.moodle_token());
+        } catch (LmsServerException e) {
+            isServerError = true;
+        }
 
         if (profile == null || !profile.username().trim().equalsIgnoreCase(request.username().trim())) {
             if (request.fallback_password() != null && !request.fallback_password().trim().isEmpty()) {
@@ -646,6 +678,13 @@ public class AuthController {
 
                     return ResponseEntity.ok(response);
                 }
+            }
+            if (isServerError) {
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                        "error_code", "INTERNAL_SERVER_ERROR",
+                        "message", "Сбой внешней LMS, вход с резервным паролем не удался.",
+                        "timestamp", OffsetDateTime.now().toString()
+                ));
             }
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
                     "error_code", "INVALID_SSO_TOKEN",
@@ -870,8 +909,10 @@ public class AuthController {
                     );
                 }
             }
+        } catch (org.springframework.web.client.HttpServerErrorException | org.springframework.web.client.ResourceAccessException e) {
+            throw new LmsServerException("LMS is unreachable or returned server error", e);
         } catch (Exception e) {
-            // External network request failed or LMS offline -> return null so fallback auth handles or returns 401
+            // Return null so fallback auth handles or returns 401 for other errors (like 4xx)
         }
         return null;
     }
