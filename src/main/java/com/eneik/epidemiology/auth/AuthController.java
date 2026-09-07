@@ -969,7 +969,94 @@ public class AuthController {
     }
 
     private MoodleProfile fetchOidcProfile(String token) {
-        return fetchProfileWithToken(token);
+        if (token == null || token.trim().isEmpty()) {
+            return null;
+        }
+
+        if (!validateOidcTokenSignature(token)) {
+            log.warn("OIDC ID token signature validation failed");
+            return null;
+        }
+
+        try {
+            String[] parts = token.split("\\.");
+            if (parts.length != 3) {
+                return null;
+            }
+            String payloadJson = new String(java.util.Base64.getUrlDecoder().decode(parts[1]), java.nio.charset.StandardCharsets.UTF_8);
+            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+            com.fasterxml.jackson.databind.JsonNode claims = mapper.readTree(payloadJson);
+
+            String username = claims.has("username") ? claims.get("username").asText() :
+                             (claims.has("preferred_username") ? claims.get("preferred_username").asText() :
+                             (claims.has("sub") ? claims.get("sub").asText() : null));
+
+            if (username == null || username.trim().isEmpty()) {
+                return null;
+            }
+
+            String moodleRole = claims.has("moodle_role") ? claims.get("moodle_role").asText() :
+                              (claims.has("role") ? claims.get("role").asText() : "Пользователь");
+
+            String department = claims.has("department") ? claims.get("department").asText() : "";
+            String email = claims.has("email") ? claims.get("email").asText() : "";
+            String fullName = claims.has("full_name") ? claims.get("full_name").asText() :
+                            (claims.has("name") ? claims.get("name").asText() : username);
+            String courses = claims.has("courses") ? claims.get("courses").asText() : "";
+
+            return new MoodleProfile(username, moodleRole, department, email, fullName, courses);
+        } catch (Exception e) {
+            log.error("Error extracting claims from OIDC ID token", e);
+            return null;
+        }
+    }
+
+    private boolean validateOidcTokenSignature(String token) {
+        if (jwtTokenProvider.validateToken(token)) {
+            return true;
+        }
+        if (moodleClientSecret != null && !moodleClientSecret.trim().isEmpty()) {
+            return validateTokenWithSecret(token, moodleClientSecret);
+        }
+        return false;
+    }
+
+    private boolean validateTokenWithSecret(String token, String secret) {
+        try {
+            if (token == null || !token.contains(".")) {
+                return false;
+            }
+            String[] parts = token.split("\\.");
+            if (parts.length != 3) {
+                return false;
+            }
+            String contentToSign = parts[0] + "." + parts[1];
+            javax.crypto.Mac mac = javax.crypto.Mac.getInstance("HmacSHA256");
+            javax.crypto.spec.SecretKeySpec secretKeySpec = new javax.crypto.spec.SecretKeySpec(
+                    secret.getBytes(java.nio.charset.StandardCharsets.UTF_8), "HmacSHA256");
+            mac.init(secretKeySpec);
+            byte[] rawHmac = mac.doFinal(contentToSign.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            String expectedSignature = java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(rawHmac);
+
+            byte[] expectedBytes = expectedSignature.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+            byte[] actualBytes = parts[2].getBytes(java.nio.charset.StandardCharsets.UTF_8);
+            if (!java.security.MessageDigest.isEqual(expectedBytes, actualBytes)) {
+                return false;
+            }
+
+            String payload = new String(java.util.Base64.getUrlDecoder().decode(parts[1]), java.nio.charset.StandardCharsets.UTF_8);
+            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+            com.fasterxml.jackson.databind.JsonNode jsonNode = mapper.readTree(payload);
+            if (jsonNode.has("exp")) {
+                long exp = jsonNode.get("exp").asLong();
+                if (System.currentTimeMillis() / 1000 > exp) {
+                    return false;
+                }
+            }
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     private String mapMoodleRole(String moodleRole) {

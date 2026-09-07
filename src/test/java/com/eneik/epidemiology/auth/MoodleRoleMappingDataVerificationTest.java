@@ -10,6 +10,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @SpringBootTest
+@io.zonky.test.db.AutoConfigureEmbeddedDatabase
 @Transactional
 public class MoodleRoleMappingDataVerificationTest {
 
