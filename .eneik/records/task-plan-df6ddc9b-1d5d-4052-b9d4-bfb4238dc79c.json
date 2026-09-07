@@ -1,0 +1,64 @@
+{
+  "epics": [
+    {
+      "existingEpicId": null,
+      "title": "Dossier Report Access Control",
+      "jtbd": "When an analytical report is generated, I want its access restricted based on the user's department and courses, so that closed reports are not globally accessible.",
+      "kanoClass": "Must-Be",
+      "cynefinDomain": "clear",
+      "sixSigmaMetric": "Percentage of generated reports lacking access control fields (target 0%)",
+      "tocConstraintRef": "Backend report generation authorization",
+      "sourceIndex": 0,
+      "requirements": [
+        "R1: When the DossierReport is saved, its accessDepartment and accessCourse fields must be populated from the user's Moodle department and courses"
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Patch Dossier Report Generation to Populate Access Fields",
+          "roleTag": "BARCAN-TAG-02",
+          "jtbd": "When implementing report saving for this epic, I want to extract the user's Moodle department and courses from the security context and set them on the DossierReport entity, so that access restrictions are automatically enforced",
+          "acceptanceCriteria": "Given an authenticated user with a Moodle department and courses\nWhen they generate an analytical report\nThen the saved DossierReport must have its accessDepartment and accessCourse fields set correctly, and an integration test must verify this behavior",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "Backend authorization propagation",
+          "sixSigmaMetric": "0% of generated reports lack access control fields in tests",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1"
+          ]
+        }
+      ]
+    },
+    {
+      "existingEpicId": "ca087fd2-45a6-4a9a-80a5-b0278aea4494",
+      "title": null,
+      "jtbd": null,
+      "kanoClass": null,
+      "cynefinDomain": null,
+      "sixSigmaMetric": null,
+      "tocConstraintRef": null,
+      "sourceIndex": 1,
+      "requirements": [
+        "R1: When processing the Moodle SSO callback, the system must first exchange the authorization code for an access token via the token endpoint before calling the userinfo endpoint"
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Fix Moodle SSO OAuth2 Token Exchange",
+          "roleTag": "BARCAN-TAG-02",
+          "jtbd": "When implementing Moodle SSO callback processing for this epic, I want to securely exchange the authorization code for an access token, so that the OAuth2 flow completes according to standard and securely fetches the user profile",
+          "acceptanceCriteria": "Given a valid Moodle authorization code\nWhen the system processes the SSO callback\nThen it must call the token endpoint for an access token, use it to call the userinfo endpoint, and an integration test must mock these endpoints to verify the correct sequence",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "SSO authentication flow correctness",
+          "sixSigmaMetric": "100% of SSO logins successfully exchange code for token",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1"
+          ]
+        }
+      ]
+    }
+  ]
+}
