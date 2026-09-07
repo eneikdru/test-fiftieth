@@ -643,7 +643,7 @@ public class AuthController {
         }
 
         String internalRole = mapMoodleRole(profile.moodleRole());
-        User user = userService.findByUsernameOrEmail(request.username().trim()).orElse(null);
+        User user = userService.findByUsernameOrEmail(profile.username().trim()).orElse(null);
 
         if (user == null) {
             String defaultPassword = (request.fallback_password() != null && !request.fallback_password().trim().isEmpty())
@@ -836,7 +836,8 @@ public class AuthController {
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                 Map<String, Object> body = response.getBody();
                 String username = (String) body.getOrDefault("username", body.get("preferred_username"));
-                String moodleRole = (String) body.getOrDefault("moodle_role", body.get("role"));
+                String moodleRole = (String) body.get("moodle_role");
+                if (moodleRole == null) moodleRole = (String) body.get("role");
                 String department = (String) body.get("department");
                 String email = (String) body.get("email");
                 String fullName = (String) body.getOrDefault("full_name", body.get("name"));

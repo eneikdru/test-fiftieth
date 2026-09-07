@@ -67,7 +67,7 @@ public class ApiSliceA35b025bVerificationTest {
     void testA35b025bCoverageNegative1() throws Exception {
         mockServer.expect(org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo("https://moodle.epidemiology-inst.ru/oauth2/userinfo"))
                 .andExpect(org.springframework.test.web.client.match.MockRestRequestMatchers.header("Authorization", "Bearer mock_invalid_token"))
-                .andRespond(org.springframework.test.web.client.response.MockRestResponseCreators.withServerError());
+                .andRespond(org.springframework.test.web.client.response.MockRestResponseCreators.withUnauthorizedRequest());
 
         String ssoBody = "{\"username\":\"new_moodle_user\",\"moodle_token\":\"mock_invalid_token\",\"fallback_password\":\"wrong_password\"}";
 
