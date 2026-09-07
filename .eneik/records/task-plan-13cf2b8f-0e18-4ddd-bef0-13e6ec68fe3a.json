@@ -1,0 +1,64 @@
+{
+  "epics": [
+    {
+      "existingEpicId": "ca087fd2-45a6-4a9a-80a5-b0278aea4494",
+      "title": null,
+      "jtbd": null,
+      "kanoClass": null,
+      "cynefinDomain": null,
+      "sixSigmaMetric": null,
+      "tocConstraintRef": null,
+      "sourceIndex": 0,
+      "requirements": [
+        "R1: Locally validate OIDC ID token signature and extract claims directly"
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Implement local OIDC ID token validation",
+          "roleTag": "BARCAN-TAG-07",
+          "jtbd": "When implementing local OIDC token validation for this epic, I want the token signature to be verified directly, so that unnecessary userinfo roundtrips are avoided and tests verify the validation logic.",
+          "acceptanceCriteria": "Given an OIDC login request,\nWhen the OIDC token is provided,\nThen the system verifies the JWT signature and extracts claims directly.\nGiven an invalid or missing signature,\nWhen the OIDC token is validated,\nThen the system rejects the token and tests confirm the rejection.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "auth-roundtrip",
+          "sixSigmaMetric": "auth latency",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1"
+          ]
+        }
+      ]
+    },
+    {
+      "existingEpicId": "ca087fd2-45a6-4a9a-80a5-b0278aea4494",
+      "title": null,
+      "jtbd": null,
+      "kanoClass": null,
+      "cynefinDomain": null,
+      "sixSigmaMetric": null,
+      "tocConstraintRef": null,
+      "sourceIndex": 1,
+      "requirements": [
+        "R1: Validate OAuth2 state parameter against stored session/cookie state"
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Implement OAuth2 state parameter validation",
+          "roleTag": "BARCAN-TAG-07",
+          "jtbd": "When implementing OAuth2 state parameter validation for this epic, I want the state to be verified, so that CSRF attacks are prevented and tests confirm the rejection of invalid states.",
+          "acceptanceCriteria": "Given an OAuth2 callback request,\nWhen the state parameter is provided,\nThen the system validates it against the stored session/cookie state.\nGiven a missing or mismatched state parameter,\nWhen the callback is processed,\nThen the system rejects the request and tests confirm the CSRF protection.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "auth-csrf",
+          "sixSigmaMetric": "auth security incidents",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1"
+          ]
+        }
+      ]
+    }
+  ]
+}
