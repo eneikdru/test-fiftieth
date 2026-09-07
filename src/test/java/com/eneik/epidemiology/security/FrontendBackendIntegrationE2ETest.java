@@ -34,6 +34,7 @@ public class FrontendBackendIntegrationE2ETest {
         testUser.setEmail("test@test.com");
         testUser.setFullName("Test User");
         testUser.setPasswordHash("hash");
+        testUser.setCreatedAt(java.time.OffsetDateTime.now());
         userRepository.save(testUser);
     }
 

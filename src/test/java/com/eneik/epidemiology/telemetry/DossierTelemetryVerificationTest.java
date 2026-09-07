@@ -65,6 +65,7 @@ class DossierTelemetryVerificationTest {
         testUser.setEmail("test@test.com");
         testUser.setFullName("Test User");
         testUser.setPasswordHash("hash");
+        testUser.setCreatedAt(java.time.OffsetDateTime.now());
         userRepository.save(testUser);
 
         EmployeeDocument doc1 = new EmployeeDocument("EMP-TEL-100", "VIROLOGY", "Order 1", LocalDate.of(2023, 5, 10), "Content 1");

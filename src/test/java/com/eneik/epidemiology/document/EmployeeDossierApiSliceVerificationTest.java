@@ -62,6 +62,7 @@ public class EmployeeDossierApiSliceVerificationTest {
         testUser.setEmail("test@test.com");
         testUser.setFullName("Test User");
         testUser.setPasswordHash("hash");
+        testUser.setCreatedAt(java.time.OffsetDateTime.now());
         userRepository.save(testUser);
 
         EmployeeDocument doc1 = new EmployeeDocument("EMP-101", "ORDER", "Приказ о назначении исследователем", LocalDate.of(2024, 1, 10), "Приказ №101/К");

@@ -58,6 +58,7 @@ public class EmployeeDossierE2ETest {
         testUser.setEmail("test@test.com");
         testUser.setFullName("Test User");
         testUser.setPasswordHash("hash");
+        testUser.setCreatedAt(java.time.OffsetDateTime.now());
         userRepository.save(testUser);
 
         EmployeeDocument doc1 = new EmployeeDocument("EMP-E2E-1", "ORDER", "Initial Order E2E", LocalDate.of(2023, 1, 1), "Content 1");
