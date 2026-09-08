@@ -18,7 +18,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
-@io.zonky.test.db.AutoConfigureEmbeddedDatabase
 @ActiveProfiles("test")
 public class EmployeeDossierAuthorizationTest {
 
