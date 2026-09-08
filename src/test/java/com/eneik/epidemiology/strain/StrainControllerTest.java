@@ -185,10 +185,11 @@ class StrainControllerTest {
     }
 
     @Test
-    @DisplayName("Given existing strain, When updateStrain is called, Then updates strain details and access rules")
+    @DisplayName("Given existing strain, When updateStrain is called by authorized user, Then updates strain details and access rules")
     void testUpdateStrain_Success() {
         User user = new User();
         user.setUsername("admin1");
+        user.setRole("ADMIN");
 
         when(authentication.getName()).thenReturn("admin1");
         when(userRepository.findByUsername("admin1")).thenReturn(Optional.of(user));
@@ -215,20 +216,76 @@ class StrainControllerTest {
     }
 
     @Test
-    @DisplayName("Given existing strain, When deleteStrain is called, Then removes strain and returns 204 No Content")
+    @DisplayName("Given user without access, When updateStrain is called, Then returns 403 Forbidden")
+    void testUpdateStrain_Forbidden() {
+        User user = new User();
+        user.setUsername("userBio");
+        user.setRole("RESEARCHER");
+        user.setDepartment("BIO");
+
+        when(authentication.getName()).thenReturn("userBio");
+        when(userRepository.findByUsername("userBio")).thenReturn(Optional.of(user));
+
+        UUID strainId = UUID.randomUUID();
+        Strain existing = new Strain();
+        existing.setId(strainId);
+        existing.setName("Restricted Strain");
+        existing.setAccessDepartment("CHEM");
+
+        when(strainRepository.findById(strainId)).thenReturn(Optional.of(existing));
+
+        StrainRequestDto request = new StrainRequestDto();
+        request.setName("Updated Name");
+
+        ResponseEntity<?> response = strainController.updateStrain(authentication, strainId, request);
+
+        assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
+        verify(strainRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("Given existing strain, When deleteStrain is called by authorized user, Then removes strain and returns 204 No Content")
     void testDeleteStrain_Success() {
         User user = new User();
         user.setUsername("admin1");
+        user.setRole("ADMIN");
 
         when(authentication.getName()).thenReturn("admin1");
         when(userRepository.findByUsername("admin1")).thenReturn(Optional.of(user));
 
         UUID strainId = UUID.randomUUID();
-        when(strainRepository.existsById(strainId)).thenReturn(true);
+        Strain existing = new Strain();
+        existing.setId(strainId);
+
+        when(strainRepository.findById(strainId)).thenReturn(Optional.of(existing));
 
         ResponseEntity<Void> response = strainController.deleteStrain(authentication, strainId);
 
         assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode());
         verify(strainRepository, times(1)).deleteById(strainId);
+    }
+
+    @Test
+    @DisplayName("Given user without access, When deleteStrain is called, Then returns 403 Forbidden")
+    void testDeleteStrain_Forbidden() {
+        User user = new User();
+        user.setUsername("userBio");
+        user.setRole("RESEARCHER");
+        user.setDepartment("BIO");
+
+        when(authentication.getName()).thenReturn("userBio");
+        when(userRepository.findByUsername("userBio")).thenReturn(Optional.of(user));
+
+        UUID strainId = UUID.randomUUID();
+        Strain existing = new Strain();
+        existing.setId(strainId);
+        existing.setAccessDepartment("CHEM");
+
+        when(strainRepository.findById(strainId)).thenReturn(Optional.of(existing));
+
+        ResponseEntity<Void> response = strainController.deleteStrain(authentication, strainId);
+
+        assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
+        verify(strainRepository, never()).deleteById(any());
     }
 }

@@ -37,6 +37,24 @@ public class StrainController {
         this.userRepository = userRepository;
     }
 
+    private boolean hasAccess(User user, Strain strain) {
+        if ("ADMIN".equals(user.getRole())) {
+            return true;
+        }
+
+        boolean isPublic = strain.getAccessDepartment() == null && strain.getAccessCourse() == null;
+        boolean matchesDepartment = strain.getAccessDepartment() != null && strain.getAccessDepartment().equals(user.getDepartment());
+        boolean matchesCourse = false;
+        if (strain.getAccessCourse() != null && user.getCourses() != null) {
+            List<String> userCourses = Arrays.stream(user.getCourses().split(","))
+                    .map(String::trim)
+                    .collect(Collectors.toList());
+            matchesCourse = userCourses.contains(strain.getAccessCourse());
+        }
+
+        return isPublic || matchesDepartment || matchesCourse;
+    }
+
     @GetMapping
     public ResponseEntity<List<Strain>> getStrains(
             Authentication authentication,
@@ -93,21 +111,8 @@ public class StrainController {
             return ResponseEntity.status(404).build();
         }
 
-        boolean isAdmin = "ADMIN".equals(user.getRole());
-        if (!isAdmin) {
-            boolean isPublic = strain.getAccessDepartment() == null && strain.getAccessCourse() == null;
-            boolean matchesDepartment = strain.getAccessDepartment() != null && strain.getAccessDepartment().equals(user.getDepartment());
-            boolean matchesCourse = false;
-            if (strain.getAccessCourse() != null && user.getCourses() != null) {
-                List<String> userCourses = Arrays.stream(user.getCourses().split(","))
-                        .map(String::trim)
-                        .collect(Collectors.toList());
-                matchesCourse = userCourses.contains(strain.getAccessCourse());
-            }
-
-            if (!isPublic && !matchesDepartment && !matchesCourse) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-            }
+        if (!hasAccess(user, strain)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
         return ResponseEntity.ok(strain);
@@ -168,6 +173,10 @@ public class StrainController {
             return ResponseEntity.status(404).build();
         }
 
+        if (!hasAccess(user, strain)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
         if (request == null || request.getName() == null || request.getName().trim().isEmpty()) {
             return ResponseEntity.status(400).body("Название штамма обязательно.");
         }
@@ -200,8 +209,13 @@ public class StrainController {
             return ResponseEntity.status(401).build();
         }
 
-        if (!strainRepository.existsById(id)) {
+        Strain strain = strainRepository.findById(id).orElse(null);
+        if (strain == null) {
             return ResponseEntity.status(404).build();
+        }
+
+        if (!hasAccess(user, strain)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
         strainRepository.deleteById(id);
