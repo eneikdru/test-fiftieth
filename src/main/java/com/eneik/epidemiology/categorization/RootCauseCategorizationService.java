@@ -146,10 +146,16 @@ public class RootCauseCategorizationService {
         long categorized = concernRepository.countByStreamNameAndRootCausePatternIdIsNotNull(stream);
         double coverageRate = total == 0 ? 100.0 : ((double) categorized / total) * 100.0;
 
+        List<String> gaps = new java.util.ArrayList<>();
+        List<DesignReviewConcern> uncategorized = concernRepository.findByStreamNameAndRootCausePatternIdIsNull(stream);
+        for (DesignReviewConcern concern : uncategorized) {
+            gaps.add("Uncategorized concern (id=" + concern.getId() + ", sequence=" + concern.getEpicSequence() + ")");
+        }
+
         if (telemetryService != null) {
             telemetryService.recordCategorizationCoverageTelemetry(stream, total, categorized, coverageRate);
         }
 
-        return new CategorizationCoverageResponse(stream, total, categorized, coverageRate);
+        return new CategorizationCoverageResponse(stream, total, categorized, coverageRate, gaps);
     }
 }

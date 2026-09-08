@@ -20,6 +20,7 @@ import org.slf4j.LoggerFactory;
 @RequestMapping("/api/v1/auth")
 public class AuthController {
     private static final Logger log = LoggerFactory.getLogger(AuthController.class);
+    private static final java.security.SecureRandom SECURE_RANDOM = new java.security.SecureRandom();
 
     @org.springframework.beans.factory.annotation.Value("${moodle.server.url:https://moodle.epidemiology-inst.ru}")
     private String moodleServerUrl = "https://moodle.epidemiology-inst.ru";
@@ -258,7 +259,7 @@ public class AuthController {
                 if (user != null && userService.verifyPassword(request.fallback_password().trim(), user.getPasswordHash())) {
                     telemetryService.recordFallbackLoginTelemetry(user.getUsername());
                     String accessToken = jwtTokenProvider.generateToken(user.getUsername(), user.getRole(), user.getDepartment(), user.getCourses());
-                    String refreshToken = "ref_" + user.getUsername() + "_" + System.currentTimeMillis();
+                    String refreshToken = generateSecureRefreshToken(user.getUsername());
 
                     return ResponseEntity.ok(Map.of(
                             "access_token", accessToken,
@@ -301,32 +302,30 @@ public class AuthController {
                     profile.courses()
             );
         } else {
-            boolean needsUpdate = false;
-            if (internalRole != null && !internalRole.equals(user.getRole())) {
-                needsUpdate = true;
-            }
-            if (profile.department() != null && !profile.department().equals(user.getDepartment())) {
-                needsUpdate = true;
-            }
-            if (profile.courses() != null && !profile.courses().equals(user.getCourses())) {
-                needsUpdate = true;
-            }
+            String oldRole = user.getRole();
+            String targetRole = internalRole != null ? internalRole : user.getRole();
+            String targetDept = (profile.department() != null && !profile.department().isBlank()) ? profile.department() : user.getDepartment();
+            String targetCourses = (profile.courses() != null && !profile.courses().isBlank()) ? profile.courses() : user.getCourses();
+
+            boolean needsUpdate = !java.util.Objects.equals(oldRole, targetRole)
+                    || !java.util.Objects.equals(user.getDepartment(), targetDept)
+                    || !java.util.Objects.equals(user.getCourses(), targetCourses);
+
             if (needsUpdate) {
-                int updated = userService.updateRoleAndDepartmentAtomically(user.getId(), user.getRole(), internalRole != null ? internalRole : user.getRole(), profile.department(), profile.courses());
+                int updated = userService.updateRoleAndDepartmentAtomically(user.getId(), oldRole, targetRole, targetDept, targetCourses);
+                user.setRole(targetRole);
+                user.setDepartment(targetDept);
+                user.setCourses(targetCourses);
                 if (updated == 0) {
-                    jdbcTemplate.update("UPDATE users SET role = ?, department = ?, courses = ? WHERE id = ?",
-                            internalRole != null ? internalRole : user.getRole(), profile.department(), profile.courses(), user.getId());
+                    user = userService.saveUser(user);
                 }
-                user.setRole(internalRole != null ? internalRole : user.getRole());
-                user.setDepartment(profile.department());
-                user.setCourses(profile.courses());
             }
         }
 
         telemetryService.recordSsoLoginTelemetry(user.getUsername());
 
         String accessToken = jwtTokenProvider.generateToken(user.getUsername(), user.getRole(), user.getDepartment(), user.getCourses());
-        String refreshToken = "ref_" + user.getUsername() + "_" + System.currentTimeMillis();
+        String refreshToken = generateSecureRefreshToken(user.getUsername());
 
         return ResponseEntity.ok(Map.of(
                 "access_token", accessToken,
@@ -394,7 +393,7 @@ public class AuthController {
         telemetryService.recordFallbackLoginTelemetry(user.getUsername());
 
         String accessToken = jwtTokenProvider.generateToken(user.getUsername(), user.getRole(), user.getDepartment(), user.getCourses());
-        String refreshToken = "ref_" + user.getUsername() + "_" + System.currentTimeMillis();
+        String refreshToken = generateSecureRefreshToken(user.getUsername());
 
         Map<String, Object> response = Map.of(
                 "access_token", accessToken,
@@ -470,32 +469,30 @@ public class AuthController {
                     courses != null ? courses.trim() : null
             );
         } else {
-            boolean needsUpdate = false;
-            if (internalRole != null && !internalRole.equals(user.getRole())) {
-                needsUpdate = true;
-            }
-            if (department != null && !department.equals(user.getDepartment())) {
-                needsUpdate = true;
-            }
-            if (courses != null && !courses.equals(user.getCourses())) {
-                needsUpdate = true;
-            }
+            String oldRole = user.getRole();
+            String targetRole = internalRole != null ? internalRole : user.getRole();
+            String targetDept = (department != null && !department.isBlank()) ? department.trim() : user.getDepartment();
+            String targetCourses = (courses != null && !courses.isBlank()) ? courses.trim() : user.getCourses();
+
+            boolean needsUpdate = !java.util.Objects.equals(oldRole, targetRole)
+                    || !java.util.Objects.equals(user.getDepartment(), targetDept)
+                    || !java.util.Objects.equals(user.getCourses(), targetCourses);
+
             if (needsUpdate) {
-                int updated = userService.updateRoleAndDepartmentAtomically(user.getId(), user.getRole(), internalRole != null ? internalRole : user.getRole(), department, courses);
+                int updated = userService.updateRoleAndDepartmentAtomically(user.getId(), oldRole, targetRole, targetDept, targetCourses);
+                user.setRole(targetRole);
+                user.setDepartment(targetDept);
+                user.setCourses(targetCourses);
                 if (updated == 0) {
-                    jdbcTemplate.update("UPDATE users SET role = ?, department = ?, courses = ? WHERE id = ?",
-                            internalRole != null ? internalRole : user.getRole(), department, courses, user.getId());
+                    user = userService.saveUser(user);
                 }
-                user.setRole(internalRole != null ? internalRole : user.getRole());
-                user.setDepartment(department);
-                user.setCourses(courses);
             }
         }
 
         telemetryService.recordSsoLoginTelemetry(user.getUsername());
 
         String accessToken = jwtTokenProvider.generateToken(user.getUsername(), user.getRole(), user.getDepartment(), user.getCourses());
-        String refreshToken = "ref_" + user.getUsername() + "_" + System.currentTimeMillis();
+        String refreshToken = generateSecureRefreshToken(user.getUsername());
 
         return ResponseEntity.ok(Map.of(
                 "access_token", accessToken,
@@ -584,7 +581,7 @@ public class AuthController {
                 if (user != null && userService.verifyPassword(request.fallback_password().trim(), user.getPasswordHash())) {
                     telemetryService.recordFallbackLoginTelemetry(user.getUsername());
                     String accessToken = jwtTokenProvider.generateToken(user.getUsername(), user.getRole(), user.getDepartment(), user.getCourses());
-                    String refreshToken = "ref_" + user.getUsername() + "_" + System.currentTimeMillis();
+                    String refreshToken = generateSecureRefreshToken(user.getUsername());
 
                     Map<String, Object> response = Map.of(
                             "access_token", accessToken,
@@ -634,32 +631,30 @@ public class AuthController {
                 profile.courses()
             );
         } else {
-            boolean needsUpdate = false;
-            if (internalRole != null && !internalRole.equals(user.getRole())) {
-                needsUpdate = true;
-            }
-            if (profile.department() != null && !profile.department().equals(user.getDepartment())) {
-                needsUpdate = true;
-            }
-            if (profile.courses() != null && !profile.courses().equals(user.getCourses())) {
-                needsUpdate = true;
-            }
+            String oldRole = user.getRole();
+            String targetRole = internalRole != null ? internalRole : user.getRole();
+            String targetDept = (profile.department() != null && !profile.department().isBlank()) ? profile.department() : user.getDepartment();
+            String targetCourses = (profile.courses() != null && !profile.courses().isBlank()) ? profile.courses() : user.getCourses();
+
+            boolean needsUpdate = !java.util.Objects.equals(oldRole, targetRole)
+                    || !java.util.Objects.equals(user.getDepartment(), targetDept)
+                    || !java.util.Objects.equals(user.getCourses(), targetCourses);
+
             if (needsUpdate) {
-                int updated = userService.updateRoleAndDepartmentAtomically(user.getId(), user.getRole(), internalRole != null ? internalRole : user.getRole(), profile.department(), profile.courses());
+                int updated = userService.updateRoleAndDepartmentAtomically(user.getId(), oldRole, targetRole, targetDept, targetCourses);
+                user.setRole(targetRole);
+                user.setDepartment(targetDept);
+                user.setCourses(targetCourses);
                 if (updated == 0) {
-                    jdbcTemplate.update("UPDATE users SET role = ?, department = ?, courses = ? WHERE id = ?",
-                            internalRole != null ? internalRole : user.getRole(), profile.department(), profile.courses(), user.getId());
+                    user = userService.saveUser(user);
                 }
-                user.setRole(internalRole != null ? internalRole : user.getRole());
-                user.setDepartment(profile.department());
-                user.setCourses(profile.courses());
             }
         }
 
         telemetryService.recordSsoLoginTelemetry(user.getUsername());
 
         String accessToken = jwtTokenProvider.generateToken(user.getUsername(), user.getRole(), user.getDepartment(), user.getCourses());
-        String refreshToken = "ref_" + user.getUsername() + "_" + System.currentTimeMillis();
+        String refreshToken = generateSecureRefreshToken(user.getUsername());
 
         Map<String, Object> response = Map.of(
                 "access_token", accessToken,
@@ -699,7 +694,7 @@ public class AuthController {
                 if (user != null && userService.verifyPassword(request.fallback_password().trim(), user.getPasswordHash())) {
                     telemetryService.recordFallbackLoginTelemetry(user.getUsername());
                     String accessToken = jwtTokenProvider.generateToken(user.getUsername(), user.getRole(), user.getDepartment(), user.getCourses());
-                    String refreshToken = "ref_" + user.getUsername() + "_" + System.currentTimeMillis();
+                    String refreshToken = generateSecureRefreshToken(user.getUsername());
 
                     Map<String, Object> response = Map.of(
                             "access_token", accessToken,
@@ -744,32 +739,30 @@ public class AuthController {
                 profile.courses()
             );
         } else {
-            boolean needsUpdate = false;
-            if (internalRole != null && !internalRole.equals(user.getRole())) {
-                needsUpdate = true;
-            }
-            if (profile.department() != null && !profile.department().equals(user.getDepartment())) {
-                needsUpdate = true;
-            }
-            if (profile.courses() != null && !profile.courses().equals(user.getCourses())) {
-                needsUpdate = true;
-            }
+            String oldRole = user.getRole();
+            String targetRole = internalRole != null ? internalRole : user.getRole();
+            String targetDept = (profile.department() != null && !profile.department().isBlank()) ? profile.department() : user.getDepartment();
+            String targetCourses = (profile.courses() != null && !profile.courses().isBlank()) ? profile.courses() : user.getCourses();
+
+            boolean needsUpdate = !java.util.Objects.equals(oldRole, targetRole)
+                    || !java.util.Objects.equals(user.getDepartment(), targetDept)
+                    || !java.util.Objects.equals(user.getCourses(), targetCourses);
+
             if (needsUpdate) {
-                int updated = userService.updateRoleAndDepartmentAtomically(user.getId(), user.getRole(), internalRole != null ? internalRole : user.getRole(), profile.department(), profile.courses());
+                int updated = userService.updateRoleAndDepartmentAtomically(user.getId(), oldRole, targetRole, targetDept, targetCourses);
+                user.setRole(targetRole);
+                user.setDepartment(targetDept);
+                user.setCourses(targetCourses);
                 if (updated == 0) {
-                    jdbcTemplate.update("UPDATE users SET role = ?, department = ?, courses = ? WHERE id = ?",
-                            internalRole != null ? internalRole : user.getRole(), profile.department(), profile.courses(), user.getId());
+                    user = userService.saveUser(user);
                 }
-                user.setRole(internalRole != null ? internalRole : user.getRole());
-                user.setDepartment(profile.department());
-                user.setCourses(profile.courses());
             }
         }
 
         telemetryService.recordSsoLoginTelemetry(user.getUsername());
 
         String accessToken = jwtTokenProvider.generateToken(user.getUsername(), user.getRole(), user.getDepartment(), user.getCourses());
-        String refreshToken = "ref_" + user.getUsername() + "_" + System.currentTimeMillis();
+        String refreshToken = generateSecureRefreshToken(user.getUsername());
 
         Map<String, Object> response = Map.of(
                 "access_token", accessToken,
@@ -813,7 +806,7 @@ public class AuthController {
         }
 
         String newAccessToken = jwtTokenProvider.generateToken(user.getUsername(), user.getRole(), user.getDepartment(), user.getCourses());
-        String newRefreshToken = "ref_" + user.getUsername() + "_" + System.currentTimeMillis();
+        String newRefreshToken = generateSecureRefreshToken(user.getUsername());
 
         Map<String, Object> response = Map.of(
                 "access_token", newAccessToken,
@@ -1133,6 +1126,13 @@ public class AuthController {
             map.put("moodle_id", user.getMoodleId());
         }
         return map;
+    }
+
+    private static String generateSecureRefreshToken(String username) {
+        byte[] randomBytes = new byte[32];
+        SECURE_RANDOM.nextBytes(randomBytes);
+        String cryptoRandom = java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(randomBytes);
+        return "ref_" + (username != null ? username : "user") + "_" + cryptoRandom;
     }
 
     private static String extractUsernameFromRefreshToken(String token) {

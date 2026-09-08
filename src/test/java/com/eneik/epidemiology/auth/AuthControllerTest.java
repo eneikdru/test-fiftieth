@@ -73,6 +73,35 @@ class AuthControllerTest {
     }
 
     @Test
+    @DisplayName("Given AuthController generates a refresh token, When invoked, Then it must perform real cryptographic generation rather than returning a predictable fixture.")
+    void testRefreshToken_CryptographicGeneration() throws Exception {
+        User user = userService.createUser("crypto_ref_user", "Pass123!", "USER");
+        String loginBody = "{\"username\":\"crypto_ref_user\",\"password\":\"Pass123!\"}";
+
+        MvcResult res1 = mockMvc.perform(post("/api/v1/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(loginBody))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        MvcResult res2 = mockMvc.perform(post("/api/v1/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(loginBody))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        String json1 = res1.getResponse().getContentAsString();
+        String json2 = res2.getResponse().getContentAsString();
+
+        String refToken1 = objectMapper.readTree(json1).get("refresh_token").asText();
+        String refToken2 = objectMapper.readTree(json2).get("refresh_token").asText();
+
+        org.junit.jupiter.api.Assertions.assertNotEquals(refToken1, refToken2);
+        org.junit.jupiter.api.Assertions.assertTrue(refToken1.startsWith("ref_crypto_ref_user_"));
+        org.junit.jupiter.api.Assertions.assertTrue(refToken1.length() > 30);
+    }
+
+    @Test
     @DisplayName("Given an authenticated request, When the user has department and courses in their OIDC token, Then integration tests must assert they are successfully wired into the application's access control.")
     void testOidcLogin_ExtractsDepartmentAndCourses_WiresToJwt() throws Exception {
         String validOidcToken = jwtTokenProvider.generateToken("oidc_jwt_user", "Исследователь", "Лаборатория геномики", "EPID-101,EPID-102");

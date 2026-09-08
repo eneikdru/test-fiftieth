@@ -41,6 +41,11 @@ public class UserService {
     }
 
     @Transactional
+    public User saveUser(User user) {
+        return userRepository.save(user);
+    }
+
+    @Transactional
     public User createUserWithMoodle(String username, String rawPassword, String email, String fullName, String role, String moodleId, String department, String courses) {
         if (userRepository.existsByUsername(username)) {
             throw new IllegalArgumentException("Пользователь с таким именем уже существует");

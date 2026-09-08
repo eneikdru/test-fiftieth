@@ -27,10 +27,10 @@ class CategorizationControllerTest {
     private RootCauseCategorizationService categorizationService;
 
     @Test
-    @DisplayName("Given an authenticated user, When GET /api/v1/categorization/coverage, Then returns categorization coverage metric")
+    @DisplayName("Given an authenticated user, When GET /api/v1/categorization/coverage, Then returns categorization coverage metric and identified gaps")
     @WithMockUser(username = "admin", roles = {"ADMIN"})
     void testGetCategorizationCoverage() throws Exception {
-        CategorizationCoverageResponse coverage = new CategorizationCoverageResponse("reviewConcerns", 10L, 8L, 80.0);
+        CategorizationCoverageResponse coverage = new CategorizationCoverageResponse("reviewConcerns", 10L, 8L, 80.0, java.util.List.of("Uncategorized concern (id=1, sequence=5)"));
         when(categorizationService.calculateCoverage("reviewConcerns")).thenReturn(coverage);
 
         mockMvc.perform(get("/api/v1/categorization/coverage")
@@ -39,7 +39,8 @@ class CategorizationControllerTest {
                 .andExpect(jsonPath("$.streamName").value("reviewConcerns"))
                 .andExpect(jsonPath("$.totalConcerns").value(10))
                 .andExpect(jsonPath("$.categorizedConcerns").value(8))
-                .andExpect(jsonPath("$.coverageRate").value(80.0));
+                .andExpect(jsonPath("$.coverageRate").value(80.0))
+                .andExpect(jsonPath("$.gaps[0]").value("Uncategorized concern (id=1, sequence=5)"));
 
         verify(categorizationService, times(1)).calculateCoverage("reviewConcerns");
     }
