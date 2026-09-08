@@ -1,0 +1,238 @@
+openapi: 3.0.3
+info:
+  title: API Управления Штаммами
+  description: Контракт API для управления изолированными штаммами и правилами доступа к ним.
+  version: 1.0.0
+servers:
+  - url: /api/v1
+    description: Основной сервер API
+paths:
+  /strains:
+    get:
+      summary: Получение списка доступных штаммов
+      description: Возвращает список изолированных штаммов, доступных текущему пользователю в соответствии с правилами доступа (по кафедрам/курсам или для администратора).
+      operationId: getStrains
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          description: Номер страницы
+          required: false
+          schema:
+            type: integer
+            default: 0
+        - name: size
+          in: query
+          description: Размер страницы
+          required: false
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Успешное получение списка штаммов
+          headers:
+            X-Total-Count:
+              schema:
+                type: integer
+              description: Общее количество записей
+            X-Total-Pages:
+              schema:
+                type: integer
+              description: Общее количество страниц
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/StrainResponse'
+        '401':
+          description: Пользователь не авторизован
+
+    post:
+      summary: Создание нового штамма
+      description: Добавляет новый изолированный штамм с указанными правилами доступа.
+      operationId: createStrain
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StrainRequest'
+      responses:
+        '201':
+          description: Штамм успешно создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StrainResponse'
+        '400':
+          description: Ошибка валидации данных
+        '401':
+          description: Пользователь не авторизован
+
+  /strains/{id}:
+    get:
+      summary: Получение штамма по ID
+      description: Возвращает детали изолированного штамма по его идентификатору.
+      operationId: getStrainById
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Идентификатор штамма
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Штамм найден
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StrainResponse'
+        '401':
+          description: Пользователь не авторизован
+        '403':
+          description: Нет прав на просмотр данного штамма
+        '404':
+          description: Штамм не найден
+
+    put:
+      summary: Изменение штамма
+      description: Обновляет данные и правила доступа существующего штамма.
+      operationId: updateStrain
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Идентификатор штамма
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StrainRequest'
+      responses:
+        '200':
+          description: Штамм успешно обновлен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StrainResponse'
+        '400':
+          description: Ошибка валидации данных
+        '401':
+          description: Пользователь не авторизован
+        '404':
+          description: Штамм не найден
+
+    delete:
+      summary: Удаление штамма
+      description: Удаляет штамм из системы по его идентификатору.
+      operationId: deleteStrain
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Идентификатор штамма
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Штамм успешно удален
+        '401':
+          description: Пользователь не авторизован
+        '404':
+          description: Штамм не найден
+
+components:
+  schemas:
+    StrainRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          description: Название штамма
+          example: "Штамм Influenza A/H1N1"
+        description:
+          type: string
+          description: Описание штамма
+          example: "Изолированный штамм вируса гриппа А"
+        identifiedDate:
+          type: string
+          format: date
+          description: Дата выделения штамма
+          example: "2024-03-15"
+        originCountry:
+          type: string
+          description: Страна происхождения
+          example: "Россия"
+        severityLevel:
+          type: string
+          description: Уровень патогенности / опасности
+          example: "HIGH"
+        accessDepartment:
+          type: string
+          description: Кафедра/подразделение с доступом к штамму
+          example: "BIO"
+        accessCourse:
+          type: string
+          description: Учебный курс с доступом к штамму
+          example: "BIO101"
+
+    StrainResponse:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Уникальный идентификатор штамма
+          example: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+        name:
+          type: string
+          description: Название штамма
+          example: "Штамм Influenza A/H1N1"
+        description:
+          type: string
+          description: Описание штамма
+        identifiedDate:
+          type: string
+          format: date
+          description: Дата выделения штамма
+        originCountry:
+          type: string
+          description: Страна происхождения
+        severityLevel:
+          type: string
+          description: Уровень патогенности / опасности
+        accessDepartment:
+          type: string
+          description: Кафедра/подразделение с доступом к штамму
+        accessCourse:
+          type: string
+          description: Учебный курс с доступом к штамму
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
