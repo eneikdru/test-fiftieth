@@ -4,6 +4,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -12,19 +13,28 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import com.eneik.epidemiology.auth.TokenRevocationService;
+import com.eneik.epidemiology.user.UserService;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.Optional;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtTokenProvider jwtTokenProvider;
     private final TokenRevocationService tokenRevocationService;
+    private final UserService userService;
 
-    public JwtAuthenticationFilter(JwtTokenProvider jwtTokenProvider, TokenRevocationService tokenRevocationService) {
+    @Autowired
+    public JwtAuthenticationFilter(JwtTokenProvider jwtTokenProvider, TokenRevocationService tokenRevocationService, UserService userService) {
         this.jwtTokenProvider = jwtTokenProvider;
         this.tokenRevocationService = tokenRevocationService;
+        this.userService = userService;
+    }
+
+    public JwtAuthenticationFilter(JwtTokenProvider jwtTokenProvider, TokenRevocationService tokenRevocationService) {
+        this(jwtTokenProvider, tokenRevocationService, null);
     }
 
     @Override
@@ -35,7 +45,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (token != null && !token.isEmpty()) {
             if (jwtTokenProvider.validateToken(token) && !tokenRevocationService.isTokenRevoked(token)) {
                 String username = jwtTokenProvider.getUsername(token);
-                String role = jwtTokenProvider.getRole(token);
+
+                String role = null;
+                if (username != null && !username.trim().isEmpty() && userService != null) {
+                    Optional<String> persistentRole = userService.resolveRoleByUsername(username);
+                    if (persistentRole.isPresent() && !persistentRole.get().trim().isEmpty()) {
+                        role = persistentRole.get();
+                    }
+                }
+
+                if (role == null || role.trim().isEmpty()) {
+                    role = jwtTokenProvider.getRole(token);
+                }
 
                 if (role == null || role.trim().isEmpty()) {
                     role = "USER";

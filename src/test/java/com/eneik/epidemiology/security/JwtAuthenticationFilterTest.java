@@ -3,6 +3,7 @@ package com.eneik.epidemiology.security;
 import com.eneik.epidemiology.auth.TokenRevocationService;
 import com.eneik.epidemiology.document.DocumentRepository;
 import com.eneik.epidemiology.document.ProtocolController;
+import com.eneik.epidemiology.user.UserService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -39,11 +40,29 @@ public class JwtAuthenticationFilterTest {
     @MockBean
     private TokenRevocationService tokenRevocationService;
 
+    @MockBean
+    private UserService userService;
+
     private void configureMockToken(String token, String username, String role) {
         Mockito.when(jwtTokenProvider.validateToken(token)).thenReturn(true);
         Mockito.when(tokenRevocationService.isTokenRevoked(token)).thenReturn(false);
         Mockito.when(jwtTokenProvider.getUsername(token)).thenReturn(username);
         Mockito.when(jwtTokenProvider.getRole(token)).thenReturn(role);
+    }
+
+    @Test
+    @DisplayName("Given persistent user role, When request is processed, Then persistent role overrides token claims and grants 200 OK")
+    void testAuthorizedRequest_PersistentRoleResolution_Granted200() throws Exception {
+        String token = "mock_valid_token_persistent";
+        configureMockToken(token, "persistent_user", "USER");
+        Mockito.when(userService.resolveRoleByUsername("persistent_user")).thenReturn(java.util.Optional.of("RESEARCHER"));
+
+        Mockito.when(documentRepository.fullTextSearch(isNull(), Mockito.eq("PROTOCOL"), isNull(), isNull(), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(Collections.emptyList()));
+
+        mockMvc.perform(get("/api/v1/protocols")
+                .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk());
     }
 
     @Test
