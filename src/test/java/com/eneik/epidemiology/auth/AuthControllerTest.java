@@ -626,4 +626,27 @@ class AuthControllerTest {
                 .andExpect(jsonPath("$.error_code", is("INVALID_STATE")));
     }
 
+    @Test
+    @DisplayName("Given an unauthenticated request or invalid token, When accessing protected endpoints, Then returns 401 Unauthorized counterexample")
+    void testAccessControl_UnauthenticatedRequest_Returns401Counterexample() throws Exception {
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/api/v1/dossier/reports"))
+                .andExpect(status().isUnauthorized());
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/api/v1/dossier/reports")
+                .header("Authorization", "Bearer invalid_or_malformed_token"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @DisplayName("Given a revoked or invalid refresh token, When refresh endpoint is called, Then returns 401 Unauthorized instead of predictable fixture")
+    void testRefreshToken_RevokedOrInvalidToken_Returns401Counterexample() throws Exception {
+        String invalidRefreshBody = "{\"refresh_token\":\"ref_nonexistent_user_1234567890\"}";
+
+        mockMvc.perform(post("/api/v1/auth/refresh")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(invalidRefreshBody))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.error_code", is("INVALID_TOKEN")));
+    }
+
 }
