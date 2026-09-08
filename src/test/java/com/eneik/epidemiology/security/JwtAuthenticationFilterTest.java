@@ -89,17 +89,15 @@ public class JwtAuthenticationFilterTest {
     }
 
     @Test
-    @DisplayName("Given token passed as URL query parameter, When requested, Then resolves token and returns 200 OK")
-    void testAuthorizedRequest_QueryParameterToken_Granted200() throws Exception {
+    @DisplayName("Given token passed as URL query parameter without Authorization header, When requested, Then ignores query token and returns 401 Unauthorized")
+    void testQueryParameterToken_NotAccepted_Returns401() throws Exception {
         String token = "mock_valid_param_token";
         configureMockToken(token, "researcher_user", "RESEARCHER");
 
-        Mockito.when(documentRepository.fullTextSearch(isNull(), Mockito.eq("PROTOCOL"), isNull(), isNull(), any(Pageable.class)))
-                .thenReturn(new PageImpl<>(Collections.emptyList()));
-
         mockMvc.perform(get("/api/v1/protocols")
                 .param("access_token", token))
-                .andExpect(status().isOk());
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.error_code", is("UNAUTHORIZED")));
     }
 
     @Test
