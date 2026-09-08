@@ -3,6 +3,7 @@ package com.eneik.epidemiology.security;
 import com.eneik.epidemiology.auth.TokenRevocationService;
 import com.eneik.epidemiology.document.DocumentRepository;
 import com.eneik.epidemiology.document.ProtocolController;
+import com.eneik.epidemiology.user.UserService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -38,6 +39,9 @@ class ProtocolAccessSecurityTest {
 
     @MockBean
     private TokenRevocationService tokenRevocationService;
+
+    @MockBean
+    private UserService userService;
 
     private void configureMockToken(String token, String username, String role) {
         Mockito.when(jwtTokenProvider.validateToken(token)).thenReturn(true);
