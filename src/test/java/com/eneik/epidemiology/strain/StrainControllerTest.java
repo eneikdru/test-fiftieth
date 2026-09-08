@@ -17,6 +17,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 
+import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -131,5 +132,160 @@ class StrainControllerTest {
         assertEquals(HttpStatus.UNAUTHORIZED, responseUnknownUser.getStatusCode());
 
         verify(strainRepository, never()).findAccessibleStrains(anyBoolean(), any(), any(), any());
+    }
+
+    @Test
+    @DisplayName("Given valid strain request, When createStrain is called, Then saves strain and returns 201 Created")
+    void testCreateStrain_Success() {
+        User user = new User();
+        user.setUsername("researcher1");
+        user.setRole("RESEARCHER");
+
+        when(authentication.getName()).thenReturn("researcher1");
+        when(userRepository.findByUsername("researcher1")).thenReturn(Optional.of(user));
+
+        StrainRequestDto request = new StrainRequestDto();
+        request.setName("New Strain");
+        request.setDescription("Test Description");
+        request.setIdentifiedDate(LocalDate.of(2024, 5, 10));
+        request.setOriginCountry("Russia");
+        request.setSeverityLevel("MEDIUM");
+        request.setAccessDepartment("BIO");
+        request.setAccessCourse("BIO101");
+
+        when(strainRepository.save(any(Strain.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        ResponseEntity<?> response = strainController.createStrain(authentication, request);
+
+        assertEquals(HttpStatus.CREATED, response.getStatusCode());
+        assertTrue(response.getBody() instanceof Strain);
+
+        Strain created = (Strain) response.getBody();
+        assertEquals("New Strain", created.getName());
+        assertEquals("BIO", created.getAccessDepartment());
+        assertEquals("BIO101", created.getAccessCourse());
+    }
+
+    @Test
+    @DisplayName("Given invalid strain request with empty name, When createStrain is called, Then returns 400 Bad Request")
+    void testCreateStrain_Invalid() {
+        User user = new User();
+        user.setUsername("researcher1");
+
+        when(authentication.getName()).thenReturn("researcher1");
+        when(userRepository.findByUsername("researcher1")).thenReturn(Optional.of(user));
+
+        StrainRequestDto request = new StrainRequestDto();
+        request.setName("   ");
+
+        ResponseEntity<?> response = strainController.createStrain(authentication, request);
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        verify(strainRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("Given existing strain, When updateStrain is called by authorized user, Then updates strain details and access rules")
+    void testUpdateStrain_Success() {
+        User user = new User();
+        user.setUsername("admin1");
+        user.setRole("ADMIN");
+
+        when(authentication.getName()).thenReturn("admin1");
+        when(userRepository.findByUsername("admin1")).thenReturn(Optional.of(user));
+
+        UUID strainId = UUID.randomUUID();
+        Strain existing = new Strain();
+        existing.setId(strainId);
+        existing.setName("Old Name");
+
+        when(strainRepository.findById(strainId)).thenReturn(Optional.of(existing));
+        when(strainRepository.save(any(Strain.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        StrainRequestDto request = new StrainRequestDto();
+        request.setName("Updated Name");
+        request.setAccessDepartment("CHEM");
+
+        ResponseEntity<?> response = strainController.updateStrain(authentication, strainId, request);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        Strain updated = (Strain) response.getBody();
+        assertNotNull(updated);
+        assertEquals("Updated Name", updated.getName());
+        assertEquals("CHEM", updated.getAccessDepartment());
+    }
+
+    @Test
+    @DisplayName("Given user without access, When updateStrain is called, Then returns 403 Forbidden")
+    void testUpdateStrain_Forbidden() {
+        User user = new User();
+        user.setUsername("userBio");
+        user.setRole("RESEARCHER");
+        user.setDepartment("BIO");
+
+        when(authentication.getName()).thenReturn("userBio");
+        when(userRepository.findByUsername("userBio")).thenReturn(Optional.of(user));
+
+        UUID strainId = UUID.randomUUID();
+        Strain existing = new Strain();
+        existing.setId(strainId);
+        existing.setName("Restricted Strain");
+        existing.setAccessDepartment("CHEM");
+
+        when(strainRepository.findById(strainId)).thenReturn(Optional.of(existing));
+
+        StrainRequestDto request = new StrainRequestDto();
+        request.setName("Updated Name");
+
+        ResponseEntity<?> response = strainController.updateStrain(authentication, strainId, request);
+
+        assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
+        verify(strainRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("Given existing strain, When deleteStrain is called by authorized user, Then removes strain and returns 204 No Content")
+    void testDeleteStrain_Success() {
+        User user = new User();
+        user.setUsername("admin1");
+        user.setRole("ADMIN");
+
+        when(authentication.getName()).thenReturn("admin1");
+        when(userRepository.findByUsername("admin1")).thenReturn(Optional.of(user));
+
+        UUID strainId = UUID.randomUUID();
+        Strain existing = new Strain();
+        existing.setId(strainId);
+
+        when(strainRepository.findById(strainId)).thenReturn(Optional.of(existing));
+
+        ResponseEntity<Void> response = strainController.deleteStrain(authentication, strainId);
+
+        assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode());
+        verify(strainRepository, times(1)).deleteById(strainId);
+    }
+
+    @Test
+    @DisplayName("Given user without access, When deleteStrain is called, Then returns 403 Forbidden")
+    void testDeleteStrain_Forbidden() {
+        User user = new User();
+        user.setUsername("userBio");
+        user.setRole("RESEARCHER");
+        user.setDepartment("BIO");
+
+        when(authentication.getName()).thenReturn("userBio");
+        when(userRepository.findByUsername("userBio")).thenReturn(Optional.of(user));
+
+        UUID strainId = UUID.randomUUID();
+        Strain existing = new Strain();
+        existing.setId(strainId);
+        existing.setAccessDepartment("CHEM");
+
+        when(strainRepository.findById(strainId)).thenReturn(Optional.of(existing));
+
+        ResponseEntity<Void> response = strainController.deleteStrain(authentication, strainId);
+
+        assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
+        verify(strainRepository, never()).deleteById(any());
     }
 }

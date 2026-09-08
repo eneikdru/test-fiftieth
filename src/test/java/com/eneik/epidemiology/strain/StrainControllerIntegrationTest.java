@@ -7,13 +7,16 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.UUID;
 
 import static org.hamcrest.Matchers.hasSize;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -30,6 +33,9 @@ public class StrainControllerIntegrationTest {
     @Autowired
     private StrainRepository strainRepository;
 
+    private UUID deptStrainId;
+    private UUID otherDeptStrainId;
+
     @BeforeEach
     void setUp() {
         strainRepository.deleteAll();
@@ -42,7 +48,8 @@ public class StrainControllerIntegrationTest {
         strainRepository.save(strainOpen);
 
         Strain strainDept = new Strain();
-        strainDept.setId(UUID.randomUUID());
+        deptStrainId = UUID.randomUUID();
+        strainDept.setId(deptStrainId);
         strainDept.setName("Dept Strain");
         strainDept.setAccessDepartment("BIO");
         strainRepository.save(strainDept);
@@ -54,7 +61,8 @@ public class StrainControllerIntegrationTest {
         strainRepository.save(strainCourse);
 
         Strain strainOtherDept = new Strain();
-        strainOtherDept.setId(UUID.randomUUID());
+        otherDeptStrainId = UUID.randomUUID();
+        strainOtherDept.setId(otherDeptStrainId);
         strainOtherDept.setName("Other Dept Strain");
         strainOtherDept.setAccessDepartment("CHEM");
         strainRepository.save(strainOtherDept);
@@ -113,5 +121,88 @@ public class StrainControllerIntegrationTest {
         mockMvc.perform(get("/api/v1/strains"))
                .andExpect(status().isOk())
                .andExpect(jsonPath("$", hasSize(4)));
+    }
+
+    @Test
+    @WithMockUser(username = "userBio")
+    void shouldCreateStrainWithAccessRules() throws Exception {
+        String requestJson = """
+                {
+                    "name": "Ebola Zaire",
+                    "description": "High consequence pathogen",
+                    "originCountry": "Congo",
+                    "severityLevel": "CRITICAL",
+                    "accessDepartment": "BIO",
+                    "accessCourse": "BIO102"
+                }
+                """;
+
+        mockMvc.perform(post("/api/v1/strains")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestJson))
+               .andExpect(status().isCreated())
+               .andExpect(jsonPath("$.id").exists())
+               .andExpect(jsonPath("$.name").value("Ebola Zaire"))
+               .andExpect(jsonPath("$.accessDepartment").value("BIO"))
+               .andExpect(jsonPath("$.accessCourse").value("BIO102"));
+    }
+
+    @Test
+    @WithMockUser(username = "userBio")
+    void shouldModifyExistingStrainAndAccessRules() throws Exception {
+        String updateJson = """
+                {
+                    "name": "Dept Strain Modified",
+                    "description": "Updated description",
+                    "accessDepartment": "BIO",
+                    "accessCourse": "BIO101"
+                }
+                """;
+
+        mockMvc.perform(put("/api/v1/strains/" + deptStrainId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(updateJson))
+               .andExpect(status().isOk())
+               .andExpect(jsonPath("$.id").value(deptStrainId.toString()))
+               .andExpect(jsonPath("$.name").value("Dept Strain Modified"))
+               .andExpect(jsonPath("$.accessCourse").value("BIO101"));
+
+        Strain updated = strainRepository.findById(deptStrainId).orElseThrow();
+        assertEquals("Dept Strain Modified", updated.getName());
+        assertEquals("BIO101", updated.getAccessCourse());
+    }
+
+    @Test
+    @WithMockUser(username = "userBio")
+    void shouldDenyUpdateForUnauthorizedStrain() throws Exception {
+        String updateJson = """
+                {
+                    "name": "Illegal Modification Attempt",
+                    "accessDepartment": "CHEM"
+                }
+                """;
+
+        mockMvc.perform(put("/api/v1/strains/" + otherDeptStrainId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(updateJson))
+               .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(username = "admin")
+    void shouldDeleteStrainById() throws Exception {
+        mockMvc.perform(delete("/api/v1/strains/" + deptStrainId))
+               .andExpect(status().isNoContent());
+
+        assertTrue(strainRepository.findById(deptStrainId).isEmpty());
+    }
+
+    @Test
+    @WithMockUser(username = "userBio")
+    void shouldDenyDeleteForUnauthorizedStrain() throws Exception {
+        mockMvc.perform(delete("/api/v1/strains/" + otherDeptStrainId))
+               .andExpect(status().isForbidden());
+
+        assertTrue(strainRepository.findById(otherDeptStrainId).isPresent());
     }
 }
