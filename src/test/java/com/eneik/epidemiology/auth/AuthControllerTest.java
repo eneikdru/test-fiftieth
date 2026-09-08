@@ -626,4 +626,75 @@ class AuthControllerTest {
                 .andExpect(jsonPath("$.error_code", is("INVALID_STATE")));
     }
 
+    @Test
+    @DisplayName("Given request to GET /api/v1/auth/moodle/override-role by ADMIN, When called, Then returns Moodle role hierarchy mappings list")
+    void testGetMoodleRoleMappings_Success() throws Exception {
+        User adminUser = userService.createUser("admin_override_user", "AdminPass123!", "ADMIN");
+        String adminToken = jwtTokenProvider.generateToken(adminUser.getUsername(), adminUser.getRole());
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/api/v1/auth/moodle/override-role")
+                .header("Authorization", "Bearer " + adminToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.mappings", notNullValue()))
+                .andExpect(jsonPath("$.total", notNullValue()));
+    }
+
+    @Test
+    @DisplayName("Given request to POST /api/v1/auth/moodle/override-role by ADMIN with valid user and role, When called, Then updates user role and returns success")
+    void testOverrideMoodleRole_Success() throws Exception {
+        User adminUser = userService.createUser("admin_override_user2", "AdminPass123!", "ADMIN");
+        String adminToken = jwtTokenProvider.generateToken(adminUser.getUsername(), adminUser.getRole());
+
+        User user = userService.createUser("override_user", "Pass12345!", "USER");
+
+        String overrideBody = String.format("{\"userId\":%d,\"role\":\"ADMIN\"}", user.getId());
+
+        mockMvc.perform(post("/api/v1/auth/moodle/override-role")
+                .header("Authorization", "Bearer " + adminToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(overrideBody))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success", is(true)))
+                .andExpect(jsonPath("$.role", is("ADMIN")));
+
+        User updatedUser = userService.findByUsername("override_user").orElseThrow();
+        org.junit.jupiter.api.Assertions.assertEquals("ADMIN", updatedUser.getRole());
+    }
+
+    @Test
+    @DisplayName("Given valid LTI launch request via form urlencoded body, When processLtiLaunchForm is invoked, Then authenticates user successfully")
+    void testLtiLaunch_FormPayload_Success() throws Exception {
+        mockMvc.perform(post("/api/v1/auth/lti/launch")
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                .param("username", "form_lti_user")
+                .param("full_name", "Форм Пользователь")
+                .param("email", "form_lti@epidemiology-inst.ru")
+                .param("roles", "Instructor")
+                .param("department", "Паразитология")
+                .param("oauth_signature", "valid_lti_signature"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.access_token", notNullValue()))
+                .andExpect(jsonPath("$.user.username", is("form_lti_user")))
+                .andExpect(jsonPath("$.user.role", is("EPIDEMIOLOGIST")));
+    }
+
+    @Test
+    @DisplayName("Given an invalid or corrupt refresh token, When refresh endpoint called, Then returns 401 Unauthorized")
+    void testRefreshToken_InvalidToken_ReturnsUnauthorized() throws Exception {
+        String invalidRefreshBody = "{\"refresh_token\":\"invalid_corrupt_refresh_token_12345\"}";
+
+        mockMvc.perform(post("/api/v1/auth/refresh")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(invalidRefreshBody))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.error_code", is("INVALID_TOKEN")));
+    }
+
+    @Test
+    @DisplayName("Given an unauthenticated request to protected endpoint, When executed, Then returns 401 Unauthorized")
+    void testProtectedEndpoint_WithoutToken_ReturnsUnauthorized() throws Exception {
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/api/v1/dossier/reports"))
+                .andExpect(status().isUnauthorized());
+    }
+
 }
