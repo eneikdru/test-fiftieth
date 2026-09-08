@@ -514,7 +514,7 @@ class AuthControllerTest {
     @DisplayName("Given valid refresh token, When refresh endpoint called, Then issues new token pair")
     void testRefreshToken_Success() throws Exception {
         userService.createUser("refresh_user", "RefPass123!", "USER");
-        String refreshToken = "ref_refresh_user_" + System.currentTimeMillis();
+        String refreshToken = jwtTokenProvider.generateRefreshToken("refresh_user");
 
         String refreshBody = String.format("{\"refresh_token\":\"%s\"}", refreshToken);
 
@@ -530,7 +530,8 @@ class AuthControllerTest {
     @Test
     @DisplayName("Given valid logout request, When logout endpoint called, Then invalidates session and returns success")
     void testLogout_Success() throws Exception {
-        String logoutBody = "{\"refresh_token\":\"ref_user1_12345\"}";
+        String refreshToken = jwtTokenProvider.generateRefreshToken("user1");
+        String logoutBody = String.format("{\"refresh_token\":\"%s\"}", refreshToken);
 
         mockMvc.perform(post("/api/v1/auth/logout")
                 .contentType(MediaType.APPLICATION_JSON)
