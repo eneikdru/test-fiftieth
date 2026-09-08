@@ -1,0 +1,45 @@
+{
+  "violations": [
+    {
+      "roleTag": "BARCAN-TAG-00",
+      "type": "refusal_criteria",
+      "prNumber": 1161,
+      "reason": "PR #1161 modifies multiple functions in AuthController but adds no tests, violating the Code Guardian constitutional requirement 'Добавление минимум одного теста на функцию, которую затронул PR'."
+    },
+    {
+      "roleTag": "BARCAN-TAG-07",
+      "type": "stub",
+      "reason": "In AuthController, the refresh token generation fakes success by returning a hardcoded predictable fixture ('ref_' + username + '_' + System.currentTimeMillis()) instead of performing real cryptographic work."
+    },
+    {
+      "roleTag": "BARCAN-TAG-09",
+      "type": "stub",
+      "prNumber": 1163,
+      "reason": "The coverage audit report acts as a pipeline stage faking success by falsely claiming zero gaps ({\"gaps\": []}) despite the core client brief requirements remaining unfulfilled and CI remaining red with 15 test failures."
+    },
+    {
+      "roleTag": "BARCAN-TAG-01",
+      "type": "layer_violation",
+      "prNumber": 1159,
+      "reason": "The OIDC token claims for department and courses are parsed into MoodleProfile but are silently dropped and unwired from the User persistence layer, acting as a claimed integration that is actually unwired."
+    },
+    {
+      "roleTag": "BARCAN-TAG-05",
+      "type": "causal_unjustified",
+      "prNumber": 1161,
+      "reason": "PR #1161 claims to 'verify access control', but the diff only appends arguments to token generation without changing any authorization mechanism or fixing the 401 Unauthorized root cause, meaning the claimed cause was never traced."
+    },
+    {
+      "roleTag": "BARCAN-TAG-06",
+      "type": "methodological",
+      "prNumber": 1161,
+      "reason": "PR #1161 modifies token generation behavior without writing any check that would refute the claim, violating the Falsification Harness proof obligation.",
+      "philosopher": "Карл Поппер",
+      "thesis": "The Logic of Scientific Discovery - falsifiability and critical testing",
+      "score": "14.000959",
+      "mustBe": "The agent must provide a failing counterexample or a targeted passing test that would fail under the defect.",
+      "performance": "Test suites continuously falsify system behavior.",
+      "attractive": "Complete deontic consistency."
+    }
+  ]
+}
