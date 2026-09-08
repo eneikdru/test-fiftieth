@@ -691,10 +691,50 @@ class AuthControllerTest {
     }
 
     @Test
-    @DisplayName("Given an unauthenticated request to protected endpoint, When executed, Then returns 401 Unauthorized")
+    @DisplayName("Given an unauthenticated request to profile endpoint, When executed, Then returns 401 Unauthorized")
     void testProtectedEndpoint_WithoutToken_ReturnsUnauthorized() throws Exception {
         mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/api/v1/dossier/reports"))
                 .andExpect(status().isUnauthorized());
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/api/v1/auth/profile"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @DisplayName("Given an authenticated SSO user, When profile endpoint is accessed and fallback password is set, Then fallback password is securely updated and local login succeeds")
+    void testPatchProfile_SetsFallbackPassword_AndLocalLoginSucceeds() throws Exception {
+        User user = userService.createUser("auto_sso_user", "OldUnknownGeneratedPass123!", "auto_sso@inst.ru", "SSO User", "USER");
+        String userToken = jwtTokenProvider.generateToken(user.getUsername(), user.getRole());
+
+        // 1. GET /api/v1/auth/profile
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/api/v1/auth/profile")
+                .header("Authorization", "Bearer " + userToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.user.username", is("auto_sso_user")))
+                .andExpect(jsonPath("$.user.email", is("auto_sso@inst.ru")));
+
+        // 2. PATCH /api/v1/auth/profile to set new fallback password
+        String patchBody = "{\"fallback_password\":\"NewFallbackPass2026!\"}";
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch("/api/v1/auth/profile")
+                .header("Authorization", "Bearer " + userToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(patchBody))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success", is(true)))
+                .andExpect(jsonPath("$.message", is("Резервный пароль профиля успешно обновлен.")));
+
+        // 3. Verify user's stored password hash is updated in database
+        User updatedUser = userService.findByUsername("auto_sso_user").orElseThrow();
+        assert userService.verifyPassword("NewFallbackPass2026!", updatedUser.getPasswordHash());
+
+        // 4. Attempt local login with the new fallback password
+        String loginBody = "{\"username\":\"auto_sso_user\",\"password\":\"NewFallbackPass2026!\"}";
+        mockMvc.perform(post("/api/v1/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(loginBody))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.access_token", notNullValue()))
+                .andExpect(jsonPath("$.user.username", is("auto_sso_user")));
     }
 
 }

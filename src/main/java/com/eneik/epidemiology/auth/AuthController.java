@@ -106,6 +106,7 @@ public class AuthController {
     public record LogoutRequest(String refresh_token) {}
     public record PasswordRecoveryRequest(String identity) {}
     public record PasswordResetConfirmationRequest(String recovery_token, String new_password) {}
+    public record UpdateProfileRequest(String password, String new_password, String fallback_password) {}
 
     @GetMapping("/moodle/override-role")
     public ResponseEntity<?> getMoodleRoleHierarchyMappings() {
@@ -883,6 +884,79 @@ public class AuthController {
                     "timestamp", OffsetDateTime.now().toString()
             ));
         }
+    }
+
+    @GetMapping("/profile")
+    public ResponseEntity<?> getProfile() {
+        org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getPrincipal())) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
+                    "error_code", "UNAUTHORIZED",
+                    "message", "Требуется авторизация для доступа к профилю.",
+                    "timestamp", OffsetDateTime.now().toString()
+            ));
+        }
+
+        User user = userService.findByUsernameOrEmail(auth.getName()).orElse(null);
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
+                    "error_code", "USER_NOT_FOUND",
+                    "message", "Пользователь не найден.",
+                    "timestamp", OffsetDateTime.now().toString()
+            ));
+        }
+
+        return ResponseEntity.ok(Map.of(
+                "user", buildUserInfo(user)
+        ));
+    }
+
+    @PatchMapping("/profile")
+    public ResponseEntity<?> updateProfile(@RequestBody(required = false) UpdateProfileRequest request) {
+        org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getPrincipal())) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
+                    "error_code", "UNAUTHORIZED",
+                    "message", "Требуется авторизация для обновления профиля.",
+                    "timestamp", OffsetDateTime.now().toString()
+            ));
+        }
+
+        User user = userService.findByUsernameOrEmail(auth.getName()).orElse(null);
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
+                    "error_code", "USER_NOT_FOUND",
+                    "message", "Пользователь не найден.",
+                    "timestamp", OffsetDateTime.now().toString()
+            ));
+        }
+
+        String newPassword = null;
+        if (request != null) {
+            if (request.fallback_password() != null && !request.fallback_password().trim().isEmpty()) {
+                newPassword = request.fallback_password().trim();
+            } else if (request.new_password() != null && !request.new_password().trim().isEmpty()) {
+                newPassword = request.new_password().trim();
+            } else if (request.password() != null && !request.password().trim().isEmpty()) {
+                newPassword = request.password().trim();
+            }
+        }
+
+        if (newPassword == null) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "error_code", "INVALID_REQUEST",
+                    "message", "Укажите новый пароль для профиля.",
+                    "timestamp", OffsetDateTime.now().toString()
+            ));
+        }
+
+        userService.updatePassword(user, newPassword);
+
+        return ResponseEntity.ok(Map.of(
+                "success", true,
+                "message", "Резервный пароль профиля успешно обновлен.",
+                "user", buildUserInfo(user)
+        ));
     }
 
     @PostMapping("/recovery/reset")

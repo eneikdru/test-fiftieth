@@ -111,6 +111,19 @@ public class UserService {
         return userRepository.existsByEmail(email);
     }
 
+    @Transactional
+    public void updatePassword(User user, String newRawPassword) {
+        if (user == null || user.getId() == null) {
+            throw new IllegalArgumentException("Пользователь должен быть указан");
+        }
+        if (newRawPassword == null || newRawPassword.trim().isEmpty()) {
+            throw new IllegalArgumentException("Пароль не может быть пустым");
+        }
+        String encoded = passwordEncoder.encode(newRawPassword.trim());
+        user.setPasswordHash(encoded);
+        userRepository.save(user);
+    }
+
     public boolean verifyPassword(String rawPassword, String encodedPassword) {
         return passwordEncoder.matches(rawPassword, encodedPassword);
     }
