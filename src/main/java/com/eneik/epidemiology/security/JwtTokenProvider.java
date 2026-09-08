@@ -35,6 +35,27 @@ public class JwtTokenProvider {
         return generateToken(username, role, null, null);
     }
 
+    public String generateRefreshToken(String username) {
+        Instant now = clock.instant();
+        Instant exp = now.plusSeconds(30L * 24 * 3600); // 30 days
+
+        String headerJson = "{\"alg\":\"HS256\",\"typ\":\"JWT\"}";
+        StringBuilder payloadBuilder = new StringBuilder();
+        payloadBuilder.append(String.format(
+                "{\"sub\":\"%s\",\"type\":\"refresh\"",
+                escapeJson(username)
+        ));
+        payloadBuilder.append(String.format(",\"iat\":%d,\"exp\":%d}", now.getEpochSecond(), exp.getEpochSecond()));
+
+        String encodedHeader = base64UrlEncode(headerJson.getBytes(StandardCharsets.UTF_8));
+        String encodedPayload = base64UrlEncode(payloadBuilder.toString().getBytes(StandardCharsets.UTF_8));
+
+        String contentToSign = encodedHeader + "." + encodedPayload;
+        String signature = hmacSha256(contentToSign, secretKey);
+
+        return contentToSign + "." + signature;
+    }
+
     public String generateToken(String username, String role, String department, String courses) {
         Instant now = clock.instant();
         Instant exp = now.plusSeconds(accessTokenValidityInSeconds);
