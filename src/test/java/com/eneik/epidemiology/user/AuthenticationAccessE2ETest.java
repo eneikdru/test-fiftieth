@@ -17,6 +17,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
+@io.zonky.test.db.AutoConfigureEmbeddedDatabase
 @Transactional
 class AuthenticationAccessE2ETest {
 

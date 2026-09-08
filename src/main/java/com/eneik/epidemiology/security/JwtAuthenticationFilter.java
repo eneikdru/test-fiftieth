@@ -30,13 +30,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
-        String authHeader = request.getHeader("Authorization");
+        String token = resolveToken(request);
 
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            String token = authHeader.substring(7);
+        if (token != null && !token.isEmpty()) {
             if (jwtTokenProvider.validateToken(token) && !tokenRevocationService.isTokenRevoked(token)) {
                 String username = jwtTokenProvider.getUsername(token);
                 String role = jwtTokenProvider.getRole(token);
+
+                if (role == null || role.trim().isEmpty()) {
+                    role = "USER";
+                }
+                role = role.trim().toUpperCase();
 
                 String authorityRole = role.startsWith("ROLE_") ? role : "ROLE_" + role;
                 SimpleGrantedAuthority authority = new SimpleGrantedAuthority(authorityRole);
@@ -50,5 +54,23 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    private String resolveToken(HttpServletRequest request) {
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader != null) {
+            String trimmedHeader = authHeader.trim();
+            if (trimmedHeader.toLowerCase().startsWith("bearer ")) {
+                return trimmedHeader.substring(7).trim();
+            }
+        }
+        String paramToken = request.getParameter("access_token");
+        if (paramToken == null || paramToken.trim().isEmpty()) {
+            paramToken = request.getParameter("token");
+        }
+        if (paramToken != null && !paramToken.trim().isEmpty()) {
+            return paramToken.trim();
+        }
+        return null;
     }
 }
