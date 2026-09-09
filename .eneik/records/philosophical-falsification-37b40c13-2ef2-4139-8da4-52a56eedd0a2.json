@@ -84,5 +84,54 @@
       "evidence": "frontend/index.html uses a JS alert for the imprint. frontend/registration-harness.html lacks the imprint completely. Also see STEP 1c instructions.",
       "screenshotFile": ""
     }
+    ,
+    {
+      "roleTag": "BARCAN-TAG-03",
+      "philosopher": "Энди Кларк",
+      "worldview": "Proponent of the extended mind thesis, arguing that cognition extends beyond the brain into tools and environments.",
+      "critique": "The frontend components lack sufficient cognitive offloading or contextual integration for complex workflows. The 'RegistrationForm' and 'PrivacySettings' do not provide real-time validation feedback or extended tooltips that would serve as artifacts to extend the user's cognitive processes, forcing the user to remember formats and constraints.",
+      "proposal": "Add real-time validation markers, informative tooltips, and contextual help to form inputs, allowing the UI to offload working memory requirements.",
+      "dislike": "Interfaces that demand high internal cognitive load without offering extended artifacts for support.",
+      "kanoClass": "Performance",
+      "confidence": "medium",
+      "evidence": "frontend/src/components/RegistrationForm.svelte and frontend/src/components/PrivacySettings.svelte lack inline contextual help or persistent artifacts.",
+      "screenshotFile": ""
+    },
+    {
+      "roleTag": "BARCAN-TAG-03",
+      "philosopher": "Томас Метцингер",
+      "worldview": "Describes the 'phenomenal tunnel', suggesting our experience is a transparent simulation (self-model) where we perceive the world but not the construction of the perception itself.",
+      "critique": "The frontend's SPA navigation (in `NavigationHub.svelte`) switches contexts without transparently exposing the loading states or the underlying transitions, potentially disrupting the user's fluid phenomenal tunnel if latency spikes, as there's no visual anchoring to explain the delay before the new view materializes.",
+      "proposal": "Implement smooth, skeleton-based loading states and transition animations that maintain the user's sense of continuity and transparently explain system processing time.",
+      "dislike": "Abrupt, unexplained state changes that break the user's transparent interaction model.",
+      "kanoClass": "Attractive",
+      "confidence": "medium",
+      "evidence": "frontend/src/components/NavigationHub.svelte tab switching logic.",
+      "screenshotFile": ""
+    },
+    {
+      "roleTag": "BARCAN-TAG-04",
+      "philosopher": "Эллиотт Собер",
+      "worldview": "Advocates for parsimony in explanation (e.g., AIC/BIC), arguing that simpler models with fewer auxiliary assumptions are preferable unless additional complexity significantly increases predictive power.",
+      "critique": "The `EpidemiologicalDatasetController` explicitly checks `datasetId` against a hardcoded set of valid strings (`\"SARS-CoV-2\", \"Ebola\", \"H1N1\"`) and enforces exactly `\"v1.0\"` for the schema version. This tightly couples the application to specific string constants, requiring excessive auxiliary assumptions about future dataset stability, violating parsimony when a simpler, more generalized validation approach (like relying on a database lookup or generic schema validator) would suffice.",
+      "proposal": "Refactor the validation logic to check `datasetId` against an authoritative database table or dynamic configuration, rather than hardcoding specific values, reducing the complexity of maintaining the controller.",
+      "dislike": "Hardcoded, inflexible logic that requires complex maintenance for simple domain additions.",
+      "kanoClass": "Must-Be",
+      "confidence": "high",
+      "evidence": "src/main/java/com/eneik/epidemiology/dataset/EpidemiologicalDatasetController.java",
+      "screenshotFile": ""
+    },
+    {
+      "roleTag": "BARCAN-TAG-05",
+      "philosopher": "Теодор Сайдер",
+      "worldview": "Defends four-dimensionalism, where objects persist through time by having temporal parts (stages) at different times.",
+      "critique": "The `DocumentController`'s `searchDocuments` method contains significant legacy search code (`query`, `author`, `year`) running alongside the newer full-text search logic. The legacy block is a vestigial temporal stage of the API's evolution that is actively worse for the system, causing confusion and maintenance burden. The product is actively worse for retaining this unused or superseded legacy code.",
+      "proposal": "Completely remove the legacy search parameters and the fallback `searchDocuments` repository call from `DocumentController`, unifying all queries through the modern full-text search path.",
+      "dislike": "Lingering, vestigial temporal stages of a system that pollute the current implementation and add maintenance burden.",
+      "kanoClass": "Reverse",
+      "confidence": "high",
+      "evidence": "src/main/java/com/eneik/epidemiology/document/DocumentController.java: legacy search compatibility block.",
+      "screenshotFile": ""
+    }
   ]
 }
