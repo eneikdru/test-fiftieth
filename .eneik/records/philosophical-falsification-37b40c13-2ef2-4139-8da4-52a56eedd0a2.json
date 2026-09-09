@@ -133,5 +133,42 @@
       "evidence": "src/main/java/com/eneik/epidemiology/document/DocumentController.java: legacy search compatibility block.",
       "screenshotFile": ""
     }
+    ,
+    {
+      "roleTag": "BARCAN-TAG-06",
+      "philosopher": "Альфред Тарский",
+      "worldview": "Known for the semantic conception of truth (T-schema), where a statement is true if and only if the state of affairs it describes actually holds in reality.",
+      "critique": "The frontend tests inside `e2e/` (like `catalog-search.spec.mjs`, `dossier-search.spec.mjs`, etc.) use `test.describe` inside `test` blocks, which throws a runtime exception (`Playwright Test did not expect test.describe() to be called here`). However, because these files fail to parse, Playwright reports 'No tests found' and exits without a failure status if configured improperly, creating a false truth status where the CI might pass, claiming the product was tested when no test actually ran.",
+      "proposal": "Fix the Playwright syntax errors (e.g. move `test` definitions into the `test.describe` blocks properly) so the tests actually execute and reflect the true state of the code.",
+      "dislike": "A test status that claims 'passed' (or skipped/empty) when the reality is that the testing mechanism itself is structurally broken, violating the T-schema.",
+      "kanoClass": "Must-Be",
+      "confidence": "high",
+      "evidence": "Execution of `npx playwright test` fails to load the test files due to syntax errors but could be misinterpreted by naive CI gates.",
+      "screenshotFile": ""
+    },
+    {
+      "roleTag": "BARCAN-TAG-07",
+      "philosopher": "Кит ДеРоуз",
+      "worldview": "Proponent of epistemic contextualism, arguing that the standards for what counts as 'knowledge' change depending on the context and the stakes involved.",
+      "critique": "In `AuthController.java`, the `mapMoodleRole` method attempts to determine user roles based on simple substrings (e.g., `if (lowerRole.contains(\"admin\")) return \"ADMIN\";`). In a high-stakes epidemiological context (e.g., assigning \"EPIDEMIOLOGIST\" or \"ADMIN\" rights), substring matching is an overly loose epistemic standard. An attacker with the name 'AdminAssistant' or similar could trivially gain administrative access.",
+      "proposal": "Implement strict, exact-match role mappings based on authoritative identifiers from the OIDC token, raising the epistemic standard to match the high stakes of the domain.",
+      "dislike": "Low epistemic standards applied to high-stakes authorization decisions.",
+      "kanoClass": "Must-Be",
+      "confidence": "high",
+      "evidence": "src/main/java/com/eneik/epidemiology/auth/AuthController.java: mapMoodleRole method.",
+      "screenshotFile": ""
+    },
+    {
+      "roleTag": "BARCAN-TAG-08",
+      "philosopher": "Готлоб Фреге",
+      "worldview": "Distinguished between sense (how a term refers) and reference (what it refers to), establishing modern logic and the need for compositional, transparent meaning.",
+      "critique": "In `AuthController.java`, the `fetchOidcProfile` method extracts a `username` from claims using `claims.has(\"username\") ? ... : claims.has(\"preferred_username\") ... : claims.has(\"sub\")`. Treating `sub` (an immutable UUID reference) interchangeably with `username` or `preferred_username` (mutable, semantic senses) conflates sense and reference. If a user changes their username, their identity might split or collide depending on which claim the token provider populates first.",
+      "proposal": "Separate the persistent, referential identity (`sub`) from the mutable, display identity (`username` or `preferred_username`), and enforce a strict lineage when linking LMS accounts to local records.",
+      "dislike": "Conflating mutable display names (sense) with immutable identifiers (reference) in identity mapping.",
+      "kanoClass": "Performance",
+      "confidence": "high",
+      "evidence": "src/main/java/com/eneik/epidemiology/auth/AuthController.java: fetchOidcProfile method logic.",
+      "screenshotFile": ""
+    }
   ]
 }
