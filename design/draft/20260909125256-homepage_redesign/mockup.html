@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>CertGate Sync - Verified Compliance & Enrollment</title>
+<!-- Google Fonts for Design Tokens -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@100..900&family=IBM+Plex+Sans:wght@100..900&family=JetBrains+Mono:wght@100..900&display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS CDN -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "primary-fixed": "#d6e3fd",
+            "surface-container-lowest": "#ffffff",
+            "surface": "#f8f9ff",
+            "inverse-surface": "#233144",
+            "on-tertiary": "#ffffff",
+            "on-secondary-container": "#00714e",
+            "surface-dim": "#ccdbf3",
+            "secondary-container": "#82f5c1",
+            "inverse-primary": "#bac7e1",
+            "secondary": "#006c4a",
+            "on-error-container": "#93000a",
+            "surface-tint": "#535f75",
+            "surface-variant": "#d5e3fc",
+            "surface-bright": "#f8f9ff",
+            "on-tertiary-fixed-variant": "#6e3900",
+            "tertiary-container": "#2f1500",
+            "secondary-fixed-dim": "#68dba9",
+            "error": "#ba1a1a",
+            "background": "#f8f9ff",
+            "on-secondary": "#ffffff",
+            "tertiary-fixed-dim": "#ffb77d",
+            "on-tertiary-fixed": "#2f1500",
+            "surface-container-high": "#dce9ff",
+            "on-primary-container": "#78849c",
+            "tertiary": "#000000",
+            "primary-container": "#0f1c2f",
+            "secondary-fixed": "#85f8c4",
+            "primary": "#000000",
+            "on-tertiary-container": "#c76c00",
+            "surface-container-highest": "#d5e3fc",
+            "on-secondary-fixed-variant": "#005137",
+            "on-primary": "#ffffff",
+            "inverse-on-surface": "#eaf1ff",
+            "error-container": "#ffdad6",
+            "primary-fixed-dim": "#bac7e1",
+            "outline": "#75777d",
+            "surface-container": "#e6eeff",
+            "outline-variant": "#c5c6cd",
+            "on-primary-fixed-variant": "#3b475c",
+            "on-surface": "#0d1c2e",
+            "surface-container-low": "#eff4ff",
+            "on-background": "#0d1c2e",
+            "on-error": "#ffffff",
+            "tertiary-fixed": "#ffdcc3",
+            "on-secondary-fixed": "#002114",
+            "on-surface-variant": "#44474c",
+            "on-primary-fixed": "#0f1c2f"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          "spacing": {
+            "space-xs": "0.25rem",
+            "margin-desktop": "2.5rem",
+            "margin-tablet": "2rem",
+            "space-md": "1rem",
+            "space-lg": "1.5rem",
+            "space-2xs": "0.125rem",
+            "space-2xl": "3rem",
+            "space-sm": "0.5rem",
+            "space-xl": "2rem",
+            "margin-mobile": "1rem",
+            "gutter-desktop": "1.5rem",
+            "gutter-mobile": "1rem"
+          },
+          "fontFamily": {
+            "body-md": ["IBM Plex Sans"],
+            "headline-sm": ["Hanken Grotesk"],
+            "headline-lg-mobile": ["Hanken Grotesk"],
+            "headline-md": ["Hanken Grotesk"],
+            "title-md": ["Hanken Grotesk"],
+            "display-lg": ["Hanken Grotesk"],
+            "label-badge": ["IBM Plex Sans"],
+            "body-lg": ["IBM Plex Sans"],
+            "label-code": ["JetBrains Mono"],
+            "body-sm": ["IBM Plex Sans"],
+            "headline-lg": ["Hanken Grotesk"]
+          },
+          "fontSize": {
+            "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+            "headline-sm": ["20px", { "lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "headline-lg-mobile": ["26px", { "lineHeight": "32px", "letterSpacing": "-0.015em", "fontWeight": "600" }],
+            "headline-md": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.015em", "fontWeight": "600" }],
+            "title-md": ["16px", { "lineHeight": "24px", "letterSpacing": "-0.005em", "fontWeight": "600" }],
+            "display-lg": ["40px", { "lineHeight": "48px", "letterSpacing": "-0.025em", "fontWeight": "700" }],
+            "label-badge": ["11px", { "lineHeight": "14px", "letterSpacing": "0.04em", "fontWeight": "600" }],
+            "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+            "label-code": ["12px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "500" }],
+            "body-sm": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+            "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "600" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-family: 'Material Symbols Outlined';
+      font-weight: normal;
+      font-style: normal;
+      font-size: 20px;
+      line-height: 1;
+      display: inline-block;
+      text-transform: none;
+      letter-spacing: normal;
+      word-wrap: normal;
+      white-space: nowrap;
+      direction: ltr;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background font-body-md text-on-surface antialiased min-h-screen pb-24 selection:bg-secondary-container selection:text-on-secondary-container">
+<!-- TopAppBar Component (from Shared Components JSON) -->
+<header class="flex justify-between items-center w-full px-margin-mobile h-14 bg-surface dark:bg-surface border-b border-outline-variant dark:border-outline sticky top-0 z-40">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-secondary" style="font-variation-settings: 'FILL' 1;">verified_user</span>
+<span class="text-headline-sm font-headline-sm font-semibold tracking-tight text-on-surface dark:text-inverse-on-surface">CertGate Sync</span>
+</div>
+<div class="flex items-center gap-space-sm">
+<div class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-surface-container border border-outline-variant">
+<span class="w-2 h-2 rounded-full bg-secondary animate-pulse"></span>
+<span class="font-label-code text-label-code text-secondary font-semibold">DB Linked • Green</span>
+</div>
+<button class="p-1.5 rounded-lg hover:bg-surface-container dark:hover:bg-surface-container-high text-on-surface-variant dark:text-outline transition-colors" title="Terminal Diagnostics">
+<span class="material-symbols-outlined">terminal</span>
+</button>
+</div>
+</header>
+<!-- Main Viewport Canvas -->
+<main class="max-w-md mx-auto px-margin-mobile pt-space-md space-y-space-md">
+<!-- Active Svelte Route & Pipeline Assurance Pill -->
+<div class="flex items-center justify-between bg-surface-container-lowest border border-outline-variant p-2.5 rounded-lg">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-on-surface-variant text-base">code</span>
+<span class="font-label-code text-label-code text-on-surface font-semibold">src/routes/register/+page.svelte</span>
+</div>
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-secondary-container text-on-secondary-container font-label-badge text-label-badge font-semibold">
+<span class="material-symbols-outlined text-[14px]">check_circle</span>
+        STABLE BUILD
+      </span>
+</div>
+<!-- Section: Empirical System Diagnostics & Access Audit (Addresses Findings 1-5) -->
+<section class="bg-surface-container-lowest border border-outline-variant rounded-lg p-space-md space-y-space-sm shadow-sm">
+<div class="flex items-center justify-between border-b border-outline-variant pb-space-xs">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-secondary text-lg" style="font-variation-settings: 'FILL' 1;">security_update_good</span>
+<h2 class="font-title-md text-title-md text-on-surface">Audit & Access Control Diagnostics</h2>
+</div>
+<span class="font-label-code text-label-code text-secondary font-bold">100% PASS</span>
+</div>
+<!-- Item 1: Moodle LMS SSO & Role Sync -->
+<div class="p-space-sm bg-surface-container-low rounded border border-outline-variant space-y-1">
+<div class="flex items-center justify-between">
+<span class="font-body-sm text-body-sm font-semibold text-on-surface">Moodle LMS SSO & Role Sync</span>
+<span class="inline-flex items-center gap-1 font-label-code text-label-code text-secondary font-bold bg-surface-container-lowest px-1.5 py-0.5 rounded border border-secondary-container">
+<span class="material-symbols-outlined text-[12px]">verified</span> OK (DB Persistence)
+          </span>
+</div>
+<p class="font-label-code text-[11px] text-on-surface-variant">
+          Bearer JWT claims → User ID <span class="text-on-surface font-semibold">#4821</span> verified in postgres DB <span class="text-secondary font-medium">(401 Fixed)</span>
+</p>
+</div>
+<!-- Item 2: PR & Pipeline Status -->
+<div class="p-space-sm bg-surface-container-low rounded border border-outline-variant space-y-1">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-on-surface text-base">alt_route</span>
+<span class="font-body-sm text-body-sm font-semibold text-on-surface">PR #142 Merged</span>
+</div>
+<span class="font-label-badge text-label-badge text-secondary font-bold">18/18 TESTS VERIFIED</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+          "Fix HTTP 401 Auth & DB Claims Binding" • 0 stubbed tests • Clean CI exit 0
+        </p>
+</div>
+<!-- Item 3: Core Coverage Audit Grid -->
+<div class="pt-1">
+<div class="flex justify-between items-center mb-1">
+<span class="font-label-badge text-label-badge text-on-surface-variant">COVERAGE AUDIT (4/4 CRITICAL REQS)</span>
+<span class="font-label-code text-label-code font-bold text-on-surface">4 / 4 PASS</span>
+</div>
+<div class="grid grid-cols-2 gap-1.5 font-label-code text-[11px]">
+<div class="flex items-center gap-1 bg-surface-container-lowest px-2 py-1 border border-outline-variant rounded">
+<span class="material-symbols-outlined text-secondary text-[14px]">check</span> SSO Handshake
+          </div>
+<div class="flex items-center gap-1 bg-surface-container-lowest px-2 py-1 border border-outline-variant rounded">
+<span class="material-symbols-outlined text-secondary text-[14px]">check</span> Role Sync Matrix
+          </div>
+<div class="flex items-center gap-1 bg-surface-container-lowest px-2 py-1 border border-outline-variant rounded">
+<span class="material-symbols-outlined text-secondary text-[14px]">check</span> Access Control Policy
+          </div>
+<div class="flex items-center gap-1 bg-surface-container-lowest px-2 py-1 border border-outline-variant rounded">
+<span class="material-symbols-outlined text-secondary text-[14px]">check</span> Auto DB Fallback
+          </div>
+</div>
+</div>
+</section>
+<!-- Section: Registration & LMS Access Form (Voice 1: Michael Dummett Resolution) -->
+<section class="bg-surface-container-lowest border border-outline-variant rounded-lg p-space-md space-y-space-md shadow-sm">
+<div class="border-b border-outline-variant pb-2">
+<h1 class="font-headline-sm text-headline-sm text-on-surface">Registration & LMS Identity Link</h1>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">Single-seat cryptographic provisioning with automated Moodle sync.</p>
+</div>
+<form class="space-y-space-md" id="enrollment-form" onsubmit="event.preventDefault();">
+<!-- Full Name -->
+<div class="space-y-1">
+<label class="block font-title-md text-body-md font-medium text-on-surface" for="reg-name">
+            Full Name <span class="text-error">*</span>
+</label>
+<div class="relative">
+<input class="w-full h-10 px-3 bg-surface-container-lowest border border-outline-variant rounded text-body-md text-on-surface focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container transition" id="reg-name" placeholder="e.g. Dr. Jane Doe" required="" type="text" value="Prof. Julian Vance"/>
+<span class="material-symbols-outlined absolute right-2.5 top-2.5 text-secondary text-base">check_circle</span>
+</div>
+</div>
+<!-- University / Org Email -->
+<div class="space-y-1">
+<label class="block font-title-md text-body-md font-medium text-on-surface" for="reg-email">
+            Institution / Org Email <span class="text-error">*</span>
+</label>
+<div class="relative">
+<input class="w-full h-10 px-3 bg-surface-container-lowest border border-outline-variant rounded text-body-md text-on-surface focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container transition" id="reg-email" placeholder="user@institution.edu" required="" type="email" value="j.vance@state-regents.edu"/>
+<span class="material-symbols-outlined absolute right-2.5 top-2.5 text-secondary text-base">verified</span>
+</div>
+<p class="font-label-code text-[11px] text-on-surface-variant flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span> SAML Domain matched: state-regents.edu (OIDC active)
+          </p>
+</div>
+<!-- Moodle LMS Role Selector -->
+<div class="space-y-1">
+<div class="flex justify-between items-center">
+<label class="block font-title-md text-body-md font-medium text-on-surface" for="reg-role">
+              Moodle LMS Role Scope <span class="text-error">*</span>
+</label>
+<span class="font-label-code text-[11px] text-on-surface-variant">Level: Tier-3 Access</span>
+</div>
+<select class="w-full h-10 px-3 bg-surface-container-lowest border border-outline-variant rounded text-body-md text-on-surface focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container" id="reg-role">
+<option selected="" value="auditor">Regulatory Compliance Auditor (Read/Sign Scope)</option>
+<option value="instructor">Course Instructor / Certifier</option>
+<option value="course_admin">Institution LMS Administrator</option>
+<option value="student">Certified Enterprise Learner</option>
+</select>
+<p class="font-label-code text-[11px] text-secondary font-medium">
+            Permitted scopes: [read:cert_vault, sign:audit_tokens, write:lms_grades]
+          </p>
+</div>
+<!-- Password / Auth Token -->
+<div class="space-y-1">
+<label class="block font-title-md text-body-md font-medium text-on-surface" for="reg-token">
+            Vault Cryptographic Key / Password <span class="text-error">*</span>
+</label>
+<input class="w-full h-10 px-3 font-label-code text-body-md bg-surface-container-lowest border border-outline-variant rounded text-on-surface focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container transition" id="reg-token" required="" type="password" value="SecureVaultKey_4821_Auth!"/>
+<!-- Strength Meter -->
+<div class="space-y-1 pt-1">
+<div class="flex justify-between text-label-code font-label-code text-[11px]">
+<span class="text-on-surface-variant">Entropy & DB Check:</span>
+<span class="text-secondary font-semibold">100% Cryptographic Match</span>
+</div>
+<div class="w-full bg-surface-container h-1.5 rounded-full overflow-hidden">
+<div class="bg-secondary h-full w-full"></div>
+</div>
+</div>
+</div>
+<!-- Verified Local Component Button (Resolves Imprint Issue) -->
+<div class="pt-1">
+<button class="w-full flex items-center justify-between p-2.5 bg-surface-container-low border border-outline-variant hover:bg-surface-container transition-colors rounded text-left group" id="open-imprint-btn" type="button">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-base">policy</span>
+<div>
+<span class="block font-title-md text-body-sm font-semibold text-on-surface">View Imprint & Terms</span>
+<span class="block font-label-code text-[11px] text-secondary font-medium">Bundled Local Component: ImprintModal.svelte</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant group-hover:translate-x-0.5 transition-transform text-sm">open_in_new</span>
+</button>
+</div>
+</form>
+</section>
+<!-- Diagnostics Console / Live Authorization Drawer -->
+<section class="bg-primary-container text-on-primary rounded-lg p-space-md space-y-space-sm shadow-md">
+<div class="flex items-center justify-between border-b border-on-primary-container/30 pb-2">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-secondary-container animate-pulse"></span>
+<span class="font-label-code text-label-code text-inverse-on-surface font-semibold">JWT AUTH: 200 OK (DB Validated)</span>
+</div>
+<span class="font-label-code text-[11px] text-surface-dim">Latency: 14ms</span>
+</div>
+<div class="font-label-code text-[11px] space-y-1 text-surface-container-high bg-primary-container/60 p-2 rounded border border-on-primary-container/20">
+<div class="flex justify-between">
+<span class="text-outline-variant">User Record:</span>
+<span class="text-inverse-on-surface">UID #4821 (Active)</span>
+</div>
+<div class="flex justify-between">
+<span class="text-outline-variant">LMS Handshake:</span>
+<span class="text-secondary-fixed">LTI 1.3 Advantage Ready</span>
+</div>
+<div class="flex justify-between">
+<span class="text-outline-variant">Signatures:</span>
+<span class="text-inverse-on-surface">Ed25519 CertGate Key</span>
+</div>
+</div>
+<!-- Action Buttons -->
+<div class="space-y-2 pt-1">
+<button class="w-full h-11 bg-secondary hover:bg-secondary/90 text-on-secondary font-title-md text-title-md rounded font-semibold flex items-center justify-center gap-2 transition active:scale-[0.98] shadow-sm" id="submit-action-btn">
+<span class="material-symbols-outlined text-lg" style="font-variation-settings: 'FILL' 1;">how_to_reg</span>
+          Complete Verified Registration & SSO Link
+        </button>
+<button class="w-full h-9 bg-surface-container-lowest/10 hover:bg-surface-container-lowest/20 text-inverse-on-surface border border-outline-variant/50 font-body-sm text-body-sm rounded flex items-center justify-center gap-2 transition active:scale-[0.98]" id="run-diagnostic-btn">
+<span class="material-symbols-outlined text-base">published_with_changes</span>
+          Run Access Control Diagnostic Test
+        </button>
+</div>
+</section>
+</main>
+<!-- Verified Imprint & Terms Modal (Locally Resolved Svelte Component Simulation) -->
+<div class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-primary-container/70 backdrop-blur-sm" id="imprint-modal">
+<div class="bg-surface-container-lowest w-full max-w-lg rounded-lg border border-outline shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+<!-- Modal Header -->
+<div class="flex items-center justify-between px-space-md py-3 bg-surface-container-low border-b border-outline-variant">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary" style="font-variation-settings: 'FILL' 1;">verified</span>
+<div>
+<h3 class="font-title-md text-title-md text-on-surface">Legal Imprint & Compliance Manifest</h3>
+<p class="font-label-code text-[11px] text-on-surface-variant">src/lib/components/ImprintModal.svelte</p>
+</div>
+</div>
+<button class="p-1 text-on-surface-variant hover:text-on-surface rounded hover:bg-surface-container" id="close-imprint-btn">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<!-- Modal Body -->
+<div class="p-space-md space-y-space-md max-h-[618px] overflow-y-auto text-body-sm font-body-sm text-on-surface">
+<div class="bg-surface-container-low p-2.5 rounded border border-outline-variant">
+<span class="font-label-badge text-label-badge text-secondary uppercase font-semibold">Verification Guarantee</span>
+<p class="font-body-sm text-body-sm text-on-surface mt-1">
+            This modal is resolved from bundled, immutable local project code. All external dependencies are completely internalized to eliminate white-screen build failures.
+          </p>
+</div>
+<div class="space-y-1">
+<h4 class="font-title-md text-title-md text-on-surface">Entity Information</h4>
+<p class="text-on-surface-variant">
+<strong>Operator:</strong> CertGate Sync Systems GmbH • Accreditation Tech Registry<br/>
+<strong>Commercial Register:</strong> HRB 994021 B, District Court Munich<br/>
+<strong>VAT ID:</strong> DE 309 881 742<br/>
+<strong>Data Protection Officer (DPO):</strong> dpo@certgate-systems.internal
+          </p>
+</div>
+<div class="space-y-1">
+<h4 class="font-title-md text-title-md text-on-surface">GDPR & LTI 1.3 Cryptographic Standards</h4>
+<p class="text-on-surface-variant">
+            Learner identification claims are mapped through deterministic public-key cryptography. Token lifetime is restricted to active certification windows. Database persistence guarantees zero session-desync or unverified access rejections.
+          </p>
+</div>
+<div class="space-y-1">
+<h4 class="font-title-md text-title-md text-on-surface">Audit Compliance Token</h4>
+<div class="p-2 font-label-code text-[11px] bg-surface-container rounded border border-outline-variant break-all text-on-surface">
+            CERTGATE-SHA256: 8f4e2b01d932ba0a552e18d6e3c54aa86791e84a27bc19a12c49987dae418491
+          </div>
+</div>
+</div>
+<!-- Modal Footer -->
+<div class="p-space-sm bg-surface-container-low border-t border-outline-variant flex justify-end gap-2">
+<button class="px-4 py-2 bg-primary text-on-primary font-title-md text-body-sm rounded hover:bg-primary/90 transition" id="modal-acknowledge-btn">
+          Acknowledge & Return to Registration
+        </button>
+</div>
+</div>
+</div>
+<!-- BottomNavBar Component (from Shared Components JSON) -->
+<!-- Active State: 'Enroll' selected as this is the primary registration/enrollment journey -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center h-16 px-space-xs bg-surface-container-lowest dark:bg-surface-container border-t border-outline-variant dark:border-outline shadow-sm">
+<!-- Tab 1: Enroll (ACTIVE) -->
+<a class="flex flex-col items-center justify-center text-secondary dark:text-secondary-fixed-dim font-label-badge text-label-badge py-1 active:scale-[0.96] transition-transform duration-100" href="#enroll">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">how_to_reg</span>
+<span>Enroll</span>
+</a>
+<!-- Tab 2: Diagnostic -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline font-label-badge text-label-badge py-1 hover:text-primary dark:hover:text-inverse-primary active:scale-[0.96] transition-transform duration-100" href="#diagnostic">
+<span class="material-symbols-outlined">sync_saved_locally</span>
+<span>Diagnostic</span>
+</a>
+<!-- Tab 3: Audit -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline font-label-badge text-label-badge py-1 hover:text-primary dark:hover:text-inverse-primary active:scale-[0.96] transition-transform duration-100" href="#audit">
+<span class="material-symbols-outlined">verified</span>
+<span>Audit</span>
+</a>
+<!-- Tab 4: Settings -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline font-label-badge text-label-badge py-1 hover:text-primary dark:hover:text-inverse-primary active:scale-[0.96] transition-transform duration-100" href="#settings">
+<span class="material-symbols-outlined">admin_panel_settings</span>
+<span>Settings</span>
+</a>
+</nav>
+<!-- Interactive JavaScript Handling for Pure Empirical Demonstration -->
+<script>
+    // Modal toggle interaction
+    const modal = document.getElementById('imprint-modal');
+    const openBtn = document.getElementById('open-imprint-btn');
+    const closeBtn = document.getElementById('close-imprint-btn');
+    const ackBtn = document.getElementById('modal-acknowledge-btn');
+    const diagnosticBtn = document.getElementById('run-diagnostic-btn');
+    const submitBtn = document.getElementById('submit-action-btn');
+
+    const toggleModal = (show) => {
+      if (show) {
+        modal.classList.remove('hidden');
+      } else {
+        modal.classList.add('hidden');
+      }
+    };
+
+    openBtn?.addEventListener('click', () => toggleModal(true));
+    closeBtn?.addEventListener('click', () => toggleModal(false));
+    ackBtn?.addEventListener('click', () => toggleModal(false));
+
+    // Close on background backdrop click
+    modal?.addEventListener('click', (e) => {
+      if (e.target === modal) toggleModal(false);
+    });
+
+    // Interactive Diagnostic Run Trigger
+    diagnosticBtn?.addEventListener('click', () => {
+      diagnosticBtn.innerHTML = '<span class="material-symbols-outlined text-base animate-spin">refresh</span> Verifying DB Token & Claims...';
+      diagnosticBtn.classList.add('opacity-80');
+      
+      setTimeout(() => {
+        diagnosticBtn.innerHTML = '<span class="material-symbols-outlined text-base text-secondary">check</span> All Handshakes Validated (200 OK)';
+        diagnosticBtn.classList.remove('opacity-80');
+      }, 700);
+    });
+
+    // Form registration submit mock
+    submitBtn?.addEventListener('click', () => {
+      const originalText = submitBtn.innerHTML;
+      submitBtn.innerHTML = '<span class="material-symbols-outlined text-lg animate-spin">sync</span> Linking PostgreSQL & LMS...';
+      submitBtn.disabled = true;
+
+      setTimeout(() => {
+        submitBtn.innerHTML = '<span class="material-symbols-outlined text-lg">done_all</span> Linked & Certified: UID #4821 Active';
+        submitBtn.classList.remove('bg-secondary');
+        submitBtn.classList.add('bg-primary-container');
+      }, 900);
+    });
+  </script>
+</body></html>
