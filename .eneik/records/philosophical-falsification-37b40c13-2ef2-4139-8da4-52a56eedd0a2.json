@@ -170,5 +170,42 @@
       "evidence": "src/main/java/com/eneik/epidemiology/auth/AuthController.java: fetchOidcProfile method logic.",
       "screenshotFile": ""
     }
+    ,
+    {
+      "roleTag": "BARCAN-TAG-09",
+      "philosopher": "Уилфрид Селларс",
+      "worldview": "Critiqued the 'Myth of the Given', arguing that knowledge is not based on direct, unmediated apprehension of raw sense data, but rather must be situated in the 'space of reasons' (justified by inference).",
+      "critique": "The codebase assumes 'valueless epics' can be found and soft-deleted by `FeatureService.deleteValuelessEpicsForProject` simply by invoking `featureRepository.softDeleteValuelessEpics`. However, there is no explicit reasoning space or justification criteria defined in the application layer for what constitutes a 'valueless' epic. The backend treats the database's internal determination as a 'Given', bypassing the application's responsibility to evaluate the business logic and tradeoffs.",
+      "proposal": "Implement explicit business logic in the `FeatureService` to evaluate epics against measurable value criteria (e.g., lack of user interaction, missing ROI estimates) before deleting them, grounding the action in the space of reasons rather than a black-box database query.",
+      "dislike": "Accepting significant destructive actions as a given from the persistence layer without an explicit justification process in the business logic.",
+      "kanoClass": "Must-Be",
+      "confidence": "high",
+      "evidence": "src/main/java/com/eneik/epidemiology/feature/FeatureService.java: deleteValuelessEpicsForProject delegates entirely to the repository without evaluation.",
+      "screenshotFile": ""
+    },
+    {
+      "roleTag": "BARCAN-TAG-10",
+      "philosopher": "Герберт Харт",
+      "worldview": "Proposed the 'rule of recognition', stating that a legal/rule system relies on an ultimate, foundational rule that determines the validity of all other primary rules.",
+      "critique": "The frontend components (`RegistrationForm`, `PrivacySettings`, etc.) each contain a hardcoded footer acknowledging the 'Российский научно-исследовательский институт эпидемиологии' and independently linking to an `ImprintModal`. There is no single, foundational 'rule of recognition' (e.g., a unified layout wrapper or global layout configuration) governing compliance elements across the UI. If the institute's legal identity or compliance requirements change, the updates must be repeated manually across many disconnected parts.",
+      "proposal": "Create a unified ApplicationLayout component that acts as the single source of truth for global compliance elements (Imprint, footers, etc.), ensuring systemic integrity.",
+      "dislike": "Scattered, repetitive compliance implementations that lack a unifying rule of recognition.",
+      "kanoClass": "Performance",
+      "confidence": "medium",
+      "evidence": "frontend/src/components/RegistrationForm.svelte and PrivacySettings.svelte both independently implement the footer and ImprintModal logic.",
+      "screenshotFile": ""
+    },
+    {
+      "roleTag": "BARCAN-TAG-11",
+      "philosopher": "Нед Блок",
+      "worldview": "Distinguished between access consciousness (information available for reasoning/action) and phenomenal consciousness (the raw 'what it is like' experiential feel).",
+      "critique": "The application handles document downloads and viewing seamlessly (e.g., in `DocumentController.java`), but it assumes access equates to experience. If a researcher downloads a `.docx` or `.xls` file (which returns `APPLICATION_OCTET_STREAM`), the browser simply saves the file. The UI offers no phenomenal preview or in-browser rendering for these critical epidemiological protocols, limiting the user's immediate experiential grasp of the data.",
+      "proposal": "Integrate an in-browser document previewer for non-PDF formats (or convert them to PDF dynamically) so the user can phenomenally experience the document contents without breaking their workflow to open an external application.",
+      "dislike": "Treating data access (downloading a binary file) as sufficient when a phenomenal, integrated viewing experience is needed for fluid work.",
+      "kanoClass": "Attractive",
+      "confidence": "medium",
+      "evidence": "src/main/java/com/eneik/epidemiology/document/DocumentController.java: viewDocument method returns raw octet streams for office documents.",
+      "screenshotFile": ""
+    }
   ]
 }
