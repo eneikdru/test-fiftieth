@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+
+<html class="h-full bg-background" lang="de"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>IdentSecure – Sichere Registrierung</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "on-surface": "#0b1c30",
+            "secondary-container": "#dae2fd",
+            "error-container": "#ffdad6",
+            "tertiary-container": "#00694c",
+            "tertiary-fixed-dim": "#7bd8b1",
+            "on-secondary": "#ffffff",
+            "on-tertiary-container": "#89e7be",
+            "surface": "#f8f9ff",
+            "on-background": "#0b1c30",
+            "on-secondary-fixed-variant": "#3f465c",
+            "inverse-surface": "#213145",
+            "tertiary": "#004f38",
+            "surface-container": "#e5eeff",
+            "on-error-container": "#93000a",
+            "inverse-on-surface": "#eaf1ff",
+            "on-surface-variant": "#434655",
+            "surface-container-low": "#eff4ff",
+            "primary-fixed": "#dce1ff",
+            "inverse-primary": "#b7c4ff",
+            "secondary": "#565e74",
+            "on-primary-fixed-variant": "#0039b5",
+            "on-error": "#ffffff",
+            "on-secondary-fixed": "#131b2e",
+            "surface-container-lowest": "#ffffff",
+            "primary": "#0037b0",
+            "surface-container-high": "#dce9ff",
+            "surface-dim": "#cbdbf5",
+            "on-tertiary": "#ffffff",
+            "primary-fixed-dim": "#b7c4ff",
+            "surface-variant": "#d3e4fe",
+            "primary-container": "#1d4ed8",
+            "surface-bright": "#f8f9ff",
+            "on-secondary-container": "#5c647a",
+            "on-primary-fixed": "#001551",
+            "on-tertiary-fixed-variant": "#00513a",
+            "outline": "#747686",
+            "background": "#f8f9ff",
+            "surface-tint": "#2151da",
+            "error": "#ba1a1a",
+            "surface-container-highest": "#d3e4fe",
+            "on-primary-container": "#cad3ff",
+            "on-primary": "#ffffff",
+            "outline-variant": "#c4c5d7",
+            "on-tertiary-fixed": "#002115",
+            "secondary-fixed-dim": "#bec6e0",
+            "tertiary-fixed": "#97f5cc",
+            "secondary-fixed": "#dae2fd"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          "spacing": {
+            "gutter-mobile": "1rem",
+            "space-xl": "2rem",
+            "space-sm": "0.75rem",
+            "space-3xl": "4rem",
+            "space-2xl": "3rem",
+            "container-max": "75rem",
+            "gutter-desktop": "1.5rem",
+            "space-xs": "0.5rem",
+            "space-lg": "1.5rem",
+            "space-md": "1rem",
+            "space-2xs": "0.25rem"
+          },
+          "fontFamily": {
+            "title-md": ["Inter"],
+            "headline-lg-mobile": ["Inter"],
+            "display-lg-mobile": ["Inter"],
+            "label-sm": ["Inter"],
+            "headline-sm": ["Inter"],
+            "legal-disclaimer": ["Inter"],
+            "display-lg": ["Inter"],
+            "body-md": ["Inter"],
+            "headline-md": ["Inter"],
+            "label-md": ["Inter"],
+            "body-lg": ["Inter"],
+            "headline-lg": ["Inter"],
+            "body-sm": ["Inter"]
+          },
+          "fontSize": {
+            "title-md": ["16px", { "lineHeight": "24px", "letterSpacing": "0em", "fontWeight": "600" }],
+            "headline-lg-mobile": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "display-lg-mobile": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.015em", "fontWeight": "700" }],
+            "label-sm": ["11px", { "lineHeight": "16px", "letterSpacing": "0.03em", "fontWeight": "600" }],
+            "headline-sm": ["20px", { "lineHeight": "28px", "letterSpacing": "-0.005em", "fontWeight": "600" }],
+            "legal-disclaimer": ["12px", { "lineHeight": "18px", "letterSpacing": "0.01em", "fontWeight": "400" }],
+            "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "body-md": ["15px", { "lineHeight": "24px", "letterSpacing": "0em", "fontWeight": "400" }],
+            "headline-md": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "label-md": ["13px", { "lineHeight": "18px", "letterSpacing": "0.01em", "fontWeight": "600" }],
+            "body-lg": ["18px", { "lineHeight": "28px", "letterSpacing": "0em", "fontWeight": "400" }],
+            "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.015em", "fontWeight": "600" }],
+            "body-sm": ["13px", { "lineHeight": "20px", "letterSpacing": "0.005em", "fontWeight": "400" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="min-h-full flex flex-col font-body-md text-on-surface bg-background antialiased selection:bg-secondary-container selection:text-on-surface">
+<!-- TopAppBar Component (from Shared JSON) -->
+<header class="sticky top-0 z-40 bg-surface shadow-sm transition-all duration-150">
+<div class="flex justify-between items-center w-full px-gutter-mobile max-w-container-max mx-auto h-14">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[24px]" style="font-variation-settings: 'FILL' 1;">verified_user</span>
+<span class="font-headline-sm text-headline-sm font-semibold text-primary tracking-tight">IdentSecure</span>
+<span class="hidden sm:inline-flex items-center ml-2 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-tertiary/10 text-tertiary border border-tertiary/20">
+          DSGVO Konform
+        </span>
+</div>
+<div class="flex items-center gap-3">
+<!-- DSGVO badge mobile -->
+<span class="inline-flex sm:hidden items-center px-2 py-0.5 rounded text-label-sm font-label-sm bg-tertiary/10 text-tertiary border border-tertiary/20">
+          DSGVO
+        </span>
+<!-- Language selector pill -->
+<button aria-label="Sprachauswahl" class="px-2.5 py-1 rounded border border-outline-variant bg-surface-container-lowest font-label-md text-label-md text-on-surface hover:bg-surface-container-low transition-colors duration-150 flex items-center gap-1" type="button">
+<span>DE</span>
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant">arrow_drop_down</span>
+</button>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-1 w-full max-w-md mx-auto px-gutter-mobile py-space-md flex flex-col justify-center">
+<!-- Hero / Headline Box -->
+<div class="mb-6 text-left">
+<div class="inline-flex items-center gap-1.5 text-primary text-label-sm font-label-sm uppercase tracking-wider mb-2 font-semibold">
+<span class="material-symbols-outlined text-[14px]">shield</span>
+        Bankenstandard IT-Sicherheit
+      </div>
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface tracking-tight font-bold">
+        Konto erstellen
+      </h1>
+<p class="mt-1 font-body-sm text-body-sm text-on-surface-variant">
+        Sicher, transparent und nach deutschem Datenschutzrecht (DSGVO) geschützt.
+      </p>
+</div>
+<!-- Registration Card -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-5 shadow-sm">
+<!-- SSO / Fast Options -->
+<div class="space-y-2 mb-5">
+<button class="w-full flex items-center justify-center gap-3 py-2.5 px-4 rounded-lg border border-outline-variant bg-surface-container-lowest hover:bg-surface-container-low text-on-surface font-label-md text-label-md transition-colors duration-150 active:scale-[0.99]" type="button">
+<span class="material-symbols-outlined text-[20px] text-primary" style="font-variation-settings: 'FILL' 1;">passkey</span>
+<span>Mit FIDO2 / Passkey registrieren</span>
+</button>
+<div class="grid grid-cols-2 gap-2">
+<button class="flex items-center justify-center gap-2 py-2 px-3 rounded-lg border border-outline-variant bg-surface-container-lowest hover:bg-surface-container-low text-on-surface font-label-sm text-label-sm transition-colors duration-150" type="button">
+<span class="material-symbols-outlined text-[18px]">account_circle</span>
+<span>Google</span>
+</button>
+<button class="flex items-center justify-center gap-2 py-2 px-3 rounded-lg border border-outline-variant bg-surface-container-lowest hover:bg-surface-container-low text-on-surface font-label-sm text-label-sm transition-colors duration-150" type="button">
+<span class="material-symbols-outlined text-[18px]">phone_iphone</span>
+<span>Apple ID</span>
+</button>
+</div>
+</div>
+<!-- Divider -->
+<div class="relative flex items-center justify-center my-4">
+<div class="border-t border-outline-variant w-full"></div>
+<span class="bg-surface-container-lowest px-3 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">oder per E-Mail</span>
+</div>
+<!-- Registration Form -->
+<form class="space-y-4" id="registerForm" onsubmit="event.preventDefault();">
+<!-- Full Name -->
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-1 font-semibold" for="fullName">
+            Vollständiger Name <span aria-hidden="true" class="text-error">*</span>
+</label>
+<div class="relative">
+<input class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface-container-lowest text-on-surface font-body-md text-body-md focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary placeholder:text-outline/60" id="fullName" placeholder="z. B. Dr. Maximilian Muster" required="" type="text"/>
+</div>
+</div>
+<!-- Business Email -->
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-1 font-semibold" for="businessEmail">
+            Geschäftliche E-Mail-Adresse <span aria-hidden="true" class="text-error">*</span>
+</label>
+<input class="w-full h-10 px-3 border border-outline-variant rounded-lg bg-surface-container-lowest text-on-surface font-body-md text-body-md focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary placeholder:text-outline/60" id="businessEmail" placeholder="name@unternehmen.de" required="" type="email"/>
+<p class="mt-1 text-[11px] text-on-surface-variant">Serverstandort: Frankfurt am Main (ISO/IEC 27001 zertifiziert)</p>
+</div>
+<!-- Password Field with interactive meter -->
+<div>
+<div class="flex items-center justify-between mb-1">
+<label class="block font-label-md text-label-md text-on-surface font-semibold" for="passwordField">
+              Passwort erstellen <span aria-hidden="true" class="text-error">*</span>
+</label>
+<span class="font-label-sm text-label-sm text-on-surface-variant font-normal" id="pwStatusText">Mind. 10 Zeichen</span>
+</div>
+<div class="relative">
+<input class="w-full h-10 px-3 pr-10 border border-outline-variant rounded-lg bg-surface-container-lowest text-on-surface font-body-md text-body-md focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary" id="passwordField" placeholder="••••••••••••" required="" type="password"/>
+<button aria-label="Passwort anzeigen oder ausblenden" class="absolute inset-y-0 right-0 pr-3 flex items-center text-on-surface-variant hover:text-on-surface" id="togglePassword" type="button">
+<span class="material-symbols-outlined text-[20px]" id="toggleIcon">visibility</span>
+</button>
+</div>
+<!-- Password strength segments -->
+<div aria-hidden="true" class="grid grid-cols-4 gap-1.5 mt-2">
+<div class="h-1 rounded-full bg-outline-variant/40 transition-all duration-300" id="bar1"></div>
+<div class="h-1 rounded-full bg-outline-variant/40 transition-all duration-300" id="bar2"></div>
+<div class="h-1 rounded-full bg-outline-variant/40 transition-all duration-300" id="bar3"></div>
+<div class="h-1 rounded-full bg-outline-variant/40 transition-all duration-300" id="bar4"></div>
+</div>
+</div>
+<!-- Explicit Consent Checkboxes (GDPR Compliant: Never pre-checked) -->
+<div class="space-y-3 pt-2">
+<label class="flex items-start gap-2.5 cursor-pointer text-left select-none">
+<input class="mt-1 w-4 h-4 rounded border-outline-variant text-primary focus:ring-primary focus:ring-offset-0 transition-colors" id="acceptAgb" required="" type="checkbox"/>
+<span class="font-legal-disclaimer text-legal-disclaimer text-on-surface-variant">
+              Ich akzeptiere die <a class="text-primary hover:underline font-semibold" href="#agb" onclick="openLegalDrawer('agb')">Allgemeinen Geschäftsbedingungen (AGB)</a> und die vertragliche Leistungsbeschreibung.
+            </span>
+</label>
+<label class="flex items-start gap-2.5 cursor-pointer text-left select-none">
+<input class="mt-1 w-4 h-4 rounded border-outline-variant text-primary focus:ring-primary focus:ring-offset-0 transition-colors" id="acceptPrivacy" required="" type="checkbox"/>
+<span class="font-legal-disclaimer text-legal-disclaimer text-on-surface-variant">
+              Ich habe die <a class="text-primary hover:underline font-semibold" href="#datenschutz" onclick="openLegalDrawer('datenschutz')">Datenschutzerklärung (DSGVO)</a> gelesen und willige in die Verarbeitung meiner Daten zur Kontoerstellung ein.
+            </span>
+</label>
+</div>
+<!-- Submit Button -->
+<div class="pt-2">
+<button class="w-full h-11 bg-primary-container text-on-primary font-label-md text-label-md rounded-lg flex items-center justify-center gap-2 hover:bg-primary transition-all duration-150 active:scale-[0.98] shadow-sm font-semibold" type="submit">
+<span>Kostenlos registrieren</span>
+<span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+</button>
+</div>
+</form>
+<!-- Trust Indicator Badge inside Card -->
+<div class="mt-4 pt-4 border-t border-outline-variant/50 flex items-center justify-between text-on-surface-variant font-label-sm text-label-sm">
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px] text-tertiary">lock</span>
+          256-Bit TLS-Verschlüsselung
+        </span>
+<button class="text-primary hover:underline flex items-center gap-0.5" onclick="openLegalDrawer('impressum')" type="button">
+<span>§ 5 DDG Impressum</span>
+<span class="material-symbols-outlined text-[14px]">chevron_right</span>
+</button>
+</div>
+</div>
+<!-- Additional Trust Note -->
+<div class="mt-4 text-center font-legal-disclaimer text-legal-disclaimer text-on-surface-variant">
+      IdentSecure speichert keine biometrischen Daten und verarbeitet Nachweise ausschließlich auf Servern innerhalb der Bundesrepublik Deutschland.
+    </div>
+</main>
+<!-- Interactive Slide-over Legal Drawer (§ 5 DDG Compliant & Audited) -->
+<div class="fixed inset-0 bg-on-surface/40 backdrop-blur-[2px] z-50 transition-opacity duration-300 opacity-0 pointer-events-none" id="drawerBackdrop" onclick="closeLegalDrawer()"></div>
+<aside aria-labelledby="legalDrawerTitle" aria-modal="true" class="fixed inset-y-0 right-0 z-50 w-full sm:w-96 max-w-full bg-surface-container-lowest border-l border-outline-variant p-space-md shadow-xl flex flex-col translate-x-full transition-transform duration-300 ease-in-out" id="legalDrawer" role="dialog">
+<!-- Drawer Header -->
+<div class="flex items-center justify-between pb-3 border-b border-outline-variant">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[22px]" style="font-variation-settings: 'FILL' 1;">gavel</span>
+<h2 class="font-headline-sm text-headline-sm font-semibold text-on-surface" id="legalDrawerTitle">
+          Rechtliche Angaben
+        </h2>
+</div>
+<button aria-label="Rechtliche Angaben schließen" class="w-8 h-8 flex items-center justify-center rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" onclick="closeLegalDrawer()" type="button">
+<span class="material-symbols-outlined text-[20px]">close</span>
+</button>
+</div>
+<!-- Navigation Drawer Tabs (from Shared JSON) -->
+<div class="grid grid-cols-2 gap-1 my-3 p-1 bg-surface-container-low rounded-lg">
+<button class="text-xs font-semibold py-1.5 px-2 rounded-md transition-colors text-center bg-surface-container-lowest text-primary shadow-xs" id="tabImpressum" onclick="switchLegalTab('impressum')" type="button">
+        § 5 DDG Impressum
+      </button>
+<button class="text-xs font-semibold py-1.5 px-2 rounded-md transition-colors text-center text-on-surface-variant hover:text-on-surface" id="tabDatenschutz" onclick="switchLegalTab('datenschutz')" type="button">
+        Datenschutz &amp; DPO
+      </button>
+</div>
+<!-- Drawer Body / Dynamic Panels -->
+<div class="flex-1 overflow-y-auto pr-1 space-y-4 font-body-sm text-body-sm text-on-surface-variant">
+<!-- Panel: Impressum (§ 5 DDG / TMG) -->
+<div class="space-y-4" id="contentImpressum">
+<div class="bg-surface-container-low/50 p-3 rounded-lg border border-outline-variant/60">
+<h3 class="font-title-md text-title-md text-on-surface font-semibold flex items-center gap-2 mb-1">
+<span class="material-symbols-outlined text-[18px] text-primary">corporate_fare</span>
+            Angaben gemäß § 5 DDG
+          </h3>
+<p class="font-semibold text-on-surface">IdentSecure GmbH</p>
+<p>Mainzer Landstraße 180</p>
+<p>60327 Frankfurt am Main</p>
+<p>Deutschland</p>
+</div>
+<div class="bg-surface-container-lowest p-3 rounded-lg border border-outline-variant/60">
+<h3 class="font-title-md text-title-md text-on-surface font-semibold flex items-center gap-2 mb-1">
+<span class="material-symbols-outlined text-[18px] text-primary">badge</span>
+            Vertretungsberechtigte Geschäftsführer
+          </h3>
+<p>Dr. Florian von Berg</p>
+<p>Helena Lindemann, M.Sc.</p>
+</div>
+<div class="bg-surface-container-lowest p-3 rounded-lg border border-outline-variant/60">
+<h3 class="font-title-md text-title-md text-on-surface font-semibold flex items-center gap-2 mb-1">
+<span class="material-symbols-outlined text-[18px] text-primary">menu_book</span>
+            Registereintrag &amp; USt-IdNr.
+          </h3>
+<p><strong class="text-on-surface font-semibold">Registergericht:</strong> Amtsgericht Frankfurt am Main</p>
+<p><strong class="text-on-surface font-semibold">Registernummer:</strong> HRB 123456</p>
+<p class="mt-1"><strong class="text-on-surface font-semibold">Umsatzsteuer-Identifikationsnummer gemäß § 27 a UStG:</strong></p>
+<code class="inline-block mt-0.5 px-1.5 py-0.5 bg-surface-container text-primary font-mono text-xs rounded border border-outline-variant">DE312456789</code>
+</div>
+<div class="bg-surface-container-lowest p-3 rounded-lg border border-outline-variant/60">
+<h3 class="font-title-md text-title-md text-on-surface font-semibold flex items-center gap-2 mb-1">
+<span class="material-symbols-outlined text-[18px] text-primary">contact_support</span>
+            Kontaktmöglichkeiten
+          </h3>
+<p>Telefon: +49 (0) 69 98765-0</p>
+<p>E-Mail: <a class="text-primary hover:underline" href="mailto:info@identsecure.de">info@identsecure.de</a></p>
+<p>Web: <span class="font-mono text-xs">www.identsecure.de</span></p>
+</div>
+<div class="bg-surface-container-lowest p-3 rounded-lg border border-outline-variant/60">
+<h3 class="font-title-md text-title-md text-on-surface font-semibold flex items-center gap-2 mb-1">
+<span class="material-symbols-outlined text-[18px] text-primary">policy</span>
+            Verbraucherstreitbeilegung
+          </h3>
+<p class="text-legal-disclaimer font-legal-disclaimer">
+            Die Europäische Kommission stellt eine Plattform zur Online-Streitbeilegung (OS) bereit. Wir sind nicht bereit oder verpflichtet, an Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle teilzunehmen.
+          </p>
+</div>
+</div>
+<!-- Panel: Datenschutz & DPO -->
+<div class="hidden space-y-4" id="contentDatenschutz">
+<div class="bg-surface-container-low/50 p-3 rounded-lg border border-outline-variant/60">
+<h3 class="font-title-md text-title-md text-on-surface font-semibold flex items-center gap-2 mb-1">
+<span class="material-symbols-outlined text-[18px] text-primary">security</span>
+            Datenschutzbeauftragter (DPO)
+          </h3>
+<p class="font-semibold text-on-surface">Dr. jur. Markus Weimann</p>
+<p>TÜV-zertifizierter Datenschutzbeauftragter</p>
+<p>E-Mail: <a class="text-primary hover:underline" href="mailto:dpo@identsecure.de">dpo@identsecure.de</a></p>
+</div>
+<div class="bg-surface-container-lowest p-3 rounded-lg border border-outline-variant/60 space-y-2">
+<h3 class="font-title-md text-title-md text-on-surface font-semibold mb-1">Zwecke der Datenverarbeitung</h3>
+<p class="text-legal-disclaimer font-legal-disclaimer">
+            Die erhobenen Registrierungsdaten (Name, Unternehmens-E-Mail, Passwort-Hash) werden ausschließlich zum Zweck der Authentifizierung sowie Bereitstellung geschäftlicher Identitätsdienste verarbeitet (Art. 6 Abs. 1 lit. b DSGVO).
+          </p>
+<p class="text-legal-disclaimer font-legal-disclaimer">
+            Hosting &amp; Datenhaltung: Rechenzentrum Frankfurt am Main (Hessen, Deutschland). Eine Übermittlung an unsichere Drittstaaten ist ausgeschlossen.
+          </p>
+</div>
+<div class="bg-surface-container-lowest p-3 rounded-lg border border-outline-variant/60">
+<h3 class="font-title-md text-title-md text-on-surface font-semibold mb-1">Ihre Betroffenenrechte (DSGVO)</h3>
+<ul class="list-disc pl-4 space-y-1 text-legal-disclaimer font-legal-disclaimer">
+<li>Auskunft (Art. 15 DSGVO)</li>
+<li>Berichtigung (Art. 16 DSGVO)</li>
+<li>Löschung / Vergessenwerden (Art. 17 DSGVO)</li>
+<li>Datenübertragbarkeit (Art. 20 DSGVO)</li>
+</ul>
+</div>
+</div>
+</div>
+<!-- Drawer Footer Actions -->
+<div class="pt-3 border-t border-outline-variant mt-2">
+<button class="w-full py-2 bg-surface-container text-on-surface font-label-md text-label-md rounded-lg hover:bg-surface-container-high transition-colors font-medium text-center" onclick="closeLegalDrawer()" type="button">
+        Schließen
+      </button>
+</div>
+</aside>
+<!-- Persistent Statutory Footer (from Shared JSON) -->
+<footer class="mt-auto w-full bg-surface-container-lowest border-t border-outline-variant">
+<div class="w-full py-space-sm px-gutter-mobile flex flex-col sm:flex-row items-center justify-between gap-space-xs max-w-container-max mx-auto">
+<!-- Copyright text -->
+<span class="font-legal-disclaimer text-legal-disclaimer text-on-surface-variant text-center sm:text-left order-2 sm:order-1">
+        © 2025 IdentSecure GmbH. Alle Rechte vorbehalten.
+      </span>
+<!-- Mandatory German Legal Links -->
+<nav aria-label="Rechtliche Pflichtangaben" class="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 font-label-sm text-label-sm order-1 sm:order-2">
+<button class="text-on-surface-variant hover:text-primary hover:underline transition-colors" onclick="openLegalDrawer('impressum')" type="button">
+          Impressum (§ 5 DDG)
+        </button>
+<span aria-hidden="true" class="text-outline-variant select-none">•</span>
+<button class="text-on-surface-variant hover:text-primary hover:underline transition-colors" onclick="openLegalDrawer('datenschutz')" type="button">
+          Datenschutz (DSGVO)
+        </button>
+<span aria-hidden="true" class="text-outline-variant select-none">•</span>
+<button class="text-on-surface-variant hover:text-primary hover:underline transition-colors" onclick="openLegalDrawer('impressum')" type="button">
+          AGB
+        </button>
+<span aria-hidden="true" class="text-outline-variant select-none">•</span>
+<button class="text-on-surface-variant hover:text-primary hover:underline transition-colors" onclick="showCookieNotice()" type="button">
+          Cookie-Einstellungen
+        </button>
+</nav>
+</div>
+</footer>
+<!-- Notification Toast for Cookie or Actions -->
+<div class="fixed bottom-16 left-1/2 -translate-x-1/2 z-50 bg-inverse-surface text-inverse-on-surface px-4 py-2.5 rounded-lg shadow-lg font-body-sm text-body-sm flex items-center gap-2 transition-all duration-200 opacity-0 pointer-events-none translate-y-2" id="toastNotification">
+<span class="material-symbols-outlined text-tertiary-fixed-dim text-[18px]">check_circle</span>
+<span id="toastMessage">Nur technisch notwendige Cookies aktiv.</span>
+</div>
+<!-- Inline Interaction Logic -->
+<script>
+    // Password visibility toggle
+    const pwInput = document.getElementById('passwordField');
+    const toggleBtn = document.getElementById('togglePassword');
+    const toggleIcon = document.getElementById('toggleIcon');
+    
+    if (toggleBtn && pwInput) {
+      toggleBtn.addEventListener('click', () => {
+        const isPassword = pwInput.type === 'password';
+        pwInput.type = isPassword ? 'text' : 'password';
+        toggleIcon.textContent = isPassword ? 'visibility_off' : 'visibility';
+      });
+    }
+
+    // Password strength meter calculation
+    const bar1 = document.getElementById('bar1');
+    const bar2 = document.getElementById('bar2');
+    const bar3 = document.getElementById('bar3');
+    const bar4 = document.getElementById('bar4');
+    const pwStatusText = document.getElementById('pwStatusText');
+
+    if (pwInput) {
+      pwInput.addEventListener('input', (e) => {
+        const val = e.target.value;
+        let score = 0;
+        if (val.length >= 8) score++;
+        if (val.length >= 10) score++;
+        if (/[A-Z]/.test(val) && /[0-9]/.test(val)) score++;
+        if (/[^A-Za-z0-9]/.test(val)) score++;
+
+        // Reset
+        const resetClasses = ['bg-error', 'bg-tertiary-container', 'bg-tertiary', 'bg-outline-variant/40'];
+        [bar1, bar2, bar3, bar4].forEach(b => b.className = 'h-1 rounded-full bg-outline-variant/40 transition-all duration-300');
+
+        if (score === 0) {
+          pwStatusText.textContent = val.length === 0 ? 'Mind. 10 Zeichen' : 'Sehr schwach';
+          pwStatusText.className = 'font-label-sm text-label-sm text-on-surface-variant font-normal';
+        } else if (score === 1) {
+          bar1.className = 'h-1 rounded-full bg-error transition-all duration-300';
+          pwStatusText.textContent = 'Schwach';
+          pwStatusText.className = 'font-label-sm text-label-sm text-error font-medium';
+        } else if (score === 2) {
+          bar1.className = 'h-1 rounded-full bg-amber-500 transition-all duration-300';
+          bar2.className = 'h-1 rounded-full bg-amber-500 transition-all duration-300';
+          pwStatusText.textContent = 'Mittel';
+          pwStatusText.className = 'font-label-sm text-label-sm text-amber-700 font-medium';
+        } else if (score === 3) {
+          bar1.className = 'h-1 rounded-full bg-primary transition-all duration-300';
+          bar2.className = 'h-1 rounded-full bg-primary transition-all duration-300';
+          bar3.className = 'h-1 rounded-full bg-primary transition-all duration-300';
+          pwStatusText.textContent = 'Gut';
+          pwStatusText.className = 'font-label-sm text-label-sm text-primary font-semibold';
+        } else {
+          bar1.className = 'h-1 rounded-full bg-tertiary transition-all duration-300';
+          bar2.className = 'h-1 rounded-full bg-tertiary transition-all duration-300';
+          bar3.className = 'h-1 rounded-full bg-tertiary transition-all duration-300';
+          bar4.className = 'h-1 rounded-full bg-tertiary transition-all duration-300';
+          pwStatusText.textContent = 'Sehr sicher (DSGVO konform)';
+          pwStatusText.className = 'font-label-sm text-label-sm text-tertiary font-semibold';
+        }
+      });
+    }
+
+    // Drawer management
+    const drawer = document.getElementById('legalDrawer');
+    const backdrop = document.getElementById('drawerBackdrop');
+    const tabImpressum = document.getElementById('tabImpressum');
+    const tabDatenschutz = document.getElementById('tabDatenschutz');
+    const contentImpressum = document.getElementById('contentImpressum');
+    const contentDatenschutz = document.getElementById('contentDatenschutz');
+
+    function openLegalDrawer(view = 'impressum') {
+      switchLegalTab(view);
+      backdrop.classList.remove('opacity-0', 'pointer-events-none');
+      backdrop.classList.add('opacity-100', 'pointer-events-auto');
+      drawer.classList.remove('translate-x-full');
+      document.body.classList.add('overflow-hidden');
+    }
+
+    function closeLegalDrawer() {
+      backdrop.classList.remove('opacity-100', 'pointer-events-auto');
+      backdrop.classList.add('opacity-0', 'pointer-events-none');
+      drawer.classList.add('translate-x-full');
+      document.body.classList.remove('overflow-hidden');
+    }
+
+    function switchLegalTab(tab) {
+      if (tab === 'datenschutz') {
+        contentImpressum.classList.add('hidden');
+        contentDatenschutz.classList.remove('hidden');
+        tabImpressum.className = 'text-xs font-semibold py-1.5 px-2 rounded-md transition-colors text-center text-on-surface-variant hover:text-on-surface';
+        tabDatenschutz.className = 'text-xs font-semibold py-1.5 px-2 rounded-md transition-colors text-center bg-surface-container-lowest text-primary shadow-xs';
+      } else {
+        contentDatenschutz.classList.add('hidden');
+        contentImpressum.classList.remove('hidden');
+        tabDatenschutz.className = 'text-xs font-semibold py-1.5 px-2 rounded-md transition-colors text-center text-on-surface-variant hover:text-on-surface';
+        tabImpressum.className = 'text-xs font-semibold py-1.5 px-2 rounded-md transition-colors text-center bg-surface-container-lowest text-primary shadow-xs';
+      }
+    }
+
+    // Escape key listener for accessible drawer closing
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        closeLegalDrawer();
+      }
+    });
+
+    // Toast trigger for cookies
+    function showCookieNotice() {
+      const toast = document.getElementById('toastNotification');
+      const msg = document.getElementById('toastMessage');
+      msg.textContent = 'Präferenz: Ausschließlich technisch essenzielle Cookies zugelassen.';
+      toast.classList.remove('opacity-0', 'pointer-events-none', 'translate-y-2');
+      toast.classList.add('opacity-100', 'pointer-events-auto', 'translate-y-0');
+      
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'pointer-events-none', 'translate-y-2');
+        toast.classList.remove('opacity-100', 'pointer-events-auto', 'translate-y-0');
+      }, 3200);
+    }
+  </script>
+</body></html>
