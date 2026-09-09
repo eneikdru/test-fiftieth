@@ -174,7 +174,7 @@ public class PrivacyService {
                 expiresAt
             );
             if (updated == 0) {
-                exportJobRepository.save(job);
+                throw new PrivacyConflictException("STATE_CONFLICT", "Не удалось завершить экспорт данных из-за конфликта статуса.");
             }
             return job;
         } catch (Exception e) {
@@ -303,7 +303,7 @@ public class PrivacyService {
             completedAt
         );
         if (updated == 0) {
-            erasureJobRepository.save(job);
+            throw new PrivacyConflictException("STATE_CONFLICT", "Не удалось завершить удаление данных из-за конфликта статуса.");
         }
 
         return job;
