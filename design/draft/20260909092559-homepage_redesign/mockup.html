@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Audit Remediation &amp; Verification Console</title>
+<!-- Google Fonts: Space Grotesk, Geist, JetBrains Mono -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&amp;family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;0,700;1,400&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS CDN with forms & container-queries plugins -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "surface-dim": "#0f131c",
+            "on-tertiary-fixed-variant": "#004e5c",
+            "secondary": "#4edea3",
+            "surface-container-high": "#262a34",
+            "primary-container": "#8083ff",
+            "secondary-fixed-dim": "#4edea3",
+            "surface-container-lowest": "#0a0e17",
+            "on-secondary-fixed-variant": "#005236",
+            "on-secondary-fixed": "#002113",
+            "surface-tint": "#c0c1ff",
+            "primary-fixed": "#e1e0ff",
+            "tertiary-fixed": "#acedff",
+            "tertiary": "#4cd7f6",
+            "on-primary-fixed": "#07006c",
+            "background": "#0f131c",
+            "on-primary-container": "#0d0096",
+            "on-surface-variant": "#c7c4d7",
+            "on-primary-fixed-variant": "#2f2ebe",
+            "surface-container-low": "#181b25",
+            "error": "#ffb4ab",
+            "surface-variant": "#31353f",
+            "surface": "#0f131c",
+            "tertiary-fixed-dim": "#4cd7f6",
+            "surface-container": "#1c1f29",
+            "surface-container-highest": "#31353f",
+            "on-tertiary-fixed": "#001f26",
+            "on-error-container": "#ffdad6",
+            "secondary-fixed": "#6ffbbe",
+            "on-tertiary-container": "#002f38",
+            "on-error": "#690005",
+            "primary-fixed-dim": "#c0c1ff",
+            "on-surface": "#dfe2ef",
+            "on-background": "#dfe2ef",
+            "outline": "#908fa0",
+            "surface-bright": "#353943",
+            "on-tertiary": "#003640",
+            "inverse-primary": "#494bd6",
+            "primary": "#c0c1ff",
+            "secondary-container": "#00a572",
+            "tertiary-container": "#009eb9",
+            "inverse-surface": "#dfe2ef",
+            "on-primary": "#1000a9",
+            "on-secondary": "#003824",
+            "error-container": "#93000a",
+            "on-secondary-container": "#00311f",
+            "inverse-on-surface": "#2c303a",
+            "outline-variant": "#464554"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          "spacing": {
+            "space-base": "1rem",
+            "margin-tablet": "2rem",
+            "space-xl": "1.5rem",
+            "space-2xs": "0.125rem",
+            "gutter-mobile": "1rem",
+            "space-xs": "0.25rem",
+            "gutter-tablet": "1.5rem",
+            "space-md": "0.75rem",
+            "space-2xl": "2rem",
+            "space-lg": "1.25rem",
+            "space-sm": "0.5rem",
+            "margin-mobile": "1rem"
+          },
+          "fontFamily": {
+            "headline-xl-mobile": ["Space Grotesk"],
+            "headline-sm": ["Space Grotesk"],
+            "body-sm": ["Geist"],
+            "label-code-sm": ["JetBrains Mono"],
+            "label-status": ["JetBrains Mono"],
+            "body-md": ["Geist"],
+            "headline-xl": ["Space Grotesk"],
+            "label-code-md": ["JetBrains Mono"],
+            "headline-lg": ["Space Grotesk"],
+            "body-lg": ["Geist"]
+          },
+          "fontSize": {
+            "headline-xl-mobile": ["28px", { "lineHeight": "34px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "headline-sm": ["18px", { "lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "body-sm": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+            "label-code-sm": ["11px", { "lineHeight": "14px", "letterSpacing": "0.02em", "fontWeight": "500" }],
+            "label-status": ["10px", { "lineHeight": "12px", "letterSpacing": "0.06em", "fontWeight": "600" }],
+            "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+            "headline-xl": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.03em", "fontWeight": "700" }],
+            "label-code-md": ["13px", { "lineHeight": "18px", "letterSpacing": "-0.01em", "fontWeight": "500" }],
+            "headline-lg": ["24px", { "lineHeight": "30px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+            "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      display: inline-block;
+      vertical-align: middle;
+      line-height: 1;
+    }
+    @keyframes pulse-subtle {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.92); }
+    }
+    .animate-pulse-subtle {
+      animation: pulse-subtle 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface antialiased min-h-screen pb-28 selection:bg-primary selection:text-on-primary">
+<!-- TOP APP BAR (Shared Component JSON derived) -->
+<header class="bg-surface-container-low border-b border-outline-variant/20 flex justify-between items-center w-full px-margin-mobile py-space-sm fixed top-0 left-0 z-50">
+<div class="flex items-center gap-space-sm">
+<div class="w-8 h-8 rounded-lg bg-surface-container flex items-center justify-center border border-outline-variant/30 text-primary">
+<span class="material-symbols-outlined text-[20px]" data-icon="verified_user">verified_user</span>
+</div>
+<div>
+<p class="font-label-code-sm text-label-code-sm text-tertiary uppercase tracking-wider leading-none mb-0.5">BARCAN Governance</p>
+<h1 class="font-headline-sm text-headline-sm text-on-surface tracking-tight">Audit &amp; Remediation</h1>
+</div>
+</div>
+<div class="flex items-center gap-space-xs">
+<div class="hidden sm:flex items-center gap-1.5 px-2 py-0.5 rounded bg-surface-container border border-outline-variant/30 text-secondary font-label-status text-label-status">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary animate-pulse-subtle"></span>
+<span>ATTESTED</span>
+</div>
+<button class="p-2 rounded-lg bg-surface-container-high text-primary hover:bg-surface-bright active:scale-95 transition-transform duration-150 flex items-center justify-center" id="syncTriggerBtn" title="Synchronize Audit Telemetry">
+<span class="material-symbols-outlined text-[20px]" data-icon="sync">sync</span>
+</button>
+</div>
+</header>
+<!-- MAIN OPERATIONAL CANVAS -->
+<main class="w-full max-w-2xl mx-auto px-margin-mobile pt-20 space-y-space-md">
+<!-- SUITE BREADCRUMB & FALSIFICATION CYCLE BANNER -->
+<section class="bg-surface-container-lowest border border-outline-variant/30 rounded-xl p-space-md relative overflow-hidden">
+<div class="absolute -right-10 -bottom-10 w-32 h-32 bg-secondary/5 rounded-full blur-2xl pointer-events-none"></div>
+<div class="flex flex-wrap items-center justify-between gap-space-xs mb-space-xs">
+<div class="flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-secondary shadow-[0_0_8px_rgba(78,222,163,0.6)] animate-pulse-subtle"></span>
+<span class="font-label-code-sm text-label-code-sm uppercase tracking-wider text-on-surface-variant">+page.svelte rendered</span>
+</div>
+<span class="font-label-status text-label-status px-2 py-0.5 rounded bg-secondary-container/20 border border-secondary/40 text-secondary uppercase">
+          Cycle 04: Falsified &amp; Resolved
+        </span>
+</div>
+<div class="mt-space-xs flex items-baseline justify-between border-t border-outline-variant/20 pt-space-xs">
+<div>
+<p class="font-label-code-sm text-label-code-sm text-outline uppercase">Remediation Status</p>
+<div class="flex items-center gap-2 mt-0.5">
+<span class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface font-bold">100% Real Verification</span>
+<span class="material-symbols-outlined text-secondary text-[20px]" data-icon="check_circle" data-weight="fill" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+</div>
+<div class="text-right">
+<p class="font-label-status text-label-status text-secondary font-mono uppercase bg-surface-container px-2 py-1 rounded border border-secondary/30">
+            5/5 Deficiencies Closed
+          </p>
+</div>
+</div>
+</section>
+<!-- FINDING 1: STUBBED PR #0 REPLACED BY REAL PR #142 -->
+<section class="bg-surface-container-low border border-outline-variant/30 rounded-xl p-space-md">
+<div class="flex items-start justify-between gap-space-sm mb-space-xs">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-primary text-[20px]" data-icon="git_pull_request">lowercase</span>
+<div>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Finding 01: PR Falsification Eliminated</h2>
+<p class="font-label-code-sm text-label-code-sm text-outline">BARCAN-TAG-09/stub • Automated Review Stage</p>
+</div>
+</div>
+<span class="font-label-status text-label-status px-2 py-0.5 rounded bg-secondary-container/20 border border-secondary/40 text-secondary">
+          REAL PASS
+        </span>
+</div>
+<!-- Target Comparison -->
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-space-xs mt-space-sm">
+<div class="bg-surface-container-lowest p-space-xs rounded border border-outline-variant/20 opacity-70">
+<span class="font-label-status text-label-status text-error flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]" data-icon="cancel">cancel</span> DEPRECATED STUB
+          </span>
+<p class="font-label-code-md text-label-code-md text-on-surface-variant font-mono mt-1">PR #0 (Mock Passthrough)</p>
+<p class="font-body-sm text-body-sm text-outline mt-0.5">Synthetic zero-check bypass detected</p>
+</div>
+<div class="bg-surface-container p-space-xs rounded border border-secondary/40 relative">
+<span class="font-label-status text-label-status text-secondary flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]" data-icon="verified">verified</span> ACTIVE TARGET
+          </span>
+<p class="font-label-code-md text-label-code-md text-on-surface font-mono font-bold mt-1">PR #142 (Hotfix / Auth &amp; LMS)</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">Deterministic cryptographic artifact</p>
+</div>
+</div>
+<!-- Critical Reason Log & Hash Copy Row -->
+<div class="mt-space-sm bg-surface-container-lowest rounded p-space-sm border border-outline-variant/20 font-label-code-sm text-label-code-sm">
+<div class="flex items-center justify-between text-on-surface-variant mb-1">
+<span class="text-tertiary">Cryptographic Log Manifest:</span>
+<button class="text-primary hover:text-primary-fixed flex items-center gap-0.5 active:scale-95 transition-transform" onclick="navigator.clipboard.writeText('sha256:4f8a91b42c67da1e89bfa81927c3e5a04bc619284fa93bc821038e9c2e'); alert('Hash copied to clipboard');">
+<span class="material-symbols-outlined text-[14px]" data-icon="content_copy">content_copy</span>
+<span>copy hash</span>
+</button>
+</div>
+<p class="text-secondary font-mono break-all leading-relaxed">
+          Verdict: APPROVED with signed manifest.<br/>
+          Verification: PR-142 hashes matched <span class="text-on-surface font-bold">sha256:4f8a...9c2e</span>, no fake pass-through.
+        </p>
+</div>
+</section>
+<!-- FINDING 2: MOODLE LMS ZERO-GAP VERIFIED MATRIX -->
+<section class="bg-surface-container-low border border-outline-variant/30 rounded-xl p-space-md">
+<div class="flex items-start justify-between gap-space-sm mb-space-sm">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-tertiary text-[20px]" data-icon="school">school</span>
+<div>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Finding 02: Moodle LMS Verification Matrix</h2>
+<p class="font-label-code-sm text-label-code-sm text-outline">BARCAN-TAG-09/stub • Non-Zero Gap Validation</p>
+</div>
+</div>
+</div>
+<div class="mb-space-sm flex items-center justify-between bg-surface-container-lowest p-space-xs rounded border border-secondary/30">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-secondary text-[16px]" data-icon="task_alt">task_alt</span>
+<span class="font-label-code-sm text-label-code-sm text-on-surface">Coverage: 4/4 Genuine Specs Passing</span>
+</div>
+<span class="font-label-status text-label-status px-2 py-0.5 rounded bg-secondary/10 text-secondary uppercase font-mono">
+          Empirical Truth
+        </span>
+</div>
+<!-- 4 Critical Capabilities Matrix -->
+<div class="space-y-space-xs">
+<!-- 1. SSO Handshake -->
+<div class="bg-surface-container p-space-sm rounded-lg border border-outline-variant/20 flex items-center justify-between">
+<div class="space-y-0.5">
+<div class="flex items-center gap-1.5">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+<span class="font-label-code-md text-label-code-md text-on-surface font-medium">SSO Handshake (OAuth2/OIDC)</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant pl-3">Active token exchange latency: <span class="text-tertiary font-mono">42ms</span></p>
+</div>
+<span class="font-label-status text-label-status text-secondary font-mono uppercase bg-surface-container-lowest px-2 py-1 rounded border border-secondary/20">
+            Pass 42ms
+          </span>
+</div>
+<!-- 2. Role Sync -->
+<div class="bg-surface-container p-space-sm rounded-lg border border-outline-variant/20 flex items-center justify-between">
+<div class="space-y-0.5">
+<div class="flex items-center gap-1.5">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+<span class="font-label-code-md text-label-code-md text-on-surface font-medium">Role Synchronization</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant pl-3">Exact 1:1 mapping: Student, Instructor, Admin verified</p>
+</div>
+<span class="font-label-status text-label-status text-secondary font-mono uppercase bg-surface-container-lowest px-2 py-1 rounded border border-secondary/20">
+            Mapped 1:1
+          </span>
+</div>
+<!-- 3. Access Control -->
+<div class="bg-surface-container p-space-sm rounded-lg border border-outline-variant/20 flex items-center justify-between">
+<div class="space-y-0.5">
+<div class="flex items-center gap-1.5">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+<span class="font-label-code-md text-label-code-md text-on-surface font-medium">Access Control Enforcement</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant pl-3">RBAC token authorization with realm validity checks</p>
+</div>
+<span class="font-label-status text-label-status text-secondary font-mono uppercase bg-surface-container-lowest px-2 py-1 rounded border border-secondary/20">
+            Enforced
+          </span>
+</div>
+<!-- 4. Fallback Protocol -->
+<div class="bg-surface-container p-space-sm rounded-lg border border-outline-variant/20 flex items-center justify-between">
+<div class="space-y-0.5">
+<div class="flex items-center gap-1.5">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+<span class="font-label-code-md text-label-code-md text-on-surface font-medium">Fallback Protocol</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant pl-3">Graceful degradation active on network disconnect</p>
+</div>
+<span class="font-label-status text-label-status text-secondary font-mono uppercase bg-surface-container-lowest px-2 py-1 rounded border border-secondary/20">
+            Resilient
+          </span>
+</div>
+</div>
+</section>
+<!-- FINDING 3, 4, 5: 401 UNAUTHORIZED, JWT-DB UNWIRED & CAUSAL ACCESS CONTROL -->
+<section class="bg-surface-container-low border border-outline-variant/30 rounded-xl p-space-md">
+<div class="flex items-start justify-between gap-space-sm mb-space-xs">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-primary text-[20px]" data-icon="key">key</span>
+<div>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Findings 03, 04, 05: HTTP 401 &amp; JWT Fix</h2>
+<p class="font-label-code-sm text-label-code-sm text-outline">BARCAN-TAG-02 &amp; 05 • E2E Identity Wiring</p>
+</div>
+</div>
+<span class="font-label-status text-label-status px-2 py-0.5 rounded bg-secondary-container/20 border border-secondary/40 text-secondary">
+          RESOLVED
+        </span>
+</div>
+<!-- Root Cause Resolution Memo -->
+<div class="bg-surface-container-lowest rounded-lg p-space-sm border border-outline-variant/20 my-space-xs">
+<p class="font-label-code-sm text-label-code-sm text-secondary">
+<span class="font-bold uppercase text-tertiary">[Root Cause Remediation]:</span> JWT claims wired to persistence layer with DB user validation; mock-only payload bypassed in favor of end-to-end authorization engine.
+        </p>
+</div>
+<!-- Trace Diagram: E2E Pipeline -->
+<div class="space-y-1.5 mt-space-sm">
+<p class="font-label-code-sm text-label-code-sm text-outline uppercase tracking-wider">Causal Gateway Execution Pipeline</p>
+<!-- Step 1 -->
+<div class="bg-surface-container p-2.5 rounded border border-outline-variant/20 flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="font-label-status text-label-status text-outline bg-surface-container-highest px-1.5 py-0.5 rounded">01</span>
+<div>
+<p class="font-label-code-md text-label-code-md text-on-surface">Bearer Token Ingress</p>
+<p class="font-body-sm text-body-sm text-outline">Signed JWT in Authorization header</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-secondary text-[16px]" data-icon="arrow_downward">arrow_downward</span>
+</div>
+<!-- Step 2 -->
+<div class="bg-surface-container p-2.5 rounded border border-outline-variant/20 flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="font-label-status text-label-status text-outline bg-surface-container-highest px-1.5 py-0.5 rounded">02</span>
+<div>
+<p class="font-label-code-md text-label-code-md text-on-surface">Claims Parsed</p>
+<p class="font-label-code-sm text-label-code-sm text-tertiary font-mono">sub: "usr_8912" | role: "ADMIN"</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-secondary text-[16px]" data-icon="arrow_downward">arrow_downward</span>
+</div>
+<!-- Step 3: DB Verification -->
+<div class="bg-surface-container p-2.5 rounded border border-secondary/40 flex items-center justify-between bg-surface-container/80">
+<div class="flex items-center gap-2">
+<span class="font-label-status text-label-status text-secondary bg-secondary-container/30 px-1.5 py-0.5 rounded">03</span>
+<div>
+<p class="font-label-code-md text-label-code-md text-secondary font-bold">Persistence Identity Verification</p>
+<p class="font-label-code-sm text-label-code-sm text-on-surface-variant font-mono">users.findUnique({ id: 'usr_8912' }) MATCHED</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-secondary text-[16px]" data-icon="database">database</span>
+</div>
+<!-- Step 4: Access Granted -->
+<div class="bg-surface-container p-2.5 rounded border border-outline-variant/20 flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="font-label-status text-label-status text-outline bg-surface-container-highest px-1.5 py-0.5 rounded">04</span>
+<div>
+<p class="font-label-code-md text-label-code-md text-on-surface">Policy Evaluated &amp; Granted</p>
+<p class="font-body-sm text-body-sm text-secondary">HTTP 200 OK — zero 401 recurrence</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-secondary text-[18px]" data-icon="check_circle" data-weight="fill" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+</div>
+</section>
+<!-- PHILOSOPHICAL REMEDIATION: DUMMETT & GOODMAN CRITIQUES -->
+<section class="bg-surface-container-low border border-outline-variant/30 rounded-xl p-space-md">
+<div class="flex items-start justify-between gap-space-sm mb-space-sm">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-primary text-[20px]" data-icon="integration_instructions">integration_instructions</span>
+<div>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Falsification: Dummett &amp; Goodman</h2>
+<p class="font-label-code-sm text-label-code-sm text-outline">Epistemic Bundle Integrity &amp; Svelte Imports</p>
+</div>
+</div>
+<span class="font-label-status text-label-status px-2 py-0.5 rounded bg-tertiary-container/30 border border-tertiary/40 text-tertiary">
+          ATTESTED
+        </span>
+</div>
+<div class="space-y-space-sm">
+<!-- Dummett: ImprintModal -->
+<div class="bg-surface-container p-space-sm rounded-lg border border-outline-variant/20">
+<div class="flex items-center justify-between mb-1">
+<span class="font-label-code-md text-label-code-md text-on-surface font-semibold">1. Dummett Verification (Anti-Realist Grounding)</span>
+<span class="font-label-status text-label-status text-secondary font-mono">0 RESOLUTION ERRORS</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mb-space-xs">
+<code class="font-label-code-sm text-label-code-sm text-primary font-mono">ImprintModal.svelte</code> local import cleanly resolved in component registry. No dangling unmanifested references.
+          </p>
+<button class="w-full py-1.5 px-space-sm bg-surface-container-high border border-outline-variant/30 hover:border-primary/50 text-on-surface rounded text-left flex items-center justify-between text-label-code-sm font-label-code-sm active:scale-[0.99] transition-all" id="modalPreviewBtn">
+<span class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px] text-tertiary" data-icon="visibility">visibility</span>
+<span>Preview Remediated Imprint Modal</span>
+</span>
+<span class="text-outline text-[11px]">Inspect Svelte Component →</span>
+</button>
+</div>
+<!-- Goodman: Tailwind Pipeline -->
+<div class="bg-surface-container p-space-sm rounded-lg border border-outline-variant/20">
+<div class="flex items-center justify-between mb-1">
+<span class="font-label-code-md text-label-code-md text-on-surface font-semibold">2. Goodman Critique (Inductive Rigor)</span>
+<span class="font-label-status text-label-status text-secondary font-mono">DETERMINISTIC</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+            Tailwind CSS production build pipeline: Self-contained PostCSS output verified. CDN warning deprecated, deterministic asset bundling preserved for air-gapped security.
+          </p>
+<div class="mt-2 flex items-center gap-2 font-label-code-sm text-label-code-sm text-secondary font-mono bg-surface-container-lowest px-2 py-1 rounded">
+<span class="material-symbols-outlined text-[14px]" data-icon="terminal">terminal</span>
+<span>$ vite build --mode production → 0 warnings, 100% pure chunks</span>
+</div>
+</div>
+</div>
+</section>
+<!-- ACTION & RUN BAR (Primary / Secondary Triggers) -->
+<section class="bg-surface-container-lowest border border-outline-variant/40 rounded-xl p-space-md space-y-space-xs">
+<div class="flex items-center justify-between font-label-code-sm text-label-code-sm text-outline pb-1">
+<span>Execution Environment: Production Node v20</span>
+<span class="text-secondary font-mono">Last validated: 2 mins ago</span>
+</div>
+<div class="flex flex-col sm:flex-row gap-space-xs pt-1">
+<button class="flex-1 bg-primary text-on-primary font-headline-sm text-[14px] font-bold py-3 px-space-md rounded-lg flex items-center justify-center gap-2 hover:bg-primary-fixed active:scale-[0.98] transition-transform duration-150 shadow-[0_0_12px_rgba(192,193,255,0.2)]" id="rerunMatrixBtn">
+<span class="material-symbols-outlined text-[18px]" data-icon="refresh">refresh</span>
+<span>Re-run Verification Matrix</span>
+</button>
+<button class="bg-surface-container-high border border-outline-variant/30 text-on-surface font-headline-sm text-[14px] py-3 px-space-md rounded-lg flex items-center justify-center gap-2 hover:bg-surface-bright active:scale-[0.98] transition-transform duration-150" id="exportAuditBtn">
+<span class="material-symbols-outlined text-[18px] text-tertiary" data-icon="download">download</span>
+<span>Export Audit (JSON)</span>
+</button>
+</div>
+</section>
+</main>
+<!-- BOTTOM SHEET MODAL: ImprintModal.svelte Preview -->
+<div class="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 hidden flex items-end sm:items-center justify-center p-0 sm:p-4 transition-opacity duration-200" id="imprintModalBackdrop">
+<div class="bg-surface-container-low border-t sm:border border-primary/30 w-full max-w-lg rounded-t-2xl sm:rounded-xl p-space-md shadow-2xl max-h-[751px] overflow-y-auto">
+<div class="flex items-center justify-between border-b border-outline-variant/20 pb-space-xs mb-space-sm">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[20px]" data-icon="code">code</span>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">ImprintModal.svelte</h3>
+</div>
+<button class="p-1 rounded text-outline hover:text-on-surface hover:bg-surface-container-high" id="closeModalBtn">
+<span class="material-symbols-outlined text-[20px]" data-icon="close">close</span>
+</button>
+</div>
+<div class="space-y-space-sm font-label-code-sm text-label-code-sm">
+<div class="p- space-sm bg-surface-container-lowest rounded border border-outline-variant/20 p-2.5">
+<p class="text-tertiary font-bold mb-1">// Dummett Anti-Realist Attestation</p>
+<p class="text-on-surface-variant font-mono">Registry Key: <span class="text-secondary">core/components/ImprintModal</span></p>
+<p class="text-on-surface-variant font-mono">Component Hash: <span class="text-primary font-bold">sha256:77bc3a...09fa</span></p>
+<p class="text-on-surface-variant font-mono">Runtime Error Count: <span class="text-secondary">0 (Deterministic Pass)</span></p>
+</div>
+<div class="bg-surface-container-lowest p-3 rounded font-mono text-[12px] leading-relaxed border border-outline-variant/20 text-on-surface-variant">
+<p class="text-outline">&lt;script lang="ts"&gt;</p>
+<p class="pl-4 text-on-surface">export let isOpen = false;</p>
+<p class="pl-4 text-on-surface">export let governanceHash: string;</p>
+<p class="pl-4 text-secondary">import { verifyIdentityClaims } from '$lib/auth';</p>
+<p class="text-outline">&lt;/script&gt;</p>
+<p class="text-tertiary mt-2">&lt;!-- Verified Imprint Container --&gt;</p>
+<p class="text-outline">&lt;div class="attested-imprint-tray"&gt; ... &lt;/div&gt;</p>
+</div>
+<button class="w-full py-2 bg-primary text-on-primary rounded font-bold font-headline-sm text-[13px] active:scale-95 transition-transform" id="dismissModalAction">
+          Dismiss Verified Inspection
+        </button>
+</div>
+</div>
+</div>
+<!-- BOTTOM NAVIGATION BAR (Shared Component JSON derived) -->
+<nav class="bg-surface-container-lowest border-t border-outline-variant/20 fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-margin-mobile py-space-xs">
+<!-- Tab 1: Overview -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant font-label-code-sm text-label-code-sm gap-space-2xs py-space-xs hover:bg-surface-container-low transition-colors rounded" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="dashboard">dashboard</span>
+<span class="uppercase">Overview</span>
+</a>
+<!-- Tab 2: Pipeline (ACTIVE: Audit & Remediation context) -->
+<a class="flex flex-col items-center justify-center text-secondary font-label-code-sm text-label-code-sm gap-space-2xs py-space-xs hover:bg-surface-container-low transition-colors rounded font-bold" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="rule" data-weight="fill" style="font-variation-settings: 'FILL' 1;">rule</span>
+<span class="uppercase">Pipeline</span>
+</a>
+<!-- Tab 3: JWT Auth -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant font-label-code-sm text-label-code-sm gap-space-2xs py-space-xs hover:bg-surface-container-low transition-colors rounded" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="key">key</span>
+<span class="uppercase">JWT Auth</span>
+</a>
+<!-- Tab 4: Logs -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant font-label-code-sm text-label-code-sm gap-space-2xs py-space-xs hover:bg-surface-container-low transition-colors rounded" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="terminal">terminal</span>
+<span class="uppercase">Logs</span>
+</a>
+</nav>
+<!-- Interactive Logic -->
+<script>
+    // Modal toggle mechanics
+    const previewBtn = document.getElementById('modalPreviewBtn');
+    const modalBackdrop = document.getElementById('imprintModalBackdrop');
+    const closeModalBtn = document.getElementById('closeModalBtn');
+    const dismissModalAction = document.getElementById('dismissModalAction');
+
+    function openModal() {
+      modalBackdrop.classList.remove('hidden');
+    }
+    function closeModal() {
+      modalBackdrop.classList.add('hidden');
+    }
+
+    if (previewBtn) previewBtn.addEventListener('click', openModal);
+    if (closeModalBtn) closeModalBtn.addEventListener('click', closeModal);
+    if (dismissModalAction) dismissModalAction.addEventListener('click', closeModal);
+
+    // Close on backdrop tap
+    modalBackdrop.addEventListener('click', (e) => {
+      if (e.target === modalBackdrop) closeModal();
+    });
+
+    // Re-run Matrix trigger
+    const rerunBtn = document.getElementById('rerunMatrixBtn');
+    if (rerunBtn) {
+      rerunBtn.addEventListener('click', () => {
+        const originalText = rerunBtn.innerHTML;
+        rerunBtn.innerHTML = '<span class="material-symbols-outlined animate-spin text-[18px]">sync</span><span>Verifying SHA-256 Chunks...</span>';
+        setTimeout(() => {
+          rerunBtn.innerHTML = '<span class="material-symbols-outlined text-[18px]">verified</span><span>Matrix Attested 100% Real</span>';
+          setTimeout(() => {
+            rerunBtn.innerHTML = originalText;
+          }, 2000);
+        }, 800);
+      });
+    }
+
+    // Export Audit JSON simulation
+    const exportBtn = document.getElementById('exportAuditBtn');
+    if (exportBtn) {
+      exportBtn.addEventListener('click', () => {
+        const data = {
+          suite: "BARCAN Governance",
+          cycle: "04-RESOLVED",
+          verified_target: "PR-142",
+          target_sha256: "4f8a91b42c67da1e89bfa81927c3e5a04bc619284fa93bc821038e9c2e",
+          lms_matrix: { sso_handshake_ms: 42, rbac: "verified", fallback: "active" },
+          http_401_fix: "users.findUnique wired to JWT persistence sub usr_8912",
+          dummett_imprint_modal: "resolved_zero_errors"
+        };
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'barcan-audit-remediation-manifest.json';
+        a.click();
+        URL.revokeObjectURL(url);
+      });
+    }
+
+    // Header sync icon animation
+    const syncBtn = document.getElementById('syncTriggerBtn');
+    if (syncBtn) {
+      syncBtn.addEventListener('click', () => {
+        syncBtn.firstElementChild.classList.add('animate-spin');
+        setTimeout(() => {
+          syncBtn.firstElementChild.classList.remove('animate-spin');
+        }, 1000);
+      });
+    }
+  </script>
+</body></html>
