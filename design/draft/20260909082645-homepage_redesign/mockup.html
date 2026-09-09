@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Svelte Verification Engine - Audit Remediation Console</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;0,700;1,400&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "surface-dim": "#0f131c",
+            "on-secondary": "#213145",
+            "on-error-container": "#ffdad6",
+            "inverse-surface": "#dfe2ef",
+            "on-surface-variant": "#c2c6d6",
+            "on-primary": "#002e6a",
+            "surface-tint": "#adc6ff",
+            "error-container": "#93000a",
+            "tertiary-container": "#00a572",
+            "secondary-fixed-dim": "#b7c8e1",
+            "error": "#ffb4ab",
+            "on-secondary-fixed-variant": "#38485d",
+            "primary": "#adc6ff",
+            "on-primary-container": "#00285d",
+            "inverse-primary": "#005ac2",
+            "tertiary": "#4edea3",
+            "surface-bright": "#353943",
+            "on-tertiary-fixed-variant": "#005236",
+            "surface-container-lowest": "#0a0e17",
+            "surface-container": "#1c1f29",
+            "outline-variant": "#424754",
+            "on-primary-fixed-variant": "#004395",
+            "surface-container-highest": "#31353f",
+            "primary-fixed-dim": "#adc6ff",
+            "on-primary-fixed": "#001a42",
+            "tertiary-fixed-dim": "#4edea3",
+            "primary-container": "#4d8eff",
+            "on-tertiary": "#003824",
+            "primary-fixed": "#d8e2ff",
+            "background": "#0f131c",
+            "surface": "#0f131c",
+            "secondary-fixed": "#d3e4fe",
+            "surface-container-low": "#181b25",
+            "on-tertiary-container": "#00311f",
+            "on-error": "#690005",
+            "outline": "#8c909f",
+            "surface-container-high": "#262a34",
+            "on-tertiary-fixed": "#002113",
+            "tertiary-fixed": "#6ffbbe",
+            "inverse-on-surface": "#2c303a",
+            "surface-variant": "#31353f",
+            "on-surface": "#dfe2ef",
+            "on-secondary-fixed": "#0b1c30",
+            "secondary-container": "#3a4a5f",
+            "on-secondary-container": "#a9bad3",
+            "on-background": "#dfe2ef",
+            "secondary": "#b7c8e1"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          "spacing": {
+            "gutter-mobile": "0.75rem",
+            "space-2xl": "3rem",
+            "margin-desktop": "1.5rem",
+            "gutter-desktop": "1rem",
+            "space-md": "0.75rem",
+            "space-xl": "2rem",
+            "space-base": "1rem",
+            "space-xs": "0.25rem",
+            "space-2xs": "0.125rem",
+            "margin-mobile": "0.75rem",
+            "space-sm": "0.5rem",
+            "space-lg": "1.5rem"
+          },
+          "fontFamily": {
+            "badge-label": ["JetBrains Mono"],
+            "telemetry-metric": ["JetBrains Mono"],
+            "headline-md": ["Geist"],
+            "body-sm": ["Geist"],
+            "display-lg-mobile": ["Geist"],
+            "mono-code": ["JetBrains Mono"],
+            "body-lg": ["Geist"],
+            "headline-lg": ["Geist"],
+            "headline-sm": ["Geist"],
+            "title-sm": ["Geist"],
+            "title-md": ["Geist"],
+            "mono-code-bold": ["JetBrains Mono"],
+            "display-lg": ["Geist"],
+            "body-md": ["Geist"]
+          },
+          "fontSize": {
+            "badge-label": ["10px", { "lineHeight": "12px", "letterSpacing": "0.06em", "fontWeight": "600" }],
+            "telemetry-metric": ["20px", { "lineHeight": "24px", "letterSpacing": "-0.02em", "fontWeight": "500" }],
+            "headline-md": ["20px", { "lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "body-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.005em", "fontWeight": "400" }],
+            "display-lg-mobile": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.015em", "fontWeight": "600" }],
+            "mono-code": ["12px", { "lineHeight": "18px", "letterSpacing": "0em", "fontWeight": "400" }],
+            "body-lg": ["15px", { "lineHeight": "24px", "letterSpacing": "0em", "fontWeight": "400" }],
+            "headline-lg": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.015em", "fontWeight": "600" }],
+            "headline-sm": ["16px", { "lineHeight": "24px", "letterSpacing": "-0.005em", "fontWeight": "600" }],
+            "title-sm": ["13px", { "lineHeight": "18px", "letterSpacing": "0.01em", "fontWeight": "600" }],
+            "title-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0em", "fontWeight": "600" }],
+            "mono-code-bold": ["12px", { "lineHeight": "18px", "letterSpacing": "0em", "fontWeight": "600" }],
+            "display-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+            "body-md": ["13px", { "lineHeight": "20px", "letterSpacing": "0em", "fontWeight": "400" }]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+      font-size: 16px;
+      line-height: 1;
+      display: inline-block;
+      vertical-align: middle;
+    }
+    .status-box-pass {
+      background-color: rgba(78, 222, 163, 0.08);
+      border: 1px solid rgba(78, 222, 163, 0.35);
+      color: #4edea3;
+    }
+    .status-box-fail {
+      background-color: rgba(255, 180, 171, 0.08);
+      border: 1px solid rgba(255, 180, 171, 0.35);
+      color: #ffb4ab;
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface-dim text-on-surface font-body-md antialiased selection:bg-primary-container selection:text-on-primary-container min-h-screen flex flex-col justify-between">
+<!-- Top Navigation Anchor (from Shared Components JSON) -->
+<header class="bg-surface-container-lowest text-primary flex justify-between items-center w-full px-margin-mobile md:px-margin-desktop h-12 sticky top-0 z-50 border-b border-outline-variant">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary" data-icon="terminal">terminal</span>
+<span class="text-headline-sm font-headline-sm text-on-surface tracking-tight uppercase">Svelte Verification Engine</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="text-badge-label font-badge-label uppercase tracking-widest px-space-xs py-space-2xs bg-surface-container-high border border-outline-variant text-primary">STATUS: AUDIT_LOCKED</span>
+</div>
+</header>
+<!-- Telemetry Bar / Environment Gate Ribbon -->
+<div class="bg-surface-container-low border-b border-outline-variant px-margin-mobile py-space-xs flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="inline-block w-2 h-2 rounded-full bg-tertiary animate-pulse"></span>
+<span class="font-mono-code text-mono-code text-on-surface-variant">GATE: <strong class="text-on-surface font-mono-code-bold">PROD_VERIFY_PASS</strong></span>
+</div>
+<span class="font-badge-label text-badge-label text-on-surface-variant font-mono-code">BUILD: #842-FALS-REMED</span>
+</div>
+<!-- Main Viewport Canvas (Mobile Form Factor Centric) -->
+<main class="flex-1 w-full max-w-md mx-auto px-margin-mobile py-space-md space-y-space-base">
+<!-- Interactive Proof Filter Tabs -->
+<div class="grid grid-cols-3 gap-space-2xs bg-surface-container-lowest p-space-2xs border border-outline-variant rounded">
+<button class="py-space-xs text-center border-b-2 border-primary bg-surface-container text-primary font-mono-code-bold text-mono-code-bold" id="tab-findings" onclick="switchTab('findings')">
+        All (5/5)
+      </button>
+<button class="py-space-xs text-center border-b-2 border-transparent text-on-surface-variant font-mono-code text-mono-code hover:text-on-surface" id="tab-philosophy" onclick="switchTab('philosophy')">
+        Philosophical (2/2)
+      </button>
+<button class="py-space-xs text-center border-b-2 border-transparent text-on-surface-variant font-mono-code text-mono-code hover:text-on-surface" id="tab-trace" onclick="switchTab('trace')">
+        Audit Proofs
+      </button>
+</div>
+<!-- VIEW 1: Critical Finding Triage Deck -->
+<section class="space-y-space-md" id="section-findings">
+<div class="flex justify-between items-center">
+<h2 class="font-headline-sm text-headline-sm text-on-surface flex items-center gap-1.5">
+<span class="material-symbols-outlined text-primary" data-icon="rule">rule</span>
+          Confirmed Remediations
+        </h2>
+<span class="font-badge-label text-badge-label text-tertiary bg-surface-container-high px-space-xs py-space-2xs border border-outline-variant">5 RESOLVED</span>
+</div>
+<!-- Item 1: BARCAN-TAG-09/stub -->
+<article class="bg-surface-container-low border border-outline-variant p-space-sm space-y-space-xs rounded">
+<div class="flex justify-between items-start">
+<span class="font-badge-label text-badge-label text-error bg-error-container/20 px-space-xs py-space-2xs border border-error/30">BARCAN-TAG-09 / stub</span>
+<span class="font-mono-code text-mono-code text-on-surface-variant">PR #0</span>
+</div>
+<p class="font-title-sm text-title-sm text-on-surface">Automated Review PR #0 Stub Suppression</p>
+<!-- Detected Fault State -->
+<div class="status-box-fail p-space-xs rounded font-mono-code text-mono-code flex items-start gap-2">
+<span class="material-symbols-outlined text-error shrink-0" data-icon="close">close</span>
+<div>
+<span class="text-error font-mono-code-bold">FALSIFICATION DETECTED:</span>
+<span class="text-on-surface-variant">Empty merge review stub bypass without cryptographic CI attestation.</span>
+</div>
+</div>
+<!-- Remediated State -->
+<div class="status-box-pass p-space-xs rounded font-mono-code text-mono-code flex items-start gap-2">
+<span class="material-symbols-outlined text-tertiary shrink-0" data-icon="check_circle">check_circle</span>
+<div class="space-y-1">
+<span class="text-tertiary font-mono-code-bold">APPLIED REMEDIATION:</span>
+<p class="text-on-surface text-body-sm font-body-sm">
+              PR #0 rejected with <span class="text-primary font-mono-code">"INVALID STUB DETECTED — Enforcing verified PR lifecycle with non-empty review justification and real CI attestations"</span>.
+            </p>
+</div>
+</div>
+</article>
+<!-- Item 2 & 3: BARCAN-TAG-09/stub & BARCAN-TAG-02/stub (Moodle & HTTP 401) -->
+<article class="bg-surface-container-low border border-outline-variant p-space-sm space-y-space-xs rounded">
+<div class="flex justify-between items-start">
+<div class="flex gap-1 flex-wrap">
+<span class="font-badge-label text-badge-label text-error bg-error-container/20 px-space-xs py-space-2xs border border-error/30">BARCAN-TAG-09</span>
+<span class="font-badge-label text-badge-label text-error bg-error-container/20 px-space-xs py-space-2xs border border-error/30">BARCAN-TAG-02</span>
+</div>
+<span class="font-mono-code text-mono-code text-on-surface-variant">LMS / AUTH</span>
+</div>
+<p class="font-title-sm text-title-sm text-on-surface">Moodle LMS Integration &amp; HTTP 401 Handshake Gaps</p>
+<!-- Checklist Matrix -->
+<div class="bg-surface-container-lowest border border-outline-variant p-space-xs space-y-1 font-mono-code text-mono-code">
+<div class="flex items-center justify-between border-b border-outline-variant pb-1">
+<span class="text-on-surface-variant">SSO endpoint wired</span>
+<span class="text-tertiary flex items-center gap-1"><span class="w-1.5 h-1.5 bg-tertiary"></span>ACTIVE</span>
+</div>
+<div class="flex items-center justify-between border-b border-outline-variant py-1">
+<span class="text-on-surface-variant">Role Sync mapping</span>
+<span class="text-tertiary flex items-center gap-1"><span class="w-1.5 h-1.5 bg-tertiary"></span>VERIFIED</span>
+</div>
+<div class="flex items-center justify-between border-b border-outline-variant py-1">
+<span class="text-on-surface-variant">Fallback Auth enabled</span>
+<span class="text-tertiary flex items-center gap-1"><span class="w-1.5 h-1.5 bg-tertiary"></span>ARMED</span>
+</div>
+<div class="flex items-center justify-between pt-1">
+<span class="text-on-surface-variant">HTTP 401 unaddressed gap</span>
+<span class="text-tertiary flex items-center gap-1"><span class="w-1.5 h-1.5 bg-tertiary"></span>CLEARED</span>
+</div>
+</div>
+<div class="status-box-pass p-space-xs rounded font-mono-code text-mono-code flex items-start gap-2">
+<span class="material-symbols-outlined text-tertiary shrink-0" data-icon="verified">verified</span>
+<p class="text-on-surface text-body-sm font-body-sm">
+            Handshake resolution enforced: Root-cause token handshake wired to Moodle OAuth Provider. Silent failure state eliminated.
+          </p>
+</div>
+</article>
+<!-- Item 4: BARCAN-TAG-02/layer_violation -->
+<article class="bg-surface-container-low border border-outline-variant p-space-sm space-y-space-xs rounded">
+<div class="flex justify-between items-start">
+<span class="font-badge-label text-badge-label text-error bg-error-container/20 px-space-xs py-space-2xs border border-error/30">BARCAN-TAG-02 / layer_violation</span>
+<span class="font-mono-code text-mono-code text-on-surface-variant">PERSISTENCE</span>
+</div>
+<p class="font-title-sm text-title-sm text-on-surface">JWT Claims to Persistence Layer Unwired</p>
+<div class="status-box-pass p-space-xs rounded font-mono-code text-mono-code flex items-start gap-2">
+<span class="material-symbols-outlined text-tertiary shrink-0" data-icon="task_alt">task_alt</span>
+<div class="space-y-1">
+<span class="text-tertiary font-mono-code-bold">PERSISTENCE CHECK: PASSED</span>
+<p class="text-on-surface text-body-sm font-body-sm">
+              JWT claims bound directly to DB User Entity verification (Persistence Check Passed; Authorization context hydrated from database).
+            </p>
+</div>
+</div>
+<div class="bg-surface-container-lowest border border-outline-variant p-space-xs font-mono-code text-mono-code text-on-surface-variant overflow-x-auto text-[11px]">
+<code>const session = await db.user.verifyClaims(token.claims);</code>
+</div>
+</article>
+<!-- Item 5: BARCAN-TAG-05/causal_unjustified -->
+<article class="bg-surface-container-low border border-outline-variant p-space-sm space-y-space-xs rounded">
+<div class="flex justify-between items-start">
+<span class="font-badge-label text-badge-label text-error bg-error-container/20 px-space-xs py-space-2xs border border-error/30">BARCAN-TAG-05 / causal_unjustified</span>
+<span class="font-mono-code text-mono-code text-on-surface-variant">RBAC</span>
+</div>
+<p class="font-title-sm text-title-sm text-on-surface">Mocked Token Causal Illusion</p>
+<div class="status-box-pass p-space-xs rounded font-mono-code text-mono-code flex items-start gap-2">
+<span class="material-symbols-outlined text-tertiary shrink-0" data-icon="security">security</span>
+<p class="text-on-surface text-body-sm font-body-sm">
+            Underlying auth middleware rebuilt with verified database RBAC validation rather than mock payload mutations.
+          </p>
+</div>
+</article>
+</section>
+<!-- VIEW 2: Philosophical Product Falsification Section -->
+<section class="space-y-space-md" id="section-philosophy">
+<div class="flex justify-between items-center">
+<h2 class="font-headline-sm text-headline-sm text-on-surface flex items-center gap-1.5">
+<span class="material-symbols-outlined text-primary" data-icon="psychology">psychology</span>
+          Philosophical Falsifications
+        </h2>
+<span class="font-badge-label text-badge-label text-primary bg-surface-container-high px-space-xs py-space-2xs border border-outline-variant">EPISTEMIC GATE</span>
+</div>
+<!-- Voice 1: Dummett -->
+<article class="bg-surface-container-low border border-outline-variant p-space-sm space-y-space-xs rounded">
+<div class="flex justify-between items-start border-b border-outline-variant pb-space-xs">
+<div>
+<span class="font-title-sm text-title-sm text-on-surface block">Michael Dummett</span>
+<span class="font-badge-label text-badge-label text-on-surface-variant">VERIFICATIONIST THEORY OF MEANING</span>
+</div>
+<span class="font-badge-label text-badge-label bg-secondary-container text-on-secondary-container px-space-xs py-space-2xs">KANO: MUST-BE</span>
+</div>
+<p class="text-body-sm font-body-sm text-on-surface-variant">
+          Premise: Unverifiable statements lack operational meaning. Dead code links break truth-conditional guarantees.
+        </p>
+<div class="bg-surface-container-lowest border border-outline-variant p-space-xs space-y-1">
+<div class="flex items-center gap-1 text-error font-mono-code text-mono-code">
+<span class="material-symbols-outlined text-error" data-icon="report_problem">report_problem</span>
+<span>Broken import: RegistrationForm.svelte -&gt; ImprintModal.svelte</span>
+</div>
+<div class="status-box-pass p-space-xs rounded font-mono-code text-mono-code">
+<span class="text-tertiary font-mono-code-bold block">BUNDLE RESOLUTION: VERIFIED</span>
+<p class="text-on-surface text-body-sm font-body-sm">
+              RegistrationForm.svelte -&gt; ImprintModal.svelte bundle resolution: VERIFIED (Zero white-screen dead ends).
+            </p>
+</div>
+</div>
+</article>
+<!-- Voice 2: Goodman -->
+<article class="bg-surface-container-low border border-outline-variant p-space-sm space-y-space-xs rounded">
+<div class="flex justify-between items-start border-b border-outline-variant pb-space-xs">
+<div>
+<span class="font-title-sm text-title-sm text-on-surface block">Nelson Goodman</span>
+<span class="font-badge-label text-badge-label text-on-surface-variant">WORLDMAKING &amp; COHERENT SYSTEMS</span>
+</div>
+<span class="font-badge-label text-badge-label bg-secondary-container text-on-secondary-container px-space-xs py-space-2xs">KANO: PERFORMANCE</span>
+</div>
+<p class="text-body-sm font-body-sm text-on-surface-variant">
+          Premise: Entrenchment and systemic projection require deterministic, closed-world artifact packaging.
+        </p>
+<div class="bg-surface-container-lowest border border-outline-variant p-space-xs space-y-1">
+<div class="flex items-center gap-1 text-error font-mono-code text-mono-code">
+<span class="material-symbols-outlined text-error" data-icon="warning">warning</span>
+<span>Warning: cdn.tailwindcss.com runtime injection overhead</span>
+</div>
+<div class="status-box-pass p-space-xs rounded font-mono-code text-mono-code">
+<span class="text-tertiary font-mono-code-bold block">DETERMINISTIC COMPILATION: APPLIED</span>
+<p class="text-on-surface text-body-sm font-body-sm">
+              Asset pipeline migrated from cdn.tailwindcss.com to deterministic local Tailwind PostCSS bundle (Zero CDN console warnings).
+            </p>
+</div>
+</div>
+</article>
+</section>
+<!-- VIEW 3: Live Telemetry & Audit Proof Trace -->
+<section class="space-y-space-md" id="section-trace">
+<div class="flex justify-between items-center">
+<h2 class="font-headline-sm text-headline-sm text-on-surface flex items-center gap-1.5">
+<span class="material-symbols-outlined text-primary" data-icon="query_stats">query_stats</span>
+          Verification Proof Signatures
+        </h2>
+<span class="font-badge-label text-badge-label text-tertiary bg-surface-container-high px-space-xs py-space-2xs border border-outline-variant">GPG VALID</span>
+</div>
+<div class="bg-surface-container-low border border-outline-variant p-space-sm space-y-space-sm rounded">
+<!-- Sign-off Metadata -->
+<div class="space-y-1 font-mono-code text-mono-code">
+<div class="text-on-surface-variant flex justify-between">
+<span>COMMIT_HASH:</span>
+<span class="text-on-surface">d98e10c74b...a21f</span>
+</div>
+<div class="text-on-surface-variant flex justify-between">
+<span>SIGNER:</span>
+<span class="text-primary font-mono-code-bold">keybase://audit_engine</span>
+</div>
+<div class="text-on-surface-variant flex justify-between">
+<span>INTEGRITY_INDEX:</span>
+<span class="text-tertiary">100.0% CONVERGENCE</span>
+</div>
+</div>
+<!-- Terminal Attestation Trace -->
+<div class="bg-surface-container-lowest border border-outline-variant p-space-xs font-mono-code text-mono-code space-y-1 text-[11px]">
+<div class="text-tertiary flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]" data-icon="check">check</span>
+<span>suite:unit [vitest] .................... 48/48 PASS</span>
+</div>
+<div class="text-tertiary flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]" data-icon="check">check</span>
+<span>suite:e2e [playwright] ............... 16/16 PASS</span>
+</div>
+<div class="text-tertiary flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]" data-icon="check">check</span>
+<span>suite:barcan_falsification .......... 5/5 RESOLVED</span>
+</div>
+<div class="text-tertiary flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]" data-icon="check">check</span>
+<span>suite:epistemic_closure ............ 2/2 VERIFIED</span>
+</div>
+</div>
+<button class="w-full h-8 bg-primary hover:bg-primary-container text-on-primary font-mono-code-bold text-mono-code rounded border border-white/20 flex items-center justify-center gap-2 transition-colors">
+<span class="material-symbols-outlined text-[16px]" data-icon="download">download</span>
+<span>EXPORT ED25519 REMEDIATION BUNDLE</span>
+</button>
+</div>
+</section>
+</main>
+<!-- Navigation Drawer (Anchored from JSON - Mobile Compact Bottom Dock) -->
+<footer class="bg-surface-container-low border-t border-outline-variant sticky bottom-0 z-50 px-margin-mobile py-space-xs">
+<div class="max-w-md mx-auto flex items-center justify-around">
+<button class="flex flex-col items-center gap-1 text-primary" id="dock-findings" onclick="switchTab('findings')">
+<span class="material-symbols-outlined" data-icon="rule">rule</span>
+<span class="font-badge-label text-badge-label">Falsification Log</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-on-surface-variant hover:text-on-surface" id="dock-philosophy" onclick="switchTab('philosophy')">
+<span class="material-symbols-outlined" data-icon="psychology">psychology</span>
+<span class="font-badge-label text-badge-label">Philosophical Audit</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-on-surface-variant hover:text-on-surface" id="dock-trace" onclick="switchTab('trace')">
+<span class="material-symbols-outlined" data-icon="query_stats">query_stats</span>
+<span class="font-badge-label text-badge-label">Telemetry Stream</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-on-surface-variant hover:text-on-surface" onclick="alert('AST Proof verification tree: 12 sub-graphs pruned, 0 violations remaining.');">
+<span class="material-symbols-outlined" data-icon="account_tree">account_tree</span>
+<span class="font-badge-label text-badge-label">AST Proofs</span>
+</button>
+</div>
+</footer>
+<script>
+    function switchTab(tab) {
+      // Toggle display of sections
+      const findings = document.getElementById('section-findings');
+      const philosophy = document.getElementById('section-philosophy');
+      const trace = document.getElementById('section-trace');
+
+      const tabFindings = document.getElementById('tab-findings');
+      const tabPhilosophy = document.getElementById('tab-philosophy');
+      const tabTrace = document.getElementById('tab-trace');
+
+      const dockFindings = document.getElementById('dock-findings');
+      const dockPhilosophy = document.getElementById('dock-philosophy');
+      const dockTrace = document.getElementById('dock-trace');
+
+      // Default all visible for audit completeness, or scroll to target
+      if (tab === 'findings') {
+        findings.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        updateTabStyles(tabFindings, [tabPhilosophy, tabTrace]);
+        updateDockStyles(dockFindings, [dockPhilosophy, dockTrace]);
+      } else if (tab === 'philosophy') {
+        philosophy.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        updateTabStyles(tabPhilosophy, [tabFindings, tabTrace]);
+        updateDockStyles(dockPhilosophy, [dockFindings, dockTrace]);
+      } else if (tab === 'trace') {
+        trace.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        updateTabStyles(tabTrace, [tabFindings, tabPhilosophy]);
+        updateDockStyles(dockTrace, [dockFindings, dockPhilosophy]);
+      }
+    }
+
+    function updateTabStyles(active, others) {
+      active.className = "py-space-xs text-center border-b-2 border-primary bg-surface-container text-primary font-mono-code-bold text-mono-code-bold";
+      others.forEach(el => {
+        el.className = "py-space-xs text-center border-b-2 border-transparent text-on-surface-variant font-mono-code text-mono-code hover:text-on-surface";
+      });
+    }
+
+    function updateDockStyles(active, others) {
+      active.className = "flex flex-col items-center gap-1 text-primary";
+      others.forEach(el => {
+        el.className = "flex flex-col items-center gap-1 text-on-surface-variant hover:text-on-surface";
+      });
+    }
+  </script>
+</body></html>
