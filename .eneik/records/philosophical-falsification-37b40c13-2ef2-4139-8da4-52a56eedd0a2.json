@@ -1,0 +1,88 @@
+{
+  "critiques": [
+    {
+      "roleTag": "BARCAN-TAG-00",
+      "philosopher": "Майкл Дамит",
+      "worldview": "Defends a verificationist theory of meaning, arguing that the meaning of a statement is tied to our capacity to recognize its truth or falsity, rejecting truth that transcends evidence.",
+      "critique": "The frontend RegistrationForm component imports and attempts to render 'ImprintModal.svelte', but the file is not imported as a local Svelte component, nor does it seem to be correctly bundled, resulting in a TypeError (Failed to resolve module specifier) when accessed in the browser. A broken import that causes a runtime failure is a 'dead end' in the product path.",
+      "proposal": "Fix the module resolution for ImprintModal.svelte in RegistrationForm.svelte, and ensure the component is properly exported/imported to allow users to complete registration without hitting a white screen or console error.",
+      "dislike": "Presenting an interface that promises a path forward but fails due to unverified file dependencies at runtime.",
+      "kanoClass": "Must-Be",
+      "confidence": "high",
+      "evidence": "frontend/src/components/RegistrationForm.svelte and console errors observed during playwright screenshot execution.",
+      "screenshotFile": "registration-harness-1440.png"
+    },
+    {
+      "roleTag": "BARCAN-TAG-00",
+      "philosopher": "Нельсон Гудман",
+      "worldview": "Focused on worldmaking and the construction of coherent systems, where rules and predicates must be projectible and consistent.",
+      "critique": "The frontend uses a CDN for Tailwind CSS (cdn.tailwindcss.com) directly in the HTML harnesses. This causes a warning in the console ('cdn.tailwindcss.com should not be used in production') and is a poor practice for a real production environment, as it impacts performance and relies on an external script rather than a built CSS asset.",
+      "proposal": "Install Tailwind CSS locally and build it as part of the frontend asset pipeline rather than relying on the CDN script.",
+      "dislike": "An unstructured approach to styling that relies on external runtime compilation rather than a deterministic, self-contained build.",
+      "kanoClass": "Performance",
+      "confidence": "high",
+      "evidence": "Console warnings in all harness HTML files during playwright execution.",
+      "screenshotFile": "index-1440.png"
+    },
+    {
+      "roleTag": "BARCAN-TAG-01",
+      "philosopher": "Рут Баркан Маркус",
+      "worldview": "Advocates for quantified actualism, meaning only things that actually exist in the domain should be represented; abstract or non-existent entities are prohibited.",
+      "critique": "The product includes a 'TelemetryService' and 'TelemetryEvent' in the backend, but there is no API controller exposed to receive or query this data (no TelemetryController). Additionally, the frontend component 'NavigationTelemetry.svelte' uses hardcoded, fake data (e.g., 'totalClicks: 0', static 'activities' list) instead of reading real data from the backend.",
+      "proposal": "Implement a real TelemetryController in the backend to ingest and serve actual telemetry data, and wire the frontend NavigationTelemetry component to consume this real data.",
+      "dislike": "Fake, hardcoded data and isolated, unusable backend code that doesn't correspond to actual product behavior.",
+      "kanoClass": "Must-Be",
+      "confidence": "high",
+      "evidence": "Missing TelemetryController in src/main/java/com/eneik/epidemiology/telemetry/, and hardcoded mock data in frontend/src/components/NavigationTelemetry.svelte.",
+      "screenshotFile": ""
+    },
+    {
+      "roleTag": "BARCAN-TAG-02",
+      "philosopher": "Джон Перри",
+      "worldview": "Analyzes the essential indexical, focusing on how context, identity, and reference point are crucial for statements and actions to have real meaning.",
+      "critique": "The codebase requires users to manually input a 'confirmationToken' to confirm data erasure in the PrivacyService. This token is constructed by prefixing 'CONFIRM_ERASURE_' to the username or subjectId. This logic relies on insecure concatenation rather than a cryptographic challenge, breaking the semantic contract of a true, secure confirmation token.",
+      "proposal": "Generate a secure, random confirmation token, store it securely in the database (or cache), and email it to the user. Then verify the provided token against the stored one, rather than expecting a deterministic string based on the username.",
+      "dislike": "Treating a deterministic string as a secure token, confusing the name of a user with cryptographic evidence of intent.",
+      "kanoClass": "Must-Be",
+      "confidence": "high",
+      "evidence": "PrivacyService.java: initiateDataErasure method checking 'CONFIRM_ERASURE_' + subjectId.",
+      "screenshotFile": ""
+    },
+    {
+      "roleTag": "BARCAN-TAG-02",
+      "philosopher": "Дэвид Чалмерс",
+      "worldview": "Developed two-dimensional semantics, distinguishing between the primary intension (how a term refers in the actual world context) and the secondary intension (how it refers across all possible worlds).",
+      "critique": "The frontend `PrivacySettings.svelte` displays a modal warning that deleting an account is an irreversible action under '152-ФЗ'. However, checking the backend `PrivacyService.java`, the `deleteUser` method relies on `userRepository.delete(user)`. There is no check to see if this is a soft-delete or hard-delete, and if the user data is actually erased completely from all related tables.",
+      "proposal": "Ensure that the account deletion process in the backend actually performs a full, irreversible hard delete of all related user data, or explicitly model it as a soft-delete with anonymization if that is the intended behavior, to match the UI's promise.",
+      "dislike": "A UI that promises irreversible deletion under a strict legal standard, while the backend implementation might be ambiguous or incomplete.",
+      "kanoClass": "Must-Be",
+      "confidence": "medium",
+      "evidence": "PrivacySettings.svelte modal text and PrivacyService.java.",
+      "screenshotFile": ""
+    },
+    {
+      "roleTag": "BARCAN-TAG-01",
+      "philosopher": "Питер Саймонс",
+      "worldview": "An ontologist specializing in modern mereology, focusing on the rigorous mathematical relationships between parts and wholes.",
+      "critique": "The codebase contains a 'FeatureService' that provides a method `deleteValuelessEpicsForProject`. This method soft-deletes epics by setting a `dismissedAt` timestamp. However, it does not cascade this deletion to the underlying 'Features' or 'Stories' that might belong to those Epics. This violates mereological principles where parts should share the lifecycle of their whole.",
+      "proposal": "Ensure that when an Epic is soft-deleted, all its constituent parts (Features, Stories, Tasks) are also appropriately marked or deleted to maintain structural integrity.",
+      "dislike": "Orphaned child entities that outlive the aggregate root they logically belong to.",
+      "kanoClass": "Performance",
+      "confidence": "medium",
+      "evidence": "FeatureService.java: deleteValuelessEpicsForProject method.",
+      "screenshotFile": ""
+    },
+    {
+      "roleTag": "BARCAN-TAG-00",
+      "philosopher": "Майкл Дамит",
+      "worldview": "Defends a verificationist theory of meaning, arguing that the meaning of a statement is tied to our capacity to recognize its truth or falsity, rejecting truth that transcends evidence.",
+      "critique": "Based on the statutory requirements (STEP 1c), any product operating for the German market requires an Imprint (Impressum) reachable from every page. In `frontend/index.html`, there is a hardcoded alert for the Imprint, and in `registration-harness.html`, there is no Imprint link at all. This is a direct violation of the domain compliance obligation.",
+      "proposal": "Add a proper, reachable Imprint (Impressum) link and modal/page to all entry points of the application, including the registration harness.",
+      "dislike": "Failing to verify and implement binding statutory requirements.",
+      "kanoClass": "Must-Be",
+      "confidence": "high",
+      "evidence": "frontend/index.html uses a JS alert for the imprint. frontend/registration-harness.html lacks the imprint completely. Also see STEP 1c instructions.",
+      "screenshotFile": ""
+    }
+  ]
+}
