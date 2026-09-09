@@ -207,5 +207,18 @@
       "evidence": "src/main/java/com/eneik/epidemiology/document/DocumentController.java: viewDocument method returns raw octet streams for office documents.",
       "screenshotFile": ""
     }
+    ,
+    {
+      "roleTag": "BARCAN-TAG-12",
+      "philosopher": "Майкл Братман",
+      "worldview": "Developed the planning theory of intention, emphasizing that shared agency relies on meshing sub-plans where participants align their actions toward a shared goal without conflicting.",
+      "critique": "The `EpidemiologicalDatasetController` validates a JSON schema (`@PostMapping(\"/validate\")`) and tightly couples its own static `validDatasets` and `schemaVersion` constraints. However, there is no shared API contract or schema registry in the broader system that coordinates these requirements with frontend submission forms or other services. The sub-plans (UI sending data, backend validating it) are not meshed through a shared, binding artifact like OpenAPI or JSON Schema, leading to inevitable coordination failures.",
+      "proposal": "Extract the schema definitions and dataset valid-value lists into a shared, machine-readable API contract (e.g., OpenAPI spec or JSON Schema registry) that both the frontend and backend consume to guarantee perfectly meshed sub-plans.",
+      "dislike": "Ad-hoc, isolated constraints built into individual controllers instead of coordinating via a shared, binding API contract.",
+      "kanoClass": "Must-Be",
+      "confidence": "high",
+      "evidence": "src/main/java/com/eneik/epidemiology/dataset/EpidemiologicalDatasetController.java manually hardcodes `schemaVersion` and `validDatasets` without external contract linkage.",
+      "screenshotFile": ""
+    }
   ]
 }
