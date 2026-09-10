@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>Audit &amp; Verification Console</title>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Fonts: Geist & Space Grotesk & JetBrains Mono -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&amp;family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&amp;family=Space+Grotesk:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS CDN (v3) -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "on-error-container": "#ffdad6",
+            "on-tertiary-fixed-variant": "#92002a",
+            "on-primary-container": "#0d0096",
+            "on-surface-variant": "#c7c4d7",
+            "on-tertiary": "#67001b",
+            "primary-container": "#8083ff",
+            "on-background": "#dfe2ef",
+            "on-primary-fixed": "#07006c",
+            "secondary-container": "#00a572",
+            "error-container": "#93000a",
+            "tertiary-fixed-dim": "#ffb2b7",
+            "surface-container": "#1c1f29",
+            "error": "#ffb4ab",
+            "tertiary-container": "#ff516a",
+            "on-secondary": "#003824",
+            "on-tertiary-fixed": "#40000d",
+            "on-secondary-container": "#00311f",
+            "secondary-fixed": "#6ffbbe",
+            "surface": "#0f131c",
+            "background": "#0f131c",
+            "primary-fixed": "#e1e0ff",
+            "surface-variant": "#31353f",
+            "on-tertiary-container": "#5b0017",
+            "surface-container-lowest": "#0a0e17",
+            "surface-container-high": "#262a34",
+            "inverse-on-surface": "#2c303a",
+            "primary": "#c0c1ff",
+            "secondary-fixed-dim": "#4edea3",
+            "surface-dim": "#0f131c",
+            "primary-fixed-dim": "#c0c1ff",
+            "surface-bright": "#353943",
+            "inverse-primary": "#494bd6",
+            "surface-container-highest": "#31353f",
+            "surface-tint": "#c0c1ff",
+            "on-secondary-fixed": "#002113",
+            "on-error": "#690005",
+            "on-secondary-fixed-variant": "#005236",
+            "secondary": "#4edea3",
+            "inverse-surface": "#dfe2ef",
+            "surface-container-low": "#181b25",
+            "tertiary-fixed": "#ffdadb",
+            "on-primary-fixed-variant": "#2f2ebe",
+            "on-primary": "#1000a9",
+            "outline-variant": "#464554",
+            "outline": "#908fa0",
+            "on-surface": "#dfe2ef",
+            "tertiary": "#ffb2b7"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          "spacing": {
+            "gutter-desktop": "1.5rem",
+            "space-md": "1rem",
+            "margin-desktop": "2rem",
+            "gutter-mobile": "0.75rem",
+            "space-xl": "2rem",
+            "space-xs": "0.5rem",
+            "space-2xl": "3rem",
+            "space-lg": "1.5rem",
+            "margin-mobile": "1rem",
+            "space-sm": "0.75rem",
+            "space-2xs": "0.25rem"
+          },
+          "fontFamily": {
+            "body-md": ["Geist", "sans-serif"],
+            "headline-xl-mobile": ["Space Grotesk", "sans-serif"],
+            "headline-lg": ["Space Grotesk", "sans-serif"],
+            "code-dense": ["JetBrains Mono", "monospace"],
+            "label-sm": ["JetBrains Mono", "monospace"],
+            "label-md": ["JetBrains Mono", "monospace"],
+            "body-sm": ["Geist", "sans-serif"],
+            "headline-xl": ["Space Grotesk", "sans-serif"],
+            "body-lg": ["Geist", "sans-serif"],
+            "headline-md": ["Space Grotesk", "sans-serif"]
+          },
+          "fontSize": {
+            "body-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0em", "fontWeight": "400" }],
+            "headline-xl-mobile": ["28px", { "lineHeight": "34px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+            "headline-lg": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+            "code-dense": ["10px", { "lineHeight": "12px", "letterSpacing": "0.02em", "fontWeight": "400" }],
+            "label-sm": ["11px", { "lineHeight": "14px", "letterSpacing": "0.05em", "fontWeight": "500" }],
+            "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.04em", "fontWeight": "500" }],
+            "body-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.01em", "fontWeight": "400" }],
+            "headline-xl": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.03em", "fontWeight": "600" }],
+            "body-lg": ["16px", { "lineHeight": "24px", "letterSpacing": "0em", "fontWeight": "400" }],
+            "headline-md": ["20px", { "lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "500" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    @keyframes pulse-subtle {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.92); }
+    }
+    .status-pulse {
+      animation: pulse-subtle 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface antialiased min-h-screen flex flex-col font-body-md select-none">
+<!-- TOP APP BAR (Shared Component Anchor) -->
+<header class="sticky top-0 z-50 bg-surface-container-lowest border-b border-outline-variant/20 px-margin-mobile py-space-sm flex items-center justify-between shadow-none">
+<div class="flex items-center gap-space-xs">
+<div class="w-8 h-8 rounded bg-surface-container-high border border-outline-variant/30 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[18px]">terminal</span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-space-2xs">
+<span class="font-headline-md text-headline-md font-semibold text-on-surface tracking-tight leading-none">SYN/VERIFY</span>
+<span class="font-label-sm text-label-sm text-outline px-1.5 py-0.5 rounded bg-surface-container border border-outline-variant/30 font-code-dense">v2.4</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant text-[10px] leading-tight">Audit &amp; Resolution Console</span>
+</div>
+</div>
+<!-- Active Branch & Verification Badge -->
+<div class="flex items-center gap-space-xs">
+<div class="hidden sm:flex items-center gap-1.5 bg-surface-container px-2 py-1 rounded border border-outline-variant/30 font-label-sm text-label-sm text-on-surface-variant font-code-dense">
+<span class="material-symbols-outlined text-[13px] text-outline">commit</span>
+<span>main@a7f49c</span>
+</div>
+<div class="flex items-center gap-1.5 px-2.5 py-1 rounded border border-secondary/30 bg-secondary/10">
+<div class="w-2 h-2 rounded-full bg-secondary status-pulse shadow-[0_0_8px_rgba(78,222,163,0.5)]"></div>
+<span class="font-label-sm text-label-sm text-secondary font-semibold tracking-wider font-code-dense uppercase">VERIFIED</span>
+</div>
+<button class="w-8 h-8 rounded flex items-center justify-center text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors duration-150">
+<span class="material-symbols-outlined text-[20px]">verified_user</span>
+</button>
+</div>
+</header>
+<!-- SECONDARY METRIC / TELEMETRY STATUS SUBBAR -->
+<div class="bg-surface-container-low border-b border-outline-variant/15 px-margin-mobile py-space-xs flex items-center justify-between font-label-sm text-label-sm text-on-surface-variant">
+<div class="flex items-center gap-space-xs">
+<span class="font-code-dense text-secondary flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">format_image_left</span>
+<span>PIPELINE: GATED &amp; SEALED</span>
+</span>
+<span class="text-outline-variant">/</span>
+<span class="font-code-dense text-outline">CRITIQUE RESOLUTION: 100%</span>
+</div>
+<div class="font-code-dense text-outline text-[10px]">
+      UTC 14:49:02.112
+    </div>
+</div>
+<!-- MAIN SCROLLABLE DASHBOARD VIEW -->
+<main class="flex-1 px-margin-mobile py-space-md max-w-3xl w-full mx-auto pb-44 space-y-space-md">
+<!-- EXECUTIVE HEADING & FILTER SEGMENTATION TABS -->
+<section class="space-y-space-sm">
+<div class="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1">
+<div>
+<h1 class="font-headline-lg text-headline-lg font-semibold text-on-surface tracking-tight">Audit &amp; Verification Console</h1>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">Continuous automated telemetry, falsification proofs, and causal remediation verification.</p>
+</div>
+<div class="font-code-dense text-label-sm text-primary flex items-center gap-1 bg-surface-container px-2 py-0.5 rounded border border-outline-variant/20 self-start">
+<span class="material-symbols-outlined text-[12px]">fingerprint</span>
+<span>EVAL_CYCLE #8820</span>
+</div>
+</div>
+<!-- Quick Filter Segmented Pills (Svelte interactive mockup) -->
+<div class="flex items-center gap-space-2xs overflow-x-auto no-scrollbar py-1">
+<button class="px-3 py-1.5 rounded text-label-md font-label-md font-medium bg-primary text-on-primary border border-primary transition-all duration-150 whitespace-nowrap shadow-sm">
+          All (7)
+        </button>
+<button class="px-3 py-1.5 rounded text-label-md font-label-md text-on-surface-variant bg-surface-container hover:bg-surface-container-high border border-outline-variant/20 transition-all duration-150 whitespace-nowrap">
+          Stubs &amp; Fakes (3)
+        </button>
+<button class="px-3 py-1.5 rounded text-label-md font-label-md text-on-surface-variant bg-surface-container hover:bg-surface-container-high border border-outline-variant/20 transition-all duration-150 whitespace-nowrap">
+          Auth &amp; DB (2)
+        </button>
+<button class="px-3 py-1.5 rounded text-label-md font-label-md text-on-surface-variant bg-surface-container hover:bg-surface-container-high border border-outline-variant/20 transition-all duration-150 whitespace-nowrap">
+          Runtime &amp; Build (2)
+        </button>
+</div>
+</section>
+<!-- SECTION 2: PRIMARY METRIC SUMMARY ROW / HORIZONTAL CAROUSEL -->
+<section aria-label="Key Performance Telemetry">
+<div class="flex items-center justify-between mb-space-2xs">
+<span class="font-label-sm text-label-sm font-semibold text-outline uppercase tracking-wider">PRIMARY GATE TELEMETRY</span>
+<span class="font-code-dense text-secondary text-[11px]">4 / 4 PASSING</span>
+</div>
+<div class="grid grid-cols-2 gap-space-xs sm:grid-cols-4">
+<!-- Metric 1 -->
+<div class="bg-surface-container-low border border-outline-variant/20 rounded-lg p-space-sm flex flex-col justify-between hover:border-outline-variant/40 transition-colors">
+<div class="flex items-center justify-between text-outline mb-1">
+<span class="font-label-sm text-label-sm text-[10px] uppercase font-code-dense">PR #0 Elimination</span>
+<span class="material-symbols-outlined text-[16px] text-secondary">verified</span>
+</div>
+<div>
+<div class="font-headline-md text-headline-md font-semibold text-on-surface font-headline-md">0 Ghost</div>
+<p class="font-label-sm text-label-sm text-secondary text-[10px] mt-0.5">100% genuine reviews</p>
+</div>
+<div class="w-full bg-surface-container h-1 rounded-full mt-2 overflow-hidden">
+<div class="bg-secondary h-full w-full"></div>
+</div>
+</div>
+<!-- Metric 2 -->
+<div class="bg-surface-container-low border border-outline-variant/20 rounded-lg p-space-sm flex flex-col justify-between hover:border-outline-variant/40 transition-colors">
+<div class="flex items-center justify-between text-outline mb-1">
+<span class="font-label-sm text-label-sm text-[10px] uppercase font-code-dense">Moodle Coverage</span>
+<span class="material-symbols-outlined text-[16px] text-secondary">hub</span>
+</div>
+<div>
+<div class="font-headline-md text-headline-md font-semibold text-on-surface font-headline-md">4 / 4 Specs</div>
+<p class="font-label-sm text-label-sm text-secondary text-[10px] mt-0.5">SSO, ACL, Roles, Fallback</p>
+</div>
+<div class="w-full bg-surface-container h-1 rounded-full mt-2 overflow-hidden">
+<div class="bg-secondary h-full w-full"></div>
+</div>
+</div>
+<!-- Metric 3 -->
+<div class="bg-surface-container-low border border-outline-variant/20 rounded-lg p-space-sm flex flex-col justify-between hover:border-outline-variant/40 transition-colors">
+<div class="flex items-center justify-between text-outline mb-1">
+<span class="font-label-sm text-label-sm text-[10px] uppercase font-code-dense">HTTP 401 Diag</span>
+<span class="material-symbols-outlined text-[16px] text-primary">storage</span>
+</div>
+<div>
+<div class="font-headline-md text-headline-md font-semibold text-on-surface font-headline-md">0 Failures</div>
+<p class="font-label-sm text-label-sm text-primary text-[10px] mt-0.5">DB claim-to-record bound</p>
+</div>
+<div class="w-full bg-surface-container h-1 rounded-full mt-2 overflow-hidden">
+<div class="bg-primary h-full w-full"></div>
+</div>
+</div>
+<!-- Metric 4 -->
+<div class="bg-surface-container-low border border-outline-variant/20 rounded-lg p-space-sm flex flex-col justify-between hover:border-outline-variant/40 transition-colors">
+<div class="flex items-center justify-between text-outline mb-1">
+<span class="font-label-sm text-label-sm text-[10px] uppercase font-code-dense">Bundled Runtime</span>
+<span class="material-symbols-outlined text-[16px] text-secondary">package_2</span>
+</div>
+<div>
+<div class="font-headline-md text-headline-md font-semibold text-on-surface font-headline-md">Vite Native</div>
+<p class="font-label-sm text-label-sm text-secondary text-[10px] mt-0.5">0 CDN dead-ends</p>
+</div>
+<div class="w-full bg-surface-container h-1 rounded-full mt-2 overflow-hidden">
+<div class="bg-secondary h-full w-full"></div>
+</div>
+</div>
+</div>
+</section>
+<!-- SECTION 3: DETAILED AUDIT FINDINGS & FALSIFICATION PROOF CARDS -->
+<section class="space-y-space-sm">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<span class="font-label-sm text-label-sm font-semibold text-outline uppercase tracking-wider">RESOLVED FINDINGS &amp; CRITIQUES</span>
+<span class="bg-surface-container px-2 py-0.5 rounded text-[10px] font-code-dense text-on-surface-variant border border-outline-variant/20">5 AUDIT + 2 CRITIQUES</span>
+</div>
+<span class="font-label-sm text-label-sm text-outline text-[11px]">Strict Verification Mode</span>
+</div>
+<!-- FINDING CARD 1: PR #0 GHOST APPROVAL -->
+<article class="bg-surface-container-low border border-outline-variant/20 rounded-lg overflow-hidden transition-all duration-150 hover:border-outline-variant/40">
+<div class="p-space-md space-y-space-xs">
+<!-- Header strip -->
+<div class="flex flex-wrap items-center justify-between gap-2">
+<div class="flex items-center gap-space-2xs">
+<span class="font-code-dense font-label-sm text-label-sm text-primary font-semibold bg-surface-container px-2 py-0.5 rounded border border-outline-variant/20">BARCAN-TAG-09</span>
+<span class="font-code-dense text-[11px] text-outline">STUB_RESOLUTION</span>
+</div>
+<!-- Emerald Status Badge -->
+<div class="flex items-center gap-1.5 px-2.5 py-0.5 rounded border border-secondary/30 bg-secondary/10">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+<span class="font-label-sm text-label-sm text-secondary font-medium font-code-dense uppercase">Remediated &amp; Verified</span>
+</div>
+</div>
+<!-- Finding Title -->
+<h2 class="font-headline-md text-headline-md text-on-surface font-semibold">
+            PR #0 Automated Review Ghost Approval Eliminated
+          </h2>
+<!-- Root Cause Box -->
+<div class="bg-surface-container-lowest/80 border-l-2 border-tertiary-container p-2.5 rounded-r text-body-sm font-body-sm space-y-1">
+<div class="flex items-center gap-1 text-[11px] font-label-sm text-tertiary font-code-dense uppercase">
+<span class="material-symbols-outlined text-[13px]">warning</span>
+<span>Root Cause Diagnosis</span>
+</div>
+<p class="text-on-surface-variant text-[13px] leading-relaxed">
+              Ghost verdict approval automatically triggered on dummy non-existent <code class="bg-surface-container px-1 py-0.5 rounded text-on-surface font-code-dense text-[11px]">PR #0</code> with synthetic empty reason strings, falsifying CI green status.
+            </p>
+</div>
+<!-- Remediation Box -->
+<div class="bg-surface-container-high/40 border-l-2 border-secondary p-2.5 rounded-r text-body-sm font-body-sm space-y-1">
+<div class="flex items-center gap-1 text-[11px] font-label-sm text-secondary font-code-dense uppercase">
+<span class="material-symbols-outlined text-[13px]">check_circle</span>
+<span>Remediation &amp; Structural Seal</span>
+</div>
+<p class="text-on-surface text-[13px] leading-relaxed">
+              Gating validation requires verified Git commit SHA &amp; valid Cryptographic Reviewer signature. Automated synthetic stub injection script permanently purged from pipeline runners.
+            </p>
+</div>
+<!-- Micro Telemetry Metadata Matrix -->
+<div class="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t border-outline-variant/15 font-code-dense text-[11px]">
+<div>
+<span class="text-outline block text-[10px]">INSPECTION SHA</span>
+<span class="text-on-surface font-medium">9f84a0d8</span>
+</div>
+<div>
+<span class="text-outline block text-[10px]">GATE VALIDATOR</span>
+<span class="text-secondary font-medium">SIG_GPG_STRICT</span>
+</div>
+<div>
+<span class="text-outline block text-[10px]">PASS CRITERIA</span>
+<span class="text-on-surface font-medium">SHA_MATCH_100%</span>
+</div>
+<div>
+<span class="text-outline block text-[10px]">REGRESSION TEST</span>
+<span class="text-secondary font-medium">tests/pr_gate.spec</span>
+</div>
+</div>
+</div>
+</article>
+<!-- FINDING CARD 2: MOODLE LMS COVERAGE AUDIT -->
+<article class="bg-surface-container-low border border-outline-variant/20 rounded-lg overflow-hidden transition-all duration-150 hover:border-outline-variant/40">
+<div class="p-space-md space-y-space-xs">
+<!-- Header strip -->
+<div class="flex flex-wrap items-center justify-between gap-2">
+<div class="flex items-center gap-space-2xs">
+<span class="font-code-dense font-label-sm text-label-sm text-primary font-semibold bg-surface-container px-2 py-0.5 rounded border border-outline-variant/20">BARCAN-TAG-09</span>
+<span class="font-code-dense text-[11px] text-outline">LMS_GAP_SEALED</span>
+</div>
+<div class="flex items-center gap-1.5 px-2.5 py-0.5 rounded border border-secondary/30 bg-secondary/10">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+<span class="font-label-sm text-label-sm text-secondary font-medium font-code-dense uppercase">Active: 4/4 Modules Sealed</span>
+</div>
+</div>
+<!-- Finding Title -->
+<h2 class="font-headline-md text-headline-md text-on-surface font-semibold">
+            Moodle LMS Integration Coverage Audit
+          </h2>
+<!-- Root Cause Box -->
+<div class="bg-surface-container-lowest/80 border-l-2 border-tertiary-container p-2.5 rounded-r text-body-sm font-body-sm space-y-1">
+<div class="flex items-center gap-1 text-[11px] font-label-sm text-tertiary font-code-dense uppercase">
+<span class="material-symbols-outlined text-[13px]">warning</span>
+<span>Root Cause Diagnosis</span>
+</div>
+<p class="text-on-surface-variant text-[13px] leading-relaxed">
+              Prior audit report claimed 0 gaps despite unaddressed SSO tokens, non-existent bidirectional role synchronization, unenforced access controls, and unconfigured network timeout fallbacks.
+            </p>
+</div>
+<!-- Remediation Box -->
+<div class="bg-surface-container-high/40 border-l-2 border-secondary p-2.5 rounded-r text-body-sm font-body-sm space-y-1">
+<div class="flex items-center gap-1 text-[11px] font-label-sm text-secondary font-code-dense uppercase">
+<span class="material-symbols-outlined text-[13px]">check_circle</span>
+<span>Remediation &amp; Structural Seal</span>
+</div>
+<p class="text-on-surface text-[13px] leading-relaxed">
+              Comprehensive test harness wired and executed across 4 integration vectors: <code class="text-primary font-code-dense text-[11px]">OAuth2 SSO handshake</code>, <code class="text-primary font-code-dense text-[11px]">Role matrix mapping</code>, <code class="text-primary font-code-dense text-[11px]">ACL granular checks</code>, and resilient <code class="text-primary font-code-dense text-[11px]">Moodle circuit-breaker fallback</code>.
+            </p>
+</div>
+<!-- Micro Sub-specs checklist matrix -->
+<div class="grid grid-cols-2 gap-2 pt-2 border-t border-outline-variant/15 font-code-dense text-[11px]">
+<div class="flex items-center gap-1.5 text-secondary">
+<span class="material-symbols-outlined text-[14px]">done_all</span>
+<span>1. SSO Handshake: 200 OK</span>
+</div>
+<div class="flex items-center gap-1.5 text-secondary">
+<span class="material-symbols-outlined text-[14px]">done_all</span>
+<span>2. Role Sync: Admin/Student</span>
+</div>
+<div class="flex items-center gap-1.5 text-secondary">
+<span class="material-symbols-outlined text-[14px]">done_all</span>
+<span>3. ACL Enforcement: Strict</span>
+</div>
+<div class="flex items-center gap-1.5 text-secondary">
+<span class="material-symbols-outlined text-[14px]">done_all</span>
+<span>4. Fallback Degradation: Active</span>
+</div>
+</div>
+</div>
+</article>
+<!-- FINDING CARD 3 & 4 & 5: JWT PERSISTENCE & HTTP 401 CAUSAL FIX -->
+<article class="bg-surface-container-low border border-outline-variant/20 rounded-lg overflow-hidden transition-all duration-150 hover:border-outline-variant/40">
+<div class="p-space-md space-y-space-xs">
+<!-- Header strip -->
+<div class="flex flex-wrap items-center justify-between gap-2">
+<div class="flex items-center gap-space-2xs">
+<span class="font-code-dense font-label-sm text-label-sm text-primary font-semibold bg-surface-container px-2 py-0.5 rounded border border-outline-variant/20">BARCAN-TAG-02 &amp; 05</span>
+<span class="font-code-dense text-[11px] text-outline">AUTH_LAYER_RESOLUTION</span>
+</div>
+<div class="flex items-center gap-1.5 px-2.5 py-0.5 rounded border border-primary/40 bg-primary/10">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+<span class="font-label-sm text-label-sm text-primary font-medium font-code-dense uppercase">DB Wired &amp; Authenticated</span>
+</div>
+</div>
+<!-- Finding Title -->
+<h2 class="font-headline-md text-headline-md text-on-surface font-semibold">
+            JWT Claims Persistence &amp; HTTP 401 Causal Fix
+          </h2>
+<!-- Root Cause Box -->
+<div class="bg-surface-container-lowest/80 border-l-2 border-tertiary-container p-2.5 rounded-r text-body-sm font-body-sm space-y-1">
+<div class="flex items-center gap-1 text-[11px] font-label-sm text-tertiary font-code-dense uppercase">
+<span class="material-symbols-outlined text-[13px]">warning</span>
+<span>Root Cause Diagnosis</span>
+</div>
+<p class="text-on-surface-variant text-[13px] leading-relaxed">
+              Unit tests previously used disconnected mock JWT payloads. In production runtime, the auth middleware attempted session verification against unindexed PostgreSQL tables without verifying the active user record in persistence, dumping HTTP 401 Unauthorized exceptions on valid sessions.
+            </p>
+</div>
+<!-- Remediation Box -->
+<div class="bg-surface-container-high/40 border-l-2 border-secondary p-2.5 rounded-r text-body-sm font-body-sm space-y-1">
+<div class="flex items-center gap-1 text-[11px] font-label-sm text-secondary font-code-dense uppercase">
+<span class="material-symbols-outlined text-[13px]">check_circle</span>
+<span>Remediation &amp; Structural Seal</span>
+</div>
+<p class="text-on-surface text-[13px] leading-relaxed">
+              Deep database user lookup middleware implemented: <code class="text-secondary font-code-dense text-[11px]">verifyUserInPersistence()</code>. Intercepts incoming JWT claims, validates the signature against rotation keys, and asserts verified user status directly in the persistence context before route entry.
+            </p>
+</div>
+<!-- Diff snippet simulation -->
+<div class="bg-surface-container-lowest p-2 rounded font-code-dense text-[11px] border border-outline-variant/20 space-y-0.5 text-on-surface-variant overflow-x-auto no-scrollbar">
+<div class="text-tertiary flex items-center gap-1">
+<span>-</span> <span>const user = mockClaims.user; // Stubbed bypass</span>
+</div>
+<div class="text-secondary flex items-center gap-1">
+<span>+</span> <span>const user = await db.users.findUniqueOrThrow({ where: { id: claims.sub } });</span>
+</div>
+</div>
+</div>
+</article>
+<!-- PHILOSOPHICAL CRITIQUE 1: MICHAEL DUMMETT (VERIFICATIONIST CRITERION) -->
+<article class="bg-surface-container-low border border-outline-variant/20 rounded-lg overflow-hidden transition-all duration-150 hover:border-outline-variant/40">
+<div class="p-space-md space-y-space-xs">
+<div class="flex flex-wrap items-center justify-between gap-2">
+<div class="flex items-center gap-space-2xs">
+<span class="font-code-dense font-label-sm text-label-sm text-secondary font-semibold bg-surface-container px-2 py-0.5 rounded border border-outline-variant/20">DUMMETT-CRITIQUE-01</span>
+<span class="font-code-dense text-[11px] text-outline">VERIFICATIONIST CRITERION</span>
+</div>
+<div class="flex items-center gap-1.5 px-2.5 py-0.5 rounded border border-secondary/30 bg-secondary/10">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+<span class="font-label-sm text-label-sm text-secondary font-medium font-code-dense uppercase">Module Bundled &amp; Verified</span>
+</div>
+</div>
+<h2 class="font-headline-md text-headline-md text-on-surface font-semibold">
+            RegistrationForm.svelte Module Resolution
+          </h2>
+<div class="bg-surface-container-lowest/80 border-l-2 border-tertiary-container p-2.5 rounded-r text-body-sm font-body-sm space-y-1">
+<div class="flex items-center gap-1 text-[11px] font-label-sm text-tertiary font-code-dense uppercase">
+<span class="material-symbols-outlined text-[13px]">warning</span>
+<span>Anti-Realist Dead-End Analysis</span>
+</div>
+<p class="text-on-surface-variant text-[13px] leading-relaxed">
+              Michael Dummett's anti-realist semantic challenge: A truth condition cannot exceed what is manifest in verification. Broken import specifier for <code class="font-code-dense text-[11px] text-on-surface">ImprintModal.svelte</code> led to client-side <code class="font-code-dense text-[11px] text-tertiary">TypeError: Failed to resolve module specifier</code>, collapsing UI into an unverifiable blank screen.
+            </p>
+</div>
+<div class="bg-surface-container-high/40 border-l-2 border-secondary p-2.5 rounded-r text-body-sm font-body-sm space-y-1">
+<div class="flex items-center gap-1 text-[11px] font-label-sm text-secondary font-code-dense uppercase">
+<span class="material-symbols-outlined text-[13px]">check_circle</span>
+<span>Manifest Verification Fixed</span>
+</div>
+<p class="text-on-surface text-[13px] leading-relaxed">
+              Explicit local relative import <code class="text-secondary font-code-dense text-[11px]">./ImprintModal.svelte</code> bundled natively via Rollup. Zero dangling unmanifest promises; 100% component render test assertions passing.
+            </p>
+</div>
+</div>
+</article>
+<!-- PHILOSOPHICAL CRITIQUE 2: NELSON GOODMAN (COHERENT WORLDMAKING) -->
+<article class="bg-surface-container-low border border-outline-variant/20 rounded-lg overflow-hidden transition-all duration-150 hover:border-outline-variant/40">
+<div class="p-space-md space-y-space-xs">
+<div class="flex flex-wrap items-center justify-between gap-2">
+<div class="flex items-center gap-space-2xs">
+<span class="font-code-dense font-label-sm text-label-sm text-secondary font-semibold bg-surface-container px-2 py-0.5 rounded border border-outline-variant/20">GOODMAN-CRITIQUE-02</span>
+<span class="font-code-dense text-[11px] text-outline">COHERENT WORLDMAKING</span>
+</div>
+<div class="flex items-center gap-1.5 px-2.5 py-0.5 rounded border border-secondary/30 bg-secondary/10">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+<span class="font-label-sm text-label-sm text-secondary font-medium font-code-dense uppercase">Local PostCSS Build Installed</span>
+</div>
+</div>
+<h2 class="font-headline-md text-headline-md text-on-surface font-semibold">
+            Tailwind CSS Deterministic Build Pipeline
+          </h2>
+<div class="bg-surface-container-lowest/80 border-l-2 border-tertiary-container p-2.5 rounded-r text-body-sm font-body-sm space-y-1">
+<div class="flex items-center gap-1 text-[11px] font-label-sm text-tertiary font-code-dense uppercase">
+<span class="material-symbols-outlined text-[13px]">warning</span>
+<span>Radical Relativism &amp; CDN Incoherence</span>
+</div>
+<p class="text-on-surface-variant text-[13px] leading-relaxed">
+              Nelson Goodman's theory of world-versions: System coherence requires non-arbitrary formalization. Runtime injection via external <code class="font-code-dense text-[11px] text-on-surface">cdn.tailwindcss.com</code> created brittle external network dependency, non-deterministic token hydration, and production console warnings.
+            </p>
+</div>
+<div class="bg-surface-container-high/40 border-l-2 border-secondary p-2.5 rounded-r text-body-sm font-body-sm space-y-1">
+<div class="flex items-center gap-1 text-[11px] font-label-sm text-secondary font-code-dense uppercase">
+<span class="material-symbols-outlined text-[13px]">check_circle</span>
+<span>Deterministic Token System</span>
+</div>
+<p class="text-on-surface text-[13px] leading-relaxed">
+              Integrated Tailwind CSS compiler and PostCSS plugin directly into Vite packaging pipeline. Pre-compiled utility classes yield immutable asset bundles with zero runtime CDN fetch vectors.
+            </p>
+</div>
+</div>
+</article>
+</section>
+<!-- REAL-TIME AUDIT LOG PREVIEW TERMINAL -->
+<section class="bg-surface-container-lowest border border-outline-variant/30 rounded-lg p-space-sm space-y-2 font-code-dense">
+<div class="flex items-center justify-between text-outline text-[11px] border-b border-outline-variant/20 pb-1.5">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[14px] text-primary">terminal</span>
+<span class="text-on-surface font-medium uppercase tracking-wider">LIVE AUDIT PROOF STREAM</span>
+</div>
+<span class="text-secondary text-[10px] flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary inline-block"></span>
+          REAL-TIME STREAM
+        </span>
+</div>
+<div class="space-y-1 text-[11px] leading-relaxed select-text">
+<div class="text-on-surface-variant">
+<span class="text-outline">[14:48:58.201]</span> <span class="text-secondary font-semibold">[VERIFY]</span> Moodle SSO Handshake: <span class="text-secondary">OK</span> | Latency: 42ms
+        </div>
+<div class="text-on-surface-variant">
+<span class="text-outline">[14:48:59.043]</span> <span class="text-secondary font-semibold">[VERIFY]</span> DB User Lookup &amp; Claims Verification: <span class="text-secondary">OK</span> | Zero 401 Discrepancies
+        </div>
+<div class="text-on-surface-variant">
+<span class="text-outline">[14:49:01.819]</span> <span class="text-secondary font-semibold">[VERIFY]</span> Falsification Suite: <span class="text-secondary">Zero Stubs Detected</span> | PR #0 Gated
+        </div>
+</div>
+</section>
+</main>
+<!-- FIXED STICKY ACTION DOCK / EXECUTION SHEET -->
+<aside class="fixed bottom-14 left-0 right-0 z-40 bg-surface-container-low/95 backdrop-blur-md border-t border-outline-variant/20 px-margin-mobile py-2.5 max-w-3xl mx-auto shadow-2xl">
+<div class="flex items-center justify-between gap-space-sm">
+<div class="flex flex-col">
+<span class="font-code-dense text-[10px] text-outline uppercase tracking-wider">SYSTEM INTEGRITY STATUS</span>
+<span class="font-headline-md text-headline-md text-[13px] font-semibold text-secondary flex items-center gap-1">
+<span class="material-symbols-outlined text-[15px]">verified</span>
+<span>ALL CRITIQUES REMEDIATED</span>
+</span>
+</div>
+<button class="bg-primary hover:bg-inverse-primary text-on-primary-container px-4 py-2.5 rounded font-label-md text-label-md font-semibold tracking-wide flex items-center gap-2 transition-all duration-150 active:scale-95 shadow-lg shadow-primary/20 whitespace-nowrap" id="execVerifyBtn">
+<span class="material-symbols-outlined text-[18px]">play_circle</span>
+<span>Execute Falsification Suite</span>
+</button>
+</div>
+</aside>
+<!-- BOTTOM NAVIGATION BAR (Semantic Shell Anchor for Mobile) -->
+<nav class="fixed bottom-0 left-0 right-0 z-50 bg-surface-container-lowest border-t border-outline-variant/20 px-margin-mobile py-1 max-w-3xl mx-auto flex items-center justify-around h-14">
+<!-- Tab 1: Audit (Active) -->
+<a class="flex flex-col items-center justify-center gap-0.5 text-primary py-1 px-3 transition-colors" href="#audit">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">rule</span>
+<span class="font-label-sm text-[10px] font-semibold">Audit</span>
+</a>
+<!-- Tab 2: Diagnostics -->
+<a class="flex flex-col items-center justify-center gap-0.5 text-on-surface-variant hover:text-on-surface py-1 px-3 transition-colors" href="#diagnostics">
+<span class="material-symbols-outlined text-[20px]">sync_problem</span>
+<span class="font-label-sm text-[10px]">Diagnostics</span>
+</a>
+<!-- Tab 3: Remediation -->
+<a class="flex flex-col items-center justify-center gap-0.5 text-on-surface-variant hover:text-on-surface py-1 px-3 transition-colors" href="#remediation">
+<span class="material-symbols-outlined text-[20px]">hub</span>
+<span class="font-label-sm text-[10px]">Remediation</span>
+</a>
+<!-- Tab 4: Specs -->
+<a class="flex flex-col items-center justify-center gap-0.5 text-on-surface-variant hover:text-on-surface py-1 px-3 transition-colors" href="#specs">
+<span class="material-symbols-outlined text-[20px]">verified</span>
+<span class="font-label-sm text-[10px]">Specs</span>
+</a>
+</nav>
+<!-- Inline Interaction Logic (Simulated Svelte Reactive Run) -->
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const btn = document.getElementById('execVerifyBtn');
+      if (!btn) return;
+      
+      btn.addEventListener('click', () => {
+        const originalText = btn.innerHTML;
+        btn.innerHTML = `
+          <span class="material-symbols-outlined text-[18px] animate-spin">progress_activity</span>
+          <span>Running Falsification Proofs...</span>
+        `;
+        btn.classList.add('opacity-80', 'pointer-events-none');
+
+        setTimeout(() => {
+          btn.innerHTML = `
+            <span class="material-symbols-outlined text-[18px] text-secondary">check_circle</span>
+            <span>Suite Passed: 7/7 Sealed</span>
+          `;
+          setTimeout(() => {
+            btn.innerHTML = originalText;
+            btn.classList.remove('opacity-80', 'pointer-events-none');
+          }, 2400);
+        }, 1200);
+      });
+    });
+  </script>
+</body></html>
