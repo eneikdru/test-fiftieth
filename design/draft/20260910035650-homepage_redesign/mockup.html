@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>Audit &amp; Resolution Console</title>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- JetBrains Mono & Hanken Grotesk -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "surface-container-lowest": "#060e20",
+            "on-secondary-container": "#5b3800",
+            "outline-variant": "#3c4a42",
+            "inverse-surface": "#dae2fd",
+            "on-secondary-fixed": "#2a1700",
+            "on-secondary": "#472a00",
+            "on-tertiary-fixed-variant": "#930013",
+            "surface": "#0b1326",
+            "on-tertiary-container": "#79000e",
+            "surface-container-highest": "#2d3449",
+            "secondary-fixed": "#ffddb8",
+            "on-error-container": "#ffdad6",
+            "secondary-container": "#ee9800",
+            "error": "#ffb4ab",
+            "on-background": "#dae2fd",
+            "primary": "#4edea3",
+            "on-secondary-fixed-variant": "#653e00",
+            "secondary-fixed-dim": "#ffb95f",
+            "outline": "#86948a",
+            "secondary": "#ffb95f",
+            "on-primary-fixed": "#002113",
+            "on-primary": "#003824",
+            "surface-container-high": "#222a3d",
+            "primary-container": "#10b981",
+            "tertiary": "#ffb3ad",
+            "on-surface-variant": "#bbcabf",
+            "on-tertiary": "#68000a",
+            "background": "#0b1326",
+            "inverse-primary": "#006c49",
+            "on-primary-fixed-variant": "#005236",
+            "tertiary-fixed-dim": "#ffb3ad",
+            "primary-fixed": "#6ffbbe",
+            "inverse-on-surface": "#283044",
+            "primary-fixed-dim": "#4edea3",
+            "surface-bright": "#31394d",
+            "surface-dim": "#0b1326",
+            "error-container": "#93000a",
+            "surface-variant": "#2d3449",
+            "on-error": "#690005",
+            "tertiary-container": "#ff7a73",
+            "on-surface": "#dae2fd",
+            "tertiary-fixed": "#ffdad7",
+            "surface-tint": "#4edea3",
+            "on-tertiary-fixed": "#410004",
+            "surface-container-low": "#131b2e",
+            "on-primary-container": "#00422b",
+            "surface-container": "#171f33"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          "spacing": {
+            "space-sm": "0.5rem",
+            "space-xxs": "0.125rem",
+            "space-lg": "1.25rem",
+            "gutter-mobile": "1rem",
+            "space-xs": "0.25rem",
+            "space-base": "1rem",
+            "margin-mobile": "1rem",
+            "space-xl": "1.5rem",
+            "space-md": "0.75rem",
+            "space-2xl": "2rem"
+          },
+          "fontFamily": {
+            "headline-sm": ["Hanken Grotesk"],
+            "label-mono-md": ["JetBrains Mono"],
+            "body-md": ["Hanken Grotesk"],
+            "label-mono-xs": ["JetBrains Mono"],
+            "body-sm": ["Hanken Grotesk"],
+            "headline-lg-mobile": ["Hanken Grotesk"],
+            "body-lg": ["Hanken Grotesk"],
+            "headline-lg": ["Hanken Grotesk"],
+            "headline-md": ["Hanken Grotesk"],
+            "label-mono-lg": ["JetBrains Mono"]
+          },
+          "fontSize": {
+            "headline-sm": ["18px", { "lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "label-mono-md": ["11px", { "lineHeight": "16px", "letterSpacing": "0.04em", "fontWeight": "500" }],
+            "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+            "label-mono-xs": ["10px", { "lineHeight": "14px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+            "body-sm": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+            "headline-lg-mobile": ["26px", { "lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+            "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "headline-md": ["22px", { "lineHeight": "28px", "letterSpacing": "-0.015em", "fontWeight": "600" }],
+            "label-mono-lg": ["13px", { "lineHeight": "18px", "letterSpacing": "0.02em", "fontWeight": "500" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-family: 'Material Symbols Outlined';
+      font-weight: normal;
+      font-style: normal;
+      font-size: 20px;
+      line-height: 1;
+      display: inline-block;
+      text-transform: none;
+      letter-spacing: normal;
+      word-wrap: normal;
+      white-space: nowrap;
+      direction: ltr;
+      -webkit-font-smoothing: antialiased;
+    }
+    /* Custom non-intrusive scrollbar */
+    ::-webkit-scrollbar {
+      width: 4px;
+      height: 4px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0b1326;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #1e293b;
+      border-radius: 2px;
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface font-body-md antialiased min-h-screen flex flex-col justify-between selection:bg-primary selection:text-on-primary">
+<!-- Mobile Host Shell Container capped at 480px -->
+<div class="w-full max-w-[480px] mx-auto min-h-screen flex flex-col bg-surface relative shadow-2xl pb-24">
+<!-- TopAppBar (from Shared Components JSON) -->
+<header class="sticky top-0 z-40 bg-surface-container-low border-b border-outline-variant flex justify-between items-center w-full px-space-base py-space-sm max-w-[480px] mx-auto transition-colors">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[20px]" data-icon="verified_user">verified_user</span>
+<div class="flex flex-col">
+<span class="text-headline-sm font-headline-sm text-on-surface uppercase tracking-wider">Audit &amp; Resolution Console</span>
+<span class="text-label-mono-xs font-label-mono-xs text-primary flex items-center gap-1">
+<span class="inline-block w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
+            Deterministic Build • Passed
+          </span>
+</div>
+</div>
+<button aria-label="Settings and options" class="text-on-surface-variant hover:bg-surface-container-high p-1.5 rounded transition-colors duration-150 active:opacity-80 active:scale-[0.98]" id="configToggleBtn">
+<span class="material-symbols-outlined text-[20px]" data-icon="tune">tune</span>
+</button>
+</header>
+<!-- Subheader: Self-Contained Bundle Telemetry Strip -->
+<div class="bg-surface-container-lowest px-space-base py-space-xs border-b border-outline-variant flex items-center justify-between">
+<div class="flex items-center gap-1.5">
+<span class="text-label-mono-xs font-label-mono-xs text-outline font-semibold">TARGET:</span>
+<span class="text-label-mono-xs font-label-mono-xs text-on-surface bg-surface-container-high px-1.5 py-0.5 rounded border border-outline-variant">+page.svelte</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="text-label-mono-xs font-label-mono-xs text-primary bg-surface-container px-2 py-0.5 rounded border border-outline-variant flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+          ZERO RUNTIME CDN
+        </span>
+<span class="text-label-mono-xs font-label-mono-xs text-on-surface-variant font-mono">v3.4.1</span>
+</div>
+</div>
+<!-- Main Scrollable Content Area -->
+<main class="flex-1 px-space-base py-space-md space-y-space-lg">
+<!-- Section: Status Header -->
+<section class="space-y-space-xs">
+<div class="flex items-center justify-between">
+<h1 class="text-headline-lg-mobile font-headline-lg-mobile text-on-surface tracking-tight">Audit Findings</h1>
+<span class="text-label-mono-xs font-label-mono-xs px-2 py-0.5 rounded bg-[#022c22] border border-primary text-primary font-bold">
+            [OK] 5/5 REMEDIATED
+          </span>
+</div>
+<p class="text-body-sm font-body-sm text-on-surface-variant">
+          Deterministic resolution verification across PR ingestion pipelines, LMS connectors, and cryptographic token verification gates.
+        </p>
+</section>
+<!-- Section: Remediation Findings Bento Cards -->
+<section class="space-y-space-md">
+<!-- Finding 1: Pipeline Review Verifier -->
+<article class="bg-surface-container-low border border-outline-variant rounded-lg p-space-base space-y-space-sm">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary" data-icon="terminal">terminal</span>
+<div>
+<span class="text-label-mono-xs font-label-mono-xs text-outline">BARCAN-TAG-09</span>
+<h2 class="text-headline-sm font-headline-sm text-on-surface leading-tight">Pipeline Review Verifier</h2>
+</div>
+</div>
+<span class="text-label-mono-xs font-label-mono-xs bg-[#022c22] text-primary border border-primary px-2 py-0.5 rounded">
+              [OK] RESOLVED
+            </span>
+</div>
+<div class="bg-surface-container-lowest border border-outline-variant rounded p-space-sm space-y-space-xs">
+<div class="flex items-center justify-between text-label-mono-xs font-label-mono-xs text-on-surface-variant">
+<span>RULE SPECIFICATION</span>
+<span class="text-primary">ENFORCED</span>
+</div>
+<p class="text-body-sm font-body-sm text-on-surface">
+              Blocked phantom PR #0. Required verified commit SHA &amp; non-empty critical justification before webhook dispatch.
+            </p>
+<div class="pt-1 flex items-center justify-between border-t border-outline-variant/60 font-mono text-label-mono-xs font-label-mono-xs text-outline">
+<span>AUDIT HASH:</span>
+<span class="text-primary font-bold">0x7f2c..b89e (sha256)</span>
+</div>
+</div>
+</article>
+<!-- Finding 2: Moodle LMS Integration Matrix -->
+<article class="bg-surface-container-low border border-outline-variant rounded-lg p-space-base space-y-space-sm">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary" data-icon="integration_instructions">integration_instructions</span>
+<div>
+<span class="text-label-mono-xs font-label-mono-xs text-outline">BARCAN-TAG-09</span>
+<h2 class="text-headline-sm font-headline-sm text-on-surface leading-tight">Moodle LMS Matrix</h2>
+</div>
+</div>
+<span class="text-label-mono-xs font-label-mono-xs bg-surface-container text-on-surface-variant border border-outline-variant px-2 py-0.5 rounded">
+              4 CHANNELS
+            </span>
+</div>
+<div class="grid grid-cols-2 gap-space-xs">
+<!-- Channel 1 -->
+<div class="bg-surface-container-lowest border border-outline-variant p-space-xs rounded flex flex-col justify-between">
+<span class="text-label-mono-xs font-label-mono-xs text-on-surface-variant">SSO Handshake</span>
+<div class="flex items-center justify-between mt-1">
+<span class="text-label-mono-xs font-label-mono-xs text-primary font-bold">[OK] VERIFIED</span>
+<span class="w-2 h-2 rounded-full bg-primary"></span>
+</div>
+</div>
+<!-- Channel 2 -->
+<div class="bg-surface-container-lowest border border-outline-variant p-space-xs rounded flex flex-col justify-between">
+<span class="text-label-mono-xs font-label-mono-xs text-on-surface-variant">Role Sync Engine</span>
+<div class="flex items-center justify-between mt-1">
+<span class="text-label-mono-xs font-label-mono-xs text-primary font-bold">[OK] CONNECTED</span>
+<span class="w-2 h-2 rounded-full bg-primary"></span>
+</div>
+</div>
+<!-- Channel 3 -->
+<div class="bg-surface-container-lowest border border-outline-variant p-space-xs rounded flex flex-col justify-between">
+<span class="text-label-mono-xs font-label-mono-xs text-on-surface-variant">Access Control ACL</span>
+<div class="flex items-center justify-between mt-1">
+<span class="text-label-mono-xs font-label-mono-xs text-primary font-bold">[OK] ENFORCED</span>
+<span class="w-2 h-2 rounded-full bg-primary"></span>
+</div>
+</div>
+<!-- Channel 4 -->
+<div class="bg-surface-container-lowest border border-outline-variant p-space-xs rounded flex flex-col justify-between">
+<span class="text-label-mono-xs font-label-mono-xs text-on-surface-variant">Fallback Gateway</span>
+<div class="flex items-center justify-between mt-1">
+<span class="text-label-mono-xs font-label-mono-xs text-secondary font-bold">[OK] STANDBY</span>
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+</div>
+</div>
+</div>
+<div class="text-label-mono-xs font-label-mono-xs text-outline text-right">
+            Coverage assertion: Real-time telemetry (Gap delta: 0.00%)
+          </div>
+</article>
+<!-- Findings 3, 4 & 5: 401 & JWT Persistence Pipeline Flow -->
+<article class="bg-surface-container-low border border-outline-variant rounded-lg p-space-base space-y-space-sm">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary" data-icon="key">key</span>
+<div>
+<span class="text-label-mono-xs font-label-mono-xs text-outline">BARCAN-TAG-02 / TAG-05</span>
+<h2 class="text-headline-sm font-headline-sm text-on-surface leading-tight">JWT Persistence Pipeline</h2>
+</div>
+</div>
+<span class="text-label-mono-xs font-label-mono-xs bg-[#022c22] text-primary border border-primary px-2 py-0.5 rounded">
+              FIXED (401 ERRS)
+            </span>
+</div>
+<p class="text-body-sm font-body-sm text-on-surface-variant">
+            Deterministic sequence resolving unaddressed 401 token rejects via wired database persistence and claims hydration:
+          </p>
+<!-- Pipeline Verification Strip -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded p-space-sm space-y-space-sm">
+<div class="flex items-center justify-between text-label-mono-xs font-label-mono-xs">
+<span class="text-on-surface font-semibold">STAGE 1: Inbound Bearer</span>
+<span class="text-primary">RFC-7519</span>
+</div>
+<div class="relative pl-4 space-y-2 border-l-2 border-primary">
+<div class="bg-surface-container p-space-xs rounded border border-outline-variant">
+<div class="text-label-mono-xs font-label-mono-xs text-outline">HTTP HEADER -&gt; JWT PARSING</div>
+<div class="text-body-sm font-body-sm font-mono text-on-surface">Signature Verified with Public Key ES256</div>
+</div>
+<div class="bg-surface-container p-space-xs rounded border border-outline-variant">
+<div class="text-label-mono-xs font-label-mono-xs text-outline">DB USER ATTESTATION (WIRED)</div>
+<div class="text-body-sm font-body-sm font-mono text-primary flex items-center justify-between">
+<span>Persistence lookup: ACTIVE</span>
+<span class="text-label-mono-xs font-label-mono-xs bg-[#022c22] px-1 rounded">2ms LATENCY</span>
+</div>
+</div>
+<div class="bg-surface-container p-space-xs rounded border border-outline-variant">
+<div class="text-label-mono-xs font-label-mono-xs text-outline">ACL AUTHORIZATION GATE</div>
+<div class="text-body-sm font-body-sm font-mono text-on-surface">Claims matched: role="Auditor"</div>
+</div>
+</div>
+<div class="flex items-center justify-between pt-1 border-t border-outline-variant text-label-mono-xs font-label-mono-xs">
+<span class="text-outline">TERMINATION RESULT</span>
+<span class="text-primary font-bold">200 OK (UNAUTHORIZED PREVENTED)</span>
+</div>
+</div>
+</article>
+<!-- Live Registration Form Card (+page.svelte execution) -->
+<article class="bg-surface-container-low border border-primary/50 rounded-lg p-space-base space-y-space-md relative overflow-hidden shadow-lg">
+<div class="absolute top-0 right-0 bg-primary text-on-primary-container px-2 py-0.5 text-label-mono-xs font-label-mono-xs font-bold rounded-bl">
+            ACTIVE +page.svelte
+          </div>
+<div class="space-y-space-xxs">
+<span class="text-label-mono-xs font-label-mono-xs text-primary font-bold uppercase tracking-wider">Interactive Registration Subsystem</span>
+<h2 class="text-headline-sm font-headline-sm text-on-surface">Auditor Enrollment</h2>
+<p class="text-body-sm font-body-sm text-on-surface-variant">Provision deterministic credentials tied to institutional audit keys.</p>
+</div>
+<form class="space-y-space-sm" id="auditRegForm" onsubmit="event.preventDefault(); triggerSubmit();">
+<!-- Full Name -->
+<div class="space-y-space-xxs">
+<div class="flex justify-between items-center">
+<label class="text-label-mono-xs font-label-mono-xs text-on-surface font-semibold" for="fullName">FULL NAME</label>
+<span class="text-label-mono-xs font-label-mono-xs text-outline">REQUIRED</span>
+</div>
+<input class="w-full bg-surface-container border border-outline-variant focus:border-primary focus:ring-0 text-on-surface rounded p-space-xs text-body-sm font-body-sm transition-colors" id="fullName" required="" type="text" value="Dr. Aris Vance"/>
+</div>
+<!-- Institutional Email -->
+<div class="space-y-space-xxs">
+<div class="flex justify-between items-center">
+<label class="text-label-mono-xs font-label-mono-xs text-on-surface font-semibold" for="email">INSTITUTIONAL EMAIL</label>
+<span class="text-label-mono-xs font-label-mono-xs text-primary font-mono">RESOLVED RFC-5322</span>
+</div>
+<input class="w-full bg-surface-container border border-outline-variant focus:border-primary focus:ring-0 text-on-surface rounded p-space-xs text-body-sm font-body-sm font-mono transition-colors" id="email" required="" type="email" value="a.vance@compliance.mit.edu"/>
+</div>
+<!-- Role Selector -->
+<div class="space-y-space-xxs">
+<label class="text-label-mono-xs font-label-mono-xs text-on-surface font-semibold" for="roleSelect">ACCESS PERMISSION LEVEL</label>
+<select class="w-full bg-surface-container border border-outline-variant focus:border-primary focus:ring-0 text-on-surface rounded p-space-xs text-body-sm font-body-sm transition-colors" id="roleSelect">
+<option selected="" value="Auditor">Auditor (Full Attestation Verification)</option>
+<option value="Student">Student (Read Registry Claims)</option>
+<option value="Admin">Administrator (Master Pipeline Gate)</option>
+</select>
+</div>
+<!-- LMS Access Checkbox -->
+<div class="bg-surface-container-lowest p-space-xs rounded border border-outline-variant flex items-center justify-between">
+<label class="flex items-center gap-2 cursor-pointer select-none text-body-sm font-body-sm text-on-surface" for="lmsSyncCheckbox">
+<input checked="" class="rounded border-outline-variant text-primary bg-surface-container focus:ring-0 focus:ring-offset-0 cursor-pointer" id="lmsSyncCheckbox" type="checkbox"/>
+<span>Sync Moodle LMS Enrollment Claims</span>
+</label>
+<span class="text-label-mono-xs font-label-mono-xs text-primary font-bold">[SYNC ON]</span>
+</div>
+<!-- Terms & Imprint Modal Trigger -->
+<div class="flex items-center justify-between text-label-mono-xs font-label-mono-xs pt-1">
+<span class="text-outline">Module: ImprintModal.svelte</span>
+<button class="text-primary hover:underline font-semibold flex items-center gap-1" id="openImprintBtn" type="button">
+<span>View Imprint &amp; Terms</span>
+<span class="material-symbols-outlined text-[14px]" data-icon="open_in_new">open_in_new</span>
+</button>
+</div>
+<!-- Submit CTA -->
+<button class="w-full bg-primary hover:bg-primary/90 text-on-primary font-headline-sm text-headline-sm py-space-sm px-space-base rounded flex items-center justify-center gap-2 transition-transform active:scale-[0.98] shadow-md" id="submitBtn" type="submit">
+<span class="material-symbols-outlined text-[20px]" data-icon="how_to_reg">how_to_reg</span>
+<span>Complete Verified Registration</span>
+</button>
+</form>
+</article>
+</section>
+</main>
+<!-- Bottom Navigation Bar (from Shared Components JSON) -->
+<!-- Destination count: 4, active item determined by page intent: "Portal" for registration & resolution -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-space-base py-space-xs max-w-[480px] mx-auto pb-safe bg-surface-container-low border-t border-outline-variant">
+<!-- Destination 1: Pipeline -->
+<button class="flex flex-col items-center justify-center text-on-surface-variant px-space-sm py-space-xs hover:text-on-surface transition-colors duration-150 active:scale-[0.96]" onclick="selectTab('pipeline')">
+<span class="material-symbols-outlined" data-icon="terminal">terminal</span>
+<span class="text-label-mono-xs font-label-mono-xs">Pipeline</span>
+</button>
+<!-- Destination 2: Matrix -->
+<button class="flex flex-col items-center justify-center text-on-surface-variant px-space-sm py-space-xs hover:text-on-surface transition-colors duration-150 active:scale-[0.96]" onclick="selectTab('matrix')">
+<span class="material-symbols-outlined" data-icon="integration_instructions">integration_instructions</span>
+<span class="text-label-mono-xs font-label-mono-xs">Matrix</span>
+</button>
+<!-- Destination 3: Auth JWT -->
+<button class="flex flex-col items-center justify-center text-on-surface-variant px-space-sm py-space-xs hover:text-on-surface transition-colors duration-150 active:scale-[0.96]" onclick="selectTab('auth')">
+<span class="material-symbols-outlined" data-icon="key">key</span>
+<span class="text-label-mono-xs font-label-mono-xs">Auth JWT</span>
+</button>
+<!-- Destination 4: Portal (Active Destination) -->
+<button class="flex flex-col items-center justify-center bg-surface-container-high text-primary rounded-lg px-space-sm py-space-xs border border-primary active:scale-[0.96] transition-transform duration-100" onclick="selectTab('portal')">
+<span class="material-symbols-outlined" data-icon="how_to_reg">how_to_reg</span>
+<span class="text-label-mono-xs font-label-mono-xs">Portal</span>
+</button>
+</nav>
+<!-- Modal Sheet: ImprintModal.svelte (Resolves dynamic import finding without runtime dead-ends) -->
+<div class="hidden fixed inset-0 z-50 flex items-end justify-center bg-[#020617]/80 backdrop-blur-sm transition-opacity duration-200" id="imprintModal">
+<div class="w-full max-w-[480px] bg-surface-container-low border-t border-outline-variant rounded-t-xl p-space-base space-y-space-md max-h-[751px] overflow-y-auto">
+<!-- Swipe handle bar -->
+<div class="w-8 h-1 bg-outline-variant mx-auto rounded-full"></div>
+<div class="flex items-center justify-between border-b border-outline-variant pb-space-xs">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary" data-icon="policy">policy</span>
+<h3 class="text-headline-sm font-headline-sm text-on-surface">Legal Imprint &amp; Compliance</h3>
+</div>
+<button aria-label="Close modal" class="text-on-surface-variant hover:text-on-surface p-1" id="closeImprintBtn">
+<span class="material-symbols-outlined" data-icon="close">close</span>
+</button>
+</div>
+<div class="space-y-space-sm text-body-sm font-body-sm text-on-surface-variant">
+<div class="bg-surface-container-lowest p-space-xs rounded border border-outline-variant space-y-1">
+<div class="text-label-mono-xs font-label-mono-xs text-primary font-bold">MODULE RESOLUTION: SUCCESS</div>
+<p class="font-mono text-label-mono-xs font-label-mono-xs text-outline">src/lib/components/ImprintModal.svelte rendered with static prerender lock.</p>
+</div>
+<div class="space-y-1">
+<h4 class="text-on-surface font-semibold text-body-md font-body-md">Statutory Telemetry Disclosure</h4>
+<p>
+              This console operates strictly under cryptographic hash integrity proofs. All identity verification transactions are verified via isolated WebCrypto primitives without tracking scripts or external third-party CDN reliance.
+            </p>
+</div>
+<div class="space-y-1">
+<h4 class="text-on-surface font-semibold text-body-md font-body-md">Deterministic Storage Attestation</h4>
+<p>
+              Identity assertions (name, institutional affiliation, and Moodle LMS tokens) are validated in ephemeral encrypted enclave storage and mirrored directly into the local verification registry.
+            </p>
+</div>
+</div>
+<div class="pt-space-xs">
+<button class="w-full bg-surface-container-high hover:bg-surface-variant text-on-surface font-headline-sm text-headline-sm py-space-sm rounded border border-outline-variant transition-colors" id="dismissImprintBtn">
+            Acknowledge &amp; Return
+          </button>
+</div>
+</div>
+</div>
+<!-- Interactive Toast Notification -->
+<div class="fixed top-14 left-1/2 -translate-x-1/2 z-50 hidden bg-surface-container-high border border-primary text-on-surface px-space-base py-space-xs rounded shadow-lg flex items-center gap-2 max-w-[90%]" id="toast">
+<span class="material-symbols-outlined text-primary text-[18px]" data-icon="check_circle">check_circle</span>
+<span class="text-label-mono-xs font-label-mono-xs font-mono" id="toastMsg">Registration verified &amp; committed</span>
+</div>
+</div>
+<!-- Interactive Logic (Vanilla JS for micro-interactions) -->
+<script>
+    const modal = document.getElementById('imprintModal');
+    const openBtn = document.getElementById('openImprintBtn');
+    const closeBtn = document.getElementById('closeImprintBtn');
+    const dismissBtn = document.getElementById('dismissImprintBtn');
+    const toast = document.getElementById('toast');
+    const toastMsg = document.getElementById('toastMsg');
+
+    function showModal() {
+      modal.classList.remove('hidden');
+    }
+
+    function hideModal() {
+      modal.classList.add('hidden');
+    }
+
+    openBtn.addEventListener('click', showModal);
+    closeBtn.addEventListener('click', hideModal);
+    dismissBtn.addEventListener('click', hideModal);
+
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) hideModal();
+    });
+
+    function showToast(msg) {
+      toastMsg.innerText = msg;
+      toast.classList.remove('hidden');
+      setTimeout(() => {
+        toast.classList.add('hidden');
+      }, 3500);
+    }
+
+    function triggerSubmit() {
+      const name = document.getElementById('fullName').value;
+      const role = document.getElementById('roleSelect').value;
+      showToast(`Attestation Committed: ${name} [${role}] -> Hash: 0x9b4a`);
+    }
+
+    function selectTab(tabName) {
+      showToast(`Navigated to context: ${tabName.toUpperCase()}`);
+    }
+
+    document.getElementById('configToggleBtn').addEventListener('click', () => {
+      showToast('Deterministic Engine: ZERO CDN WARNINGS');
+    });
+  </script>
+</body></html>
