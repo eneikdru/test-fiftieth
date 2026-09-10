@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>DevSecOps Verification Core | Mobile Audit</title>
+<!-- Fonts & Material Symbols -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        "colors": {
+          "on-primary-fixed": "#07006c",
+          "surface-container-low": "#181b25",
+          "tertiary-container": "#00885d",
+          "tertiary": "#4edea3",
+          "surface-tint": "#c0c1ff",
+          "secondary": "#4cd7f6",
+          "tertiary-fixed": "#6ffbbe",
+          "on-error": "#690005",
+          "surface": "#0f131c",
+          "surface-container-lowest": "#0a0e17",
+          "on-primary": "#1000a9",
+          "error": "#ffb4ab",
+          "primary-fixed": "#e1e0ff",
+          "primary-container": "#8083ff",
+          "secondary-fixed": "#acedff",
+          "on-surface-variant": "#c7c4d7",
+          "surface-bright": "#353943",
+          "outline-variant": "#464554",
+          "primary": "#c0c1ff",
+          "inverse-surface": "#dfe2ef",
+          "inverse-on-surface": "#2c303a",
+          "tertiary-fixed-dim": "#4edea3",
+          "outline": "#908fa0",
+          "on-primary-fixed-variant": "#2f2ebe",
+          "on-surface": "#dfe2ef",
+          "primary-fixed-dim": "#c0c1ff",
+          "secondary-fixed-dim": "#4cd7f6",
+          "surface-dim": "#0f131c",
+          "on-secondary-fixed-variant": "#004e5c",
+          "on-secondary-container": "#00424e",
+          "on-primary-container": "#0d0096",
+          "on-tertiary": "#003824",
+          "surface-container": "#1c1f29",
+          "error-container": "#93000a",
+          "surface-variant": "#31353f",
+          "background": "#0f131c",
+          "on-secondary-fixed": "#001f26",
+          "on-secondary": "#003640",
+          "on-tertiary-fixed-variant": "#005236",
+          "on-background": "#dfe2ef",
+          "on-tertiary-container": "#000703",
+          "surface-container-high": "#262a34",
+          "on-tertiary-fixed": "#002113",
+          "surface-container-highest": "#31353f",
+          "secondary-container": "#03b5d3",
+          "on-error-container": "#ffdad6",
+          "inverse-primary": "#494bd6"
+        },
+        "borderRadius": {
+          "DEFAULT": "0.125rem",
+          "lg": "0.25rem",
+          "xl": "0.5rem",
+          "full": "0.75rem"
+        },
+        "spacing": {
+          "gutter-compact": "0.75rem",
+          "space-2xl": "2rem",
+          "space-md": "0.75rem",
+          "space-xl": "1.5rem",
+          "margin-edge": "1.5rem",
+          "space-xs": "0.25rem",
+          "gutter-normal": "1.25rem",
+          "space-3xl": "3rem",
+          "space-lg": "1.25rem",
+          "space-2xs": "0.125rem",
+          "space-base": "1rem",
+          "space-sm": "0.5rem"
+        },
+        "fontFamily": {
+          "headline-lg": ["Geist", "sans-serif"],
+          "label-sm": ["JetBrains Mono", "monospace"],
+          "body-md": ["Geist", "sans-serif"],
+          "headline-lg-mobile": ["Geist", "sans-serif"],
+          "label-md": ["JetBrains Mono", "monospace"],
+          "body-lg": ["Geist", "sans-serif"],
+          "body-sm": ["Geist", "sans-serif"],
+          "headline-xl-mobile": ["Geist", "sans-serif"],
+          "code-stream": ["JetBrains Mono", "monospace"],
+          "label-lg": ["JetBrains Mono", "monospace"],
+          "headline-md": ["Geist", "sans-serif"],
+          "headline-xl": ["Geist", "sans-serif"],
+          "headline-sm": ["Geist", "sans-serif"]
+        },
+        "fontSize": {
+          "headline-lg": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+          "label-sm": ["11px", { "lineHeight": "14px", "fontWeight": "500" }],
+          "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+          "headline-lg-mobile": ["20px", { "lineHeight": "28px", "letterSpacing": "-0.015em", "fontWeight": "600" }],
+          "label-md": ["12px", { "lineHeight": "16px", "fontWeight": "500" }],
+          "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+          "body-sm": ["13px", { "lineHeight": "18px", "fontWeight": "400" }],
+          "headline-xl-mobile": ["26px", { "lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+          "code-stream": ["12px", { "lineHeight": "20px", "fontWeight": "400" }],
+          "label-lg": ["13px", { "lineHeight": "18px", "letterSpacing": "-0.01em", "fontWeight": "500" }],
+          "headline-md": ["18px", { "lineHeight": "26px", "letterSpacing": "-0.015em", "fontWeight": "600" }],
+          "headline-xl": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.025em", "fontWeight": "600" }],
+          "headline-sm": ["15px", { "lineHeight": "22px", "letterSpacing": "-0.01em", "fontWeight": "600" }]
+        }
+      }
+    }
+  }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+      font-size: 18px;
+      line-height: 1;
+    }
+    /* Custom subtle scrollbar for mobile console output */
+    ::-webkit-scrollbar {
+      width: 3px;
+      height: 3px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0a0e17;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #31353f;
+      border-radius: 2px;
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface font-body-sm min-h-screen antialiased flex flex-col items-center select-none overflow-x-hidden">
+<!-- Mobile Viewport Container simulating mobile frame (+page.svelte) -->
+<div class="w-full max-w-md min-h-screen bg-surface flex flex-col shadow-2xl relative pb-20 border-x border-outline-variant">
+<!-- JSON Predicted Component: TopAppBar -->
+<header class="bg-surface-container-lowest dark:bg-surface-container-lowest docked full-width top-0 border-b border-outline-variant dark:border-outline-variant flex justify-between items-center w-full px-space-lg h-14 sticky z-40">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-primary dark:text-primary" data-icon="verified_user">verified_user</span>
+<h1 class="text-headline-sm font-headline-sm font-semibold tracking-tight text-on-surface dark:text-on-surface truncate">DevSecOps Verification Core</h1>
+</div>
+<button class="text-label-md font-label-md bg-surface-container-high px-space-sm py-space-xs text-primary border border-outline hover:bg-surface-container hover:text-on-surface transition-colors duration-150 ease-in-out uppercase tracking-wider flex items-center gap-1" onclick="triggerVerificationAnimation()">
+<span>RUN VERIFICATION</span>
+</button>
+</header>
+<!-- Mobile Drawer Overlay / Drawer Trigger Menu Button Strip -->
+<div class="fixed inset-0 bg-surface-container-lowest/80 backdrop-blur-sm z-50 hidden transition-opacity" id="drawerOverlay" onclick="toggleDrawer()">
+<div class="bg-surface-container-lowest dark:bg-surface-container-lowest docked left-0 top-14 h-[calc(100vh-3.5rem)] w-60 border-r border-outline-variant dark:border-outline-variant flex flex-col w-60 h-full p-space-sm justify-between shadow-2xl" onclick="event.stopPropagation()">
+<!-- Header Drawer Title -->
+<div class="space-y-space-sm">
+<div class="px-space-md py-space-xs flex items-center justify-between border-b border-outline-variant pb-space-xs">
+<span class="text-label-md font-label-md font-semibold text-on-surface tracking-wider">SEC-OPS ENGINES</span>
+<button class="text-on-surface-variant hover:text-on-surface" onclick="toggleDrawer()">
+<span class="material-symbols-outlined" data-icon="close">close</span>
+</button>
+</div>
+<!-- Drawer Navigation Tabs from JSON -->
+<nav class="flex flex-col gap-1">
+<!-- Tab 1: Audit Critiques (Active) -->
+<button class="flex items-center gap-space-sm px-space-md py-space-sm bg-surface-container-high dark:bg-surface-container-high text-primary dark:text-primary font-medium rounded border-l-2 border-primary text-label-md font-label-md w-full text-left transition-colors" onclick="switchTab('critiques'); toggleDrawer()">
+<span class="material-symbols-outlined" data-icon="bug_report">bug_report</span>
+<span>Audit Critiques (5)</span>
+</button>
+<!-- Tab 2 -->
+<button class="flex items-center gap-space-sm px-space-md py-space-sm text-on-surface-variant dark:text-on-surface-variant font-normal rounded hover:text-on-surface text-label-md font-label-md w-full text-left transition-colors" onclick="switchTab('jwt'); toggleDrawer()">
+<span class="material-symbols-outlined" data-icon="key">key</span>
+<span>Auth &amp; JWT Trace</span>
+</button>
+<!-- Tab 3 -->
+<button class="flex items-center gap-space-sm px-space-md py-space-sm text-on-surface-variant dark:text-on-surface-variant font-normal rounded hover:text-on-surface text-label-md font-label-md w-full text-left transition-colors" onclick="switchTab('moodle'); toggleDrawer()">
+<span class="material-symbols-outlined" data-icon="fact_check">fact_check</span>
+<span>Moodle Coverage</span>
+</button>
+<!-- Tab 4 -->
+<button class="flex items-center gap-space-sm px-space-md py-space-sm text-on-surface-variant dark:text-on-surface-variant font-normal rounded hover:text-on-surface text-label-md font-label-md w-full text-left transition-colors" onclick="switchTab('runner'); toggleDrawer()">
+<span class="material-symbols-outlined" data-icon="terminal">terminal</span>
+<span>Falsification Runner</span>
+</button>
+<!-- Tab 5 -->
+<button class="flex items-center gap-space-sm px-space-md py-space-sm text-on-surface-variant dark:text-on-surface-variant font-normal rounded hover:text-on-surface text-label-md font-label-md w-full text-left transition-colors" onclick="switchTab('attestation'); toggleDrawer()">
+<span class="material-symbols-outlined" data-icon="shield">shield</span>
+<span>Pipeline Attestation</span>
+</button>
+</nav>
+</div>
+<div class="border-t border-outline-variant pt-space-sm px-space-md text-label-sm font-label-sm text-on-surface-variant space-y-1">
+<div class="flex justify-between">
+<span>SUITE ENGINES:</span>
+<span class="text-tertiary font-mono">ONLINE</span>
+</div>
+<div class="text-[10px] text-outline opacity-80 font-mono truncate">ID: 9a7e-falsification-v2</div>
+</div>
+</div>
+</div>
+<!-- MAIN SCROLLABLE AUDIT CANVAS (+page.svelte body) -->
+<main class="flex-1 px-space-base py-space-md space-y-space-md">
+<!-- Drawer Toggle & Route Location Breadcrumb -->
+<div class="flex items-center justify-between bg-surface-container-low px-space-md py-space-xs rounded border border-outline-variant">
+<button class="flex items-center gap-1.5 text-primary text-label-md font-label-md hover:text-on-surface" onclick="toggleDrawer()">
+<span class="material-symbols-outlined text-primary" data-icon="menu">menu</span>
+<span>ENGINES DRAWER</span>
+</button>
+<div class="flex items-center gap-1 font-label-sm text-label-sm text-on-surface-variant">
+<span class="w-2 h-2 rounded-full bg-tertiary animate-pulse"></span>
+<span class="text-tertiary uppercase">LIVE MONITOR</span>
+</div>
+</div>
+<!-- Section 1: Header & System Telemetry Status -->
+<div class="space-y-space-sm">
+<div class="bg-surface-container-lowest border border-outline-variant p-space-md rounded shadow-inner">
+<div class="flex items-start justify-between">
+<div>
+<span class="text-label-sm font-label-sm text-outline uppercase tracking-wider block">Audit Remediation Core</span>
+<div class="text-headline-md font-headline-md text-on-surface flex items-center gap-1.5 mt-0.5">
+<span class="inline-block w-2.5 h-2.5 bg-tertiary rounded-xs"></span>
+<span>SELF-FALSIFICATION: VERIFIED</span>
+</div>
+</div>
+<div class="bg-surface-container px-space-sm py-0.5 rounded border border-outline-variant text-right">
+<span class="text-label-sm font-label-sm text-secondary font-mono">ACTIVE RUN</span>
+<div class="text-label-md font-label-md text-on-surface font-semibold">CYCLE 09</div>
+</div>
+</div>
+<div class="mt-space-sm pt-space-xs border-t border-outline-variant flex items-center justify-between text-label-sm font-label-sm text-on-surface-variant">
+<span>Root-Layer Validation: <strong class="text-tertiary font-mono">ZERO STUBS</strong></span>
+<span class="font-mono text-outline">SHA: 7e80a..db8</span>
+</div>
+</div>
+<!-- 4 Quick Health Chips (Horizontal Scrollable on Mobile) -->
+<div class="flex gap-space-xs overflow-x-auto pb-1 no-scrollbar text-label-sm font-label-sm">
+<div class="flex items-center gap-1 bg-surface-container-high px-2 py-1 rounded border border-outline-variant whitespace-nowrap">
+<span class="text-tertiary font-bold">■</span>
+<span class="text-on-surface">PR Verification:</span>
+<span class="text-tertiary font-mono">Real PRs Only</span>
+</div>
+<div class="flex items-center gap-1 bg-surface-container-high px-2 py-1 rounded border border-outline-variant whitespace-nowrap">
+<span class="text-tertiary font-bold">■</span>
+<span class="text-on-surface">Moodle LMS:</span>
+<span class="text-tertiary font-mono">4/4 Specs Met</span>
+</div>
+<div class="flex items-center gap-1 bg-surface-container-high px-2 py-1 rounded border border-outline-variant whitespace-nowrap">
+<span class="text-secondary font-bold">■</span>
+<span class="text-on-surface">Auth 401s:</span>
+<span class="text-secondary font-mono">DB-Linked</span>
+</div>
+<div class="flex items-center gap-1 bg-surface-container-high px-2 py-1 rounded border border-outline-variant whitespace-nowrap">
+<span class="text-tertiary font-bold">■</span>
+<span class="text-on-surface">Imports:</span>
+<span class="text-tertiary font-mono">Local Resolved</span>
+</div>
+</div>
+</div>
+<!-- Section 2: Interactive Tabs Filter Bar -->
+<div class="bg-surface-container-lowest p-1 rounded border border-outline-variant flex items-center justify-between text-label-md font-label-md overflow-x-auto">
+<button class="px-space-sm py-1 rounded bg-surface-container-high text-primary border-b-2 border-primary font-semibold flex items-center gap-1" id="tabBtnCritiques" onclick="switchTab('critiques')">
+<span>Critiques</span>
+<span class="text-label-sm bg-surface-container px-1 py-0.2 rounded font-mono text-primary">5</span>
+</button>
+<button class="px-space-sm py-1 text-on-surface-variant hover:text-on-surface transition-colors flex items-center gap-1" id="tabBtnJwt" onclick="switchTab('jwt')">
+<span>Auth/JWT</span>
+</button>
+<button class="px-space-sm py-1 text-on-surface-variant hover:text-on-surface transition-colors flex items-center gap-1" id="tabBtnMoodle" onclick="switchTab('moodle')">
+<span>Moodle 4/4</span>
+</button>
+<button class="px-space-sm py-1 text-on-surface-variant hover:text-on-surface transition-colors flex items-center gap-1" id="tabBtnRunner" onclick="switchTab('runner')">
+<span>Runner</span>
+</button>
+</div>
+<!-- TAB PANEL 1: AUDIT CRITIQUES REMEDIATION MATRIX -->
+<div class="space-y-space-md" id="panelCritiques">
+<!-- Banner Alert: Zero Mock Policy -->
+<div class="bg-surface-container-low border-l-2 border-primary p-space-sm rounded-r flex items-start gap-space-sm">
+<span class="material-symbols-outlined text-primary mt-0.5" data-icon="policy">policy</span>
+<div>
+<div class="text-label-md font-label-md text-on-surface font-semibold">Strict Audit Falsification Enforcement</div>
+<p class="text-body-sm font-body-sm text-on-surface-variant text-[12px] leading-snug">
+              Every flagged vulnerability (Findings 1-5) has been audited against real database connections, physical module paths, and authenticated pull requests.
+            </p>
+</div>
+</div>
+<!-- Finding 1 Card -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded p-space-sm space-y-space-xs">
+<div class="flex items-center justify-between">
+<span class="text-label-sm font-label-sm text-primary font-mono font-semibold">FINDING 1 [BARCAN-TAG-09]</span>
+<span class="text-label-sm font-label-sm text-tertiary bg-surface-container-high px-1.5 py-0.5 rounded border border-tertiary/30">GUARDRAIL ENFORCED</span>
+</div>
+<h3 class="text-headline-sm font-headline-sm text-on-surface">Automated PR Verification Guardrail</h3>
+<p class="text-body-sm font-body-sm text-on-surface-variant text-[12px]">
+            PR #0 simulated mock bypass was intercepted, rejected, and blacklisted. The falsification runner now rejects null commits or unauthenticated CI diff passes.
+          </p>
+<div class="bg-surface-container-high border border-outline-variant p-space-xs rounded space-y-1 font-mono text-[11px]">
+<div class="flex items-center justify-between text-on-surface">
+<span class="text-secondary font-semibold">Verified Subject:</span>
+<span class="text-tertiary">PR #104 Passed [0 Stubs]</span>
+</div>
+<div class="text-on-surface-variant text-[10px] pl-2 border-l border-outline-variant">
+              Target: <span class="text-on-surface">Auth &amp; DB Session Layer</span><br/>
+              Reasoning Engine: <span class="text-tertiary">Validated diff non-empty (240 lines, 12 checks)</span>
+</div>
+</div>
+</div>
+<!-- Finding 2 Card -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded p-space-sm space-y-space-xs">
+<div class="flex items-center justify-between">
+<span class="text-label-sm font-label-sm text-primary font-mono font-semibold">FINDING 2 [BARCAN-TAG-09]</span>
+<span class="text-label-sm font-label-sm text-tertiary bg-surface-container-high px-1.5 py-0.5 rounded border border-tertiary/30">4/4 RIGOROUS CHECKS</span>
+</div>
+<h3 class="text-headline-sm font-headline-sm text-on-surface">Moodle LMS Integration Matrix</h3>
+<p class="text-body-sm font-body-sm text-on-surface-variant text-[12px]">
+            Transparent 4-point verification matrix. Zero false claim assertions:
+          </p>
+<div class="grid grid-cols-2 gap-1.5 pt-1">
+<div class="bg-surface-container p-2 rounded border border-outline-variant">
+<div class="flex items-center gap-1 text-[11px] font-mono text-tertiary">
+<span class="material-symbols-outlined text-[14px]" data-icon="check_circle">check_circle</span>
+<span>SSO Gateway</span>
+</div>
+<div class="text-[10px] text-on-surface-variant mt-0.5">Active SAML/OIDC Link</div>
+</div>
+<div class="bg-surface-container p-2 rounded border border-outline-variant">
+<div class="flex items-center gap-1 text-[11px] font-mono text-tertiary">
+<span class="material-symbols-outlined text-[14px]" data-icon="check_circle">check_circle</span>
+<span>Dynamic Role Sync</span>
+</div>
+<div class="text-[10px] text-on-surface-variant mt-0.5">Faculty/Student Mapping</div>
+</div>
+<div class="bg-surface-container p-2 rounded border border-outline-variant">
+<div class="flex items-center gap-1 text-[11px] font-mono text-tertiary">
+<span class="material-symbols-outlined text-[14px]" data-icon="check_circle">check_circle</span>
+<span>Granular ACL</span>
+</div>
+<div class="text-[10px] text-on-surface-variant mt-0.5">Enforced at Endpoint</div>
+</div>
+<div class="bg-surface-container p-2 rounded border border-outline-variant">
+<div class="flex items-center gap-1 text-[11px] font-mono text-tertiary">
+<span class="material-symbols-outlined text-[14px]" data-icon="check_circle">check_circle</span>
+<span>Fallback Local Auth</span>
+</div>
+<div class="text-[10px] text-on-surface-variant mt-0.5">Failover Configured</div>
+</div>
+</div>
+</div>
+<!-- Finding 3 & 5 Card -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded p-space-sm space-y-space-xs">
+<div class="flex items-center justify-between">
+<span class="text-label-sm font-label-sm text-primary font-mono font-semibold">FINDING 3 &amp; 5 [BARCAN-TAG-02, 05]</span>
+<span class="text-label-sm font-label-sm text-secondary bg-surface-container-high px-1.5 py-0.5 rounded border border-secondary/30">REMEDIATED</span>
+</div>
+<h3 class="text-headline-sm font-headline-sm text-on-surface">HTTP 401 Causal Root-Cause Resolver</h3>
+<p class="text-body-sm font-body-sm text-on-surface-variant text-[12px]">
+            Traced latent 401 exceptions down to PostgreSQL connection pool drops and desynced tenant flags rather than superficial JWT claims.
+          </p>
+<div class="bg-surface-container-high p-space-xs rounded border border-outline-variant font-code-stream text-[11px] space-y-1">
+<div class="text-outline">Trace Path:</div>
+<div class="text-on-surface flex items-center gap-1">
+<span class="text-error font-mono">401_ERR</span>
+<span>→ Connection Pool Starvation (max: 20)</span>
+</div>
+<div class="text-tertiary flex items-center gap-1">
+<span>REMEDY:</span>
+<span class="text-on-surface">PgBouncer multiplexing + keep-alive TTL ping</span>
+</div>
+</div>
+</div>
+<!-- Finding 4 Card: JWT to DB Wiring Inspector -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded p-space-sm space-y-space-xs">
+<div class="flex items-center justify-between">
+<span class="text-label-sm font-label-sm text-primary font-mono font-semibold">FINDING 4 [BARCAN-TAG-02]</span>
+<span class="text-label-sm font-label-sm text-tertiary bg-surface-container-high px-1.5 py-0.5 rounded border border-tertiary/30">WIRING SEALED</span>
+</div>
+<h3 class="text-headline-sm font-headline-sm text-on-surface">JWT-to-Persistence Layer Wiring</h3>
+<!-- Stepper Visualization -->
+<div class="space-y-1.5 pt-1">
+<div class="flex items-center gap-2 text-label-sm font-label-sm">
+<span class="w-5 h-5 rounded-full bg-surface-container-high border border-tertiary text-tertiary flex items-center justify-center font-mono text-[10px]">1</span>
+<span class="text-on-surface">JWT Claim Parsed:</span>
+<span class="text-outline font-mono truncate">sub:usr_89f0</span>
+</div>
+<div class="w-0.5 h-2 bg-tertiary ml-2.5"></div>
+<div class="flex items-center gap-2 text-label-sm font-label-sm">
+<span class="w-5 h-5 rounded-full bg-surface-container-high border border-tertiary text-tertiary flex items-center justify-center font-mono text-[10px]">2</span>
+<span class="text-on-surface">DB User Record:</span>
+<span class="text-tertiary font-mono">Row Located (2.1ms)</span>
+</div>
+<div class="w-0.5 h-2 bg-tertiary ml-2.5"></div>
+<div class="flex items-center gap-2 text-label-sm font-label-sm">
+<span class="w-5 h-5 rounded-full bg-surface-container-high border border-tertiary text-tertiary flex items-center justify-center font-mono text-[10px]">3</span>
+<span class="text-on-surface">Tenant &amp; Role Integrity:</span>
+<span class="text-tertiary font-mono">Active (org_core)</span>
+</div>
+<div class="w-0.5 h-2 bg-tertiary ml-2.5"></div>
+<div class="flex items-center gap-2 text-label-sm font-label-sm">
+<span class="w-5 h-5 rounded-full bg-surface-container-high border border-tertiary text-tertiary flex items-center justify-center font-mono text-[10px]">4</span>
+<span class="text-on-surface font-semibold">Authorized Session:</span>
+<span class="text-secondary font-mono">401 Preempted</span>
+</div>
+</div>
+</div>
+<!-- Runtime Verification Finding (Dummett & Goodman) -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded p-space-sm space-y-space-xs">
+<div class="flex items-center justify-between">
+<span class="text-label-sm font-label-sm text-primary font-mono font-semibold">RUNTIME VERIFICATION [DUMMETT &amp; GOODMAN]</span>
+<span class="text-label-sm font-label-sm text-tertiary bg-surface-container-high px-1.5 py-0.5 rounded border border-tertiary/30">0 WHITE SCREENS</span>
+</div>
+<h3 class="text-headline-sm font-headline-sm text-on-surface">Module &amp; Bundling Attestation</h3>
+<div class="bg-surface-container-high p-space-xs rounded border border-outline-variant space-y-1 font-mono text-[11px]">
+<div class="flex items-center justify-between text-on-surface">
+<span>Component:</span>
+<span class="text-on-surface font-semibold">RegistrationForm.svelte</span>
+</div>
+<div class="flex items-center justify-between text-on-surface-variant">
+<span>Dependency:</span>
+<span class="text-tertiary">./ImprintModal.svelte (Local File)</span>
+</div>
+<div class="flex items-center justify-between text-on-surface-variant">
+<span>CDN External Injection:</span>
+<span class="text-tertiary">0% (Vite Bundled CSS)</span>
+</div>
+<div class="flex items-center justify-between text-outline text-[10px] pt-1 border-t border-outline-variant">
+<span>Asset Integrity Hash:</span>
+<span class="text-secondary font-mono">sha384-H4uW2...kL9</span>
+</div>
+</div>
+</div>
+</div>
+<!-- TAB PANEL 2: AUTH & JWT TRACE (Initially Hidden, Toggled via JS) -->
+<div class="space-y-space-md hidden" id="panelJwt">
+<div class="bg-surface-container-lowest border border-outline-variant rounded p-space-md space-y-space-sm">
+<div class="flex justify-between items-center">
+<h3 class="text-headline-sm font-headline-sm text-on-surface">Deep Live Trace Inspector</h3>
+<span class="text-label-sm font-label-sm text-tertiary font-mono">LATENCY: 1.4ms</span>
+</div>
+<p class="text-body-sm font-body-sm text-on-surface-variant text-[12px]">
+            Continuous synthetic probes validating database-backed session claims across high concurrency request spikes.
+          </p>
+<div class="bg-surface-container-lowest border border-outline p-space-xs rounded font-code-stream text-[11px] space-y-1 text-on-surface overflow-x-auto">
+<div class="text-secondary font-mono">&gt; PROBE #8842: GET /api/v1/auth/context</div>
+<div class="text-outline pl-2">Header Authorization: Bearer eyJhbGci...</div>
+<div class="text-outline pl-2">Lookup query: SELECT * FROM users WHERE uuid = $1</div>
+<div class="text-tertiary pl-2">→ Database response: 200 OK [tenant: acme_corp, role: secops_auditor]</div>
+<div class="text-tertiary pl-2">→ Middleware: Session validated, bypass cache = false</div>
+<div class="text-outline pl-2">&gt; Trace Complete: 0 auth drift events detected</div>
+</div>
+</div>
+</div>
+<!-- TAB PANEL 3: MOODLE COVERAGE (Initially Hidden) -->
+<div class="space-y-space-md hidden" id="panelMoodle">
+<div class="bg-surface-container-lowest border border-outline-variant rounded p-space-md space-y-space-sm">
+<h3 class="text-headline-sm font-headline-sm text-on-surface">Moodle Compliance Specs (4/4)</h3>
+<p class="text-body-sm font-body-sm text-on-surface-variant text-[12px]">
+            Comprehensive policy audit covering institutional learning management integrations and token handshakes.
+          </p>
+<ul class="space-y-2 text-label-sm font-label-sm text-on-surface">
+<li class="p-2 bg-surface-container rounded border border-outline-variant flex items-center justify-between">
+<span>1. LTI 1.3 Advantage Protocol</span>
+<span class="text-tertiary font-mono">ENFORCED</span>
+</li>
+<li class="p-2 bg-surface-container rounded border border-outline-variant flex items-center justify-between">
+<span>2. Scoped REST Token Renewal</span>
+<span class="text-tertiary font-mono">ROTATION PASS</span>
+</li>
+<li class="p-2 bg-surface-container rounded border border-outline-variant flex items-center justify-between">
+<span>3. Multi-Tenant Role Isolation</span>
+<span class="text-tertiary font-mono">SEALED</span>
+</li>
+<li class="p-2 bg-surface-container rounded border border-outline-variant flex items-center justify-between">
+<span>4. Fallback Offline Cache Grace</span>
+<span class="text-tertiary font-mono">ACTIVE (15m TTL)</span>
+</li>
+</ul>
+</div>
+</div>
+<!-- TAB PANEL 4: FALSIFICATION RUNNER (Initially Hidden) -->
+<div class="space-y-space-md hidden" id="panelRunner">
+<div class="bg-surface-container-lowest border border-outline-variant rounded p-space-md space-y-space-sm">
+<div class="flex items-center justify-between">
+<h3 class="text-headline-sm font-headline-sm text-on-surface">Falsification Test Harness</h3>
+<span class="text-label-sm font-label-sm text-secondary font-mono">STRESS RUNNER</span>
+</div>
+<p class="text-body-sm font-body-sm text-on-surface-variant text-[12px]">
+            Injects adversarial test cases, fake PR tokens, expired JWT signatures, and disconnected database sockets.
+          </p>
+<div class="p-3 bg-surface-container rounded border border-outline-variant font-mono text-[11px] space-y-1">
+<div class="text-tertiary">✔ Test 01: Inject Fake PR #0 -&gt; Intercepted and Dropped</div>
+<div class="text-tertiary">✔ Test 02: Simulate PgSQL pool timeout -&gt; Handled gracefully</div>
+<div class="text-tertiary">✔ Test 03: Tamper JWT Claim sub -&gt; 401 triggered correctly</div>
+<div class="text-tertiary">✔ Test 04: Missing local module ImprintModal -&gt; Caught at compile</div>
+</div>
+</div>
+</div>
+<!-- Primary Action CTA Button Section -->
+<div class="pt-space-xs space-y-space-xs">
+<button class="w-full bg-[#6366f1] hover:bg-[#4f46e5] text-white py-space-sm px-space-md rounded font-headline-sm text-headline-sm flex items-center justify-center gap-2 shadow-lg transition-all duration-150 active:scale-[0.99] border border-primary/40" id="ctaExecuteSuite" onclick="executeFalsificationSuite()">
+<span class="material-symbols-outlined" data-icon="play_circle">play_circle</span>
+<span id="ctaText">Execute Self-Falsification Suite</span>
+</button>
+<div class="flex items-center justify-between px-1 text-[11px] font-mono text-outline">
+<span class="flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary inline-block"></span>
+            CI Gate: Auto-Remediate
+          </span>
+<span>Last Passed: Just now</span>
+</div>
+</div>
+<!-- Execution Monospace Telemetry Stream Log -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded p-space-sm">
+<div class="flex items-center justify-between pb-space-xs border-b border-outline-variant text-label-sm font-label-sm">
+<span class="text-on-surface flex items-center gap-1 font-mono">
+<span class="material-symbols-outlined text-[14px] text-secondary" data-icon="terminal">terminal</span>
+            SEC-OPS TELEMETRY LOG
+          </span>
+<button class="text-outline hover:text-on-surface font-mono text-[10px]" onclick="clearConsoleLog()">CLEAR</button>
+</div>
+<div class="pt-2 font-code-stream text-[11px] text-on-surface-variant space-y-1 max-h-36 overflow-y-auto leading-tight" id="consoleLogOutput">
+<div class="text-tertiary">[14:32:01.092] Attestation handshake initialized...</div>
+<div class="text-on-surface">[14:32:01.124] Guardrail: Checking PR integrity diff for PR #104 [OK]</div>
+<div class="text-on-surface">[14:32:01.189] Moodle LMS matrix: 4 endpoints verified [OK]</div>
+<div class="text-on-surface">[14:32:01.210] Resolving svelte components: RegistrationForm &amp; ImprintModal [OK]</div>
+<div class="text-tertiary">[14:32:01.264] Falsification engine: 0 mock violations discovered. Ready.</div>
+</div>
+</div>
+</main>
+<!-- Contextual Mobile Floating Quick Action / Status Dock -->
+<div class="fixed bottom-3 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-sm bg-surface-container-high/95 backdrop-blur-md border border-outline-variant px-space-md py-space-xs rounded-full shadow-2xl flex items-center justify-between z-30">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-tertiary"></span>
+<span class="text-label-sm font-label-sm text-on-surface font-mono">STATUS: PASSED (5/5)</span>
+</div>
+<button class="flex items-center gap-1 text-label-sm font-label-sm text-primary hover:text-on-surface font-mono" onclick="scrollToTop()">
+<span>TOP</span>
+<span class="material-symbols-outlined text-[14px]" data-icon="arrow_upward">arrow_upward</span>
+</button>
+</div>
+</div>
+<!-- Micro-Interactions & State Controller Script -->
+<script>
+    // Tab switching micro-controller
+    function switchTab(tabId) {
+      const panels = ['critiques', 'jwt', 'moodle', 'runner'];
+      const tabs = {
+        'critiques': 'tabBtnCritiques',
+        'jwt': 'tabBtnJwt',
+        'moodle': 'tabBtnMoodle',
+        'runner': 'tabBtnRunner'
+      };
+
+      panels.forEach(p => {
+        const panelEl = document.getElementById('panel' + capitalize(p));
+        if (panelEl) {
+          if (p === tabId) {
+            panelEl.classList.remove('hidden');
+          } else {
+            panelEl.classList.add('hidden');
+          }
+        }
+      });
+
+      // Update button styling
+      Object.keys(tabs).forEach(key => {
+        const btn = document.getElementById(tabs[key]);
+        if (!btn) return;
+        if (key === tabId) {
+          btn.className = "px-space-sm py-1 rounded bg-surface-container-high text-primary border-b-2 border-primary font-semibold flex items-center gap-1";
+        } else {
+          btn.className = "px-space-sm py-1 text-on-surface-variant hover:text-on-surface transition-colors flex items-center gap-1";
+        }
+      });
+
+      appendLog(`Switched view context to [${tabId.toUpperCase()}]`);
+    }
+
+    function capitalize(str) {
+      return str.charAt(0).toUpperCase() + str.slice(1);
+    }
+
+    // Drawer Toggle Logic
+    function toggleDrawer() {
+      const overlay = document.getElementById('drawerOverlay');
+      if (overlay.classList.contains('hidden')) {
+        overlay.classList.remove('hidden');
+      } else {
+        overlay.classList.add('hidden');
+      }
+    }
+
+    // Scroll to top
+    function scrollToTop() {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // Telemetry log appender
+    function appendLog(text, isSuccess = false) {
+      const log = document.getElementById('consoleLogOutput');
+      if (!log) return;
+      const entry = document.createElement('div');
+      const time = new Date().toISOString().substring(11, 23);
+      entry.className = isSuccess ? "text-tertiary" : "text-on-surface";
+      entry.innerText = `[${time}] ${text}`;
+      log.appendChild(entry);
+      log.scrollTop = log.scrollHeight;
+    }
+
+    function clearConsoleLog() {
+      const log = document.getElementById('consoleLogOutput');
+      if (log) {
+        log.innerHTML = `<div class="text-outline">[Console reset by Sec-Ops Auditor]</div>`;
+      }
+    }
+
+    // Verification suite simulation
+    function executeFalsificationSuite() {
+      const btn = document.getElementById('ctaExecuteSuite');
+      const txt = document.getElementById('ctaText');
+      btn.disabled = true;
+      txt.innerText = "Running Falsification...";
+      btn.classList.add('opacity-75');
+
+      appendLog("Initiating full self-falsification suite across 5 target critiques...");
+      
+      setTimeout(() => {
+        appendLog("→ Injecting adversarial simulated breach: Intercepted [0 vulnerabilities]", true);
+      }, 500);
+
+      setTimeout(() => {
+        appendLog("→ Auditing PostgreSQL connection pool: Resilient 20/20 capacity [0 errors]", true);
+      }, 1000);
+
+      setTimeout(() => {
+        appendLog("→ Svelte component resolution: 100% bundled local assets verified [PASS]", true);
+        txt.innerText = "Suite Verified: 5/5 Passed";
+        btn.disabled = false;
+        btn.classList.remove('opacity-75');
+      }, 1600);
+    }
+
+    function triggerVerificationAnimation() {
+      executeFalsificationSuite();
+    }
+  </script>
+</body></html>
