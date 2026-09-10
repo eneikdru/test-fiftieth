@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>PROD-ZERO-CDN // Cryptographic LMS Identity Verifier</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Configuration -->
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "inverse-surface": "#dfe2ef",
+            "tertiary-fixed-dim": "#adc6ff",
+            "surface-container-lowest": "#0a0e17",
+            "tertiary-fixed": "#d8e2ff",
+            "surface-container": "#1c1f29",
+            "primary": "#4edea3",
+            "on-error": "#690005",
+            "primary-fixed": "#6ffbbe",
+            "on-primary-fixed-variant": "#005236",
+            "on-primary-container": "#00422b",
+            "surface-container-low": "#181b25",
+            "on-secondary-container": "#5b3800",
+            "error": "#ffb4ab",
+            "surface": "#0f131c",
+            "primary-fixed-dim": "#4edea3",
+            "tertiary": "#adc6ff",
+            "on-background": "#dfe2ef",
+            "surface-container-highest": "#31353f",
+            "surface-variant": "#31353f",
+            "on-tertiary-fixed": "#001a42",
+            "on-secondary-fixed": "#2a1700",
+            "on-surface": "#dfe2ef",
+            "on-primary-fixed": "#002113",
+            "on-surface-variant": "#bbcabf",
+            "secondary": "#ffb95f",
+            "on-secondary": "#472a00",
+            "on-primary": "#003824",
+            "on-secondary-fixed-variant": "#653e00",
+            "outline-variant": "#3c4a42",
+            "secondary-container": "#ee9800",
+            "primary-container": "#10b981",
+            "surface-container-high": "#262a34",
+            "secondary-fixed": "#ffddb8",
+            "inverse-on-surface": "#2c303a",
+            "on-tertiary": "#002e6a",
+            "surface-dim": "#0f131c",
+            "on-tertiary-container": "#00367a",
+            "tertiary-container": "#71a1ff",
+            "secondary-fixed-dim": "#ffb95f",
+            "surface-tint": "#4edea3",
+            "on-error-container": "#ffdad6",
+            "error-container": "#93000a",
+            "outline": "#86948a",
+            "inverse-primary": "#006c49",
+            "surface-bright": "#353943",
+            "on-tertiary-fixed-variant": "#004395",
+            "background": "#0f131c"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          "spacing": {
+            "space-base": "1rem",
+            "space-xs": "0.25rem",
+            "gutter-mobile": "1rem",
+            "imprint-modal-max-width": "42rem",
+            "space-xxs": "0.125rem",
+            "space-md": "0.75rem",
+            "sidebar-width": "17.5rem",
+            "gutter-desktop": "1.5rem",
+            "space-lg": "1.5rem",
+            "space-sm": "0.5rem",
+            "space-2xl": "3rem",
+            "space-xl": "2rem",
+            "space-3xl": "4rem"
+          },
+          "fontFamily": {
+            "headline-xl-mobile": ["Geist"],
+            "headline-lg": ["Geist"],
+            "caption-caps": ["JetBrains Mono"],
+            "label-code-lg": ["JetBrains Mono"],
+            "label-code-md": ["JetBrains Mono"],
+            "body-md": ["Geist"],
+            "headline-md": ["Geist"],
+            "body-sm": ["Geist"],
+            "headline-xl": ["Geist"],
+            "label-code-sm": ["JetBrains Mono"],
+            "body-lg": ["Geist"]
+          },
+          "fontSize": {
+            "headline-xl-mobile": ["26px", { "lineHeight": "34px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+            "headline-lg": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+            "caption-caps": ["10px", { "lineHeight": "14px", "letterSpacing": "0.08em", "fontWeight": "600" }],
+            "label-code-lg": ["14px", { "lineHeight": "20px", "letterSpacing": "-0.01em", "fontWeight": "500" }],
+            "label-code-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0em", "fontWeight": "500" }],
+            "body-md": ["14px", { "lineHeight": "20px", "letterSpacing": "-0.005em", "fontWeight": "400" }],
+            "headline-md": ["18px", { "lineHeight": "26px", "letterSpacing": "-0.015em", "fontWeight": "600" }],
+            "body-sm": ["13px", { "lineHeight": "18px", "letterSpacing": "0em", "fontWeight": "400" }],
+            "headline-xl": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.03em", "fontWeight": "600" }],
+            "label-code-sm": ["11px", { "lineHeight": "14px", "letterSpacing": "0.02em", "fontWeight": "400" }],
+            "body-lg": ["16px", { "lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "400" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    /* Custom subtle pulsing animations for determinism telemetry */
+    @keyframes pulse-halo {
+      0%, 100% { box-shadow: 0 0 12px rgba(16, 185, 129, 0.15); }
+      50% { box-shadow: 0 0 20px rgba(16, 185, 129, 0.35); }
+    }
+    .verified-halo {
+      animation: pulse-halo 2.5s infinite ease-in-out;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      height: 4px;
+      width: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #0a0e17;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #3c4a42;
+      border-radius: 2px;
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface min-h-screen font-body-md antialiased pb-24 selection:bg-primary selection:text-on-primary-fixed">
+<!-- ========================================================================= -->
+<!-- 1. TOP APP BAR (Shared Component JSON Conformance)                        -->
+<!-- ========================================================================= -->
+<header class="fixed top-0 left-0 w-full z-50 flex items-center justify-between px-gutter-mobile h-14 bg-surface-container-low border-b border-outline-variant">
+<!-- Leading Identity & Verified Anchor -->
+<div class="flex items-center space-x-2">
+<span class="material-symbols-outlined text-primary text-xl" data-icon="verified_user">verified_user</span>
+<div class="flex flex-col">
+<span class="text-label-code-lg font-label-code-lg font-bold text-primary tracking-tight">PROD-ZERO-CDN</span>
+<span class="text-caption-caps font-caption-caps text-outline flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-primary inline-block"></span>
+          ZERO CDN • LOCAL RUNTIME
+        </span>
+</div>
+</div>
+<!-- Trailing Diagnostic & Telemetry Status -->
+<div class="flex items-center space-x-2">
+<div class="hidden sm:flex items-center bg-surface-container-lowest px-2 py-1 rounded border border-outline-variant">
+<span class="w-2 h-2 rounded-full bg-primary-container animate-ping mr-1.5"></span>
+<span class="text-caption-caps font-caption-caps text-primary">DB SYNCED 24ms</span>
+</div>
+<button aria-label="Terminal" class="p-1.5 rounded text-on-surface-variant hover:bg-surface-container-highest hover:text-on-surface transition-all duration-150" title="Terminal Diagnostics">
+<span class="material-symbols-outlined text-xl" data-icon="terminal">terminal</span>
+</button>
+</div>
+</header>
+<!-- ========================================================================= -->
+<!-- MAIN WORKSPACE CONTAINER                                                 -->
+<!-- ========================================================================= -->
+<main class="pt-18 px-gutter-mobile max-w-lg mx-auto space-y-space-base mt-14">
+<!-- Secondary Meta Strip: Nelson Goodman Anti-Falsification Badge -->
+<div class="bg-surface-container-low border border-outline-variant rounded p-space-sm flex items-center justify-between shadow-sm">
+<div class="flex items-center space-x-2 overflow-hidden">
+<span class="material-symbols-outlined text-primary text-base flex-shrink-0" data-icon="check_circle">check_circle</span>
+<span class="text-label-code-sm font-label-code-sm text-on-surface truncate">
+          Local Asset Pipeline • Zero CDN • Goodman Audit Safe
+        </span>
+</div>
+<span class="text-caption-caps font-caption-caps px-1.5 py-0.5 rounded bg-surface-container-high text-outline text-right whitespace-nowrap">
+        Svelte v5.19
+      </span>
+</div>
+<!-- ======================================================================= -->
+<!-- 2. AUDIT VERIFIER & PR INTEGRITY HUD (Finding 1 Resolution)              -->
+<!-- ======================================================================= -->
+<section class="bg-surface-container-low border border-outline-variant rounded p-space-base space-y-space-sm">
+<div class="flex items-center justify-between border-b border-outline-variant pb-space-xs">
+<div class="flex items-center space-x-2">
+<span class="material-symbols-outlined text-secondary text-base" data-icon="verified">verified</span>
+<h2 class="text-label-code-md font-label-code-md text-on-surface font-semibold">PR #42 Cryptographic Gate</h2>
+</div>
+<span class="text-caption-caps font-caption-caps bg-surface-container-highest px-2 py-0.5 rounded text-primary border border-outline-variant">
+          HEAD: 7f8a92c
+        </span>
+</div>
+<div class="space-y-1">
+<div class="flex justify-between items-baseline">
+<span class="text-caption-caps font-caption-caps text-on-surface-variant">BRANCH ASSIGNED</span>
+<span class="text-label-code-sm font-label-code-sm text-on-surface font-medium">feat/moodle-jwt-auth-wire</span>
+</div>
+<div class="flex justify-between items-baseline">
+<span class="text-caption-caps font-caption-caps text-on-surface-variant">AUDITOR ATTESTATION</span>
+<span class="text-label-code-sm font-label-code-sm text-primary flex items-center gap-1">
+<span class="material-symbols-outlined text-xs" data-icon="key">key</span>
+            sec-lead@edusec.infra [SIG: valid]
+          </span>
+</div>
+</div>
+<!-- Execution Check Assertions (Strict 9/9 Zero Mock Rule) -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded p-space-xs space-y-1.5">
+<div class="flex justify-between items-center text-caption-caps font-caption-caps text-on-surface-variant px-1 border-b border-surface-container-highest pb-1">
+<span>STATIC &amp; RUNTIME CONFORMANCE</span>
+<span class="text-primary font-bold">9/9 PASSED (0 STUBBED)</span>
+</div>
+<div class="grid grid-cols-3 gap-1 text-center font-label-code-sm text-caption-caps">
+<div class="bg-surface-container p-1 rounded border border-outline-variant flex items-center justify-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+<span>PR #0 Cleared</span>
+</div>
+<div class="bg-surface-container p-1 rounded border border-outline-variant flex items-center justify-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+<span>No Empty Rev</span>
+</div>
+<div class="bg-surface-container p-1 rounded border border-outline-variant flex items-center justify-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+<span>Ed25519 Verified</span>
+</div>
+</div>
+</div>
+</section>
+<!-- ======================================================================= -->
+<!-- 4. JWT & DATABASE PERSISTENCE WIRE TRACE (Findings 3, 4, 5 Resolution)  -->
+<!-- ======================================================================= -->
+<section class="bg-surface-container-low border border-outline-variant rounded p-space-base space-y-space-sm verified-halo">
+<div class="flex items-center justify-between">
+<div class="flex items-center space-x-1.5">
+<span class="material-symbols-outlined text-primary text-base" data-icon="polyline">polyline</span>
+<h2 class="text-label-code-md font-label-code-md text-on-surface font-semibold">Active Auth Wire &amp; DB Trace</h2>
+</div>
+<span class="text-caption-caps font-caption-caps bg-surface-container-highest text-primary-fixed-dim px-2 py-0.5 rounded border border-outline-variant">
+          401 Fix Verified
+        </span>
+</div>
+<!-- Linear Architectural Pipeline Visualization -->
+<div class="p-space-xs bg-surface-container-lowest rounded border border-outline-variant space-y-2">
+<div class="flex items-center justify-between text-label-code-sm font-label-code-sm">
+<div class="bg-surface-container px-2 py-1 rounded text-primary flex items-center gap-1 border border-outline-variant">
+<span class="material-symbols-outlined text-xs" data-icon="token">token</span>
+<span>JWT Claims</span>
+</div>
+<span class="text-outline text-xs">➔</span>
+<div class="bg-surface-container px-2 py-1 rounded text-tertiary flex items-center gap-1 border border-outline-variant">
+<span class="material-symbols-outlined text-xs" data-icon="database">database</span>
+<span>users.find(sub)</span>
+</div>
+<span class="text-outline text-xs">➔</span>
+<div class="bg-surface-container px-2 py-1 rounded text-secondary flex items-center gap-1 border border-outline-variant">
+<span class="material-symbols-outlined text-xs" data-icon="policy">policy</span>
+<span>RBAC 200</span>
+</div>
+</div>
+<div class="text-caption-caps font-caption-caps text-on-surface-variant flex justify-between items-center px-1 pt-1 border-t border-surface-container-highest">
+<span>PAYLOAD: sub: usr_994a | role: editor</span>
+<span class="text-primary font-mono font-bold">ZERO MOCK BYPASS</span>
+</div>
+</div>
+</section>
+<!-- ======================================================================= -->
+<!-- 3. REGISTRATION FORM & RESOLVED IMPRINT COMPONENT (Dummett Resolution)    -->
+<!-- ======================================================================= -->
+<section class="bg-surface-container-low border border-outline-variant rounded p-space-base space-y-space-base">
+<div class="flex items-center justify-between border-b border-outline-variant pb-space-xs">
+<div class="flex flex-col">
+<h1 class="text-headline-md font-headline-md text-on-surface">Institutional Student Enrollment</h1>
+<p class="text-body-sm font-body-sm text-on-surface-variant">Cryptographic enrollment tied to Moodle LMS Core</p>
+</div>
+<span class="material-symbols-outlined text-primary" data-icon="app_registration">app_registration</span>
+</div>
+<!-- Native Interactive Form Mocked for Svelte Hydration -->
+<form class="space-y-space-sm" onsubmit="event.preventDefault();">
+<!-- Field: Full Name -->
+<div class="space-y-space-xxs">
+<label class="text-caption-caps font-caption-caps text-on-surface-variant flex items-center justify-between" for="fullName">
+<span>LEGAL IDENTIFIER (FULL NAME)</span>
+<span class="text-primary text-[10px]">VERIFIED</span>
+</label>
+<div class="relative">
+<input class="w-full h-[38px] bg-surface-container-lowest border border-outline-variant rounded px-space-md text-body-sm font-body-sm text-on-surface focus:outline-none focus:border-primary transition-colors" id="fullName" placeholder="e.g. Elena Rostova" type="text" value="Dr. Aris Thorne"/>
+</div>
+</div>
+<!-- Field: Academic Email -->
+<div class="space-y-space-xxs">
+<label class="text-caption-caps font-caption-caps text-on-surface-variant" for="academicEmail">
+            ACADEMIC EMAIL DOMAIN
+          </label>
+<input class="w-full h-[38px] bg-surface-container-lowest border border-outline-variant rounded px-space-md text-body-sm font-body-sm text-on-surface focus:outline-none focus:border-primary transition-colors" id="academicEmail" type="email" value="a.thorne@oxford.edu.audit"/>
+</div>
+<!-- Two Columns: Moodle ID & Password -->
+<div class="grid grid-cols-2 gap-space-sm">
+<div class="space-y-space-xxs">
+<label class="text-caption-caps font-caption-caps text-on-surface-variant" for="studentId">
+              MOODLE ID
+            </label>
+<input class="w-full h-[38px] bg-surface-container-lowest border border-outline-variant rounded px-space-md text-label-code-sm font-label-code-sm text-on-surface focus:outline-none focus:border-primary font-mono" id="studentId" type="text" value="MDL-882190"/>
+</div>
+<div class="space-y-space-xxs">
+<label class="text-caption-caps font-caption-caps text-on-surface-variant" for="secPin">
+              SESSION PIN / PASS
+            </label>
+<input class="w-full h-[38px] bg-surface-container-lowest border border-outline-variant rounded px-space-md text-label-code-sm font-label-code-sm text-on-surface focus:outline-none focus:border-primary font-mono" id="secPin" type="password" value="••••••••••••"/>
+</div>
+</div>
+<!-- Explicit Bundled Imprint Reference (Dummett Resolution) -->
+<div class="p-space-sm bg-surface-container-lowest border border-outline-variant rounded space-y-1">
+<div class="flex items-center justify-between">
+<span class="text-label-code-sm font-label-code-sm text-primary flex items-center gap-1.5 font-medium">
+<span class="material-symbols-outlined text-sm" data-icon="description">description</span>
+              ImprintModal.svelte [Bundled &amp; Resolved]
+            </span>
+<button class="text-caption-caps font-caption-caps text-on-surface-variant hover:text-primary underline decoration-primary/50" id="toggleImprintBtn" onclick="document.getElementById('imprintDrawer').classList.toggle('hidden')" type="button">
+              Toggle Terms
+            </button>
+</div>
+<p class="text-body-sm font-body-sm text-on-surface-variant leading-tight">
+            Institutional Data Governance BDSG/GDPR. Zero third-party telemetry. Module specifier resolved locally with root relative path.
+          </p>
+<!-- Collapsible Verified Imprint Metadata -->
+<div class="hidden pt-2 border-t border-surface-container-highest space-y-1 text-caption-caps font-caption-caps text-outline" id="imprintDrawer">
+<p><strong>Provider:</strong> Deterministic Infrastructure Foundation e.V.</p>
+<p><strong>Registrar:</strong> Amtsgericht Berlin HRB 99120</p>
+<p><strong>Public Key:</strong> SHA256:4e3a8901be...32bf</p>
+</div>
+</div>
+<!-- Primary CTA Submit Button -->
+<div class="space-y-1 pt-1">
+<button class="w-full h-11 bg-primary-container text-on-primary-container font-label-code-md font-bold rounded flex items-center justify-center space-x-2 hover:bg-primary transition-all duration-150 active:scale-[0.98]" type="submit">
+<span class="material-symbols-outlined text-lg" data-icon="lock_open">lock_open</span>
+<span>Complete Verified Registration</span>
+</button>
+<div class="flex justify-between items-center px-1 text-caption-caps font-caption-caps text-outline">
+<span>TRANSACTION ISOLATION: SERIALIZABLE</span>
+<span class="text-primary font-semibold">Direct DB write + Token minting</span>
+</div>
+</div>
+</form>
+</section>
+<!-- ======================================================================= -->
+<!-- 5. MOODLE LMS INTEGRATION VERIFIED MATRIX (Finding 2 Resolution)         -->
+<!-- ======================================================================= -->
+<section class="bg-surface-container-low border border-outline-variant rounded p-space-base space-y-space-sm mb-6">
+<div class="flex items-center justify-between border-b border-outline-variant pb-space-xs">
+<div class="flex items-center space-x-2">
+<span class="material-symbols-outlined text-primary text-base" data-icon="fact_check">fact_check</span>
+<h2 class="text-label-code-md font-label-code-md text-on-surface font-semibold">LMS Matrix: 4 Real Pillars</h2>
+</div>
+<span class="text-caption-caps font-caption-caps text-on-surface-variant font-mono">
+          COVERAGE: 100%
+        </span>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-space-xs">
+<!-- Pillar 1 -->
+<div class="p-space-xs bg-surface-container-lowest border border-outline-variant rounded space-y-0.5">
+<div class="flex items-center justify-between text-caption-caps font-caption-caps">
+<span class="text-primary font-semibold">1. SSO ENDPOINT</span>
+<span class="text-outline">42ms</span>
+</div>
+<p class="text-label-code-sm font-label-code-sm text-on-surface">OAuth2 / LTI 1.3 Active</p>
+<span class="text-[10px] font-mono text-outline block">Handshake validated &amp; synced</span>
+</div>
+<!-- Pillar 2 -->
+<div class="p-space-xs bg-surface-container-lowest border border-outline-variant rounded space-y-0.5">
+<div class="flex items-center justify-between text-caption-caps font-caption-caps">
+<span class="text-primary font-semibold">2. ROLE SYNC</span>
+<span class="text-primary font-mono">STABLE</span>
+</div>
+<p class="text-label-code-sm font-label-code-sm text-on-surface">Moodle ➔ DB Mapping</p>
+<span class="text-[10px] font-mono text-outline block">`editingteacher` &amp; `student` bound</span>
+</div>
+<!-- Pillar 3 -->
+<div class="p-space-xs bg-surface-container-lowest border border-outline-variant rounded space-y-0.5">
+<div class="flex items-center justify-between text-caption-caps font-caption-caps">
+<span class="text-secondary font-semibold">3. ACCESS CONTROL</span>
+<span class="text-outline">RBAC</span>
+</div>
+<p class="text-label-code-sm font-label-code-sm text-on-surface">Course-Level ACL</p>
+<span class="text-[10px] font-mono text-outline block">Zero unassigned permission holes</span>
+</div>
+<!-- Pillar 4 -->
+<div class="p-space-xs bg-surface-container-lowest border border-outline-variant rounded space-y-0.5">
+<div class="flex items-center justify-between text-caption-caps font-caption-caps">
+<span class="text-primary font-semibold">4. FALLBACK HANDLER</span>
+<span class="text-primary font-mono">ARMED</span>
+</div>
+<p class="text-label-code-sm font-label-code-sm text-on-surface">Offline Queue Cache</p>
+<span class="text-[10px] font-mono text-outline block">Idempotent retry buffer ready</span>
+</div>
+</div>
+</section>
+</main>
+<!-- ========================================================================= -->
+<!-- 6. DOCKED BOTTOM NAVIGATION BAR (Shared Component JSON Conformance)       -->
+<!-- ========================================================================= -->
+<!-- Destination tab count: 3. Exact labels: 'Register', 'Audit Trace', 'Auth Wire'.
+       Active logic: Current page context is user registration -> 'Register' is ACTIVE. -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-gutter-mobile py-space-xs bg-surface-container-lowest border-t border-outline-variant">
+<!-- Destination 1: Register (ACTIVE) -->
+<a class="flex flex-col items-center justify-center text-primary bg-surface-container-high rounded-lg py-1.5 px-3 active:scale-[0.97] transition-transform duration-100" href="#register">
+<span class="material-symbols-outlined text-xl" data-icon="app_registration">app_registration</span>
+<span class="text-caption-caps font-caption-caps font-semibold">Register</span>
+</a>
+<!-- Destination 2: Audit Trace (INACTIVE) -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant py-1.5 px-3 hover:bg-surface-container hover:text-on-surface active:scale-[0.97] transition-transform duration-100" href="#audit-trace">
+<span class="material-symbols-outlined text-xl" data-icon="fact_check">fact_check</span>
+<span class="text-caption-caps font-caption-caps">Audit Trace</span>
+</a>
+<!-- Destination 3: Auth Wire (INACTIVE) -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant py-1.5 px-3 hover:bg-surface-container hover:text-on-surface active:scale-[0.97] transition-transform duration-100" href="#auth-wire">
+<span class="material-symbols-outlined text-xl" data-icon="key">key</span>
+<span class="text-caption-caps font-caption-caps">Auth Wire</span>
+</a>
+</nav>
+</body></html>
