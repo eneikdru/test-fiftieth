@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>LMS Registry - Registration &amp; Moodle LMS Integration</title>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Google Fonts: Hanken Grotesk & Geist -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&amp;family=Hanken+Grotesk:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS v3 -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "on-tertiary-fixed-variant": "#005137",
+            "inverse-surface": "#213145",
+            "secondary-container": "#6860ef",
+            "on-background": "#0b1c30",
+            "on-secondary-fixed": "#100069",
+            "on-error-container": "#93000a",
+            "tertiary-container": "#00301f",
+            "primary-container": "#1e293b",
+            "on-primary-fixed-variant": "#3c475a",
+            "tertiary-fixed-dim": "#68dba9",
+            "surface-container": "#e5eeff",
+            "error-container": "#ffdad6",
+            "on-secondary-fixed-variant": "#372abf",
+            "inverse-on-surface": "#eaf1ff",
+            "primary-fixed": "#d8e3fb",
+            "secondary": "#4e45d5",
+            "on-primary": "#ffffff",
+            "primary": "#091426",
+            "tertiary-fixed": "#85f8c4",
+            "surface-dim": "#cbdbf5",
+            "on-primary-fixed": "#111c2d",
+            "on-secondary": "#ffffff",
+            "on-secondary-container": "#fffbff",
+            "on-error": "#ffffff",
+            "secondary-fixed-dim": "#c3c0ff",
+            "on-tertiary-container": "#24a375",
+            "inverse-primary": "#bcc7de",
+            "surface-container-high": "#dce9ff",
+            "error": "#ba1a1a",
+            "background": "#f8f9ff",
+            "on-primary-container": "#8590a6",
+            "on-surface": "#0b1c30",
+            "on-tertiary-fixed": "#002114",
+            "surface": "#f8f9ff",
+            "surface-bright": "#f8f9ff",
+            "surface-container-lowest": "#ffffff",
+            "outline": "#75777d",
+            "surface-container-low": "#eff4ff",
+            "on-surface-variant": "#45474c",
+            "primary-fixed-dim": "#bcc7de",
+            "surface-tint": "#545f73",
+            "surface-container-highest": "#d3e4fe",
+            "tertiary": "#00190e",
+            "outline-variant": "#c5c6cd",
+            "surface-variant": "#d3e4fe",
+            "on-tertiary": "#ffffff",
+            "secondary-fixed": "#e3dfff"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          "spacing": {
+            "space-lg": "1.5rem",
+            "gutter-mobile": "1rem",
+            "space-xs": "0.5rem",
+            "space-2xs": "0.25rem",
+            "space-sm": "0.75rem",
+            "space-xl": "2rem",
+            "space-md": "1rem",
+            "space-3xl": "4rem",
+            "space-2xl": "3rem",
+            "gutter-desktop": "1.5rem",
+            "container-max": "76rem"
+          },
+          "fontFamily": {
+            "body-md": ["Hanken Grotesk"],
+            "title-md": ["Hanken Grotesk"],
+            "body-sm": ["Hanken Grotesk"],
+            "label-sm": ["Geist"],
+            "display": ["Hanken Grotesk"],
+            "title-sm": ["Hanken Grotesk"],
+            "code-sm": ["Geist"],
+            "headline-lg": ["Hanken Grotesk"],
+            "headline-md": ["Hanken Grotesk"],
+            "label-md": ["Geist"],
+            "body-lg": ["Hanken Grotesk"],
+            "headline-lg-mobile": ["Hanken Grotesk"],
+            "headline-sm": ["Hanken Grotesk"]
+          },
+          "fontSize": {
+            "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+            "title-md": ["16px", { "lineHeight": "24px", "fontWeight": "600" }],
+            "body-sm": ["13px", { "lineHeight": "18px", "fontWeight": "400" }],
+            "label-sm": ["11px", { "lineHeight": "14px", "letterSpacing": "0.04em", "fontWeight": "500" }],
+            "display": ["40px", { "lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "title-sm": ["14px", { "lineHeight": "20px", "fontWeight": "600" }],
+            "code-sm": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+            "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "headline-md": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "500" }],
+            "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+            "headline-lg-mobile": ["26px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+            "headline-sm": ["20px", { "lineHeight": "28px", "letterSpacing": "-0.005em", "fontWeight": "600" }]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface font-body-md text-body-md antialiased min-h-screen flex flex-col justify-between pb-20 selection:bg-secondary-fixed selection:text-on-secondary-fixed">
+<!-- ================= TOP APP BAR (Shared Component Anchor) ================= -->
+<header class="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-space-md h-10 w-full max-w-container-max mx-auto bg-surface border-b border-outline-variant">
+<div class="flex items-center space-x-2">
+<button aria-label="Open Navigation Menu" class="text-on-surface p-1 hover:bg-surface-container-low transition-colors duration-150 active:opacity-80" type="button">
+<span class="material-symbols-outlined text-lg leading-none" data-icon="menu">menu</span>
+</button>
+<span class="font-title-md text-title-md text-primary uppercase tracking-wider font-bold">LMS Registry</span>
+</div>
+<!-- Auth & Persistence State -->
+<div class="flex items-center space-x-space-xs">
+<div class="flex items-center bg-surface-container-low px-space-xs py-0.5 rounded border border-outline-variant">
+<span class="w-1.5 h-1.5 rounded-full bg-on-tertiary-container mr-1.5"></span>
+<span class="font-label-sm text-label-sm text-on-surface-variant font-medium">TLS 1.3 · JWT Active</span>
+</div>
+<span class="material-symbols-outlined text-secondary text-lg" data-icon="verified_user" data-weight="fill" style="font-variation-settings: 'FILL' 1;">verified_user</span>
+</div>
+</header>
+<!-- ================= MAIN CONTENT CANVAS ================= -->
+<main class="w-full max-w-md mx-auto px-gutter-mobile pt-12 space-y-space-md flex-1">
+<!-- Build Verification & Deterministic Bundle Banner -->
+<section class="bg-surface-container-low border border-outline-variant rounded-lg p-space-xs flex items-center justify-between shadow-none">
+<div class="flex items-center space-x-2 overflow-hidden">
+<span class="material-symbols-outlined text-secondary text-sm flex-shrink-0" data-icon="verified">verified</span>
+<div class="truncate">
+<p class="font-label-sm text-label-sm text-on-surface truncate font-semibold">Production-ready local build</p>
+<p class="font-code-sm text-code-sm text-on-surface-variant text-[10px] leading-tight font-mono">Deterministic CSS bundle active · Zero runtime leak</p>
+</div>
+</div>
+<span class="font-label-sm text-label-sm bg-surface-container-lowest border border-outline-variant px-1.5 py-0.5 rounded text-secondary font-mono flex-shrink-0">v2.4.8-audit</span>
+</section>
+<!-- Contextual Title & Intro -->
+<section class="space-y-1">
+<div class="flex items-center justify-between">
+<h1 class="font-headline-sm text-headline-sm text-primary tracking-tight font-bold">Moodle LMS Integration</h1>
+<span class="font-code-sm text-code-sm text-outline font-mono">+page.svelte</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+        Complete enterprise registrar enrollment and authenticate mutual LTI 1.3 token exchange with live DB claims.
+      </p>
+</section>
+<!-- Verified Audit & Integration Status Panel (Findings 3, 4, 5 Resolved) -->
+<section class="bg-surface-container-lowest border border-outline-variant rounded-xl p-space-md space-y-space-sm">
+<div class="flex items-center justify-between border-b border-outline-variant pb-2">
+<div class="flex items-center space-x-1.5">
+<span class="material-symbols-outlined text-secondary text-base" data-icon="policy">policy</span>
+<h2 class="font-title-sm text-title-sm text-primary font-semibold">Verified System Audit</h2>
+</div>
+<span class="inline-flex items-center bg-surface-container-low border border-outline-variant px-2 py-0.5 rounded-full font-label-sm text-label-sm text-on-tertiary-container font-medium">
+<span class="w-1.5 h-1.5 rounded-full bg-on-tertiary-container mr-1"></span>
+          Audit Passed (4/4)
+        </span>
+</div>
+<div class="space-y-2">
+<!-- Item 1: Moodle LTI 1.3 Gateway -->
+<div class="bg-surface-container-low p-space-xs rounded border border-outline-variant flex items-start justify-between">
+<div class="space-y-0.5">
+<div class="flex items-center space-x-1.5">
+<span class="font-label-sm text-label-sm font-semibold text-primary">LTI 1.3 &amp; SSO Gateway</span>
+<span class="material-symbols-outlined text-on-tertiary-container text-xs" data-icon="lock">lock</span>
+</div>
+<p class="font-code-sm text-code-sm text-on-surface-variant text-[11px] leading-tight font-mono">DB identity matched: sha256_e49b81...019</p>
+</div>
+<span class="font-label-sm text-label-sm text-secondary bg-surface-container-lowest border border-outline-variant px-1.5 py-0.5 rounded font-mono">Active &amp; Synced</span>
+</div>
+<!-- Item 2: Role Sync & Handshake -->
+<div class="bg-surface-container-low p-space-xs rounded border border-outline-variant flex items-start justify-between">
+<div class="space-y-0.5">
+<div class="flex items-center space-x-1.5">
+<span class="font-label-sm text-label-sm font-semibold text-primary">Access Control &amp; RBAC</span>
+<span class="material-symbols-outlined text-secondary text-xs" data-icon="sync">sync</span>
+</div>
+<p class="font-code-sm text-code-sm text-on-surface-variant text-[11px] leading-tight font-mono">Admin / Faculty / Student mapped · 401 failover active</p>
+</div>
+<span class="font-label-sm text-label-sm text-on-tertiary-container bg-surface-container-lowest border border-outline-variant px-1.5 py-0.5 rounded font-mono">DB-Backed</span>
+</div>
+</div>
+</section>
+<!-- Registration Form Component -->
+<section class="bg-surface-container-lowest border border-outline-variant rounded-xl p-space-md space-y-space-md">
+<div class="border-b border-outline-variant pb-2 flex items-center justify-between">
+<h2 class="font-title-sm text-title-sm text-primary font-semibold">Institutional Enrollment</h2>
+<span class="font-label-sm text-label-sm text-outline">Form ID: REG-8821</span>
+</div>
+<form class="space-y-space-md" onsubmit="event.preventDefault();">
+<!-- Full Academic Name -->
+<div class="space-y-1">
+<label class="block font-label-md text-label-md text-on-surface font-semibold" for="academicName">
+            Full Academic Name
+          </label>
+<input class="w-full h-10 px-3 bg-surface-container-lowest border border-outline rounded-lg text-body-sm font-body-sm text-on-surface focus:outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20 transition-colors" id="academicName" placeholder="e.g. Dr. Eleanor Vance" type="text" value="Dr. Helena Vance-Montague"/>
+</div>
+<!-- Institutional Email -->
+<div class="space-y-1">
+<label class="block font-label-md text-label-md text-on-surface font-semibold" for="institutionalEmail">
+            Institutional Email
+          </label>
+<input class="w-full h-10 px-3 bg-surface-container-lowest border border-outline rounded-lg text-body-sm font-body-sm text-on-surface focus:outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20 transition-colors" id="institutionalEmail" placeholder="name@university.edu" type="email" value="h.vance@oxford-academic.edu"/>
+</div>
+<!-- Moodle LMS Base Endpoint -->
+<div class="space-y-1">
+<div class="flex items-center justify-between">
+<label class="block font-label-md text-label-md text-on-surface font-semibold" for="moodleUrl">
+              Moodle Institution URL
+            </label>
+<span class="font-label-sm text-label-sm text-on-surface-variant font-mono">LTI 1.3</span>
+</div>
+<div class="relative flex items-center">
+<input class="w-full h-10 pl-3 pr-10 bg-surface-container-lowest border border-outline rounded-lg text-body-sm font-body-sm text-on-surface focus:outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20 font-mono transition-colors" id="moodleUrl" type="url" value="https://moodle.oxford-academic.edu/auth/lti"/>
+<span class="material-symbols-outlined absolute right-3 text-secondary text-sm" data-icon="hub">hub</span>
+</div>
+</div>
+<!-- SSO Role Assignment Dropdown -->
+<div class="space-y-1">
+<label class="block font-label-md text-label-md text-on-surface font-semibold" for="roleSelect">
+            SSO Role Assignment
+          </label>
+<div class="relative">
+<select class="w-full h-10 pl-3 pr-8 bg-surface-container-lowest border border-outline rounded-lg text-body-sm font-body-sm text-on-surface appearance-none focus:outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20 transition-colors" id="roleSelect">
+<option selected="" value="admin">Academic Administrator (Full SSO Audit)</option>
+<option value="faculty">Faculty / Course Director (Curriculum Sync)</option>
+<option value="evaluator">Accredited External Evaluator</option>
+<option value="student">Enrolled Scholar (Read Only)</option>
+</select>
+<span class="material-symbols-outlined absolute right-2.5 top-2.5 text-on-surface-variant pointer-events-none text-base" data-icon="expand_more">expand_more</span>
+</div>
+</div>
+<!-- Legal Compliance & Imprint Modal Trigger Section -->
+<div class="bg-surface-container-low p-space-xs rounded-lg border border-outline-variant space-y-2">
+<div class="flex items-start space-x-2">
+<input checked="" class="mt-1 w-4 h-4 rounded text-secondary border-outline focus:ring-secondary/20" id="termsAgreement" type="checkbox"/>
+<label class="font-body-sm text-body-sm text-on-surface select-none" for="termsAgreement">
+              I acknowledge institutional data processing, cryptographic role synchronization, and mandatory LTI telemetry.
+            </label>
+</div>
+<!-- Functional Imprint Modal Button -->
+<div class="flex items-center justify-between pt-1 border-t border-outline-variant">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Regulatory Notice (EU/BGB)</span>
+<button class="inline-flex items-center space-x-1 font-label-sm text-label-sm text-secondary hover:text-on-secondary-fixed-variant font-medium underline underline-offset-2" onclick="document.getElementById('imprintDrawer').classList.toggle('hidden');" type="button">
+<span>Imprint &amp; Legal Notice</span>
+<span class="material-symbols-outlined text-xs" data-icon="gavel">gavel</span>
+</button>
+</div>
+</div>
+<!-- CTA and Persistence Affirmation -->
+<div class="space-y-2 pt-1">
+<button class="w-full h-11 bg-primary text-on-primary font-title-sm text-title-sm rounded-lg flex items-center justify-center space-x-2 border border-on-surface hover:bg-primary-container active:opacity-85 transition-all shadow-none" type="submit">
+<span class="material-symbols-outlined text-base animate-spin" data-icon="sync" style="animation-duration: 3s;">sync</span>
+<span>Complete Verified Registration &amp; SSO Handshake</span>
+</button>
+<div class="flex items-center justify-center space-x-1.5 text-on-surface-variant">
+<span class="material-symbols-outlined text-xs text-on-tertiary-container" data-icon="verified_user">verified_user</span>
+<span class="font-label-sm text-label-sm font-mono text-[10px]">SHA-256 DB-Verified Session · Persistent LTI claims valid</span>
+</div>
+</div>
+</form>
+</section>
+<!-- ================= RESOLVED IMPRINT & REGULATORY DRAWER / CARD ================= -->
+<section class="bg-surface-container-lowest border-2 border-secondary/30 rounded-xl p-space-md space-y-space-sm" id="imprintDrawer">
+<div class="flex items-center justify-between border-b border-outline-variant pb-2">
+<div class="flex items-center space-x-1.5">
+<span class="material-symbols-outlined text-secondary text-base" data-icon="policy">policy</span>
+<h3 class="font-title-sm text-title-sm text-primary font-semibold">Institutional Impressum &amp; Legal Notice</h3>
+</div>
+<button aria-label="Close Imprint Drawer" class="text-on-surface-variant hover:text-on-surface text-sm" onclick="document.getElementById('imprintDrawer').classList.add('hidden');" type="button">
+<span class="material-symbols-outlined text-base" data-icon="close">close</span>
+</button>
+</div>
+<div class="space-y-2 text-body-sm text-on-surface-variant leading-snug">
+<div class="grid grid-cols-2 gap-2 text-[11px] font-label-sm">
+<div class="bg-surface-container-low p-2 rounded border border-outline-variant">
+<p class="font-semibold text-primary">Service Provider</p>
+<p class="font-body-sm text-body-sm text-on-surface">LMS Registry Consortium e.V.</p>
+<p class="text-outline">Wissenschaftspark 14, 10115 Berlin</p>
+</div>
+<div class="bg-surface-container-low p-2 rounded border border-outline-variant">
+<p class="font-semibold text-primary">Data Protection Officer</p>
+<p class="font-body-sm text-body-sm text-on-surface">Prof. Dr. K. Lindemann</p>
+<p class="text-outline">dpo@lms-registry.edu.eu</p>
+</div>
+</div>
+<div class="bg-surface-container-low p-2 rounded border border-outline-variant space-y-1">
+<div class="flex items-center justify-between">
+<span class="font-semibold text-primary font-label-sm text-label-sm">GDPR &amp; LTI 1.3 Claims Protocol</span>
+<span class="font-label-sm text-label-sm text-on-tertiary-container font-mono">Article 6(1)(c) Compliant</span>
+</div>
+<p class="text-[11px] text-on-surface leading-tight">
+            User credentials and role mappings are stored exclusively on European institutional federated nodes. JWT tokens expire deterministically every 3600 seconds with persistence failovers directly mirrored into DB records.
+          </p>
+</div>
+<div class="flex items-center justify-between pt-1 font-label-sm text-label-sm text-outline font-mono text-[10px]">
+<span>Registergericht: Amtsgericht Charlottenburg (VR 39201 B)</span>
+<span>VAT: DE 984 219 401</span>
+</div>
+</div>
+</section>
+</main>
+<!-- ================= BOTTOM NAVIGATION BAR (Shared Component Anchor) ================= -->
+<!-- Active Destination: "Sync" representing the Moodle Integration & Registration screen -->
+<nav class="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around px-gutter-mobile h-14 w-full bg-surface border-t border-outline-variant max-w-container-max mx-auto">
+<!-- Item 0: Sync (Active) -->
+<a class="flex flex-col items-center justify-center text-secondary font-label-sm text-label-sm active:scale-95 transition-transform duration-100 py-1" href="#sync">
+<span class="material-symbols-outlined text-xl leading-none" data-icon="sync" data-weight="fill" style="font-variation-settings: 'FILL' 1;">sync</span>
+<span class="mt-0.5">Sync</span>
+</a>
+<!-- Item 1: Credentials (Inactive) -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant font-label-sm text-label-sm hover:bg-surface-container-low transition-colors duration-150 active:scale-95 duration-100 py-1" href="#credentials">
+<span class="material-symbols-outlined text-xl leading-none" data-icon="badge">badge</span>
+<span class="mt-0.5">Credentials</span>
+</a>
+<!-- Item 2: SSO Audit (Inactive) -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant font-label-sm text-label-sm hover:bg-surface-container-low transition-colors duration-150 active:scale-95 duration-100 py-1" href="#audit">
+<span class="material-symbols-outlined text-xl leading-none" data-icon="security">security</span>
+<span class="mt-0.5">SSO Audit</span>
+</a>
+<!-- Item 3: Imprint (Inactive) -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant font-label-sm text-label-sm hover:bg-surface-container-low transition-colors duration-150 active:scale-95 duration-100 py-1" href="#imprint" onclick="document.getElementById('imprintDrawer').classList.remove('hidden');">
+<span class="material-symbols-outlined text-xl leading-none" data-icon="gavel">gavel</span>
+<span class="mt-0.5">Imprint</span>
+</a>
+</nav>
+</body></html>
