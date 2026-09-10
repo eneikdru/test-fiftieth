@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Svelte LMS Core | Audit &amp; Telemetry Engine</title>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Fonts: Geist & JetBrains Mono -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "secondary-fixed": "#71f8e4",
+            "primary-fixed-dim": "#4cd7f6",
+            "on-surface": "#dae2fd",
+            "surface-variant": "#2d3449",
+            "surface-container-highest": "#2d3449",
+            "tertiary": "#4edea3",
+            "on-background": "#dae2fd",
+            "on-error-container": "#ffdad6",
+            "inverse-surface": "#dae2fd",
+            "inverse-primary": "#00687a",
+            "surface-container-high": "#222a3d",
+            "on-tertiary-fixed-variant": "#005236",
+            "secondary": "#4fdbc8",
+            "surface-container": "#171f33",
+            "tertiary-container": "#1bbd85",
+            "on-tertiary-fixed": "#002113",
+            "on-secondary-container": "#003f38",
+            "inverse-on-surface": "#283044",
+            "error-container": "#93000a",
+            "tertiary-fixed": "#6ffbbe",
+            "surface-container-low": "#131b2e",
+            "on-primary": "#003640",
+            "tertiary-fixed-dim": "#4edea3",
+            "on-secondary": "#003731",
+            "surface-tint": "#4cd7f6",
+            "outline": "#869397",
+            "surface-dim": "#0b1326",
+            "surface": "#0b1326",
+            "primary-fixed": "#acedff",
+            "surface-container-lowest": "#060e20",
+            "on-tertiary": "#003824",
+            "on-primary-fixed-variant": "#004e5c",
+            "on-error": "#690005",
+            "secondary-fixed-dim": "#4fdbc8",
+            "on-secondary-fixed": "#00201c",
+            "on-secondary-fixed-variant": "#005048",
+            "outline-variant": "#3d494c",
+            "error": "#ffb4ab",
+            "on-tertiary-container": "#00452e",
+            "primary-container": "#06b6d4",
+            "on-surface-variant": "#bcc9cd",
+            "on-primary-container": "#00424f",
+            "background": "#0b1326",
+            "on-primary-fixed": "#001f26",
+            "surface-bright": "#31394d",
+            "primary": "#4cd7f6",
+            "secondary-container": "#04b4a2"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          "spacing": {
+            "space-base": "1rem",
+            "space-md": "0.75rem",
+            "panel-padding-compact": "0.75rem",
+            "panel-padding-default": "1.25rem",
+            "gutter-mobile": "0.75rem",
+            "space-xs": "0.25rem",
+            "space-lg": "1.5rem",
+            "space-2xs": "0.125rem",
+            "space-sm": "0.5rem",
+            "space-xl": "2rem",
+            "space-2xl": "3rem",
+            "gutter-desktop": "1rem"
+          },
+          "fontFamily": {
+            "display-mobile": ["Geist"],
+            "headline-lg": ["Geist"],
+            "body-sm": ["Geist"],
+            "mono-lg": ["JetBrains Mono"],
+            "body-lg": ["Geist"],
+            "headline-sm": ["Geist"],
+            "label-caps": ["JetBrains Mono"],
+            "mono-md": ["JetBrains Mono"],
+            "body-md": ["Geist"],
+            "display": ["Geist"],
+            "mono-sm": ["JetBrains Mono"],
+            "headline-md": ["Geist"]
+          },
+          "fontSize": {
+            "display-mobile": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+            "headline-lg": ["22px", { "lineHeight": "28px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+            "body-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.01em", "fontWeight": "400" }],
+            "mono-lg": ["13px", { "lineHeight": "18px", "letterSpacing": "-0.01em", "fontWeight": "500" }],
+            "body-lg": ["14px", { "lineHeight": "22px", "letterSpacing": "0em", "fontWeight": "400" }],
+            "headline-sm": ["15px", { "lineHeight": "20px", "letterSpacing": "-0.01em", "fontWeight": "500" }],
+            "label-caps": ["10px", { "lineHeight": "12px", "letterSpacing": "0.08em", "fontWeight": "600" }],
+            "mono-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0em", "fontWeight": "400" }],
+            "body-md": ["13px", { "lineHeight": "18px", "letterSpacing": "0em", "fontWeight": "400" }],
+            "display": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.025em", "fontWeight": "600" }],
+            "mono-sm": ["11px", { "lineHeight": "14px", "letterSpacing": "0.02em", "fontWeight": "400" }],
+            "headline-md": ["18px", { "lineHeight": "24px", "letterSpacing": "-0.015em", "fontWeight": "600" }]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-family: 'Material Symbols Outlined';
+      font-weight: normal;
+      font-style: normal;
+      font-size: 18px;
+      line-height: 1;
+      letter-spacing: normal;
+      text-transform: none;
+      display: inline-block;
+      white-space: nowrap;
+      word-wrap: normal;
+      direction: ltr;
+      -webkit-font-feature-settings: 'liga';
+      -webkit-font-smoothing: antialiased;
+    }
+    
+    /* Subtle hairline micro-borders */
+    .micro-border {
+      border: 1px solid #1e293b;
+    }
+    .micro-border-highlight {
+      border: 1px solid #334155;
+    }
+    .micro-border-cyan {
+      border: 1px solid rgba(6, 182, 212, 0.35);
+    }
+    .glow-cyan-inset {
+      box-shadow: inset 0 0 12px rgba(6, 182, 212, 0.15);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface antialiased min-h-screen pb-20 flex flex-col font-body-md text-body-md selection:bg-primary selection:text-on-primary">
+<!-- TOP APP BAR (Shared Component Anchor) -->
+<header class="flex justify-between items-center w-full px-space-md h-12 sticky top-0 z-50 bg-surface-container border-b border-outline-variant">
+<div class="flex items-center space-x-space-sm">
+<span class="material-symbols-outlined text-primary" data-icon="terminal">terminal</span>
+<span class="font-mono-lg text-mono-lg font-semibold text-primary tracking-tight">Audit &amp; Telemetry Engine</span>
+</div>
+<div class="flex items-center space-x-space-xs">
+<button class="flex items-center space-x-space-2xs px-space-xs py-space-2xs rounded hover:bg-surface-variant hover:text-on-surface active:scale-95 duration-150 transition-all text-on-surface-variant text-primary" title="Audit Status">
+<span class="material-symbols-outlined text-primary" data-icon="security_update_good">security_update_good</span>
+</button>
+</div>
+</header>
+<!-- SUBHEADER: Diagnostic Context & Build Verification -->
+<section class="w-full bg-surface-container-low px-space-md py-space-sm border-b border-outline-variant">
+<div class="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-space-sm">
+<div>
+<div class="flex items-center space-x-space-xs mb-space-2xs">
+<span class="font-label-caps text-label-caps text-primary px-1.5 py-0.5 rounded bg-surface-container border border-primary/30">
+            SVELTE 5 (+page.svelte)
+          </span>
+<span class="font-label-caps text-label-caps text-tertiary px-1.5 py-0.5 rounded bg-tertiary-container/20 border border-tertiary/30 flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary animate-pulse"></span>
+            Verified Build v2.4.1 [Deterministic]
+          </span>
+</div>
+<h1 class="font-headline-sm text-headline-sm text-on-surface font-semibold tracking-tight">
+          Audit Critique &amp; Empirical Falsification Resolution Console
+        </h1>
+</div>
+<!-- Live Remediation Counter & Suite Trigger -->
+<div class="flex items-center gap-space-sm self-start md:self-auto">
+<div class="flex items-center space-x-2 px-2.5 py-1 rounded bg-surface-container border border-primary/40">
+<span class="font-mono-sm text-mono-sm text-on-surface-variant">Audit:</span>
+<span class="font-mono-lg text-mono-lg font-bold text-tertiary">5/5 Remediated</span>
+<span class="material-symbols-outlined text-tertiary text-sm" data-icon="verified">verified</span>
+</div>
+<button class="flex items-center space-x-1.5 px-3 py-1.5 rounded bg-primary-container text-on-primary font-mono-sm text-mono-sm font-semibold hover:brightness-110 active:scale-95 transition-transform shadow-sm" id="run-verification-btn">
+<span class="material-symbols-outlined text-sm" data-icon="play_arrow">play_arrow</span>
+<span>Run Verification Suite</span>
+</button>
+</div>
+</div>
+<!-- Filter Bar -->
+<div class="max-w-7xl mx-auto mt-space-sm flex items-center space-x-space-xs overflow-x-auto pb-1 text-on-surface-variant scrollbar-none">
+<button class="filter-tab active font-mono-sm text-mono-sm px-2.5 py-1 rounded bg-surface-container-highest text-primary border border-primary/40 whitespace-nowrap">
+        All Findings (5)
+      </button>
+<button class="filter-tab font-mono-sm text-mono-sm px-2.5 py-1 rounded bg-surface-container hover:text-on-surface border border-outline-variant whitespace-nowrap">
+        Pipeline (PR #142)
+      </button>
+<button class="filter-tab font-mono-sm text-mono-sm px-2.5 py-1 rounded bg-surface-container hover:text-on-surface border border-outline-variant whitespace-nowrap">
+        LMS Matrix (4/4)
+      </button>
+<button class="filter-tab font-mono-sm text-mono-sm px-2.5 py-1 rounded bg-surface-container hover:text-on-surface border border-outline-variant whitespace-nowrap">
+        Auth &amp; DB (0% Drops)
+      </button>
+<button class="filter-tab font-mono-sm text-mono-sm px-2.5 py-1 rounded bg-surface-container hover:text-on-surface border border-outline-variant whitespace-nowrap">
+        Runtime &amp; Imprint
+      </button>
+</div>
+</section>
+<!-- MAIN AUDIT CONSOLE CONTAINER -->
+<main class="w-full max-w-7xl mx-auto px-space-md py-space-md space-y-space-md flex-1">
+<!-- SUITE RUNNING PROGRESS BANNER (Dynamic Mock Interaction) -->
+<div class="hidden rounded bg-surface-container p-space-sm border border-primary/40 glow-cyan-inset" id="suite-progress">
+<div class="flex items-center justify-between font-mono-sm text-mono-sm mb-1.5 text-primary">
+<span class="flex items-center gap-1.5">
+<span class="material-symbols-outlined animate-spin text-sm" data-icon="sync">sync</span>
+          Executing Deterministic Svelte Component Test &amp; Causal Assertion Matrix...
+        </span>
+<span class="font-bold" id="progress-percent">0%</span>
+</div>
+<div class="w-full bg-surface-container-lowest h-1.5 rounded overflow-hidden">
+<div class="h-full bg-primary transition-all duration-300 w-0" id="progress-bar"></div>
+</div>
+</div>
+<!-- ROOT CAUSE BANNER: Causal Remediation (Finding 5) -->
+<div class="rounded bg-surface-container-low p-space-md border border-outline-variant flex flex-col md:flex-row items-start md:items-center justify-between gap-space-sm relative overflow-hidden">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-tertiary"></div>
+<div class="flex items-start space-x-space-sm pl-space-xs">
+<span class="material-symbols-outlined text-tertiary mt-0.5" data-icon="psychology">psychology</span>
+<div>
+<div class="flex items-center space-x-2">
+<span class="font-label-caps text-label-caps text-tertiary px-1.5 py-0.2 rounded bg-tertiary-container/10 border border-tertiary/30">
+              RESOLVED [BARCAN-TAG-05]
+            </span>
+<span class="font-mono-sm text-mono-sm text-on-surface font-semibold">Causal Root-Cause Remediation Verified</span>
+</div>
+<p class="text-on-surface-variant font-body-sm text-body-sm mt-0.5">
+            Middleware DB layer updated to explicitly hydrate session claims against PostgreSQL persistence. Rejected cosmetic test-mock manipulation in favor of empirical database lookup assertions.
+          </p>
+</div>
+</div>
+<div class="flex items-center space-x-2 font-mono-sm text-mono-sm bg-surface-container px-3 py-1.5 rounded border border-outline-variant self-end md:self-auto shrink-0">
+<span class="text-on-surface-variant">Postgres Ping:</span>
+<span class="text-tertiary font-bold">1.2ms (Pool Active)</span>
+</div>
+</div>
+<!-- AUDIT FINDINGS BENTO GRID -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-space-md">
+<!-- FINDING 1: PR Review Pipeline Guard (PR #0 Fake Approval Eliminated) -->
+<div class="md:col-span-6 rounded bg-surface-container p-space-md border border-outline-variant flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between pb-space-xs border-b border-outline-variant mb-space-sm">
+<div class="flex items-center space-x-2">
+<span class="material-symbols-outlined text-primary" data-icon="account_tree">account_tree</span>
+<span class="font-headline-sm text-headline-sm font-semibold text-on-surface">PR Review Pipeline Guard</span>
+</div>
+<span class="font-label-caps text-label-caps text-tertiary px-1.5 py-0.5 rounded bg-tertiary/10 border border-tertiary/30">
+              RESOLVED [BARCAN-TAG-09]
+            </span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mb-space-sm">
+            Eliminated fictitious stub PR #0 with empty justification. Replaced with mandatory deterministic commit hashing and strict branch protection sign-off policy.
+          </p>
+<!-- Before / After Visual Comparison -->
+<div class="space-y-space-xs font-mono-sm text-mono-sm">
+<div class="p-2 rounded bg-surface-container-lowest border border-error/30 flex items-center justify-between">
+<div class="flex items-center space-x-2">
+<span class="material-symbols-outlined text-error text-sm" data-icon="cancel">cancel</span>
+<span class="line-through text-on-surface-variant">PR #0: stub-merge (empty reason)</span>
+</div>
+<span class="font-label-caps text-label-caps text-error bg-error-container/20 px-1 py-0.5 rounded">REJECTED</span>
+</div>
+<div class="p-2.5 rounded bg-surface-container-low border border-tertiary/40">
+<div class="flex items-center justify-between mb-1">
+<div class="flex items-center space-x-2">
+<span class="material-symbols-outlined text-tertiary text-sm" data-icon="check_circle">check_circle</span>
+<span class="text-primary font-semibold">PR #142: feat(auth): fix-jwt-persistence</span>
+</div>
+<span class="font-label-caps text-label-caps text-tertiary bg-tertiary/10 border border-tertiary/30 px-1.5 py-0.5 rounded">ENFORCED</span>
+</div>
+<div class="grid grid-cols-2 gap-1 text-[10px] text-on-surface-variant pt-1 border-t border-outline-variant/40">
+<div>Commit: <span class="text-on-surface">9f8e4a2c</span></div>
+<div>Signoff: <span class="text-tertiary">Cryptographic (GPG)</span></div>
+<div>Tests Passed: <span class="text-on-surface">42/42 unit, 6/6 E2E</span></div>
+<div>Reviewer: <span class="text-on-surface">Lead Architect</span></div>
+</div>
+</div>
+</div>
+</div>
+<div class="mt-space-sm pt-space-xs border-t border-outline-variant flex items-center justify-between text-on-surface-variant font-mono-sm text-mono-sm">
+<span>Branch: <span class="text-on-surface">main</span></span>
+<span class="text-tertiary flex items-center gap-1">
+<span class="material-symbols-outlined text-sm" data-icon="lock">lock</span>
+            Protected via CI Hook
+          </span>
+</div>
+</div>
+<!-- FINDING 2: Moodle LMS Requirement Matrix (Gaps Unmasked) -->
+<div class="md:col-span-6 rounded bg-surface-container p-space-md border border-outline-variant flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between pb-space-xs border-b border-outline-variant mb-space-sm">
+<div class="flex items-center space-x-2">
+<span class="material-symbols-outlined text-secondary" data-icon="sync_alt">sync_alt</span>
+<span class="font-headline-sm text-headline-sm font-semibold text-on-surface">Moodle LMS Requirement Matrix</span>
+</div>
+<span class="font-label-caps text-label-caps text-tertiary px-1.5 py-0.5 rounded bg-tertiary/10 border border-tertiary/30">
+              4/4 VERIFIED
+            </span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mb-space-sm">
+            Full compliance unmasked and active. Client spec requirements verified with real telemetry feeds from the LMS sync daemon.
+          </p>
+<!-- 4 Critical Requirements Stack -->
+<div class="space-y-1.5 font-mono-sm text-mono-sm">
+<div class="p-2 rounded bg-surface-container-low border border-outline-variant flex items-center justify-between">
+<div class="flex items-center space-x-2">
+<span class="w-2 h-2 rounded-full bg-tertiary"></span>
+<span class="text-on-surface">1. SSO Handshake (OIDC/SAML2)</span>
+</div>
+<span class="text-primary font-medium">Connected (14ms)</span>
+</div>
+<div class="p-2 rounded bg-surface-container-low border border-outline-variant flex items-center justify-between">
+<div class="flex items-center space-x-2">
+<span class="w-2 h-2 rounded-full bg-tertiary"></span>
+<span class="text-on-surface">2. Role Sync (Student/Inst/Admin)</span>
+</div>
+<span class="text-tertiary font-medium">2,410 active records</span>
+</div>
+<div class="p-2 rounded bg-surface-container-low border border-outline-variant flex items-center justify-between">
+<div class="flex items-center space-x-2">
+<span class="w-2 h-2 rounded-full bg-tertiary"></span>
+<span class="text-on-surface">3. Access Control (Course ACL)</span>
+</div>
+<span class="text-on-surface font-medium">DB Policies Enforced</span>
+</div>
+<div class="p-2 rounded bg-surface-container-low border border-outline-variant flex items-center justify-between">
+<div class="flex items-center space-x-2">
+<span class="w-2 h-2 rounded-full bg-tertiary"></span>
+<span class="text-on-surface">4. Graceful Fallback &amp; Retry Queue</span>
+</div>
+<span class="text-secondary font-medium">0 Pending / Cache OK</span>
+</div>
+</div>
+</div>
+<div class="mt-space-sm pt-space-xs border-t border-outline-variant flex items-center justify-between text-on-surface-variant font-mono-sm text-mono-sm">
+<span>Last Daemon Poll: <span class="text-on-surface">34s ago</span></span>
+<button class="text-primary hover:underline flex items-center gap-1">
+<span class="material-symbols-outlined text-sm" data-icon="refresh">refresh</span>
+            Resync
+          </button>
+</div>
+</div>
+<!-- FINDING 3 & 4: Auth Subsystem: JWT Claims -> DB User Entity Wiring (Full Width Pipeline) -->
+<div class="md:col-span-12 rounded bg-surface-container p-space-md border border-outline-variant">
+<div class="flex flex-col md:flex-row md:items-center justify-between pb-space-xs border-b border-outline-variant mb-space-sm gap-2">
+<div class="flex items-center space-x-2">
+<span class="material-symbols-outlined text-primary" data-icon="verified_user">verified_user</span>
+<span class="font-headline-sm text-headline-sm font-semibold text-on-surface">
+              Auth Subsystem: JWT Claims ➔ DB User Entity Persistence
+            </span>
+</div>
+<div class="flex items-center space-x-2">
+<span class="font-label-caps text-label-caps text-tertiary px-1.5 py-0.5 rounded bg-tertiary/10 border border-tertiary/30">
+              RESOLVED [BARCAN-TAG-02 / LAYER_VIOLATION]
+            </span>
+<span class="font-mono-sm text-mono-sm text-tertiary font-bold">401 Drop Rate: 0.00% (24h)</span>
+</div>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mb-space-md">
+          Eliminated layer boundary violation where JWT headers were decoded but never persisted to database scopes, causing sporadic HTTP 401 unauthorized errors during route transitions in Svelte LMS navigation.
+        </p>
+<!-- Pipeline Diagram -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-space-xs relative">
+<!-- Step 1 -->
+<div class="p-space-sm rounded bg-surface-container-low border border-primary/30 relative">
+<div class="font-label-caps text-label-caps text-primary mb-1">NODE 01: INGRESS</div>
+<div class="font-mono-sm text-mono-sm font-semibold text-on-surface flex items-center justify-between">
+<span>Token Parser</span>
+<span class="material-symbols-outlined text-primary text-sm" data-icon="key">key</span>
+</div>
+<div class="text-[11px] text-on-surface-variant mt-1">RS256 Signature Verify. Extracts sub, aud, exp claims.</div>
+<div class="mt-2 text-[10px] font-mono-sm text-tertiary flex items-center gap-1">
+<span class="material-symbols-outlined text-xs" data-icon="check">check</span> Validated (0.3ms)
+            </div>
+</div>
+<!-- Step 2 -->
+<div class="p-space-sm rounded bg-surface-container-low border border-primary/30 relative">
+<div class="font-label-caps text-label-caps text-primary mb-1">NODE 02: PERSISTENCE</div>
+<div class="font-mono-sm text-mono-sm font-semibold text-on-surface flex items-center justify-between">
+<span>DB User Lookup</span>
+<span class="material-symbols-outlined text-primary text-sm" data-icon="database">database</span>
+</div>
+<div class="text-[11px] text-on-surface-variant mt-1">Queries Postgres `users` by UUID from JWT sub claim.</div>
+<div class="mt-2 text-[10px] font-mono-sm text-tertiary flex items-center gap-1">
+<span class="material-symbols-outlined text-xs" data-icon="check">check</span> Entity Hydrated (1.1ms)
+            </div>
+</div>
+<!-- Step 3 -->
+<div class="p-space-sm rounded bg-surface-container-low border border-primary/30 relative">
+<div class="font-label-caps text-label-caps text-primary mb-1">NODE 03: AUTHORIZATION</div>
+<div class="font-mono-sm text-mono-sm font-semibold text-on-surface flex items-center justify-between">
+<span>Scope Evaluator</span>
+<span class="material-symbols-outlined text-primary text-sm" data-icon="shield">shield</span>
+</div>
+<div class="text-[11px] text-on-surface-variant mt-1">Binds enrolled course ACLs &amp; LMS role matrices.</div>
+<div class="mt-2 text-[10px] font-mono-sm text-tertiary flex items-center gap-1">
+<span class="material-symbols-outlined text-xs" data-icon="check">check</span> Scope Assigned (0.4ms)
+            </div>
+</div>
+<!-- Step 4 -->
+<div class="p-space-sm rounded bg-surface-container-low border border-tertiary/40 relative glow-cyan-inset">
+<div class="font-label-caps text-label-caps text-tertiary mb-1">NODE 04: DISPATCH</div>
+<div class="font-mono-sm text-mono-sm font-semibold text-on-surface flex items-center justify-between">
+<span>200 OK Context</span>
+<span class="material-symbols-outlined text-tertiary text-sm" data-icon="task_alt">task_alt</span>
+</div>
+<div class="text-[11px] text-on-surface-variant mt-1">Svelte context initialized with user &amp; course payload.</div>
+<div class="mt-2 text-[10px] font-mono-sm text-tertiary flex items-center gap-1">
+<span class="material-symbols-outlined text-xs" data-icon="done_all">done_all</span> Zero Drops
+            </div>
+</div>
+</div>
+<div class="mt-space-sm p-2 rounded bg-surface-container-lowest border border-outline-variant flex flex-col md:flex-row md:items-center justify-between font-mono-sm text-mono-sm gap-2">
+<div class="flex items-center space-x-2">
+<span class="text-on-surface-variant">Trace Example:</span>
+<span class="text-primary font-semibold">GET /api/v1/courses/cs101/roster</span>
+<span class="text-tertiary">-&gt; 200 OK (2.8ms total)</span>
+</div>
+<div class="text-on-surface-variant text-[11px]">
+            Claim Wiring: <code class="text-on-surface bg-surface-container px-1 py-0.5 rounded">event.locals.user = db.query(jwt.sub)</code>
+</div>
+</div>
+</div>
+<!-- PHILOSOPHICAL FALSIFICATION RESOLUTION SECTION -->
+<div class="md:col-span-12">
+<div class="flex items-center space-x-2 mb-space-sm">
+<span class="material-symbols-outlined text-primary" data-icon="fact_check">fact_check</span>
+<h2 class="font-headline-sm text-headline-sm font-semibold text-on-surface">
+            Philosophical Falsification &amp; Deterministic Bundler Fixes
+          </h2>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-space-md">
+<!-- Verificationist Dead-End Fix: ImprintModal.svelte -->
+<div class="rounded bg-surface-container p-space-md border border-outline-variant flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between mb-space-xs">
+<span class="font-mono-sm text-mono-sm text-on-surface font-semibold flex items-center gap-1.5">
+<span class="material-symbols-outlined text-tertiary text-sm" data-icon="extension">extension</span>
+                  ImprintModal.svelte Import Resolution
+                </span>
+<span class="font-label-caps text-label-caps text-tertiary bg-tertiary/10 border border-tertiary/30 px-1.5 py-0.5 rounded">
+                  FIXED: 0 TypeError
+                </span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mb-space-sm">
+                Resolved bare specifier runtime crash. Component bundled cleanly at <code class="text-primary">src/components/ImprintModal.svelte</code> with zero module load exceptions.
+              </p>
+<div class="bg-surface-container-lowest p-2 rounded border border-outline-variant font-mono-sm text-mono-sm text-[11px] mb-space-sm">
+<div class="text-on-surface-variant">// Svelte 5 Ingress Export</div>
+<div class="text-primary">import ImprintModal from '$lib/components/ImprintModal.svelte';</div>
+<div class="text-tertiary">✓ Verified in client AST bundle map</div>
+</div>
+</div>
+<button class="w-full flex items-center justify-center space-x-2 py-2 rounded bg-surface-container-high hover:bg-surface-container-highest border border-primary/40 text-primary font-mono-sm text-mono-sm font-semibold active:scale-95 transition-all" id="open-imprint-btn">
+<span class="material-symbols-outlined text-sm" data-icon="visibility">visibility</span>
+<span>Preview Imprint Modal / Trigger Registration Harness</span>
+</button>
+</div>
+<!-- Deterministic Build Asset Fix: Tailwind Asset Pipeline -->
+<div class="rounded bg-surface-container p-space-md border border-outline-variant flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between mb-space-xs">
+<span class="font-mono-sm text-mono-sm text-on-surface font-semibold flex items-center gap-1.5">
+<span class="material-symbols-outlined text-secondary text-sm" data-icon="palette">palette</span>
+                  Tailwind Asset Pipeline: Compiled Build
+                </span>
+<span class="font-label-caps text-label-caps text-tertiary bg-tertiary/10 border border-tertiary/30 px-1.5 py-0.5 rounded">
+                  0 CDN Warnings
+                </span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mb-space-sm">
+                Eliminated arbitrary runtime stylesheet injections. Complete semantic color palette and typography tokens pre-compiled deterministically.
+              </p>
+<div class="grid grid-cols-2 gap-2 font-mono-sm text-mono-sm text-[11px] mb-space-sm">
+<div class="p-2 rounded bg-surface-container-lowest border border-outline-variant">
+<span class="text-on-surface-variant block text-[10px]">CSS Bundle Size</span>
+<span class="text-tertiary font-bold">14.2 kB (Brotli)</span>
+</div>
+<div class="p-2 rounded bg-surface-container-lowest border border-outline-variant">
+<span class="text-on-surface-variant block text-[10px]">Purge Status</span>
+<span class="text-primary font-bold">100% Tree-Shaken</span>
+</div>
+</div>
+</div>
+<div class="p-2 rounded bg-surface-container-lowest border border-outline-variant flex items-center justify-between font-mono-sm text-mono-sm text-[11px]">
+<span class="text-on-surface-variant">Compiler Target:</span>
+<span class="text-on-surface">ESNext + Tailwind V3 Core</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- INTERACTIVE MODAL HARNESS: ImprintModal.svelte (Resolves Finding & Demonstration) -->
+<div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-surface-container-lowest/80 backdrop-blur-sm hidden" id="imprint-modal">
+<div class="w-full max-w-lg rounded-lg bg-surface-container border border-primary/50 shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-150">
+<!-- Modal Header -->
+<div class="flex items-center justify-between px-space-md py- space-sm bg-surface-container-high border-b border-outline-variant">
+<div class="flex items-center space-x-2">
+<span class="material-symbols-outlined text-primary text-base" data-icon="description">description</span>
+<span class="font-mono-sm text-mono-sm font-bold text-on-surface">ImprintModal.svelte (Mounted)</span>
+</div>
+<button class="text-on-surface-variant hover:text-on-surface p-1 rounded" id="close-imprint-btn">
+<span class="material-symbols-outlined text-base" data-icon="close">close</span>
+</button>
+</div>
+<!-- Modal Body -->
+<div class="p-space-md space-y-space-sm font-body-sm text-body-sm text-on-surface">
+<div class="p-2 rounded bg-surface-container-low border border-tertiary/40 flex items-center space-x-2">
+<span class="material-symbols-outlined text-tertiary text-sm" data-icon="verified">verified</span>
+<span class="text-tertiary font-mono-sm text-mono-sm font-semibold">Zero TypeError: Module Specifier Linked</span>
+</div>
+<div class="space-y-1">
+<h4 class="font-mono-sm text-mono-sm font-semibold text-primary">System Telemetry &amp; Legal Imprint</h4>
+<p class="text-on-surface-variant text-[12px]">
+            Svelte 5 LMS Core Telemetry Harness. All claims cryptographically validated against public keys with zero stub bypasses.
+          </p>
+</div>
+<div class="bg-surface-container-lowest p-2.5 rounded border border-outline-variant font-mono-sm text-mono-sm text-[11px] space-y-1">
+<div><span class="text-on-surface-variant">Operator:</span> Svelte LMS Infrastructure Labs GmbH</div>
+<div><span class="text-on-surface-variant">Verification Hash:</span> <code class="text-primary">sha256-8a71b2...9f4</code></div>
+<div><span class="text-on-surface-variant">LMS Gateway:</span> Moodle 4.x REST / WS Bridge Verified</div>
+<div><span class="text-on-surface-variant">Build Reference:</span> deterministic-ci-prod-v2.4.1</div>
+</div>
+</div>
+<!-- Modal Actions -->
+<div class="px-space-md py-space-sm bg-surface-container-low border-t border-outline-variant flex justify-end space-x-2">
+<button class="px-3 py-1.5 rounded bg-surface-container hover:bg-surface-container-highest border border-outline-variant font-mono-sm text-mono-sm text-on-surface" id="close-imprint-btn-sec">
+          Dismiss
+        </button>
+<button class="px-3 py-1.5 rounded bg-primary-container text-on-primary font-mono-sm text-mono-sm font-semibold hover:brightness-110" id="confirm-imprint-btn">
+          Acknowledge &amp; Sign
+        </button>
+</div>
+</div>
+</div>
+<!-- BOTTOM NAVIGATION BAR (Shared Component Anchor) -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-space-xs py-space-2xs bg-surface-container-low border-t border-outline-variant">
+<!-- Tab 1: Pipeline -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-space-xs py-space-2xs hover:bg-surface-container hover:text-on-surface transition-colors active:scale-95 duration-100" href="#pipeline">
+<span class="material-symbols-outlined" data-icon="account_tree">account_tree</span>
+<span class="font-label-caps text-label-caps">Pipeline</span>
+</a>
+<!-- Tab 2: Moodle -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-space-xs py-space-2xs hover:bg-surface-container hover:text-on-surface transition-colors active:scale-95 duration-100" href="#moodle">
+<span class="material-symbols-outlined" data-icon="sync_alt">sync_alt</span>
+<span class="font-label-caps text-label-caps">Moodle</span>
+</a>
+<!-- Tab 3: Auth-401 -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-space-xs py-space-2xs hover:bg-surface-container hover:text-on-surface transition-colors active:scale-95 duration-100" href="#auth-401">
+<span class="material-symbols-outlined" data-icon="verified_user">verified_user</span>
+<span class="font-label-caps text-label-caps">Auth-401</span>
+</a>
+<!-- Tab 4: Runtime -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-space-xs py-space-2xs hover:bg-surface-container hover:text-on-surface transition-colors active:scale-95 duration-100" href="#runtime">
+<span class="material-symbols-outlined" data-icon="memory">memory</span>
+<span class="font-label-caps text-label-caps">Runtime</span>
+</a>
+<!-- Tab 5: Verify (Active Semantic Anchor for Audit Console) -->
+<a class="flex flex-col items-center justify-center bg-surface-container-highest text-primary rounded-lg px-space-xs py-space-2xs border border-primary/30 active:scale-95 duration-100" href="#verify">
+<span class="material-symbols-outlined" data-icon="fact_check" style="font-variation-settings: 'FILL' 1;">fact_check</span>
+<span class="font-label-caps text-label-caps">Verify</span>
+</a>
+</nav>
+<!-- SCRIPT FOR CLIENT INTERACTIVITY -->
+<script>
+    // Imprint Modal Harness Handlers
+    const imprintModal = document.getElementById('imprint-modal');
+    const openBtn = document.getElementById('open-imprint-btn');
+    const closeBtn = document.getElementById('close-imprint-btn');
+    const closeBtnSec = document.getElementById('close-imprint-btn-sec');
+    const confirmBtn = document.getElementById('confirm-imprint-btn');
+
+    function toggleModal(show) {
+      if (show) {
+        imprintModal.classList.remove('hidden');
+      } else {
+        imprintModal.classList.add('hidden');
+      }
+    }
+
+    if (openBtn) openBtn.addEventListener('click', () => toggleModal(true));
+    if (closeBtn) closeBtn.addEventListener('click', () => toggleModal(false));
+    if (closeBtnSec) closeBtnSec.addEventListener('click', () => toggleModal(false));
+    if (confirmBtn) confirmBtn.addEventListener('click', () => {
+      alert('Imprint assertion registered into telemetry ledger.');
+      toggleModal(false);
+    });
+
+    // Run Verification Suite Dynamic Simulation
+    const runBtn = document.getElementById('run-verification-btn');
+    const suiteProgress = document.getElementById('suite-progress');
+    const progressBar = document.getElementById('progress-bar');
+    const progressPercent = document.getElementById('progress-percent');
+
+    if (runBtn) {
+      runBtn.addEventListener('click', () => {
+        suiteProgress.classList.remove('hidden');
+        runBtn.disabled = true;
+        runBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        
+        let progress = 0;
+        const interval = setInterval(() => {
+          progress += 20;
+          progressBar.style.width = progress + '%';
+          progressPercent.textContent = progress + '%';
+
+          if (progress >= 100) {
+            clearInterval(interval);
+            setTimeout(() => {
+              progressPercent.textContent = '100% (Passed: 5/5)';
+              progressBar.classList.remove('bg-primary');
+              progressBar.classList.add('bg-tertiary');
+              runBtn.disabled = false;
+              runBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            }, 300);
+          }
+        }, 150);
+      });
+    }
+
+    // Filter bar interaction tabs
+    const filterTabs = document.querySelectorAll('.filter-tab');
+    filterTabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        filterTabs.forEach(t => {
+          t.classList.remove('bg-surface-container-highest', 'text-primary', 'border-primary/40');
+          t.classList.add('bg-surface-container', 'border-outline-variant', 'text-on-surface-variant');
+        });
+        tab.classList.remove('bg-surface-container', 'text-on-surface-variant');
+        tab.classList.add('bg-surface-container-highest', 'text-primary', 'border-primary/40');
+      });
+    });
+  </script>
+</body></html>
