@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>DevSecOps Audit</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=JetBrains+Mono:wght@100..900&display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "on-tertiary-fixed-variant": "#92002a",
+            "surface-dim": "#0b1326",
+            "on-tertiary": "#67001b",
+            "on-surface": "#dae2fd",
+            "on-primary-fixed-variant": "#005236",
+            "background": "#0b1326",
+            "surface-container": "#171f33",
+            "on-background": "#dae2fd",
+            "outline-variant": "#3c4a42",
+            "tertiary-fixed-dim": "#ffb2b7",
+            "surface-container-high": "#222a3d",
+            "on-primary-container": "#00422b",
+            "on-secondary-fixed-variant": "#2f2ebe",
+            "secondary-fixed-dim": "#c0c1ff",
+            "on-tertiary-container": "#780021",
+            "surface-tint": "#4edea3",
+            "inverse-primary": "#006c49",
+            "outline": "#86948a",
+            "on-tertiary-fixed": "#40000d",
+            "inverse-on-surface": "#283044",
+            "surface-container-highest": "#2d3449",
+            "inverse-surface": "#dae2fd",
+            "surface-bright": "#31394d",
+            "primary-fixed": "#6ffbbe",
+            "on-primary": "#003824",
+            "secondary-container": "#3131c0",
+            "tertiary-container": "#ff7886",
+            "on-secondary-fixed": "#07006c",
+            "surface-container-lowest": "#060e20",
+            "secondary": "#c0c1ff",
+            "secondary-fixed": "#e1e0ff",
+            "on-primary-fixed": "#002113",
+            "surface-container-low": "#131b2e",
+            "on-secondary-container": "#b0b2ff",
+            "tertiary": "#ffb2b7",
+            "on-error-container": "#ffdad6",
+            "error-container": "#93000a",
+            "surface-variant": "#2d3449",
+            "on-error": "#690005",
+            "tertiary-fixed": "#ffdadb",
+            "surface": "#0b1326",
+            "error": "#ffb4ab",
+            "on-secondary": "#1000a9",
+            "primary-container": "#10b981",
+            "primary-fixed-dim": "#4edea3",
+            "primary": "#4edea3",
+            "on-surface-variant": "#bbcabf"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          "spacing": {
+            "drawer-width": "28rem",
+            "md": "1rem",
+            "gutter-desktop": "1.25rem",
+            "2xl": "3rem",
+            "xl": "2rem",
+            "sidebar-width": "16rem",
+            "micro": "0.125rem",
+            "sm": "0.75rem",
+            "lg": "1.5rem",
+            "2xs": "0.25rem",
+            "gutter-mobile": "0.75rem",
+            "xs": "0.5rem"
+          },
+          "fontFamily": {
+            "code-md": ["JetBrains Mono"],
+            "body-sm": ["Geist"],
+            "headline-lg": ["Geist"],
+            "code-sm": ["JetBrains Mono"],
+            "metric-value": ["JetBrains Mono"],
+            "display-lg": ["Geist"],
+            "headline-sm": ["Geist"],
+            "body-lg": ["Geist"],
+            "label-caps": ["JetBrains Mono"]
+          },
+          "fontSize": {
+            "code-md": ["13px", { "lineHeight": "18px", "letterSpacing": "-0.01em", "fontWeight": "500" }],
+            "body-sm": ["13px", { "lineHeight": "20px", "letterSpacing": "0", "fontWeight": "400" }],
+            "headline-lg": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.015em", "fontWeight": "600" }],
+            "code-sm": ["11px", { "lineHeight": "16px", "letterSpacing": "0", "fontWeight": "500" }],
+            "metric-value": ["20px", { "lineHeight": "24px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+            "display-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+            "headline-sm": ["18px", { "lineHeight": "26px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "body-lg": ["15px", { "lineHeight": "24px", "letterSpacing": "-0.005em", "fontWeight": "400" }],
+            "label-caps": ["10px", { "lineHeight": "14px", "letterSpacing": "0.08em", "fontWeight": "600" }]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface font-body-sm text-body-sm min-h-screen flex flex-col pb-2xl selection:bg-primary-container selection:text-on-primary-container">
+<!-- Shared TopAppBar -->
+<header class="sticky top-0 z-50 flex items-center justify-between w-full px-sm py-xs bg-surface-container-lowest border-b border-outline-variant">
+<div class="flex items-center gap-xs">
+<span class="material-symbols-outlined text-primary text-headline-sm" data-icon="verified_user">verified_user</span>
+<div class="flex flex-col">
+<span class="font-headline-sm text-headline-sm font-bold tracking-tight text-on-surface">DevSecOps Audit</span>
+<div class="flex items-center gap-2xs">
+<span class="font-label-caps text-label-caps text-primary uppercase tracking-wider">v2.4.19-falsify</span>
+<span class="text-outline-variant font-code-sm text-code-sm">|</span>
+<span class="font-label-caps text-label-caps text-on-surface-variant">5/5 Reconciled</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-xs">
+<div class="flex items-center gap-2xs px-xs py-micro rounded bg-surface-container-high border border-outline-variant">
+<span class="inline-block w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
+<span class="font-label-caps text-label-caps text-primary">LIVE GATE</span>
+</div>
+<button aria-label="Open Terminal Shell" class="flex items-center justify-center p-2xs rounded text-primary hover:bg-surface-container-high transition-colors duration-150 active:scale-95">
+<span class="material-symbols-outlined text-headline-sm" data-icon="terminal">terminal</span>
+</button>
+</div>
+</header>
+<!-- Telemetry Bar -->
+<div class="w-full bg-surface-container-low border-b border-outline-variant px-sm py-2xs flex items-center justify-between">
+<div class="flex items-center gap-xs">
+<span class="font-label-caps text-label-caps text-on-surface-variant">AUDIT HEALTH:</span>
+<span class="font-code-md text-code-md font-bold text-primary">98.4%</span>
+</div>
+<div class="flex items-center gap-2xs">
+<span class="material-symbols-outlined text-code-sm text-primary" data-icon="shield">shield</span>
+<span class="font-code-sm text-code-sm text-on-surface">Zero Stubs Active</span>
+</div>
+</div>
+<!-- Main Scroll View -->
+<main class="flex-1 w-full max-w-screen-md mx-auto px-gutter-mobile py-sm flex flex-col gap-sm">
+<!-- Executive Audit Status Banner -->
+<section class="rounded-lg bg-surface-container border border-outline-variant p-sm relative overflow-hidden">
+<div class="flex items-center justify-between pb-xs border-b border-outline-variant">
+<div class="flex items-center gap-xs">
+<span class="material-symbols-outlined text-primary text-headline-sm" data-icon="task_alt">task_alt</span>
+<span class="font-code-md text-code-md font-bold text-on-surface">Falsification Verified: Pass</span>
+</div>
+<span class="font-label-caps text-label-caps px-xs py-micro rounded bg-primary/10 text-primary border border-primary/30">CYCLE #149 COMPLETED</span>
+</div>
+<!-- 2x2 Metric Matrix -->
+<div class="grid grid-cols-2 gap-xs pt-xs">
+<div class="p-xs rounded bg-surface-container-low border border-outline-variant flex flex-col">
+<span class="font-label-caps text-label-caps text-on-surface-variant">UNWIRED JWT CLAIMS</span>
+<span class="font-metric-value text-metric-value text-primary mt-micro">0</span>
+<span class="font-code-sm text-code-sm text-on-surface-variant">Resolved & DB-Bound</span>
+</div>
+<div class="p-xs rounded bg-surface-container-low border border-outline-variant flex flex-col">
+<span class="font-label-caps text-label-caps text-on-surface-variant">PIPELINE FAKE VERDICTS</span>
+<span class="font-metric-value text-metric-value text-primary mt-micro">Purged</span>
+<span class="font-code-sm text-code-sm text-on-surface-variant">PR #0 Revoked</span>
+</div>
+<div class="p-xs rounded bg-surface-container-low border border-outline-variant flex flex-col">
+<span class="font-label-caps text-label-caps text-on-surface-variant">MOODLE LMS GAPS</span>
+<span class="font-metric-value text-metric-value text-primary mt-micro">4/4</span>
+<span class="font-code-sm text-code-sm text-on-surface-variant">Implemented & Synced</span>
+</div>
+<div class="p-xs rounded bg-surface-container-low border border-outline-variant flex flex-col">
+<span class="font-label-caps text-label-caps text-on-surface-variant">DETERMINISTIC BUNDLE</span>
+<span class="font-metric-value text-metric-value text-primary mt-micro">Vite AOT</span>
+<span class="font-code-sm text-code-sm text-on-surface-variant">0 CDN Warnings</span>
+</div>
+</div>
+</section>
+<!-- Tab Filter Bar -->
+<div class="flex items-center gap-2xs overflow-x-auto pb-micro no-scrollbar">
+<button class="px-sm py-2xs rounded bg-surface-container-high text-primary border border-primary/40 font-code-sm text-code-sm font-semibold whitespace-nowrap">
+        All Gaps (5)
+      </button>
+<button class="px-sm py-2xs rounded bg-surface-container-low text-on-surface-variant border border-outline-variant hover:bg-surface-container hover:text-on-surface font-code-sm text-code-sm whitespace-nowrap transition-colors duration-150">
+        Auth & JWT (2)
+      </button>
+<button class="px-sm py-2xs rounded bg-surface-container-low text-on-surface-variant border border-outline-variant hover:bg-surface-container hover:text-on-surface font-code-sm text-code-sm whitespace-nowrap transition-colors duration-150">
+        LMS & Pipeline (2)
+      </button>
+<button class="px-sm py-2xs rounded bg-surface-container-low text-on-surface-variant border border-outline-variant hover:bg-surface-container hover:text-on-surface font-code-sm text-code-sm whitespace-nowrap transition-colors duration-150">
+        Runtime Fixes (1)
+      </button>
+</div>
+<!-- Specific Finding Cards -->
+<div class="flex flex-col gap-sm">
+<!-- Finding 1: Pipeline Gate -->
+<article class="rounded-lg bg-surface-container-low border border-outline-variant p-sm flex flex-col gap-xs">
+<div class="flex items-start justify-between">
+<div class="flex flex-col">
+<div class="flex items-center gap-xs">
+<span class="font-label-caps text-label-caps text-secondary-fixed-dim bg-secondary-container/40 px-xs py-micro rounded border border-secondary/30">BARCAN-TAG-09/stub</span>
+<span class="font-label-caps text-label-caps text-primary">RESOLVED</span>
+</div>
+<h2 class="font-headline-sm text-headline-sm font-semibold text-on-surface mt-micro">PR #0 Automated Approval Revoked & Gated</h2>
+</div>
+<span class="material-symbols-outlined text-primary" data-icon="lock_clock">lock_clock</span>
+</div>
+<p class="text-body-sm font-body-sm text-on-surface-variant">
+          Purged automated bypass approving PR #0 with blank reasons. Non-empty cryptographic justification and author authorization strictly required.
+        </p>
+<!-- Code Diff Block -->
+<div class="rounded bg-surface-container-lowest border border-outline-variant p-xs font-code-sm text-code-sm overflow-x-auto">
+<div class="text-on-surface-variant pb-micro font-label-caps text-label-caps">DIFF: .github/workflows/audit-gate.yml</div>
+<div class="text-tertiary-fixed-dim bg-tertiary-container/10 px-xs py-micro rounded-micro line-through opacity-80">
+            - if: github.event.pull_request.number == 0 || verdict == 'stub'
+          </div>
+<div class="text-primary bg-primary-container/10 px-xs py-micro rounded-micro mt-micro">
+            + if: pr.number > 0 && pr.audit_verdict.has_reason && pr.sig_valid
+          </div>
+</div>
+<div class="flex items-center justify-between text-code-sm font-code-sm text-on-surface-variant pt-2xs border-t border-outline-variant/60">
+<span class="flex items-center gap-2xs">
+<span class="material-symbols-outlined text-code-sm text-primary" data-icon="check_circle">check_circle</span>
+            Gated CI Pass
+          </span>
+<span>Hash: 9f84a...c71</span>
+</div>
+</article>
+<!-- Finding 2: Moodle LMS Verification -->
+<article class="rounded-lg bg-surface-container-low border border-outline-variant p-sm flex flex-col gap-xs">
+<div class="flex items-start justify-between">
+<div class="flex flex-col">
+<div class="flex items-center gap-xs">
+<span class="font-label-caps text-label-caps text-secondary-fixed-dim bg-secondary-container/40 px-xs py-micro rounded border border-secondary/30">BARCAN-TAG-09/stub</span>
+<span class="font-label-caps text-label-caps text-primary">RESOLVED</span>
+</div>
+<h2 class="font-headline-sm text-headline-sm font-semibold text-on-surface mt-micro">Moodle LMS Client Gaps Enforced</h2>
+</div>
+<span class="material-symbols-outlined text-primary" data-icon="integration_instructions">integration_instructions</span>
+</div>
+<p class="text-body-sm font-body-sm text-on-surface-variant">
+          Falsification of "zero gaps" refuted. Full client adapter surface deployed covering 4 critical enterprise protocol points.
+        </p>
+<!-- Implementation Checklist -->
+<div class="grid grid-cols-2 gap-2xs font-code-sm text-code-sm">
+<div class="p-2xs rounded bg-surface-container flex items-center gap-xs border border-outline-variant">
+<span class="material-symbols-outlined text-primary text-code-sm" data-icon="done">done</span>
+<span>SSO: SAML/OAuth2</span>
+</div>
+<div class="p-2xs rounded bg-surface-container flex items-center gap-xs border border-outline-variant">
+<span class="material-symbols-outlined text-primary text-code-sm" data-icon="done">done</span>
+<span>Role Sync: LTI 1.3</span>
+</div>
+<div class="p-2xs rounded bg-surface-container flex items-center gap-xs border border-outline-variant">
+<span class="material-symbols-outlined text-primary text-code-sm" data-icon="done">done</span>
+<span>Access Control Matrix</span>
+</div>
+<div class="p-2xs rounded bg-surface-container flex items-center gap-xs border border-outline-variant">
+<span class="material-symbols-outlined text-primary text-code-sm" data-icon="done">done</span>
+<span>Offline Grace Fallback</span>
+</div>
+</div>
+<div class="flex items-center justify-between text-code-sm font-code-sm text-on-surface-variant pt-2xs border-t border-outline-variant/60">
+<span class="flex items-center gap-2xs">
+<span class="material-symbols-outlined text-code-sm text-primary" data-icon="verified">verified</span>
+            Audited in lib/lms/moodle.ts
+          </span>
+<span>Coverage: 100%</span>
+</div>
+</article>
+<!-- Finding 3, 4, 5: Auth & JWT Persistence -->
+<article class="rounded-lg bg-surface-container-low border border-outline-variant p-sm flex flex-col gap-xs">
+<div class="flex items-start justify-between">
+<div class="flex flex-col">
+<div class="flex items-center gap-xs">
+<span class="font-label-caps text-label-caps text-secondary-fixed-dim bg-secondary-container/40 px-xs py-micro rounded border border-secondary/30">BARCAN-TAG-02 & 05</span>
+<span class="font-label-caps text-label-caps text-primary">RESOLVED</span>
+</div>
+<h2 class="font-headline-sm text-headline-sm font-semibold text-on-surface mt-micro">JWT Persistence & 401 Re-anchored</h2>
+</div>
+<span class="material-symbols-outlined text-primary" data-icon="key">key</span>
+</div>
+<p class="text-body-sm font-body-sm text-on-surface-variant">
+          Mock tokens removed. Unwired JWT `sub` now executes authoritative Postgres user state lookup; explicit 401 on expired tokens, 403 on role deficiency.
+        </p>
+<!-- Code Snippet -->
+<div class="rounded bg-surface-container-lowest border border-outline-variant p-xs font-code-sm text-code-sm overflow-x-auto text-on-surface">
+<div class="text-on-surface-variant pb-micro font-label-caps text-label-caps">AUTH ENGINE: src/lib/server/auth.ts</div>
+<code>
+<span class="text-primary">const</span> sub = token.claims.sub;<br/>
+<span class="text-primary">const</span> user = <span class="text-secondary">await</span> db.users.findUnique({ where: { id: sub } });<br/>
+<span class="text-primary">if</span> (!user || user.revoked) <span class="text-tertiary-fixed-dim">throw</span> error(401, 'Unauthorized Session');<br/>
+<span class="text-primary">if</span> (!user.roles.includes(scope)) <span class="text-tertiary-fixed-dim">throw</span> error(403, 'Forbidden Scope');
+          </code>
+</div>
+<div class="flex items-center justify-between text-code-sm font-code-sm text-on-surface-variant pt-2xs border-t border-outline-variant/60">
+<span class="flex items-center gap-2xs">
+<span class="material-symbols-outlined text-code-sm text-primary" data-icon="database">database</span>
+            Postgres Session Bound
+          </span>
+<span>Zero Mocks</span>
+</div>
+</article>
+</div>
+<!-- Philosophical Falsification Critique Section -->
+<section class="rounded-lg bg-surface-container border border-outline-variant p-sm flex flex-col gap-xs mt-2xs">
+<div class="flex items-center gap-xs">
+<span class="material-symbols-outlined text-primary" data-icon="psychology">psychology</span>
+<div>
+<h3 class="font-headline-sm text-headline-sm font-semibold text-on-surface">Epistemological & Falsification Audit</h3>
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Kano Framework: Must-Be & Performance Gates</span>
+</div>
+</div>
+<div class="flex flex-col gap-xs pt-xs">
+<!-- Dummett: Verificationism / Must-Be -->
+<div class="p-xs rounded bg-surface-container-low border border-outline-variant flex flex-col gap-2xs">
+<div class="flex items-center justify-between">
+<span class="font-code-md text-code-md font-semibold text-on-surface">Michael Dummett (Must-Be: Verificationist)</span>
+<span class="font-label-caps text-label-caps text-primary bg-primary/10 px-xs py-micro rounded">VERIFIED</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+<strong>Critique:</strong> Unverified module path causing white-screen crash violates anti-realist warrantability.
+          </p>
+<div class="font-code-sm text-code-sm text-on-surface bg-surface-container-lowest p-xs rounded border border-outline-variant">
+            RegistrationForm.svelte → local <span class="text-primary font-bold">./ImprintModal.svelte</span> import anchored. Zero Playwright TypeError exceptions.
+          </div>
+</div>
+<!-- Goodman: Worldmaking / Performance -->
+<div class="p-xs rounded bg-surface-container-low border border-outline-variant flex flex-col gap-2xs">
+<div class="flex items-center justify-between">
+<span class="font-code-md text-code-md font-semibold text-on-surface">Nelson Goodman (Performance: Worldmaking)</span>
+<span class="font-label-caps text-label-caps text-primary bg-primary/10 px-xs py-micro rounded">DETERMINISTIC</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+<strong>Critique:</strong> Non-deterministic external Tailwind CDN warning compromises reproducibility across security worlds.
+          </p>
+<div class="font-code-sm text-code-sm text-on-surface bg-surface-container-lowest p-xs rounded border border-outline-variant">
+            Purged runtime CDN scripts → strictly compiled via local <span class="text-primary font-bold">PostCSS & Vite AOT bundle</span>.
+          </div>
+</div>
+</div>
+</section>
+<!-- Run Diagnostic Trigger -->
+<div class="flex flex-col gap-2xs pt-xs">
+<button class="w-full py-xs px-sm rounded bg-primary text-on-primary font-code-md text-code-md font-bold flex items-center justify-center gap-xs hover:bg-primary-fixed transition-colors duration-150 active:scale-95 shadow-lg shadow-primary/10">
+<span class="material-symbols-outlined text-code-md" data-icon="refresh">refresh</span>
+        Re-run Falsification Harness
+      </button>
+<div class="flex items-center justify-between px-2xs">
+<span class="font-code-sm text-code-sm text-on-surface-variant">Attestation Signature: 0x81b7e4a...</span>
+<button class="font-code-sm text-code-sm text-primary underline hover:text-primary-fixed">Export Cryptographic JSON</button>
+</div>
+</div>
+</main>
+<!-- Shared BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-xs py-2xs bg-surface-container-lowest border-t border-outline-variant">
+<button aria-current="page" class="flex flex-col items-center justify-center text-primary bg-surface-container-high rounded px-sm py-2xs">
+<span class="material-symbols-outlined text-headline-sm" data-icon="shield_locked" data-weight="fill" style="font-variation-settings: 'FILL' 1;">shield_locked</span>
+<span class="font-code-sm text-code-sm mt-micro">Findings</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant px-sm py-2xs hover:bg-surface-container rounded transition-colors duration-150">
+<span class="material-symbols-outlined text-headline-sm" data-icon="query_stats">query_stats</span>
+<span class="font-code-sm text-code-sm mt-micro">Telemetry</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant px-sm py-2xs hover:bg-surface-container rounded transition-colors duration-150">
+<span class="material-symbols-outlined text-headline-sm" data-icon="rule">rule</span>
+<span class="font-code-sm text-code-sm mt-micro">Proofs</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant px-sm py-2xs hover:bg-surface-container rounded transition-colors duration-150">
+<span class="material-symbols-outlined text-headline-sm" data-icon="build_circle">build_circle</span>
+<span class="font-code-sm text-code-sm mt-micro">Actions</span>
+</button>
+</nav>
+</body></html>
