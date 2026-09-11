@@ -1,5 +1,7 @@
 package com.eneik.epidemiology.security;
 
+import com.eneik.epidemiology.document.Document;
+import com.eneik.epidemiology.document.DocumentRepository;
 import com.eneik.epidemiology.user.User;
 import com.eneik.epidemiology.user.UserRepository;
 import com.eneik.epidemiology.user.UserService;
@@ -12,8 +14,9 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
-import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -34,9 +37,59 @@ class DocumentSecurityTest {
     @Autowired
     private JwtTokenProvider jwtTokenProvider;
 
+    @Autowired
+    private DocumentRepository documentRepository;
+
     @BeforeEach
     void setUp() {
+        documentRepository.deleteAll();
         userRepository.deleteAll();
+    }
+
+    @Test
+    @DisplayName("Given an authenticated user without RESEARCHER, EPIDEMIOLOGIST or ADMIN role (USER role), When attempting to access documents via /api/v1/documents, Then they are not able to retrieve PROTOCOL documents")
+    void testUserRoleCannotAccessProtocolDocuments() throws Exception {
+        Document protocolDoc = new Document("Секретный Протокол №1", "НИИ Эпидемиологии", 2024, "/data/docs/uploads/p1.pdf");
+        protocolDoc.setDocType("PROTOCOL");
+        documentRepository.save(protocolDoc);
+
+        Document generalDoc = new Document("Открытый Доклад", "НИИ Эпидемиологии", 2024, "/data/docs/uploads/r1.pdf");
+        generalDoc.setDocType("REPORT");
+        documentRepository.save(generalDoc);
+
+        User regularUser = userService.createUser("user_ordinary", "UserPass123!", "USER");
+        String userToken = jwtTokenProvider.generateToken(regularUser.getUsername(), regularUser.getRole());
+
+        mockMvc.perform(get("/api/v1/documents")
+                .header("Authorization", "Bearer " + userToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].docType", is("REPORT")))
+                .andExpect(jsonPath("$[0].title", is("Открытый Доклад")));
+
+        mockMvc.perform(get("/api/v1/documents/search")
+                .param("q", "Протокол")
+                .header("Authorization", "Bearer " + userToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.total_elements", is(1)))
+                .andExpect(jsonPath("$.items", hasSize(0)));
+    }
+
+    @Test
+    @DisplayName("Given an authorized user with RESEARCHER role, When requesting documents, Then PROTOCOL documents are successfully returned")
+    void testResearcherRoleCanAccessProtocolDocuments() throws Exception {
+        Document protocolDoc = new Document("Секретный Протокол №2", "НИИ Эпидемиологии", 2024, "/data/docs/uploads/p2.pdf");
+        protocolDoc.setDocType("PROTOCOL");
+        documentRepository.save(protocolDoc);
+
+        User researcher = userService.createUser("researcher_olga_proto", "ResPass123!", "RESEARCHER");
+        String researcherToken = jwtTokenProvider.generateToken(researcher.getUsername(), researcher.getRole());
+
+        mockMvc.perform(get("/api/v1/documents")
+                .header("Authorization", "Bearer " + researcherToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].docType", is("PROTOCOL")));
     }
 
     @Test

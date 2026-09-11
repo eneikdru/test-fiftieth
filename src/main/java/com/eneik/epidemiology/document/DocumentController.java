@@ -2,6 +2,10 @@ package com.eneik.epidemiology.document;
 
 import com.eneik.epidemiology.telemetry.TelemetryService;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
@@ -100,9 +104,34 @@ public class DocumentController {
         ));
     }
 
+    private boolean isProtocolAccessAuthorized() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated()) {
+            return false;
+        }
+        for (GrantedAuthority authority : auth.getAuthorities()) {
+            String roleName = authority.getAuthority();
+            if (roleName != null) {
+                if (roleName.startsWith("ROLE_")) {
+                    roleName = roleName.substring(5);
+                }
+                roleName = roleName.toUpperCase();
+                if ("RESEARCHER".equals(roleName) || "EPIDEMIOLOGIST".equals(roleName) || "ADMIN".equals(roleName)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     @GetMapping
     public ResponseEntity<?> getAllDocuments() {
         List<Document> documents = documentRepository.findAll();
+        if (!isProtocolAccessAuthorized()) {
+            documents = documents.stream()
+                    .filter(doc -> doc.getDocType() == null || !"PROTOCOL".equalsIgnoreCase(doc.getDocType()))
+                    .collect(Collectors.toList());
+        }
         return ResponseEntity.ok(documents);
     }
 
@@ -152,9 +181,16 @@ public class DocumentController {
                     pageable
             );
 
-            telemetryService.recordSearchTelemetry(q != null ? q : "", resultPage.getContent().size());
+            List<Document> filteredContent = resultPage.getContent();
+            if (!isProtocolAccessAuthorized()) {
+                filteredContent = filteredContent.stream()
+                        .filter(doc -> doc.getDocType() == null || !"PROTOCOL".equalsIgnoreCase(doc.getDocType()))
+                        .collect(Collectors.toList());
+            }
 
-            List<Map<String, Object>> items = resultPage.getContent().stream().map(doc -> {
+            telemetryService.recordSearchTelemetry(q != null ? q : "", filteredContent.size());
+
+            List<Map<String, Object>> items = filteredContent.stream().map(doc -> {
                 Map<String, Object> item = new LinkedHashMap<>();
                 item.put("document_id", doc.getId());
                 item.put("title", doc.getTitle());
@@ -191,13 +227,20 @@ public class DocumentController {
         Pageable pageable = PageRequest.of(page, size);
         Page<Document> resultPage = documentRepository.searchDocuments(normalizedQuery, normalizedAuthor, year, pageable);
 
+        List<Document> filteredContent = resultPage.getContent();
+        if (!isProtocolAccessAuthorized()) {
+            filteredContent = filteredContent.stream()
+                    .filter(doc -> doc.getDocType() == null || !"PROTOCOL".equalsIgnoreCase(doc.getDocType()))
+                    .collect(Collectors.toList());
+        }
+
         String telemetryQuery = query != null ? query : (author != null ? author : "");
-        telemetryService.recordSearchTelemetry(telemetryQuery, resultPage.getContent().size());
+        telemetryService.recordSearchTelemetry(telemetryQuery, filteredContent.size());
 
         return ResponseEntity.ok(Map.of(
                 "query", telemetryQuery,
-                "count", resultPage.getContent().size(),
-                "results", resultPage.getContent(),
+                "count", filteredContent.size(),
+                "results", filteredContent,
                 "totalPages", resultPage.getTotalPages(),
                 "totalElements", resultPage.getTotalElements(),
                 "currentPage", resultPage.getNumber()
