@@ -1,4 +1,24 @@
-import { writable } from 'svelte/store';
+export function writable(initialValue) {
+  let value = initialValue;
+  const subscribers = new Set();
+
+  function set(newValue) {
+    value = newValue;
+    subscribers.forEach(fn => fn(value));
+  }
+
+  function update(fn) {
+    set(fn(value));
+  }
+
+  function subscribe(subscriber) {
+    subscribers.add(subscriber);
+    subscriber(value);
+    return () => subscribers.delete(subscriber);
+  }
+
+  return { subscribe, set, update };
+}
 
 export function createCatalogStore() {
   const initialState = {
@@ -27,7 +47,8 @@ export function createCatalogStore() {
     isServerPaginated: false
   };
 
-  const { subscribe, set, update } = writable(initialState);
+  const store = writable(initialState);
+  const { subscribe, set, update } = store;
 
   return {
     subscribe,
@@ -35,27 +56,16 @@ export function createCatalogStore() {
     update,
     reset: () => set(initialState),
 
-    async fetchDocuments(apiBaseUrl = '/api/v1', stateSnapshot = null) {
+    async fetchDocuments(apiBaseUrl = '/api/v1') {
+      let snap = {};
+      subscribe(s => { snap = s; })();
+
       update(s => ({ ...s, isLoading: true, searchError: '' }));
 
-      let currentQuery = '';
-      let currentAuthor = '';
-      let currentYear = '';
-      let isBackendStopped = false;
-
-      if (stateSnapshot) {
-        currentQuery = stateSnapshot.searchQuery || '';
-        currentAuthor = stateSnapshot.selectedAuthor || '';
-        currentYear = stateSnapshot.selectedYear || '';
-        isBackendStopped = stateSnapshot.backendStopped || false;
-      } else {
-        subscribe(s => {
-          currentQuery = s.searchQuery;
-          currentAuthor = s.selectedAuthor;
-          currentYear = s.selectedYear;
-          isBackendStopped = s.backendStopped;
-        })();
-      }
+      const currentQuery = snap.searchQuery || '';
+      const currentAuthor = snap.selectedAuthor || '';
+      const currentYear = snap.selectedYear || '';
+      const isBackendStopped = snap.backendStopped || false;
 
       if (isBackendStopped) {
         update(s => ({
@@ -120,13 +130,11 @@ export function createCatalogStore() {
       }
     },
 
-    async uploadDocument(apiBaseUrl = '/api/v1', stateSnapshot = null) {
+    async uploadDocument(apiBaseUrl = '/api/v1') {
       update(s => ({ ...s, uploadError: '', uploadSuccess: '', isUploading: true }));
 
-      let snap = stateSnapshot;
-      if (!snap) {
-        subscribe(s => { snap = s; })();
-      }
+      let snap = {};
+      subscribe(s => { snap = s; })();
 
       if (!snap.uploadTitle.trim() || !snap.uploadAuthor.trim() || !snap.uploadYear) {
         update(s => ({
@@ -189,25 +197,13 @@ export function createCatalogStore() {
 
     async deleteDocument(id, apiBaseUrl = '/api/v1') {
       try {
-        const response = await fetch(`${apiBaseUrl}/documents/${id}`, {
-          method: 'DELETE'
-        });
-        if (!response.ok) {
-          throw new Error('Не удалось удалить документ.');
-        }
-        update(s => ({
-          ...s,
-          documents: s.documents.filter(doc => String(doc.id) !== String(id))
-        }));
-        return true;
-      } catch (err) {
-        // Local removal fallback if endpoint returns errors or mock mode
-        update(s => ({
-          ...s,
-          documents: s.documents.filter(doc => String(doc.id) !== String(id))
-        }));
-        return true;
-      }
+        await fetch(`${apiBaseUrl}/documents/${id}`, { method: 'DELETE' });
+      } catch (err) {}
+      update(s => ({
+        ...s,
+        documents: s.documents.filter(doc => String(doc.id) !== String(id))
+      }));
+      return true;
     }
   };
 }

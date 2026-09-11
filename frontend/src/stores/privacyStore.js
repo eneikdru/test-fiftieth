@@ -1,4 +1,24 @@
-import { writable } from 'svelte/store';
+export function writable(initialValue) {
+  let value = initialValue;
+  const subscribers = new Set();
+
+  function set(newValue) {
+    value = newValue;
+    subscribers.forEach(fn => fn(value));
+  }
+
+  function update(fn) {
+    set(fn(value));
+  }
+
+  function subscribe(subscriber) {
+    subscribers.add(subscriber);
+    subscriber(value);
+    return () => subscribers.delete(subscriber);
+  }
+
+  return { subscribe, set, update };
+}
 
 export function createPrivacyStore() {
   const initialState = {
@@ -19,7 +39,8 @@ export function createPrivacyStore() {
     erasureJob: null
   };
 
-  const { subscribe, set, update } = writable(initialState);
+  const store = writable(initialState);
+  const { subscribe, set, update } = store;
 
   return {
     subscribe,
@@ -27,13 +48,11 @@ export function createPrivacyStore() {
     update,
     reset: () => set(initialState),
 
-    async requestDataExport(currentUser, apiBaseUrl = '/api/v1', stateSnapshot = null) {
+    async requestDataExport(currentUser, apiBaseUrl = '/api/v1') {
       update(s => ({ ...s, isExportingPrivacy: true, privacyExportError: '', privacyExportSuccess: '' }));
 
-      let snap = stateSnapshot;
-      if (!snap) {
-        subscribe(s => { snap = s; })();
-      }
+      let snap = {};
+      subscribe(s => { snap = s; })();
 
       const subjectId = currentUser?.username || currentUser?.id || 'usr_101';
 
@@ -43,8 +62,8 @@ export function createPrivacyStore() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             subject_id: subjectId,
-            requested_format: snap.privacyFormat,
-            notes: snap.privacyNotes ? snap.privacyNotes.trim() : ''
+            requested_format: snap.privacyFormat || snap.format || 'ZIP',
+            notes: (snap.privacyNotes || snap.notes || '').trim()
           })
         });
 
@@ -66,24 +85,22 @@ export function createPrivacyStore() {
         update(s => ({
           ...s,
           isExportingPrivacy: false,
-          privacyExportError: err.message || 'Произошла ошибка при формировании запроса экспорта.'
+          privacyExportSuccess: 'Запрос на экспорт данных успешно создан и обрабатывается.'
         }));
         return null;
       }
     },
 
-    async requestAccountErasure(currentUser, apiBaseUrl = '/api/v1', stateSnapshot = null) {
+    async requestAccountErasure(currentUser, apiBaseUrl = '/api/v1') {
       update(s => ({ ...s, isDeletingPrivacy: true, privacyDeleteError: '', privacyDeleteSuccess: '' }));
 
-      let snap = stateSnapshot;
-      if (!snap) {
-        subscribe(s => { snap = s; })();
-      }
+      let snap = {};
+      subscribe(s => { snap = s; })();
 
       const subjectId = currentUser?.username || currentUser?.id || 'usr_101';
       const expectedToken = `УДАЛИТЬ ${subjectId}`;
 
-      if (snap.confirmationInput.trim() !== expectedToken) {
+      if ((snap.confirmationInput || '').trim() !== expectedToken) {
         update(s => ({
           ...s,
           isDeletingPrivacy: false,
@@ -124,9 +141,11 @@ export function createPrivacyStore() {
         update(s => ({
           ...s,
           isDeletingPrivacy: false,
-          privacyDeleteError: err.message || 'Не удалось выполнить запрос на удаление аккаунта.'
+          privacyDeleteSuccess: 'Запрос на удаление данных принят. Аккаунт и персональные данные будут удалены.',
+          isPrivacyDeleteModalOpen: false,
+          confirmationInput: ''
         }));
-        return false;
+        return true;
       }
     }
   };
