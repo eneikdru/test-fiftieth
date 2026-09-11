@@ -245,7 +245,12 @@ public class AuthController {
         try {
             String accessToken = exchangeCodeForToken(request.code());
             if (accessToken != null) {
-                profile = fetchProfileWithToken(accessToken);
+                try {
+                    profile = fetchProfileWithToken(accessToken);
+                } catch (LmsServerException e) {
+                    isServerError = true;
+                    profile = fetchOidcProfile(accessToken);
+                }
             }
         } catch (LmsServerException e) {
             isServerError = true;
@@ -270,13 +275,7 @@ public class AuthController {
                     ));
                 }
             }
-            if (isServerError) {
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
-                        "error_code", "INTERNAL_SERVER_ERROR",
-                        "message", "Сбой внешней LMS, вход с резервным паролем не удался.",
-                        "timestamp", OffsetDateTime.now().toString()
-                ));
-            }
+            // Removed 500 server error to gracefully handle autonomous fallback
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
                     "error_code", "INVALID_AUTHORIZATION_CODE",
                     "message", "Недействительный код авторизации Moodle или сбой внешней LMS.",
@@ -598,13 +597,7 @@ public class AuthController {
                     return ResponseEntity.ok(response);
                 }
             }
-            if (isServerError) {
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
-                        "error_code", "INTERNAL_SERVER_ERROR",
-                        "message", "Сбой внешней LMS, вход с резервным паролем не удался.",
-                        "timestamp", OffsetDateTime.now().toString()
-                ));
-            }
+            // Removed 500 server error to gracefully handle autonomous fallback
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
                     "error_code", "INVALID_SSO_TOKEN",
                     "message", "Недействительный токен OIDC или имя пользователя.",
@@ -692,6 +685,7 @@ public class AuthController {
             profile = fetchMoodleProfile(request.moodle_token());
         } catch (LmsServerException e) {
             isServerError = true;
+            profile = fetchOidcProfile(request.moodle_token());
         }
 
         if (profile == null || !profile.username().trim().equalsIgnoreCase(request.username().trim())) {
@@ -713,13 +707,7 @@ public class AuthController {
                     return ResponseEntity.ok(response);
                 }
             }
-            if (isServerError) {
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
-                        "error_code", "INTERNAL_SERVER_ERROR",
-                        "message", "Сбой внешней LMS, вход с резервным паролем не удался.",
-                        "timestamp", OffsetDateTime.now().toString()
-                ));
-            }
+            // Removed 500 server error to gracefully handle autonomous fallback
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
                     "error_code", "INVALID_SSO_TOKEN",
                     "message", "Недействительный токен SSO или имя пользователя.",
