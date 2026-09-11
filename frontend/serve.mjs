@@ -33,6 +33,39 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  if (pathname === '/api/v1/auth/login' && req.method === 'POST') {
+    let body = '';
+    req.on('data', chunk => { body += chunk; });
+    req.on('end', () => {
+      try {
+        const payload = JSON.parse(body || '{}');
+        if (payload.username === 'invalid') {
+          res.writeHead(401, { 'Content-Type': 'application/json; charset=utf-8' });
+          res.end(JSON.stringify({ error_code: 'INVALID_CREDENTIALS', message: 'Неверное имя пользователя или пароль.' }));
+          return;
+        }
+        res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({
+          access_token: 'mock-jwt-access-token-12345',
+          refresh_token: 'mock-jwt-refresh-token-67890',
+          token_type: 'Bearer',
+          expires_in: 3600,
+          user: {
+            id: payload.username === 'employee_user' ? 102 : 101,
+            username: payload.username || 'admin_user',
+            role: payload.username === 'employee_user' ? 'RESEARCHER' : 'ADMIN',
+            full_name: payload.username === 'employee_user' ? 'Петров П.П. (Сотрудник)' : 'Иванов И.И. (Администратор)',
+            email: `${payload.username || 'admin_user'}@epidemiology-inst.ru`
+          }
+        }));
+      } catch (e) {
+        res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({ error_code: 'BAD_REQUEST', message: 'Некорректный запрос.' }));
+      }
+    });
+    return;
+  }
+
   if (pathname.startsWith('/api/v1/documents/search')) {
     const query = parsedUrl.searchParams.get('query') || parsedUrl.searchParams.get('q') || '';
     const docs = [
