@@ -683,9 +683,6 @@ public class AuthController {
             ));
         }
 
-        // Minimal mock validation for SSO token to prevent arbitrary auth bypass.
-        // In a real implementation, this would involve verifying an OAuth2/OIDC token or SAML assertion
-        // against the Moodle identity provider's public keys and fetching the user profile securely.
         MoodleProfile profile = null;
         boolean isServerError = false;
         try {
@@ -1065,6 +1062,10 @@ public class AuthController {
     }
 
     private MoodleProfile fetchMoodleProfile(String token) {
+        if (token == null || !validateOidcTokenSignature(token)) {
+            log.warn("Moodle SSO token signature validation failed");
+            return null;
+        }
         return fetchProfileWithToken(token);
     }
 

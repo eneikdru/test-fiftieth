@@ -399,15 +399,17 @@ class AuthControllerTest {
     @Test
     @DisplayName("Given valid SSO login request, When moodle sso endpoint called, Then returns JWT tokens and records sso login telemetry")
     void testSsoLogin_ReturnsAuthTokensAndRecordsTelemetry() throws Exception {
+        String mockToken = jwtTokenProvider.generateToken("moodle_user", "USER");
+
         mockServer.expect(org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo("https://moodle.epidemiology-inst.ru/oauth2/userinfo"))
-                .andExpect(org.springframework.test.web.client.match.MockRestRequestMatchers.header("Authorization", "Bearer mock_valid_moodle_token"))
+                .andExpect(org.springframework.test.web.client.match.MockRestRequestMatchers.header("Authorization", "Bearer " + mockToken))
                 .andRespond(org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess(
                         "{\"username\":\"moodle_user\",\"moodle_role\":\"Старший научный сотрудник\",\"department\":\"Эпидемиология\",\"email\":\"moodle@inst.ru\",\"full_name\":\"Moodle User\",\"courses\":\"BIO-101\"}",
                         MediaType.APPLICATION_JSON));
 
         userService.createUser("moodle_user", "Pass123!", "moodle@inst.ru", "Moodle User", "USER");
 
-        String ssoBody = "{\"username\":\"moodle_user\",\"moodle_token\":\"mock_valid_moodle_token\"}";
+        String ssoBody = "{\"username\":\"moodle_user\",\"moodle_token\":\"" + mockToken + "\"}";
 
         mockMvc.perform(post("/api/v1/auth/sso/moodle")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -456,13 +458,15 @@ class AuthControllerTest {
     @Test
     @DisplayName("Given SSO login request for new user, When moodle sso endpoint called, Then user is auto-provisioned with fallback password")
     void testSsoLogin_NewUserAutoProvisioning() throws Exception {
+        String mockToken = jwtTokenProvider.generateToken("new_moodle_user", "USER");
+
         mockServer.expect(org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo("https://moodle.epidemiology-inst.ru/oauth2/userinfo"))
-                .andExpect(org.springframework.test.web.client.match.MockRestRequestMatchers.header("Authorization", "Bearer mock_valid_new_moodle_token"))
+                .andExpect(org.springframework.test.web.client.match.MockRestRequestMatchers.header("Authorization", "Bearer " + mockToken))
                 .andRespond(org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess(
                         "{\"username\":\"new_moodle_user\",\"moodle_role\":\"Администратор\",\"department\":\"IT\",\"email\":\"new_moodle@inst.ru\",\"full_name\":\"New Moodle Admin\",\"courses\":\"\"}",
                         MediaType.APPLICATION_JSON));
 
-        String ssoBody = "{\"username\":\"new_moodle_user\",\"moodle_token\":\"mock_valid_new_moodle_token\",\"fallback_password\":\"MySecureFallback!\"}";
+        String ssoBody = "{\"username\":\"new_moodle_user\",\"moodle_token\":\"" + mockToken + "\",\"fallback_password\":\"MySecureFallback!\"}";
 
         mockMvc.perform(post("/api/v1/auth/sso/moodle")
                 .contentType(MediaType.APPLICATION_JSON)
