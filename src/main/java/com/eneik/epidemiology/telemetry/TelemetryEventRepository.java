@@ -11,4 +11,8 @@ public interface TelemetryEventRepository extends JpaRepository<TelemetryEvent, 
     List<TelemetryEvent> findByEventType(String eventType);
 
     List<TelemetryEvent> findByDocumentId(Long documentId);
+
+    List<TelemetryEvent> findByModule(String module);
+
+    List<TelemetryEvent> findAllByOrderByCreatedAtDesc();
 }

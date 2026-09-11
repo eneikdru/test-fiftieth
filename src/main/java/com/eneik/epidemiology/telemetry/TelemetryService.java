@@ -8,6 +8,7 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class TelemetryService {
@@ -35,6 +36,14 @@ public class TelemetryService {
     public TelemetryService(TelemetryEventRepository telemetryEventRepository, Clock clock) {
         this.telemetryEventRepository = telemetryEventRepository;
         this.clock = clock;
+    }
+
+    @Transactional
+    public TelemetryEvent recordEvent(TelemetryEvent event) {
+        if (event.getCreatedAt() == null) {
+            event.setCreatedAt(OffsetDateTime.now(clock));
+        }
+        return telemetryEventRepository.save(event);
     }
 
     @Transactional
@@ -158,6 +167,11 @@ public class TelemetryService {
     }
 
     @Transactional(readOnly = true)
+    public List<TelemetryEvent> getAllEvents() {
+        return telemetryEventRepository.findAllByOrderByCreatedAtDesc();
+    }
+
+    @Transactional(readOnly = true)
     public List<TelemetryEvent> getEventsByType(String eventType) {
         return telemetryEventRepository.findByEventType(eventType);
     }
@@ -165,5 +179,15 @@ public class TelemetryService {
     @Transactional(readOnly = true)
     public List<TelemetryEvent> getEventsByDocumentId(Long documentId) {
         return telemetryEventRepository.findByDocumentId(documentId);
+    }
+
+    @Transactional(readOnly = true)
+    public List<TelemetryEvent> getEventsByModule(String module) {
+        return telemetryEventRepository.findByModule(module);
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<TelemetryEvent> getEventById(Long id) {
+        return telemetryEventRepository.findById(id);
     }
 }

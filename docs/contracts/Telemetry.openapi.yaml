@@ -1,0 +1,185 @@
+openapi: 3.0.1
+info:
+  title: Telemetry Ingestion and Query API
+  version: "1.0"
+paths:
+  /api/v1/telemetry/events:
+    post:
+      summary: Ingest telemetry event
+      operationId: ingestTelemetry
+      tags:
+        - Telemetry
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TelemetryEventRequest'
+      responses:
+        '201':
+          description: Telemetry event recorded successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TelemetryEventResponse'
+        '400':
+          description: Invalid request payload (e.g. missing eventType)
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal server error
+    get:
+      summary: Query telemetry events
+      operationId: getTelemetryEvents
+      tags:
+        - Telemetry
+      parameters:
+        - name: eventType
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter events by event type
+        - name: documentId
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int64
+          description: Filter events by document ID
+        - name: module
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter events by module
+      responses:
+        '200':
+          description: Telemetry events retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TelemetryEventResponse'
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal server error
+  /api/v1/telemetry/events/{id}:
+    get:
+      summary: Get telemetry event by ID
+      operationId: getTelemetryEventById
+      tags:
+        - Telemetry
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+          description: ID of the telemetry event
+      responses:
+        '200':
+          description: Telemetry event retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TelemetryEventResponse'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Telemetry event not found
+        '500':
+          description: Internal server error
+components:
+  schemas:
+    TelemetryEventRequest:
+      type: object
+      required:
+        - eventType
+      properties:
+        eventType:
+          type: string
+          description: Event type indicator
+          example: SPA_NAVIGATION
+        queryTerm:
+          type: string
+          description: Optional query term
+        documentId:
+          type: integer
+          format: int64
+          description: Optional document ID
+        resultsCount:
+          type: integer
+          description: Optional count of results
+        processingTimeMs:
+          type: integer
+          format: int64
+          description: Optional processing time in milliseconds
+        workflowDurationMs:
+          type: integer
+          format: int64
+          description: Optional workflow duration in milliseconds
+        startTime:
+          type: string
+          format: date-time
+          description: Optional start timestamp
+        endTime:
+          type: string
+          format: date-time
+          description: Optional end timestamp
+        createdAt:
+          type: string
+          format: date-time
+          description: Optional creation timestamp
+        module:
+          type: string
+          description: Optional module name
+          example: Core Module
+        title:
+          type: string
+          description: Optional event title
+          example: Dashboard Loaded
+        success:
+          type: boolean
+          description: Optional execution success flag
+    TelemetryEventResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: Telemetry event ID
+        eventType:
+          type: string
+          description: Event type indicator
+        queryTerm:
+          type: string
+        documentId:
+          type: integer
+          format: int64
+        resultsCount:
+          type: integer
+        processingTimeMs:
+          type: integer
+          format: int64
+        workflowDurationMs:
+          type: integer
+          format: int64
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        module:
+          type: string
+        title:
+          type: string
+        success:
+          type: boolean
