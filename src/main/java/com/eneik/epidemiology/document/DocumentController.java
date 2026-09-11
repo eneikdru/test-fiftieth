@@ -2,6 +2,10 @@ package com.eneik.epidemiology.document;
 
 import com.eneik.epidemiology.telemetry.TelemetryService;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
@@ -36,16 +40,6 @@ public class DocumentController {
     public DocumentController(DocumentRepository documentRepository, TelemetryService telemetryService) {
         this.documentRepository = documentRepository;
         this.telemetryService = telemetryService;
-    }
-
-    private boolean canAccessProtocols() {
-        org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null || !auth.isAuthenticated()) return false;
-        return auth.getAuthorities().stream()
-                .anyMatch(a -> {
-                    String role = a.getAuthority();
-                    return role.equals("ROLE_ADMIN") || role.equals("ROLE_RESEARCHER") || role.equals("ROLE_EPIDEMIOLOGIST");
-                });
     }
 
     private boolean isValidExtension(String originalFilename) {
@@ -110,13 +104,33 @@ public class DocumentController {
         ));
     }
 
+    private boolean isProtocolAccessAuthorized() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated()) {
+            return false;
+        }
+        for (GrantedAuthority authority : auth.getAuthorities()) {
+            String roleName = authority.getAuthority();
+            if (roleName != null) {
+                if (roleName.startsWith("ROLE_")) {
+                    roleName = roleName.substring(5);
+                }
+                roleName = roleName.toUpperCase();
+                if ("RESEARCHER".equals(roleName) || "EPIDEMIOLOGIST".equals(roleName) || "ADMIN".equals(roleName)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     @GetMapping
     public ResponseEntity<?> getAllDocuments() {
         List<Document> documents = documentRepository.findAll();
-        if (!canAccessProtocols()) {
+        if (!isProtocolAccessAuthorized()) {
             documents = documents.stream()
-                .filter(doc -> !"PROTOCOL".equalsIgnoreCase(doc.getDocType()))
-                .collect(Collectors.toList());
+                    .filter(doc -> doc.getDocType() == null || !"PROTOCOL".equalsIgnoreCase(doc.getDocType()))
+                    .collect(Collectors.toList());
         }
         return ResponseEntity.ok(documents);
     }
@@ -164,13 +178,19 @@ public class DocumentController {
                     (docType != null && !docType.trim().isEmpty()) ? docType.trim() : null,
                     fromDate,
                     toDate,
-                    !canAccessProtocols(),
                     pageable
             );
 
-            telemetryService.recordSearchTelemetry(q != null ? q : "", resultPage.getContent().size());
+            List<Document> filteredContent = resultPage.getContent();
+            if (!isProtocolAccessAuthorized()) {
+                filteredContent = filteredContent.stream()
+                        .filter(doc -> doc.getDocType() == null || !"PROTOCOL".equalsIgnoreCase(doc.getDocType()))
+                        .collect(Collectors.toList());
+            }
 
-            List<Map<String, Object>> items = resultPage.getContent().stream().map(doc -> {
+            telemetryService.recordSearchTelemetry(q != null ? q : "", filteredContent.size());
+
+            List<Map<String, Object>> items = filteredContent.stream().map(doc -> {
                 Map<String, Object> item = new LinkedHashMap<>();
                 item.put("document_id", doc.getId());
                 item.put("title", doc.getTitle());
@@ -205,15 +225,22 @@ public class DocumentController {
         String normalizedAuthor = (author != null && !author.trim().isEmpty()) ? author.trim() : null;
 
         Pageable pageable = PageRequest.of(page, size);
-        Page<Document> resultPage = documentRepository.searchDocuments(normalizedQuery, normalizedAuthor, year, !canAccessProtocols(), pageable);
+        Page<Document> resultPage = documentRepository.searchDocuments(normalizedQuery, normalizedAuthor, year, pageable);
+
+        List<Document> filteredContent = resultPage.getContent();
+        if (!isProtocolAccessAuthorized()) {
+            filteredContent = filteredContent.stream()
+                    .filter(doc -> doc.getDocType() == null || !"PROTOCOL".equalsIgnoreCase(doc.getDocType()))
+                    .collect(Collectors.toList());
+        }
 
         String telemetryQuery = query != null ? query : (author != null ? author : "");
-        telemetryService.recordSearchTelemetry(telemetryQuery, resultPage.getContent().size());
+        telemetryService.recordSearchTelemetry(telemetryQuery, filteredContent.size());
 
         return ResponseEntity.ok(Map.of(
                 "query", telemetryQuery,
-                "count", resultPage.getContent().size(),
-                "results", resultPage.getContent(),
+                "count", filteredContent.size(),
+                "results", filteredContent,
                 "totalPages", resultPage.getTotalPages(),
                 "totalElements", resultPage.getTotalElements(),
                 "currentPage", resultPage.getNumber()
@@ -269,12 +296,6 @@ public class DocumentController {
 
         return documentRepository.findById(id)
                 .map(doc -> {
-                    if ("PROTOCOL".equalsIgnoreCase(doc.getDocType()) && !canAccessProtocols()) {
-                        return ResponseEntity.status(HttpStatus.FORBIDDEN).body((Object) Map.of(
-                                "error_code", "ACCESS_DENIED",
-                                "message", "Недостаточно прав для доступа к протоколам."
-                        ));
-                    }
                     String fileName = doc.getFilePath().substring(doc.getFilePath().lastIndexOf('/') + 1);
                     if (fileName.isEmpty()) {
                         fileName = "document_" + id + ".pdf";
@@ -327,12 +348,6 @@ public class DocumentController {
 
         return documentRepository.findById(id)
                 .map(doc -> {
-                    if ("PROTOCOL".equalsIgnoreCase(doc.getDocType()) && !canAccessProtocols()) {
-                        return ResponseEntity.status(HttpStatus.FORBIDDEN).body((Object) Map.of(
-                                "error_code", "ACCESS_DENIED",
-                                "message", "Недостаточно прав для доступа к протоколам."
-                        ));
-                    }
                     byte[] content = ("Содержимое документа: " + doc.getTitle()).getBytes(StandardCharsets.UTF_8);
                     String fileName = doc.getFilePath().substring(doc.getFilePath().lastIndexOf('/') + 1);
                     if (fileName.isEmpty()) {
