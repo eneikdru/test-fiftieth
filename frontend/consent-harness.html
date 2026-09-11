@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Consent Banner Harness</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/svelte@3.59.2/compiler.js"></script>
+</head>
+<body class="bg-[#f7f9fb] min-h-screen text-[#191c1e] antialiased font-sans" tabindex="-1">
+  <div id="app"></div>
+  <script type="module">
+    async function loadComponent() {
+      try {
+        const response = await fetch('./src/components/ConsentBanner.svelte');
+        const source = await response.text();
+
+        const { js } = window.svelte.compile(source, {
+          format: 'esm',
+          name: 'ConsentBanner',
+          sveltePath: 'https://unpkg.com/svelte@3.59.2'
+        });
+
+        // Some imports might still be just 'svelte', so replace them
+        let code = js.code.replace(/from "https:\/\/unpkg.com\/svelte@3.59.2"/g, `from "https://unpkg.com/svelte@3.59.2/index.mjs"`);
+        // Replace svelte/internal
+        code = code.replace(/from "https:\/\/unpkg.com\/svelte@3.59.2\/internal"/g, `from "https://unpkg.com/svelte@3.59.2/internal/index.mjs"`);
+
+        const blob = new Blob([code], { type: 'application/javascript' });
+        const blobUrl = URL.createObjectURL(blob);
+
+        const module = await import(blobUrl);
+        const ConsentBanner = module.default;
+
+        new ConsentBanner({
+          target: document.getElementById('app')
+        });
+
+        console.log("Component loaded and mounted successfully.");
+      } catch (err) {
+        console.error("Component failed to load:", err);
+      }
+    }
+    loadComponent();
+  </script>
+</body>
+</html>
