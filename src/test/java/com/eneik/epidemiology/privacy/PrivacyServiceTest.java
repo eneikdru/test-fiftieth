@@ -179,7 +179,6 @@ class PrivacyServiceTest {
         );
     }
 
-    @org.junit.jupiter.api.Disabled("Pending TAG-02 implementation of secure token (wishlist)")
     @Test
     @DisplayName("Given an erasure confirmation attempt, When using a deterministic string, Then the request is rejected")
     void testDeterministicTokenRejected() {
@@ -193,7 +192,6 @@ class PrivacyServiceTest {
         );
     }
 
-    @org.junit.jupiter.api.Disabled("Pending TAG-02 implementation of secure token (wishlist)")
     @Test
     @DisplayName("Given a valid secure token, When submitted, Then the erasure is successfully confirmed")
     void testSecureTokenAccepted() {
