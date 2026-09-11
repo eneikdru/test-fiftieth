@@ -60,4 +60,31 @@ test.describe('Authentication, Role Access, and Recovery E2E Tests', () => {
     await page.click('button:has-text("Выйти из системы")');
     await expect(page.locator('h2')).toHaveText('Вход в систему');
   });
+
+  test('Given a running application, When E2E tests exercise the login form with valid credentials, Then the system must grant access to protected data', async ({ page }) => {
+    await page.goto(harnessPath);
+    await expect(page.locator('h2')).toHaveText('Вход в систему');
+
+    await page.fill('#username-input', 'admin_user');
+    await page.fill('#password-input', 'AdminSecret123!');
+    await page.click('button[type="submit"]');
+
+    await expect(page.locator('main')).toContainText('База знаний по эпидемиологии');
+    await expect(page.locator('#document-grid')).toBeVisible();
+    await expect(page.locator('.document-card')).toHaveCount(2);
+  });
+
+  test('Given invalid credentials, When the tests attempt to log in, Then access must be explicitly denied and an error shown', async ({ page }) => {
+    await page.goto(harnessPath);
+    await expect(page.locator('h2')).toHaveText('Вход в систему');
+
+    await page.fill('#username-input', 'invalid_user');
+    await page.fill('#password-input', 'WrongPassword123!');
+    await page.click('button[type="submit"]');
+
+    await expect(page.locator('#login-error-message')).toBeVisible();
+    await expect(page.locator('#login-error-message')).toContainText('Неверное имя пользователя или пароль');
+    await expect(page.locator('h2')).toHaveText('Вход в систему');
+    await expect(page.locator('#document-grid')).toHaveCount(0);
+  });
 });

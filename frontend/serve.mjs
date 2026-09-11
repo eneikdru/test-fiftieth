@@ -24,6 +24,52 @@ const server = http.createServer((req, res) => {
   const pathname = parsedUrl.pathname;
 
   // Mock API endpoints
+  if (pathname === '/api/v1/auth/login' && req.method === 'POST') {
+    let body = '';
+    req.on('data', chunk => { body += chunk.toString(); });
+    req.on('end', () => {
+      try {
+        const credentials = JSON.parse(body || '{}');
+        const validCredentials = {
+          'admin_user': 'AdminSecret123!',
+          'employee_user': 'EmployeeSecret123!',
+          'moodle_user': 'MySecureFallback!'
+        };
+
+        if (credentials.username && validCredentials[credentials.username] && validCredentials[credentials.username] === credentials.password) {
+          const isEmployee = credentials.username === 'employee_user';
+          res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+          res.end(JSON.stringify({
+            access_token: 'mock_jwt_access_token',
+            refresh_token: 'mock_jwt_refresh_token',
+            user: {
+              id: 101,
+              username: credentials.username,
+              role: isEmployee ? 'RESEARCHER' : 'ADMIN',
+              full_name: isEmployee ? 'Петров П.П. (Сотрудник)' : 'Иванов И.И. (Администратор)',
+              email: `${credentials.username}@epidemiology-inst.ru`
+            }
+          }));
+        } else {
+          res.writeHead(401, { 'Content-Type': 'application/json; charset=utf-8' });
+          res.end(JSON.stringify({
+            error_code: 'INVALID_CREDENTIALS',
+            message: 'Неверное имя пользователя или пароль.',
+            timestamp: new Date().toISOString()
+          }));
+        }
+      } catch (e) {
+        res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({
+          error_code: 'INVALID_REQUEST',
+          message: 'Неверный формат запроса.',
+          timestamp: new Date().toISOString()
+        }));
+      }
+    });
+    return;
+  }
+
   if (pathname === '/api/v1/documents/1/download' || (pathname.startsWith('/api/v1/documents/') && pathname.endsWith('/download'))) {
     res.writeHead(200, {
       'Content-Type': 'application/pdf',
