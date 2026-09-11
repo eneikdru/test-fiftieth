@@ -64,6 +64,9 @@ class DataSubjectRightsVerificationTest {
     @Autowired
     private DataSource dataSource;
 
+    @Autowired
+    private DataErasureTokenRepository erasureTokenRepository;
+
     private PrivacyService privacyService;
     private final Clock fixedClock = Clock.fixed(Instant.parse("2026-08-22T15:00:00Z"), ZoneId.of("UTC"));
 
@@ -76,7 +79,8 @@ class DataSubjectRightsVerificationTest {
             employeeDocumentRepository,
             dossierReportRepository,
             objectMapper,
-            fixedClock
+            fixedClock,
+            erasureTokenRepository
         );
     }
 
@@ -230,7 +234,15 @@ class DataSubjectRightsVerificationTest {
         assertEquals(1, employeeDocumentRepository.findByEmployeeIdOrderByDocDateDesc("rights_erasure_user").size());
 
         // Perform erasure
-        String confirmationToken = "CONFIRM_ERASURE_rights_erasure_user";
+        DataErasureToken erasureToken = new DataErasureToken();
+        erasureToken.setSubjectId("rights_erasure_user");
+        erasureToken.setToken("SECURE_TOKEN_rights_erasure_user");
+        erasureToken.setCreatedAt(OffsetDateTime.now(fixedClock));
+        erasureToken.setExpiresAt(OffsetDateTime.now(fixedClock).plusHours(24));
+        erasureToken.setUsed(false);
+        erasureTokenRepository.save(erasureToken);
+
+        String confirmationToken = "SECURE_TOKEN_rights_erasure_user";
         DataErasureJob job = privacyService.initiateDataErasure("rights_erasure_user", confirmationToken, "152-FZ Withdrawal", "ALL_PERSONAL_DATA");
 
         assertEquals("COMPLETED", job.getStatus());
