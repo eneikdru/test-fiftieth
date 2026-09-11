@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Платформа согласий и управления cookie (152-ФЗ)</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary": "#003f87",
+            "on-primary": "#ffffff",
+            "background": "#f7f9fb",
+            "on-surface": "#191c1e",
+            "on-surface-variant": "#424752",
+            "outline": "#727784",
+            "outline-variant": "#c2c6d4",
+            "surface-container-lowest": "#ffffff",
+            "surface-container": "#eceef0",
+            "surface-variant": "#e0e3e5",
+            "error": "#ba1a1a",
+            "error-container": "#ffdad6",
+            "on-error-container": "#93000a"
+          },
+          fontFamily: {
+            "sans": ["Inter", "sans-serif"]
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-[#f7f9fb] min-h-screen text-[#191c1e] antialiased font-sans flex flex-col">
+  <div id="app" class="flex-1 flex flex-col"></div>
+
+  <script>
+    const STORAGE_KEY = 'consent_preferences';
+
+    let state = {
+      bannerVisible: true,
+      showDetails: false,
+      trackerLoaded: false,
+      savedConsent: null,
+      preferences: {
+        essential: true,
+        analytics: false,
+        marketing: false
+      }
+    };
+
+    function initConsent() {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          state.savedConsent = parsed;
+          state.preferences.analytics = Boolean(parsed.analytics);
+          state.preferences.marketing = Boolean(parsed.marketing);
+          state.bannerVisible = false;
+
+          if (parsed.analytics || parsed.marketing) {
+            state.trackerLoaded = true;
+          }
+        } else {
+          state.bannerVisible = true;
+          state.trackerLoaded = false;
+        }
+      } catch (e) {
+        state.bannerVisible = true;
+      }
+    }
+
+    function saveConsent(updatedPrefs, actionStatus) {
+      state.preferences = {
+        essential: true,
+        analytics: Boolean(updatedPrefs.analytics),
+        marketing: Boolean(updatedPrefs.marketing)
+      };
+
+      const payload = {
+        ...state.preferences,
+        status: actionStatus,
+        timestamp: new Date().toISOString()
+      };
+
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+        localStorage.setItem('consent_choice', actionStatus);
+        if (actionStatus === 'rejected') {
+          // ensure no non-essential cookies
+          document.cookie = "analytics_tracker=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+        } else if (actionStatus === 'accepted' || updatedPrefs.analytics) {
+          document.cookie = "analytics_tracker=active; path=/;";
+        }
+      } catch (e) {}
+
+      state.savedConsent = payload;
+      state.bannerVisible = false;
+      state.trackerLoaded = state.preferences.analytics || state.preferences.marketing;
+      render();
+    }
+
+    function handleAcceptAll() {
+      saveConsent({ essential: true, analytics: true, marketing: true }, 'accepted');
+    }
+
+    function handleRejectAll() {
+      saveConsent({ essential: true, analytics: false, marketing: false }, 'rejected');
+    }
+
+    function handleSaveCustom() {
+      saveConsent(state.preferences, 'custom');
+    }
+
+    function resetConsent() {
+      try {
+        localStorage.removeItem(STORAGE_KEY);
+        localStorage.removeItem('consent_choice');
+        document.cookie = "analytics_tracker=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+      } catch (e) {}
+      state.savedConsent = null;
+      state.bannerVisible = true;
+      state.showDetails = false;
+      state.trackerLoaded = false;
+      state.preferences = { essential: true, analytics: false, marketing: false };
+      render();
+    }
+
+    function toggleDetails() {
+      state.showDetails = !state.showDetails;
+      render();
+    }
+
+    function render() {
+      const app = document.getElementById('app');
+
+      app.innerHTML = `
+        <div class="max-w-[1440px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 flex flex-col justify-between">
+          <div>
+            <!-- Main Application Header -->
+            <header class="mb-8 border-b border-[#c2c6d4] pb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <div class="flex items-center gap-2 mb-1">
+                  <span class="text-xs font-semibold uppercase text-[#424752] tracking-wider">Информационная платформа НИИ Эпидемиологии</span>
+                </div>
+                <h1 class="text-2xl sm:text-3xl font-bold text-[#003f87]">
+                  Центр управления согласиями и трекерами
+                </h1>
+                <p class="text-sm text-[#424752] mt-1">
+                  Демонстрация работы баннера согласия и блокировки аналитических модулей
+                </p>
+              </div>
+
+              <div class="flex items-center gap-3">
+                <button
+                  type="button"
+                  id="reset-consent-btn"
+                  onclick="resetConsent()"
+                  class="px-4 py-2 bg-white hover:bg-[#eceef0] border border-[#c2c6d4] text-[#191c1e] text-xs font-semibold rounded-lg shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-[#003f87]"
+                >
+                  Сбросить сохраненный выбор
+                </button>
+              </div>
+            </header>
+
+            <!-- Status Panels Grid -->
+            <main class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+              <!-- Consent Status Card -->
+              <section class="bg-white border border-[#e0e3e5] rounded-xl p-6 shadow-sm space-y-4">
+                <div class="flex items-center justify-between border-b border-[#e0e3e5] pb-3">
+                  <h2 class="text-lg font-bold text-[#003f87] flex items-center gap-2">
+                    <span>📋 Состояние согласия</span>
+                  </h2>
+                  <span id="consent-status-badge" class="px-2.5 py-1 rounded-full text-xs font-bold ${
+                    state.savedConsent
+                      ? (state.savedConsent.status === 'accepted' ? 'bg-emerald-100 text-emerald-800' : (state.savedConsent.status === 'rejected' ? 'bg-rose-100 text-rose-800' : 'bg-blue-100 text-blue-800'))
+                      : 'bg-amber-100 text-amber-800'
+                  }">
+                    ${state.savedConsent ? 'Согласие получено (' + state.savedConsent.status + ')' : 'Не выбрано (Новый визит)'}
+                  </span>
+                </div>
+
+                <div class="text-xs text-[#424752] space-y-2">
+                  <p><strong>Обязательные (152-ФЗ):</strong> <span class="text-emerald-700 font-semibold">Активны (Всегда)</span></p>
+                  <p><strong>Аналитические cookies:</strong> <span class="${state.preferences.analytics ? 'text-emerald-700 font-semibold' : 'text-rose-700 font-semibold'}">${state.preferences.analytics ? 'Разрешены' : 'Заблокированы'}</span></p>
+                  <p><strong>Маркетинговые cookies:</strong> <span class="${state.preferences.marketing ? 'text-emerald-700 font-semibold' : 'text-rose-700 font-semibold'}">${state.preferences.marketing ? 'Разрешены' : 'Заблокированы'}</span></p>
+                </div>
+              </section>
+
+              <!-- Tracker Execution Status Card -->
+              <section class="bg-white border border-[#e0e3e5] rounded-xl p-6 shadow-sm space-y-4">
+                <div class="flex items-center justify-between border-b border-[#e0e3e5] pb-3">
+                  <h2 class="text-lg font-bold text-[#003f87] flex items-center gap-2">
+                    <span>📡 Статус некритичных трекеров</span>
+                  </h2>
+                  <span id="tracker-status-badge" class="px-2.5 py-1 rounded-full text-xs font-bold ${
+                    state.trackerLoaded ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'
+                  }">
+                    ${state.trackerLoaded ? 'Трекеры запущены' : 'Некритичные трекеры заблокированы'}
+                  </span>
+                </div>
+
+                <p id="tracker-status-desc" class="text-xs text-[#424752]">
+                  ${state.trackerLoaded
+                    ? 'Аналитический скрипт запущен, так как пользователь дал явное согласие.'
+                    : 'До получения явного согласия пользователя сторонние скрипты и трекеры не загружаются.'}
+                </p>
+              </section>
+            </main>
+          </div>
+
+          <!-- Footer -->
+          <footer class="py-6 border-t border-[#e0e3e5] text-xs text-[#727784] flex flex-col sm:flex-row justify-between items-center gap-2">
+            <span>Российский научно-исследовательский институт эпидемиологии</span>
+            <span>Модуль соответствия 152-ФЗ и GDPR</span>
+          </footer>
+        </div>
+
+        <!-- Consent Banner Overlay / Component Container -->
+        ${state.bannerVisible ? `
+          <div
+            id="consent-banner"
+            role="dialog"
+            aria-modal="false"
+            aria-labelledby="consent-title"
+            aria-describedby="consent-description"
+            class="fixed bottom-0 left-0 right-0 z-50 p-4 sm:p-6 bg-white border-t-2 border-[#003f87] shadow-2xl font-sans text-[#191c1e]"
+          >
+            <div class="max-w-7xl mx-auto flex flex-col gap-4">
+              <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div class="space-y-1.5 flex-1">
+                  <div class="flex items-center gap-2">
+                    <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#d3e4fe] text-[#003f87] text-xs font-bold" aria-hidden="true">
+                      🛡️
+                    </span>
+                    <h2 id="consent-title" class="text-base sm:text-lg font-bold text-[#003f87]">
+                      Настройки конфиденциальности и файлов cookie
+                    </h2>
+                  </div>
+                  <p id="consent-description" class="text-xs sm:text-sm text-[#424752] leading-relaxed">
+                    Мы используем необходимые файлы cookie для работы платформы. С вашего согласия мы также используем аналитические и маркетинговые файлы cookie для улучшения сервиса. Отклонение дополнительных cookie не ограничит доступ к базовым функциям.
+                  </p>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-2 sm:gap-3 shrink-0">
+                  <button
+                    type="button"
+                    id="consent-reject-all-btn"
+                    onclick="handleRejectAll()"
+                    class="px-4 py-2.5 bg-[#eceef0] hover:bg-[#e0e3e5] text-[#191c1e] text-xs sm:text-sm font-semibold rounded-lg border border-[#c2c6d4] focus:outline-none focus:ring-2 focus:ring-[#003f87] focus:ring-offset-2 transition-colors min-h-[44px] flex items-center justify-center"
+                    aria-label="Отклонить все необязательные cookie"
+                  >
+                    Отклонить все
+                  </button>
+
+                  <button
+                    type="button"
+                    id="consent-toggle-details-btn"
+                    onclick="toggleDetails()"
+                    aria-expanded="${state.showDetails}"
+                    aria-controls="consent-details-panel"
+                    class="px-4 py-2.5 bg-white hover:bg-[#f7f9fb] text-[#003f87] text-xs sm:text-sm font-semibold rounded-lg border border-[#003f87] focus:outline-none focus:ring-2 focus:ring-[#003f87] focus:ring-offset-2 transition-colors min-h-[44px] flex items-center justify-center"
+                  >
+                    ${state.showDetails ? 'Скрыть настройки' : 'Настройки'}
+                  </button>
+
+                  <button
+                    type="button"
+                    id="consent-accept-all-btn"
+                    onclick="handleAcceptAll()"
+                    class="px-4 py-2.5 bg-[#003f87] hover:bg-[#002b5e] text-white text-xs sm:text-sm font-semibold rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#003f87] focus:ring-offset-2 transition-colors min-h-[44px] flex items-center justify-center"
+                    aria-label="Принять все файлы cookie"
+                  >
+                    Принять все
+                  </button>
+                </div>
+              </div>
+
+              ${state.showDetails ? `
+                <div
+                  id="consent-details-panel"
+                  class="mt-2 pt-4 border-t border-[#e0e3e5] grid grid-cols-1 md:grid-cols-3 gap-4 bg-[#f7f9fb] p-4 rounded-xl"
+                >
+                  <div class="p-3 bg-white border border-[#e0e3e5] rounded-lg space-y-2">
+                    <div class="flex items-center justify-between">
+                      <label for="cookie-essential" class="text-xs font-bold text-[#191c1e]">
+                        Обязательные (152-ФЗ)
+                      </label>
+                      <input
+                        type="checkbox"
+                        id="cookie-essential"
+                        checked
+                        disabled
+                        class="w-4 h-4 text-[#003f87] border-[#727784] rounded focus:ring-[#003f87] cursor-not-allowed opacity-80"
+                      />
+                    </div>
+                    <p class="text-[11px] text-[#424752] leading-normal">
+                      Необходимы для аутентификации, сессий безопасности и работы основных модулей платформы.
+                    </p>
+                  </div>
+
+                  <div class="p-3 bg-white border border-[#e0e3e5] rounded-lg space-y-2">
+                    <div class="flex items-center justify-between">
+                      <label for="cookie-analytics" class="text-xs font-bold text-[#191c1e] cursor-pointer">
+                        Аналитика и Производительность
+                      </label>
+                      <input
+                        type="checkbox"
+                        id="cookie-analytics"
+                        ${state.preferences.analytics ? 'checked' : ''}
+                        onchange="state.preferences.analytics = this.checked"
+                        class="w-4 h-4 text-[#003f87] border-[#727784] rounded focus:ring-[#003f87] cursor-pointer"
+                      />
+                    </div>
+                    <p class="text-[11px] text-[#424752] leading-normal">
+                      Сбор анонимной статистики использования, времени отклика страниц и траекторий навигации.
+                    </p>
+                  </div>
+
+                  <div class="p-3 bg-white border border-[#e0e3e5] rounded-lg space-y-2">
+                    <div class="flex items-center justify-between">
+                      <label for="cookie-marketing" class="text-xs font-bold text-[#191c1e] cursor-pointer">
+                        Персонализация и Уведомления
+                      </label>
+                      <input
+                        type="checkbox"
+                        id="cookie-marketing"
+                        ${state.preferences.marketing ? 'checked' : ''}
+                        onchange="state.preferences.marketing = this.checked"
+                        class="w-4 h-4 text-[#003f87] border-[#727784] rounded focus:ring-[#003f87] cursor-pointer"
+                      />
+                    </div>
+                    <p class="text-[11px] text-[#424752] leading-normal">
+                      Персонализация уведомлений об эпидемиологических отчетах и адаптивные рекомендации материалов.
+                    </p>
+                  </div>
+
+                  <div class="md:col-span-3 flex justify-end gap-2 pt-2 border-t border-[#e0e3e5]">
+                    <button
+                      type="button"
+                      id="consent-save-custom-btn"
+                      onclick="handleSaveCustom()"
+                      class="px-4 py-2 bg-[#003f87] hover:bg-[#002b5e] text-white text-xs font-semibold rounded-lg focus:outline-none focus:ring-2 focus:ring-[#003f87] focus:ring-offset-1 transition-colors min-h-[40px]"
+                    >
+                      Сохранить выбранные настройки
+                    </button>
+                  </div>
+                </div>
+              ` : ''}
+            </div>
+          </div>
+        ` : ''}
+      `;
+    }
+
+    initConsent();
+    render();
+  </script>
+</body>
+</html>
