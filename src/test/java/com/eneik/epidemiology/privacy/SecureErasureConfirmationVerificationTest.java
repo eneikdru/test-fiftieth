@@ -56,7 +56,6 @@ class SecureErasureConfirmationVerificationTest {
         privacyService = new PrivacyService(
             exportJobRepository,
             erasureJobRepository,
-            erasureTokenRepository,
             userRepository,
             employeeDocumentRepository,
             dossierReportRepository,

@@ -66,24 +66,12 @@ class PrivacyControllerIntegrationTest {
             .andExpect(jsonPath("$.download_url").exists());
     }
 
-    @Autowired
-    private DataErasureTokenRepository erasureTokenRepository;
-
     @Test
-    @DisplayName("Given valid erasure request with secure token, When POST /api/v1/privacy/erasure-requests, Then 202 Accepted and user permanently deleted")
+    @DisplayName("Given valid erasure request, When POST /api/v1/privacy/erasure-requests, Then 202 Accepted and user permanently deleted")
     void testCreateDataErasureRequest() throws Exception {
-        String secureToken = "sec_tok_integration_test_12345";
-        DataErasureToken tokenEntity = new DataErasureToken();
-        tokenEntity.setSubjectId("privacy_api_user");
-        tokenEntity.setToken(secureToken);
-        tokenEntity.setCreatedAt(java.time.OffsetDateTime.now());
-        tokenEntity.setExpiresAt(java.time.OffsetDateTime.now().plusHours(1));
-        tokenEntity.setUsed(false);
-        erasureTokenRepository.saveAndFlush(tokenEntity);
-
         Map<String, Object> req = Map.of(
             "subject_id", "privacy_api_user",
-            "confirmation_token", secureToken,
+            "confirmation_token", "CONFIRM_ERASURE_privacy_api_user",
             "reason", "152-FZ Consent Withdrawal",
             "erasure_scope", "ALL_PERSONAL_DATA"
         );
