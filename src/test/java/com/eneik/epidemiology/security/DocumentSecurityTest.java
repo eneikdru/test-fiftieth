@@ -90,6 +90,8 @@ class DocumentSecurityTest {
         protocol.setTitle("Test Protocol");
         protocol.setDocType("PROTOCOL");
         protocol.setFilePath("test_protocol.pdf");
+        protocol.setAuthorOrganization("Test Org");
+        protocol.setPublicationYear(2023);
         protocol = documentRepository.save(protocol);
 
         mockMvc.perform(get("/api/v1/documents/" + protocol.getId() + "/view")
@@ -108,6 +110,8 @@ class DocumentSecurityTest {
         protocol.setTitle("Test Protocol");
         protocol.setDocType("PROTOCOL");
         protocol.setFilePath("test_protocol.pdf");
+        protocol.setAuthorOrganization("Test Org");
+        protocol.setPublicationYear(2023);
         protocol = documentRepository.save(protocol);
 
         java.nio.file.Path testFilePath = java.nio.file.Paths.get("data/docs/uploads").resolve("test_protocol.pdf");
