@@ -32,11 +32,15 @@ public class RuntimeContractFeatureTest {
 
         // Setup test data
         Feature valuelessFeature = new Feature("feat-1", "proj-a", "orig-1", null, true);
+        Feature childFeature = new Feature("feat-1-child", "proj-a", "feat-1", null, false);
+        Feature grandchildFeature = new Feature("feat-1-grandchild", "proj-a", "feat-1-child", null, false);
         Feature validFeature = new Feature("feat-2", "proj-a", "orig-2", null, false);
         Feature alreadyDismissed = new Feature("feat-3", "proj-a", "orig-3", OffsetDateTime.now(), true);
         Feature otherProjectFeature = new Feature("feat-4", "proj-b", "orig-4", null, true);
 
         featureRepository.save(valuelessFeature);
+        featureRepository.save(childFeature);
+        featureRepository.save(grandchildFeature);
         featureRepository.save(validFeature);
         featureRepository.save(alreadyDismissed);
         featureRepository.save(otherProjectFeature);
@@ -51,11 +55,17 @@ public class RuntimeContractFeatureTest {
         int updated = featureService.deleteValuelessEpicsForProject(projectId);
 
         // Then it sets dismissedAt instead of deleting the row
-        assertEquals(1, updated, "Should update exactly 1 valueless feature for the project");
+        assertEquals(3, updated, "Should update exactly 3 features for the project");
 
         Feature updatedFeature = featureRepository.findById("feat-1").orElseThrow();
         assertNotNull(updatedFeature.getDismissedAt(), "dismissedAt should be set");
         assertTrue(updatedFeature.isValueless());
+
+        Feature updatedChild = featureRepository.findById("feat-1-child").orElseThrow();
+        assertNotNull(updatedChild.getDismissedAt(), "child dismissedAt should be set");
+
+        Feature updatedGrandchild = featureRepository.findById("feat-1-grandchild").orElseThrow();
+        assertNotNull(updatedGrandchild.getDismissedAt(), "grandchild dismissedAt should be set");
 
         Feature unupdatedFeature = featureRepository.findById("feat-2").orElseThrow();
         assertNull(unupdatedFeature.getDismissedAt(), "valid feature should not be dismissed");

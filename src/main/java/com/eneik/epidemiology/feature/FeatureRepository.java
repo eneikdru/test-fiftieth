@@ -13,7 +13,14 @@ import java.util.List;
 public interface FeatureRepository extends JpaRepository<Feature, String> {
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
-    @Query("UPDATE Feature f SET f.dismissedAt = :dismissedAt WHERE f.projectId = :projectId AND f.valueless = true AND f.dismissedAt IS NULL")
+    @Query(value = "WITH RECURSIVE cascade_features AS (" +
+            "SELECT id FROM features WHERE project_id = :projectId AND valueless = true AND dismissed_at IS NULL " +
+            "UNION ALL " +
+            "SELECT f.id FROM features f " +
+            "INNER JOIN cascade_features cf ON f.origin_feature_id = cf.id " +
+            "WHERE f.dismissed_at IS NULL) " +
+            "UPDATE features SET dismissed_at = :dismissedAt WHERE id IN (SELECT id FROM cascade_features)",
+            nativeQuery = true)
     int softDeleteValuelessEpics(@Param("projectId") String projectId, @Param("dismissedAt") OffsetDateTime dismissedAt);
 
     List<Feature> findByProjectIdAndDismissedAtIsNull(String projectId);
