@@ -45,6 +45,9 @@ class PrivacyServiceTest {
     private DossierReportRepository dossierReportRepository;
 
     @Autowired
+    private DataErasureTokenRepository erasureTokenRepository;
+
+    @Autowired
     private ObjectMapper objectMapper;
 
     private PrivacyService privacyService;
@@ -55,11 +58,13 @@ class PrivacyServiceTest {
         privacyService = new PrivacyService(
             exportJobRepository,
             erasureJobRepository,
+            erasureTokenRepository,
             userRepository,
             employeeDocumentRepository,
             dossierReportRepository,
             objectMapper,
-            fixedClock
+            fixedClock,
+            new java.util.Random(42)
         );
     }
 
@@ -151,8 +156,8 @@ class PrivacyServiceTest {
         DossierReport report = new DossierReport("erasure_target", "MONTHLY_SUMMARY", "GENERATED", "Monthly report", 1, "/api/v1/dossier/download/2");
         dossierReportRepository.save(report);
 
-        String token = "CONFIRM_ERASURE_erasure_target";
-        DataErasureJob job = privacyService.initiateDataErasure("erasure_target", token, "152-FZ", "ALL_PERSONAL_DATA");
+        DataErasureToken tokenEntity = privacyService.generateErasureToken("erasure_target");
+        DataErasureJob job = privacyService.initiateDataErasure("erasure_target", tokenEntity.getToken(), "152-FZ", "ALL_PERSONAL_DATA");
 
         assertNotNull(job);
         assertEquals("COMPLETED", job.getStatus());
@@ -177,5 +182,79 @@ class PrivacyServiceTest {
         assertThrows(PrivacyService.PrivacyBadRequestException.class, () ->
             privacyService.initiateDataErasure("erasure_invalid_token", "WRONG_TOKEN", "Reason", "ALL_PERSONAL_DATA")
         );
+    }
+
+    @Test
+    @DisplayName("Given a user requesting erasure, When generateErasureToken is called, Then a secure random token is generated, stored, and verified successfully upon erasure")
+    void testGenerateAndVerifyCryptographicErasureTokenSuccess() {
+        User user = new User("crypto_erasure_target", "hash999", "RESEARCHER", "target@epid.org", "Петров Петр");
+        userRepository.save(user);
+
+        DataErasureToken tokenEntity = privacyService.generateErasureToken("crypto_erasure_target");
+        assertNotNull(tokenEntity);
+        assertNotNull(tokenEntity.getToken());
+        assertTrue(tokenEntity.getToken().startsWith("ERASURE_TOK_"));
+        assertFalse(tokenEntity.getUsed());
+
+        DataErasureJob job = privacyService.initiateDataErasure("crypto_erasure_target", tokenEntity.getToken(), "Legal request", "ALL_PERSONAL_DATA");
+        assertNotNull(job);
+        assertEquals("COMPLETED", job.getStatus());
+
+        Optional<DataErasureToken> updatedTokenOpt = erasureTokenRepository.findByToken(tokenEntity.getToken());
+        assertTrue(updatedTokenOpt.isPresent());
+        assertTrue(updatedTokenOpt.get().getUsed(), "Token must be marked as used in database after verification");
+    }
+
+    @Test
+    @DisplayName("Given a used cryptographic erasure token, When used again for erasure, Then bad request exception is thrown")
+    void testCryptographicErasureTokenReusedFails() {
+        User user = new User("reused_token_user", "hash101", "RESEARCHER");
+        userRepository.save(user);
+
+        DataErasureToken tokenEntity = privacyService.generateErasureToken("reused_token_user");
+        tokenEntity.setUsed(true);
+        erasureTokenRepository.saveAndFlush(tokenEntity);
+
+        PrivacyService.PrivacyBadRequestException ex = assertThrows(
+            PrivacyService.PrivacyBadRequestException.class,
+            () -> privacyService.initiateDataErasure("reused_token_user", tokenEntity.getToken(), "Reason", "ALL_PERSONAL_DATA")
+        );
+        assertEquals("INVALID_CONFIRMATION_TOKEN", ex.getErrorCode());
+        assertEquals("Токен подтверждения уже был использован.", ex.getMessage());
+    }
+
+    @Test
+    @DisplayName("Given an expired cryptographic erasure token, When submitted for erasure, Then bad request exception is thrown")
+    void testCryptographicErasureTokenExpiredFails() {
+        User user = new User("expired_token_user", "hash102", "RESEARCHER");
+        userRepository.save(user);
+
+        DataErasureToken tokenEntity = privacyService.generateErasureToken("expired_token_user");
+        tokenEntity.setExpiresAt(java.time.OffsetDateTime.now(fixedClock).minusHours(1));
+        erasureTokenRepository.saveAndFlush(tokenEntity);
+
+        PrivacyService.PrivacyBadRequestException ex = assertThrows(
+            PrivacyService.PrivacyBadRequestException.class,
+            () -> privacyService.initiateDataErasure("expired_token_user", tokenEntity.getToken(), "Reason", "ALL_PERSONAL_DATA")
+        );
+        assertEquals("INVALID_CONFIRMATION_TOKEN", ex.getErrorCode());
+        assertEquals("Срок действия токена подтверждения истек.", ex.getMessage());
+    }
+
+    @Test
+    @DisplayName("Given a cryptographic erasure token for User A, When submitted by User B, Then bad request exception is thrown")
+    void testCryptographicErasureTokenWrongSubjectFails() {
+        User userA = new User("user_a", "hashA", "RESEARCHER");
+        User userB = new User("user_b", "hashB", "RESEARCHER");
+        userRepository.save(userA);
+        userRepository.save(userB);
+
+        DataErasureToken tokenEntity = privacyService.generateErasureToken("user_a");
+
+        PrivacyService.PrivacyBadRequestException ex = assertThrows(
+            PrivacyService.PrivacyBadRequestException.class,
+            () -> privacyService.initiateDataErasure("user_b", tokenEntity.getToken(), "Reason", "ALL_PERSONAL_DATA")
+        );
+        assertEquals("INVALID_CONFIRMATION_TOKEN", ex.getErrorCode());
     }
 }

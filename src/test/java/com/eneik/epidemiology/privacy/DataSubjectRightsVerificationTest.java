@@ -56,6 +56,9 @@ class DataSubjectRightsVerificationTest {
     private DossierReportRepository dossierReportRepository;
 
     @Autowired
+    private DataErasureTokenRepository erasureTokenRepository;
+
+    @Autowired
     private ObjectMapper objectMapper;
 
     @Autowired
@@ -72,11 +75,13 @@ class DataSubjectRightsVerificationTest {
         privacyService = new PrivacyService(
             exportJobRepository,
             erasureJobRepository,
+            erasureTokenRepository,
             userRepository,
             employeeDocumentRepository,
             dossierReportRepository,
             objectMapper,
-            fixedClock
+            fixedClock,
+            new java.util.Random(100)
         );
     }
 
@@ -230,8 +235,8 @@ class DataSubjectRightsVerificationTest {
         assertEquals(1, employeeDocumentRepository.findByEmployeeIdOrderByDocDateDesc("rights_erasure_user").size());
 
         // Perform erasure
-        String confirmationToken = "CONFIRM_ERASURE_rights_erasure_user";
-        DataErasureJob job = privacyService.initiateDataErasure("rights_erasure_user", confirmationToken, "152-FZ Withdrawal", "ALL_PERSONAL_DATA");
+        DataErasureToken tokenEntity = privacyService.generateErasureToken("rights_erasure_user");
+        DataErasureJob job = privacyService.initiateDataErasure("rights_erasure_user", tokenEntity.getToken(), "152-FZ Withdrawal", "ALL_PERSONAL_DATA");
 
         assertEquals("COMPLETED", job.getStatus());
         assertEquals(2, job.getRecordsErasedCount()); // 1 user + 1 document

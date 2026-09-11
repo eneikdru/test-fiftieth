@@ -48,6 +48,19 @@ public class PrivacyController {
         return new ResponseEntity<>(downloadData.bytes(), headers, HttpStatus.OK);
     }
 
+    @PostMapping("/erasure-tokens")
+    public ResponseEntity<?> createDataErasureToken(@RequestBody Map<String, Object> body) {
+        String subjectId = (String) body.get("subject_id");
+        DataErasureToken erasureToken = privacyService.generateErasureToken(subjectId);
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("subject_id", erasureToken.getSubjectId());
+        response.put("token", erasureToken.getToken());
+        response.put("created_at", erasureToken.getCreatedAt() != null ? erasureToken.getCreatedAt().toString() : null);
+        response.put("expires_at", erasureToken.getExpiresAt() != null ? erasureToken.getExpiresAt().toString() : null);
+        response.put("message", "Токен подтверждения удаления персональных данных успешно сгенерирован и отправлен на ваш электронный адрес.");
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
     @PostMapping("/erasure-requests")
     public ResponseEntity<?> createDataErasureRequest(@RequestBody Map<String, Object> body) {
         String subjectId = (String) body.get("subject_id");

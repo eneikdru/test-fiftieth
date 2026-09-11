@@ -7,12 +7,15 @@ import com.eneik.epidemiology.document.EmployeeDocumentRepository;
 import com.eneik.epidemiology.user.User;
 import com.eneik.epidemiology.user.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
+import java.security.SecureRandom;
 import java.time.Clock;
 import java.time.OffsetDateTime;
 import java.util.*;
@@ -22,24 +25,29 @@ import java.util.zip.ZipOutputStream;
 @Service
 public class PrivacyService {
 
+    private static final Logger log = LoggerFactory.getLogger(PrivacyService.class);
+
     private final DataExportJobRepository exportJobRepository;
     private final DataErasureJobRepository erasureJobRepository;
+    private final DataErasureTokenRepository erasureTokenRepository;
     private final UserRepository userRepository;
     private final EmployeeDocumentRepository employeeDocumentRepository;
     private final DossierReportRepository dossierReportRepository;
     private final ObjectMapper objectMapper;
     private final Clock clock;
+    private final Random random;
 
     @Autowired
     public PrivacyService(
         DataExportJobRepository exportJobRepository,
         DataErasureJobRepository erasureJobRepository,
+        DataErasureTokenRepository erasureTokenRepository,
         UserRepository userRepository,
         EmployeeDocumentRepository employeeDocumentRepository,
         DossierReportRepository dossierReportRepository,
         ObjectMapper objectMapper
     ) {
-        this(exportJobRepository, erasureJobRepository, userRepository, employeeDocumentRepository, dossierReportRepository, objectMapper, Clock.systemUTC());
+        this(exportJobRepository, erasureJobRepository, erasureTokenRepository, userRepository, employeeDocumentRepository, dossierReportRepository, objectMapper, Clock.systemUTC(), new SecureRandom());
     }
 
     public PrivacyService(
@@ -49,7 +57,7 @@ public class PrivacyService {
         ObjectMapper objectMapper,
         Clock clock
     ) {
-        this(exportJobRepository, erasureJobRepository, userRepository, null, null, objectMapper, clock);
+        this(exportJobRepository, erasureJobRepository, null, userRepository, null, null, objectMapper, clock, new SecureRandom());
     }
 
     public PrivacyService(
@@ -61,13 +69,29 @@ public class PrivacyService {
         ObjectMapper objectMapper,
         Clock clock
     ) {
+        this(exportJobRepository, erasureJobRepository, null, userRepository, employeeDocumentRepository, dossierReportRepository, objectMapper, clock, new SecureRandom());
+    }
+
+    public PrivacyService(
+        DataExportJobRepository exportJobRepository,
+        DataErasureJobRepository erasureJobRepository,
+        DataErasureTokenRepository erasureTokenRepository,
+        UserRepository userRepository,
+        EmployeeDocumentRepository employeeDocumentRepository,
+        DossierReportRepository dossierReportRepository,
+        ObjectMapper objectMapper,
+        Clock clock,
+        Random random
+    ) {
         this.exportJobRepository = exportJobRepository;
         this.erasureJobRepository = erasureJobRepository;
+        this.erasureTokenRepository = erasureTokenRepository;
         this.userRepository = userRepository;
         this.employeeDocumentRepository = employeeDocumentRepository;
         this.dossierReportRepository = dossierReportRepository;
         this.objectMapper = objectMapper;
         this.clock = clock;
+        this.random = random != null ? random : new SecureRandom();
     }
 
     @Transactional
@@ -230,7 +254,7 @@ public class PrivacyService {
     }
 
     @Transactional
-    public DataErasureJob initiateDataErasure(String subjectId, String confirmationToken, String reason, String scope) {
+    public DataErasureToken generateErasureToken(String subjectId) {
         if (subjectId == null || subjectId.isBlank()) {
             throw new PrivacyException("INVALID_SUBJECT_ID", "Идентификатор субъекта данных не может быть пустым.");
         }
@@ -238,10 +262,65 @@ public class PrivacyService {
         User user = findSubjectUser(subjectId)
             .orElseThrow(() -> new PrivacyNotFoundException("SUBJECT_NOT_FOUND", "Пользователь с указанным идентификатором не найден."));
 
-        String expectedToken = "CONFIRM_ERASURE_" + subjectId;
-        String expectedTokenByUsername = "CONFIRM_ERASURE_" + user.getUsername();
-        if (confirmationToken == null || (!confirmationToken.equals(expectedToken) && !confirmationToken.equals(expectedTokenByUsername))) {
+        byte[] randomBytes = new byte[16];
+        random.nextBytes(randomBytes);
+        String tokenValue = "ERASURE_TOK_" + bytesToHex(randomBytes);
+
+        OffsetDateTime now = OffsetDateTime.now(clock);
+        OffsetDateTime expiresAt = now.plusHours(24);
+
+        DataErasureToken erasureToken = new DataErasureToken();
+        erasureToken.setSubjectId(user.getUsername());
+        erasureToken.setToken(tokenValue);
+        erasureToken.setCreatedAt(now);
+        erasureToken.setExpiresAt(expiresAt);
+        erasureToken.setUsed(false);
+
+        DataErasureToken savedToken = erasureToken;
+        if (erasureTokenRepository != null) {
+            savedToken = erasureTokenRepository.save(erasureToken);
+        }
+
+        log.info("[OUTBOUND NOTIFICATION CHANNEL] Sent erasure token '{}' to user '{}' at email '{}'", tokenValue, user.getUsername(), user.getEmail());
+
+        return savedToken;
+    }
+
+    @Transactional
+    public DataErasureJob initiateDataErasure(String subjectId, String confirmationToken, String reason, String scope) {
+        if (subjectId == null || subjectId.isBlank()) {
+            throw new PrivacyException("INVALID_SUBJECT_ID", "Идентификатор субъекта данных не может быть пустым.");
+        }
+
+        if (confirmationToken == null || confirmationToken.isBlank()) {
             throw new PrivacyBadRequestException("INVALID_CONFIRMATION_TOKEN", "Неверный токен подтверждения удаления данных.");
+        }
+
+        User user = findSubjectUser(subjectId)
+            .orElseThrow(() -> new PrivacyNotFoundException("SUBJECT_NOT_FOUND", "Пользователь с указанным идентификатором не найден."));
+
+        if (erasureTokenRepository == null) {
+            throw new PrivacyBadRequestException("INVALID_CONFIRMATION_TOKEN", "Неверный токен подтверждения удаления данных.");
+        }
+
+        Optional<DataErasureToken> tokenOpt = erasureTokenRepository.findByToken(confirmationToken);
+        if (tokenOpt.isEmpty()) {
+            throw new PrivacyBadRequestException("INVALID_CONFIRMATION_TOKEN", "Неверный токен подтверждения удаления данных.");
+        }
+
+        DataErasureToken tokenEntity = tokenOpt.get();
+        if (!tokenEntity.getSubjectId().equals(user.getUsername()) && !tokenEntity.getSubjectId().equals(subjectId)) {
+            throw new PrivacyBadRequestException("INVALID_CONFIRMATION_TOKEN", "Неверный токен подтверждения удаления данных.");
+        }
+        if (Boolean.TRUE.equals(tokenEntity.getUsed())) {
+            throw new PrivacyBadRequestException("INVALID_CONFIRMATION_TOKEN", "Токен подтверждения уже был использован.");
+        }
+        if (tokenEntity.getExpiresAt().isBefore(OffsetDateTime.now(clock))) {
+            throw new PrivacyBadRequestException("INVALID_CONFIRMATION_TOKEN", "Срок действия токена подтверждения истек.");
+        }
+        int updated = erasureTokenRepository.markTokenAsUsed(tokenEntity.getId());
+        if (updated == 0) {
+            throw new PrivacyBadRequestException("INVALID_CONFIRMATION_TOKEN", "Токен подтверждения уже был использован или заблокирован.");
         }
 
         List<DataErasureJob> activeJobs = erasureJobRepository.findBySubjectIdAndStatusIn(
@@ -295,14 +374,14 @@ public class PrivacyService {
         job.setRecordsErasedCount(totalErased);
         job.setCompletedAt(completedAt);
 
-        int updated = erasureJobRepository.updateStatusToCompleted(
+        int jobUpdated = erasureJobRepository.updateStatusToCompleted(
             job.getRequestId(),
             "PENDING",
             "COMPLETED",
             totalErased,
             completedAt
         );
-        if (updated == 0) {
+        if (jobUpdated == 0) {
             throw new PrivacyConflictException("STATE_CONFLICT", "Не удалось завершить удаление данных из-за конфликта статуса.");
         }
 
@@ -325,6 +404,14 @@ public class PrivacyService {
         } catch (NumberFormatException ignored) {
         }
         return userRepository.findByUsername(subjectId);
+    }
+
+    private static String bytesToHex(byte[] bytes) {
+        StringBuilder sb = new StringBuilder();
+        for (byte b : bytes) {
+            sb.append(String.format("%02x", b));
+        }
+        return sb.toString();
     }
 
     public record DownloadData(byte[] bytes, String mediaType) {}

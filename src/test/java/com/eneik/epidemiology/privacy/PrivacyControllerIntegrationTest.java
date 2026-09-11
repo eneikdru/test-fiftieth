@@ -69,9 +69,20 @@ class PrivacyControllerIntegrationTest {
     @Test
     @DisplayName("Given valid erasure request, When POST /api/v1/privacy/erasure-requests, Then 202 Accepted and user permanently deleted")
     void testCreateDataErasureRequest() throws Exception {
+        Map<String, Object> tokenReq = Map.of("subject_id", "privacy_api_user");
+        String responseBody = mockMvc.perform(post("/api/v1/privacy/erasure-tokens")
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(tokenReq)))
+            .andExpect(status().isCreated())
+            .andReturn().getResponse().getContentAsString();
+
+        Map<?, ?> resMap = objectMapper.readValue(responseBody, Map.class);
+        String generatedToken = (String) resMap.get("token");
+
         Map<String, Object> req = Map.of(
             "subject_id", "privacy_api_user",
-            "confirmation_token", "CONFIRM_ERASURE_privacy_api_user",
+            "confirmation_token", generatedToken,
             "reason", "152-FZ Consent Withdrawal",
             "erasure_scope", "ALL_PERSONAL_DATA"
         );
@@ -103,5 +114,38 @@ class PrivacyControllerIntegrationTest {
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.error_code").value("INVALID_CONFIRMATION_TOKEN"))
             .andExpect(jsonPath("$.message").value("Неверный токен подтверждения удаления данных."));
+    }
+
+    @Test
+    @DisplayName("Given user requesting erasure token, When POST /api/v1/privacy/erasure-tokens, Then token is generated and returned, and can be used for erasure")
+    void testCreateDataErasureTokenAndErasureFlow() throws Exception {
+        Map<String, Object> tokenReq = Map.of("subject_id", "privacy_api_user");
+
+        String responseBody = mockMvc.perform(post("/api/v1/privacy/erasure-tokens")
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(tokenReq)))
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.subject_id").value("privacy_api_user"))
+            .andExpect(jsonPath("$.token").exists())
+            .andExpect(jsonPath("$.message").value("Токен подтверждения удаления персональных данных успешно сгенерирован и отправлен на ваш электронный адрес."))
+            .andReturn().getResponse().getContentAsString();
+
+        Map<?, ?> resMap = objectMapper.readValue(responseBody, Map.class);
+        String generatedToken = (String) resMap.get("token");
+
+        Map<String, Object> erasureReq = Map.of(
+            "subject_id", "privacy_api_user",
+            "confirmation_token", generatedToken,
+            "reason", "152-FZ Consent Withdrawal",
+            "erasure_scope", "ALL_PERSONAL_DATA"
+        );
+
+        mockMvc.perform(post("/api/v1/privacy/erasure-requests")
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(erasureReq)))
+            .andExpect(status().isAccepted())
+            .andExpect(jsonPath("$.status").value("COMPLETED"));
     }
 }
