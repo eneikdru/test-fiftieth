@@ -26,7 +26,7 @@
   $: postPercentage = Math.min(100, Math.round((postConsolidationTaps / preTaps) * 80));
 </script>
 
-<div class="telemetry-dashboard space-y-6">
+<div class="telemetry-dashboard space-y-6" role="region" aria-label="Панель телеметрии">
   <!-- Summary Header -->
   <div class="flex items-center justify-between border-b border-[#e0e3e5] pb-3">
     <div>
@@ -45,10 +45,16 @@
   <!-- Bento Grid: Telemetry Metric Cards -->
   <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
     <!-- Metric Card 1: Click Distance -->
-    <div id="telemetry-card-click-distance" class="bg-white border border-[#e0e3e5] rounded-xl p-4 flex flex-col justify-between shadow-sm relative overflow-hidden group hover:shadow-md transition-shadow">
+    <div
+      id="telemetry-card-click-distance"
+      tabindex="0"
+      role="region"
+      aria-label="Средняя дистанция кликов"
+      class="bg-white border border-[#e0e3e5] rounded-xl p-4 flex flex-col justify-between shadow-sm relative overflow-hidden group hover:shadow-md transition-shadow focus:outline-none focus:ring-2 focus:ring-[#003f87]"
+    >
       <div class="flex justify-between items-start">
         <span class="text-xs font-semibold text-[#424752] uppercase tracking-wider">Средняя дистанция кликов</span>
-        <span class="text-base">👆</span>
+        <span class="text-base" aria-hidden="true">👆</span>
       </div>
       <div class="mt-3">
         <div class="text-3xl font-bold text-[#191c1e] font-mono tracking-tight" id="metric-click-distance-value">
@@ -57,7 +63,7 @@
       </div>
       <div class="flex items-center gap-1.5 mt-4 pt-2 border-t border-[#f2f4f6]">
         <span class="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 text-xs px-2 py-0.5 rounded-full font-medium">
-          <span>↓</span>
+          <span aria-hidden="true">↓</span>
           <span>-24% улучшение</span>
         </span>
         <span class="text-[11px] text-[#727784] ml-auto">По сравнению с до-консолидацией</span>
@@ -65,10 +71,16 @@
     </div>
 
     <!-- Metric Card 2: Tab Load Success -->
-    <div id="telemetry-card-tab-load" class="bg-white border border-[#e0e3e5] rounded-xl p-4 flex flex-col justify-between shadow-sm relative overflow-hidden hover:shadow-md transition-shadow">
+    <div
+      id="telemetry-card-tab-load"
+      tabindex="0"
+      role="region"
+      aria-label="Успешность загрузки вкладок"
+      class="bg-white border border-[#e0e3e5] rounded-xl p-4 flex flex-col justify-between shadow-sm relative overflow-hidden hover:shadow-md transition-shadow focus:outline-none focus:ring-2 focus:ring-[#003f87]"
+    >
       <div class="flex justify-between items-start">
         <span class="text-xs font-semibold text-[#424752] uppercase tracking-wider">Успешность загрузки вкладок</span>
-        <span class="text-base">⚡</span>
+        <span class="text-base" aria-hidden="true">⚡</span>
       </div>
       <div class="mt-3">
         <div class="text-3xl font-bold text-[#191c1e] font-mono tracking-tight" id="metric-tab-load-success-value">
@@ -77,7 +89,7 @@
       </div>
       <div class="flex items-center gap-1.5 mt-4 pt-2 border-t border-[#f2f4f6]">
         <span class="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 text-xs px-2 py-0.5 rounded-full font-medium">
-          <span>↑</span>
+          <span aria-hidden="true">↑</span>
           <span>100% норма</span>
         </span>
         <span class="text-[11px] text-[#727784] ml-auto">Успешно: {telemetry.successfulLoads} / Сбоев: {telemetry.failedLoads}</span>
@@ -121,11 +133,11 @@
       <span>Журнал переходов и загрузок</span>
       <span class="text-xs font-normal text-[#727784]">Всего записей: {telemetry.activities.length}</span>
     </h3>
-    <div class="bg-white border border-[#e0e3e5] rounded-xl overflow-hidden divide-y divide-[#e0e3e5]">
+    <div class="bg-white border border-[#e0e3e5] rounded-xl overflow-hidden divide-y divide-[#e0e3e5]" role="list" aria-label="Записи активности телеметрии">
       {#each telemetry.activities as activity}
-        <div class="p-3.5 flex items-center justify-between hover:bg-[#f7f9fb] transition-colors">
+        <div class="p-3.5 flex items-center justify-between hover:bg-[#f7f9fb] transition-colors focus:outline-none focus:ring-2 focus:ring-[#003f87]" role="listitem" tabindex="0">
           <div class="flex items-center gap-3">
-            <div class="w-8 h-8 rounded-full bg-[#d3e4fe] text-[#003f87] flex items-center justify-center font-bold text-xs">
+            <div class="w-8 h-8 rounded-full bg-[#d3e4fe] text-[#003f87] flex items-center justify-center font-bold text-xs" aria-hidden="true">
               ✓
             </div>
             <div>
@@ -135,7 +147,7 @@
           </div>
           <div class="text-right">
             <div class="text-xs font-mono font-bold text-emerald-700 flex items-center gap-1 justify-end">
-              <span>●</span> {activity.latencyMs}мс
+              <span aria-hidden="true">●</span> {activity.latencyMs}мс
             </div>
             <div class="text-[11px] text-[#727784]">{activity.timestamp}</div>
           </div>
