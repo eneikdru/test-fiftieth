@@ -1,0 +1,367 @@
+openapi: 3.0.3
+info:
+  title: API Конфиденциальности и 152-ФЗ
+  description: Контракт API для обработки запросов субъектов персональных данных (экспорт и уничтожение данных).
+  version: 1.0.0
+servers:
+  - url: /api/v1
+    description: Основной сервер API
+
+paths:
+  /privacy/export-requests:
+    post:
+      summary: Инициализация выгрузки персональных данных
+      description: Создает запрос на формирование архива с персональными данными субъекта.
+      operationId: createDataExportRequest
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DataExportRequest'
+      responses:
+        '202':
+          description: Запрос на экспорт принят в обработку
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataExportJobResponse'
+        '400':
+          description: Некорректные параметры запроса
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Пользователь не авторизован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Доступ запрещен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /privacy/export-requests/{requestId}:
+    get:
+      summary: Проверка статуса выгрузки данных
+      description: Возвращает текущий статус выполнения задачи экспорта персональных данных.
+      operationId: getDataExportJobStatus
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: requestId
+          in: path
+          required: true
+          description: Уникальный идентификатор запроса экспорта
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Статус задачи экспорта
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataExportJobResponse'
+        '401':
+          description: Пользователь не авторизован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Запрос экспорта не найден
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /privacy/export-requests/{requestId}/download:
+    get:
+      summary: Скачивание сформированного архива данных
+      description: Предоставляет файл с выгруженными персональными данными субъекта.
+      operationId: downloadExportedData
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: requestId
+          in: path
+          required: true
+          description: Уникальный идентификатор выполненного запроса экспорта
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Архив персональных данных
+          content:
+            application/zip:
+              schema:
+                type: string
+                format: binary
+            application/json:
+              schema:
+                type: object
+        '401':
+          description: Пользователь не авторизован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Запрос или файл не найден
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /privacy/erasure-requests:
+    post:
+      summary: Инициализация удаления персональных данных
+      description: Создает запрос на удаление/обезличивание персональных данных субъекта согласно 152-ФЗ.
+      operationId: createDataErasureRequest
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DataErasureRequest'
+      responses:
+        '202':
+          description: Запрос на удаление данных принят в обработку
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataErasureJobResponse'
+        '400':
+          description: Неверный токен подтверждения или отсутствуют обязательные поля
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Пользователь не авторизован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Доступ запрещен (требуются административные права)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /privacy/erasure-requests/{requestId}:
+    get:
+      summary: Проверка статуса процесса удаления данных
+      description: Возвращает статус и параметры выполнения задачи удаления данных.
+      operationId: getDataErasureJobStatus
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: requestId
+          in: path
+          required: true
+          description: Уникальный идентификатор запроса удаления
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Статус задачи удаления данных
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataErasureJobResponse'
+        '401':
+          description: Пользователь не авторизован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Запрос удаления не найден
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    DataExportRequest:
+      type: object
+      required:
+        - subject_id
+      properties:
+        subject_id:
+          type: string
+          description: Идентификатор субъекта персональных данных
+          example: "usr_10203"
+        requested_format:
+          type: string
+          enum: [JSON, ZIP]
+          default: ZIP
+          description: Формат экспорта данных
+        notes:
+          type: string
+          nullable: true
+          description: Примечание или основание запроса
+
+    DataExportJobResponse:
+      type: object
+      required:
+        - request_id
+        - subject_id
+        - status
+        - created_at
+      properties:
+        request_id:
+          type: string
+          format: uuid
+          description: Идентификатор задачи экспорта
+          example: "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"
+        subject_id:
+          type: string
+          description: Идентификатор субъекта данных
+          example: "usr_10203"
+        status:
+          $ref: '#/components/schemas/JobStatus'
+        download_url:
+          type: string
+          nullable: true
+          description: Ссылка для скачивания при завершении задачи
+          example: "/api/v1/privacy/export-requests/a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11/download"
+        created_at:
+          type: string
+          format: date-time
+          description: Дата и время создания запроса
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Дата и время завершения
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Срок действия ссылки скачивания
+        error_details:
+          $ref: '#/components/schemas/ErrorDetails'
+
+    DataErasureRequest:
+      type: object
+      required:
+        - subject_id
+        - confirmation_token
+        - reason
+      properties:
+        subject_id:
+          type: string
+          description: Идентификатор субъекта данных
+          example: "usr_10203"
+        confirmation_token:
+          type: string
+          description: Токен подтверждения операции удаления
+          example: "CONFIRM_ERASURE_USR_10203"
+        reason:
+          type: string
+          description: Правовое основание (например, отзыв согласия согласно 152-ФЗ)
+          example: "Отозвано согласие на обработку персональных данных (152-ФЗ)"
+        erasure_scope:
+          type: string
+          enum: [ALL_PERSONAL_DATA, ANONYMIZE_ACTIVITY_LOGS_ONLY]
+          default: ALL_PERSONAL_DATA
+          description: Область стирания данных
+
+    DataErasureJobResponse:
+      type: object
+      required:
+        - request_id
+        - subject_id
+        - status
+        - created_at
+      properties:
+        request_id:
+          type: string
+          format: uuid
+          description: Идентификатор задачи удаления
+          example: "b1fec988-8b0a-4bf7-aa5c-5aa8ac270b22"
+        subject_id:
+          type: string
+          description: Идентификатор субъекта данных
+          example: "usr_10203"
+        status:
+          $ref: '#/components/schemas/JobStatus'
+        created_at:
+          type: string
+          format: date-time
+          description: Время запуска процедуры
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Время завершения процедуры
+        records_erased_count:
+          type: integer
+          nullable: true
+          description: Количество удаленных/обезличенных записей
+        error_details:
+          $ref: '#/components/schemas/ErrorDetails'
+
+    JobStatus:
+      type: string
+      enum:
+        - PENDING
+        - PROCESSING
+        - COMPLETED
+        - FAILED
+      description: Статус фоновой задачи обработки персональных данных
+
+    ErrorDetails:
+      type: object
+      nullable: true
+      properties:
+        code:
+          type: string
+          example: "STORAGE_UNAVAILABLE"
+        message:
+          type: string
+          example: "Ошибка хранилища при обработке данных."
+
+    ErrorResponse:
+      type: object
+      required:
+        - error_code
+        - message
+        - timestamp
+      properties:
+        error_code:
+          type: string
+          description: Машинно-читаемый код ошибки
+          example: "INVALID_CONFIRMATION_TOKEN"
+        message:
+          type: string
+          description: Описание ошибки на русском языке
+          example: "Неверный токен подтверждения удаления данных."
+        details:
+          type: object
+          additionalProperties: true
+          nullable: true
+        timestamp:
+          type: string
+          format: date-time
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

@@ -1,0 +1,343 @@
+openapi: 3.0.3
+info:
+  title: API Каталога Документов
+  description: Контракт API для каталога эпидемиологических документов и материалов.
+  version: 1.0.0
+servers:
+  - url: /api/v1
+    description: Основной сервер API
+
+paths:
+  /catalog/documents:
+    get:
+      summary: Поиск и фильтрация документов в каталоге
+      description: Возвращает список документов в каталоге с поддержкой полнотекстового поиска и фильтрации.
+      operationId: searchCatalogDocuments
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: q
+          in: query
+          description: Поисковый запрос
+          required: false
+          schema:
+            type: string
+        - name: author_organization
+          in: query
+          description: Организация-автор для фильтрации
+          required: false
+          schema:
+            type: string
+        - name: doc_type
+          in: query
+          description: Тип документа (например, PROTOCOL, REPORT)
+          required: false
+          schema:
+            type: string
+        - name: page
+          in: query
+          description: Номер страницы (начиная с 0)
+          required: false
+          schema:
+            type: integer
+            default: 0
+        - name: size
+          in: query
+          description: Размер страницы
+          required: false
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Успешный результат поиска в каталоге
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CatalogSearchResponse'
+        '400':
+          description: Некорректные параметры поиска
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Пользователь не авторизован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    post:
+      summary: Загрузка документа в каталог
+      description: Добавляет новый документ в каталог. Доступно администраторам.
+      operationId: uploadCatalogDocument
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CatalogItemUploadRequest'
+      responses:
+        '201':
+          description: Документ успешно добавлен в каталог
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CatalogItemResponse'
+        '400':
+          description: Некорректные данные или неподдерживаемый формат файла
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Пользователь не авторизован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Доступ запрещен (требуются права администратора)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /catalog/documents/{id}:
+    get:
+      summary: Получение детальной информации о документе
+      description: Возвращает карточку элемента каталога по идентификатору.
+      operationId: getCatalogDocumentById
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Идентификатор документа в каталоге
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Элемент каталога найден
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CatalogItemResponse'
+        '401':
+          description: Пользователь не авторизован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Документ не найден в каталоге
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      summary: Удаление документа из каталога
+      description: Удаляет документ из каталога по его идентификатору.
+      operationId: deleteCatalogDocument
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Идентификатор удаляемого документа
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: Документ успешно удален из каталога
+        '401':
+          description: Пользователь не авторизован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Доступ запрещен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Документ не найден
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /catalog/documents/{id}/download:
+    get:
+      summary: Скачивание файла документа из каталога
+      description: Предоставляет файл документа из каталога для скачивания.
+      operationId: downloadCatalogDocument
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Идентификатор документа
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Содержимое файла документа
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        '401':
+          description: Пользователь не авторизован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Документ не найден
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    CatalogItemResponse:
+      type: object
+      required:
+        - id
+        - title
+        - author_organization
+        - publication_year
+        - created_at
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: Уникальный идентификатор документа в каталоге
+          example: 101
+        title:
+          type: string
+          description: Название документа
+          example: "Протокол эпидемиологического надзора 2026"
+        doc_type:
+          type: string
+          description: Тип документа
+          example: "PROTOCOL"
+        author_organization:
+          type: string
+          description: Организация-автор
+          example: "НИИ Эпидемиологии"
+        publication_year:
+          type: integer
+          description: Год публикации
+          example: 2026
+        created_at:
+          type: string
+          format: date-time
+          description: Дата и время внесения в каталог
+        text_content:
+          type: string
+          nullable: true
+          description: Текстовое содержимое документа для индексации
+
+    CatalogSearchResponse:
+      type: object
+      required:
+        - items
+        - total_elements
+        - page
+        - size
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/CatalogItemResponse'
+        total_elements:
+          type: integer
+          format: int64
+          description: Общее количество найденных документов
+          example: 1
+        page:
+          type: integer
+          description: Текущий номер страницы
+          example: 0
+        size:
+          type: integer
+          description: Количество элементов на странице
+          example: 20
+
+    CatalogItemUploadRequest:
+      type: object
+      required:
+        - title
+        - author_organization
+        - publication_year
+        - file
+      properties:
+        title:
+          type: string
+          description: Название загружаемого документа
+          example: "Отчет по инфекционной заболеваемости"
+        author_organization:
+          type: string
+          description: Организация-автор
+          example: "Центр гигиены и эпидемиологии"
+        publication_year:
+          type: integer
+          description: Год публикации
+          example: 2026
+        doc_type:
+          type: string
+          description: Категория или тип документа
+          example: "REPORT"
+        file:
+          type: string
+          format: binary
+          description: Файл документа (PDF или офисный формат)
+
+    ErrorResponse:
+      type: object
+      required:
+        - error_code
+        - message
+        - timestamp
+      properties:
+        error_code:
+          type: string
+          description: Машинно-читаемый код ошибки
+          example: "CATALOG_ITEM_NOT_FOUND"
+        message:
+          type: string
+          description: Сообщение об ошибке на русском языке
+          example: "Запрашиваемый документ каталога не найден."
+        details:
+          type: object
+          additionalProperties: true
+          nullable: true
+        timestamp:
+          type: string
+          format: date-time
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
