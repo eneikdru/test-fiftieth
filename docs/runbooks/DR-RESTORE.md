@@ -13,7 +13,7 @@ Use the `restore.sh` script to perform the recovery against a fresh environment.
 ### Example Restore Command
 
 ```bash
-docker compose run --rm -e OFFSITE_BACKUP_DIR=/offsite_backups backup /usr/local/bin/restore.sh
+docker compose run --rm -e OFFSITE_BACKUP_DIR=/offsite_backups backup /bin/bash /scripts/restore.sh
 ```
 
 ## 3. Verify Restoration
