@@ -36,6 +36,9 @@ class PrivacyServiceTest {
     private DataErasureJobRepository erasureJobRepository;
 
     @Autowired
+    private DataErasureTokenRepository erasureTokenRepository;
+
+    @Autowired
     private UserRepository userRepository;
 
     @Autowired
@@ -55,6 +58,7 @@ class PrivacyServiceTest {
         privacyService = new PrivacyService(
             exportJobRepository,
             erasureJobRepository,
+            erasureTokenRepository,
             userRepository,
             employeeDocumentRepository,
             dossierReportRepository,
@@ -152,6 +156,14 @@ class PrivacyServiceTest {
         dossierReportRepository.save(report);
 
         String token = "CONFIRM_ERASURE_erasure_target";
+        DataErasureToken erasureToken = new DataErasureToken();
+        erasureToken.setSubjectId("erasure_target");
+        erasureToken.setToken(token);
+        erasureToken.setCreatedAt(java.time.OffsetDateTime.now(fixedClock));
+        erasureToken.setExpiresAt(java.time.OffsetDateTime.now(fixedClock).plusHours(24));
+        erasureToken.setUsed(false);
+        erasureTokenRepository.saveAndFlush(erasureToken);
+
         DataErasureJob job = privacyService.initiateDataErasure("erasure_target", token, "152-FZ", "ALL_PERSONAL_DATA");
 
         assertNotNull(job);

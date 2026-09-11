@@ -32,6 +32,9 @@ class PrivacyControllerIntegrationTest {
     private UserRepository userRepository;
 
     @Autowired
+    private DataErasureTokenRepository erasureTokenRepository;
+
+    @Autowired
     private JwtTokenProvider jwtTokenProvider;
 
     @Autowired
@@ -69,9 +72,18 @@ class PrivacyControllerIntegrationTest {
     @Test
     @DisplayName("Given valid erasure request, When POST /api/v1/privacy/erasure-requests, Then 202 Accepted and user permanently deleted")
     void testCreateDataErasureRequest() throws Exception {
+        String tokenVal = "CONFIRM_ERASURE_privacy_api_user";
+        DataErasureToken erasureToken = new DataErasureToken();
+        erasureToken.setSubjectId("privacy_api_user");
+        erasureToken.setToken(tokenVal);
+        erasureToken.setCreatedAt(java.time.OffsetDateTime.now());
+        erasureToken.setExpiresAt(java.time.OffsetDateTime.now().plusHours(24));
+        erasureToken.setUsed(false);
+        erasureTokenRepository.saveAndFlush(erasureToken);
+
         Map<String, Object> req = Map.of(
             "subject_id", "privacy_api_user",
-            "confirmation_token", "CONFIRM_ERASURE_privacy_api_user",
+            "confirmation_token", tokenVal,
             "reason", "152-FZ Consent Withdrawal",
             "erasure_scope", "ALL_PERSONAL_DATA"
         );

@@ -54,6 +54,7 @@ class SecureErasureConfirmationVerificationTest {
         privacyService = new PrivacyService(
             exportJobRepository,
             erasureJobRepository,
+            erasureTokenRepository,
             userRepository,
             employeeDocumentRepository,
             dossierReportRepository,
@@ -68,16 +69,16 @@ class SecureErasureConfirmationVerificationTest {
         User user = new User("deterministic_user", "pass123", "RESEARCHER");
         userRepository.save(user);
 
-        // Verification token that is NOT created in DataErasureTokenRepository, e.g., plain random string or arbitrary deterministic string
-        String randomDeterministicString = "CONFIRM_ERASURE_UNTRUSTED_DETERMINISTIC_STRING";
+        // Plain deterministic string constructed from prefix + subjectId without a stored DataErasureToken challenge
+        String deterministicToken = "CONFIRM_ERASURE_" + user.getUsername();
 
         PrivacyService.PrivacyBadRequestException exception = assertThrows(
             PrivacyService.PrivacyBadRequestException.class,
-            () -> privacyService.initiateDataErasure(user.getUsername(), randomDeterministicString, "Withdraw consent", "ALL_PERSONAL_DATA")
+            () -> privacyService.initiateDataErasure(user.getUsername(), deterministicToken, "Withdraw consent", "ALL_PERSONAL_DATA")
         );
 
         assertEquals("INVALID_CONFIRMATION_TOKEN", exception.getErrorCode());
-        assertTrue(userRepository.findByUsername("deterministic_user").isPresent(), "User should not be deleted when using invalid/untrusted token");
+        assertTrue(userRepository.findByUsername("deterministic_user").isPresent(), "User should not be deleted when using unstored deterministic token");
     }
 
     @Test
@@ -86,13 +87,23 @@ class SecureErasureConfirmationVerificationTest {
         User user = new User("secure_token_user", "pass123", "RESEARCHER");
         userRepository.save(user);
 
-        // Secure token is generated, stored in DB, and emailed/provided to user
-        String secureTokenString = "CONFIRM_ERASURE_" + user.getUsername();
+        // Secure challenge token is cryptographically generated, stored in privacy_erasure_tokens table
+        String secureTokenString = "SECURE_TOK_" + UUID.randomUUID();
+        DataErasureToken tokenEntity = new DataErasureToken();
+        tokenEntity.setSubjectId(user.getUsername());
+        tokenEntity.setToken(secureTokenString);
+        tokenEntity.setCreatedAt(OffsetDateTime.now(fixedClock));
+        tokenEntity.setExpiresAt(OffsetDateTime.now(fixedClock).plusHours(24));
+        tokenEntity.setUsed(false);
+        erasureTokenRepository.saveAndFlush(tokenEntity);
 
         DataErasureJob job = privacyService.initiateDataErasure(user.getUsername(), secureTokenString, "Withdraw consent", "ALL_PERSONAL_DATA");
 
         assertNotNull(job);
         assertEquals("COMPLETED", job.getStatus());
-        assertTrue(userRepository.findByUsername("secure_token_user").isEmpty(), "User should be permanently deleted after successful confirmation");
+        assertTrue(userRepository.findByUsername("secure_token_user").isEmpty(), "User should be permanently deleted after successful confirmation with secure token");
+
+        DataErasureToken usedToken = erasureTokenRepository.findByToken(secureTokenString).orElseThrow();
+        assertTrue(usedToken.getUsed(), "Token should be marked as used upon confirmation");
     }
 }

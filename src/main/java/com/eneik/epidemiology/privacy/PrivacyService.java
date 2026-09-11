@@ -24,6 +24,7 @@ public class PrivacyService {
 
     private final DataExportJobRepository exportJobRepository;
     private final DataErasureJobRepository erasureJobRepository;
+    private final DataErasureTokenRepository erasureTokenRepository;
     private final UserRepository userRepository;
     private final EmployeeDocumentRepository employeeDocumentRepository;
     private final DossierReportRepository dossierReportRepository;
@@ -34,12 +35,24 @@ public class PrivacyService {
     public PrivacyService(
         DataExportJobRepository exportJobRepository,
         DataErasureJobRepository erasureJobRepository,
+        DataErasureTokenRepository erasureTokenRepository,
         UserRepository userRepository,
         EmployeeDocumentRepository employeeDocumentRepository,
         DossierReportRepository dossierReportRepository,
         ObjectMapper objectMapper
     ) {
-        this(exportJobRepository, erasureJobRepository, userRepository, employeeDocumentRepository, dossierReportRepository, objectMapper, Clock.systemUTC());
+        this(exportJobRepository, erasureJobRepository, erasureTokenRepository, userRepository, employeeDocumentRepository, dossierReportRepository, objectMapper, Clock.systemUTC());
+    }
+
+    public PrivacyService(
+        DataExportJobRepository exportJobRepository,
+        DataErasureJobRepository erasureJobRepository,
+        UserRepository userRepository,
+        EmployeeDocumentRepository employeeDocumentRepository,
+        DossierReportRepository dossierReportRepository,
+        ObjectMapper objectMapper
+    ) {
+        this(exportJobRepository, erasureJobRepository, null, userRepository, employeeDocumentRepository, dossierReportRepository, objectMapper, Clock.systemUTC());
     }
 
     public PrivacyService(
@@ -49,12 +62,13 @@ public class PrivacyService {
         ObjectMapper objectMapper,
         Clock clock
     ) {
-        this(exportJobRepository, erasureJobRepository, userRepository, null, null, objectMapper, clock);
+        this(exportJobRepository, erasureJobRepository, null, userRepository, null, null, objectMapper, clock);
     }
 
     public PrivacyService(
         DataExportJobRepository exportJobRepository,
         DataErasureJobRepository erasureJobRepository,
+        DataErasureTokenRepository erasureTokenRepository,
         UserRepository userRepository,
         EmployeeDocumentRepository employeeDocumentRepository,
         DossierReportRepository dossierReportRepository,
@@ -63,6 +77,7 @@ public class PrivacyService {
     ) {
         this.exportJobRepository = exportJobRepository;
         this.erasureJobRepository = erasureJobRepository;
+        this.erasureTokenRepository = erasureTokenRepository;
         this.userRepository = userRepository;
         this.employeeDocumentRepository = employeeDocumentRepository;
         this.dossierReportRepository = dossierReportRepository;
@@ -238,9 +253,29 @@ public class PrivacyService {
         User user = findSubjectUser(subjectId)
             .orElseThrow(() -> new PrivacyNotFoundException("SUBJECT_NOT_FOUND", "Пользователь с указанным идентификатором не найден."));
 
-        String expectedToken = "CONFIRM_ERASURE_" + subjectId;
-        String expectedTokenByUsername = "CONFIRM_ERASURE_" + user.getUsername();
-        if (confirmationToken == null || (!confirmationToken.equals(expectedToken) && !confirmationToken.equals(expectedTokenByUsername))) {
+        if (confirmationToken == null || confirmationToken.isBlank()) {
+            throw new PrivacyBadRequestException("INVALID_CONFIRMATION_TOKEN", "Неверный токен подтверждения удаления данных.");
+        }
+
+        boolean validToken = false;
+        if (erasureTokenRepository != null) {
+            Optional<DataErasureToken> tokenOpt = erasureTokenRepository.findByToken(confirmationToken);
+            if (tokenOpt.isPresent()) {
+                DataErasureToken tokenEntity = tokenOpt.get();
+                boolean matchesSubject = user.getUsername().equals(tokenEntity.getSubjectId()) || subjectId.equals(tokenEntity.getSubjectId());
+                boolean notExpired = tokenEntity.getExpiresAt() != null && OffsetDateTime.now(clock).isBefore(tokenEntity.getExpiresAt());
+                boolean notUsed = !Boolean.TRUE.equals(tokenEntity.getUsed());
+
+                if (matchesSubject && notExpired && notUsed) {
+                    int updated = erasureTokenRepository.markTokenAsUsed(tokenEntity.getId());
+                    if (updated > 0) {
+                        validToken = true;
+                    }
+                }
+            }
+        }
+
+        if (!validToken) {
             throw new PrivacyBadRequestException("INVALID_CONFIRMATION_TOKEN", "Неверный токен подтверждения удаления данных.");
         }
 
