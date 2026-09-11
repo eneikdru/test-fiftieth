@@ -44,12 +44,7 @@
     }
 
     function generateReport() {
-        loading = true;
-        feedback = "";
-        setTimeout(() => {
-            loading = false;
-            feedback = "✓ Итоговая справка успешно сформирована.";
-        }, 1000);
+        // Disabled: backend capability missing
     }
 </script>
 
@@ -72,12 +67,8 @@
             {/each}
         </ul>
         <div class="report-section">
-            <button on:click={generateReport} id="generate-report-button" aria-label="Сформировать итоговую справку" disabled={loading}>
-                {#if loading}
-                    <span id="loading-spinner">Загрузка...</span>
-                {:else}
-                    Сформировать итоговую справку
-                {/if}
+            <button id="generate-report-button" aria-label="Сформировать итоговую справку" disabled={true} title="Генерация справок временно недоступна">
+                Сформировать итоговую справку (Недоступно)
             </button>
         </div>
         {#if feedback}
