@@ -1,0 +1,577 @@
+{
+  "epics": [
+    {
+      "existingEpicId": null,
+      "title": "Resolve Frontend Integration and Statutory Requirements",
+      "jtbd": "When the end customer accesses the application, I want a stable, self-contained frontend with a reachable imprint, so that the application loads reliably and complies with domain legal requirements.",
+      "kanoClass": "Must-Be",
+      "cynefinDomain": "complex",
+      "sixSigmaMetric": "frontend console error rate",
+      "tocConstraintRef": "frontend asset build process",
+      "sourceIndex": 0,
+      "requirements": [
+        "R1: Fix module resolution for ImprintModal.svelte in RegistrationForm.svelte.",
+        "R2: Install Tailwind CSS locally and build it as part of the frontend asset pipeline instead of using the CDN.",
+        "R3: Add a reachable Imprint (Impressum) link and modal/page to all entry points of the application, including the registration harness."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Fix Frontend Build and Statutory Links",
+          "roleTag": "BARCAN-TAG-11",
+          "jtbd": "When implementing the frontend fixes for this epic, I want to ensure local CSS compilation and proper module resolution, so that the application is self-contained and statutory links are reachable.",
+          "acceptanceCriteria": "Given a user visits the registration harness, When the page loads, Then no module resolution errors are thrown.\nGiven a user visits any entry point, When the page loads, Then the Tailwind CSS is loaded from a local build and no CDN warning appears.\nGiven a user is on the registration harness, When they look for statutory information, Then an Imprint link is reachable.\nGiven a user navigates via keyboard or assistive technology, When the interface is operated, Then it complies with WCAG 2.1 level AA standards.",
+          "leanValue": "essential",
+          "cynefinDomain": "complex",
+          "tocConstraintRef": "frontend asset build process",
+          "sixSigmaMetric": "frontend console error rate",
+          "hasUi": true,
+          "requirementRefs": [
+            "R1",
+            "R2",
+            "R3"
+          ]
+        },
+        {
+          "title": "QA Verification for Frontend Integration",
+          "roleTag": "BARCAN-TAG-06",
+          "jtbd": "When implementing tests for this epic, I want to verify that the frontend renders without errors and the imprint is reachable, so that regressions are caught automatically.",
+          "acceptanceCriteria": "Given a running application, When the end-to-end tests run, Then the registration page loads successfully.\nGiven a page load, When checking network requests, Then Tailwind CSS is served locally.\nGiven the application entry points, When the UI is navigated, Then the Imprint link is present and clickable.",
+          "leanValue": "essential",
+          "cynefinDomain": "complex",
+          "tocConstraintRef": "E2E test execution",
+          "sixSigmaMetric": "test pass rate",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1",
+            "R2",
+            "R3"
+          ]
+        }
+      ]
+    },
+    {
+      "existingEpicId": null,
+      "title": "User Consent Management for Tracking",
+      "jtbd": "When the product collects telemetry data, I want an opt-in consent mechanism, so that privacy compliance is maintained before non-essential scripts load.",
+      "kanoClass": "Must-Be",
+      "cynefinDomain": "clear",
+      "sixSigmaMetric": "consent platform integration success rate",
+      "tocConstraintRef": "third-party consent script loading",
+      "sourceIndex": 1,
+      "requirements": [
+        "R1: Implement an established consent platform to capture opt-in consent before any non-essential cookie or tracker loads.",
+        "R2: Ensure refusing is as easy as accepting, and the choice is recorded and revocable."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Consent Platform UI Integration",
+          "roleTag": "BARCAN-TAG-11",
+          "jtbd": "When integrating the consent platform for this epic, I want to implement the banner, so that users can make an informed choice.",
+          "acceptanceCriteria": "Given a new visitor, When the page loads, Then the consent platform banner appears before non-essential trackers load.\nGiven the banner, When the user interacts, Then rejecting is as easy as accepting and the choice is saved.\nGiven a user interacts via keyboard, When using the banner, Then it meets WCAG 2.1 level AA.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "frontend layout",
+          "sixSigmaMetric": "consent capture rate",
+          "hasUi": true,
+          "requirementRefs": [
+            "R1",
+            "R2"
+          ]
+        },
+        {
+          "title": "QA Verification for Consent Integration",
+          "roleTag": "BARCAN-TAG-06",
+          "jtbd": "When implementing tests for this epic, I want to verify that tracking is disabled until consent is granted, so that regulatory compliance is confirmed.",
+          "acceptanceCriteria": "Given a new visitor without consent, When the page loads, Then no tracking scripts are executed.\nGiven consent is granted, When navigating, Then telemetry scripts successfully load and fire.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "E2E test execution",
+          "sixSigmaMetric": "test pass rate",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1",
+            "R2"
+          ]
+        }
+      ]
+    },
+    {
+      "existingEpicId": null,
+      "title": "Implement Telemetry Ingestion and Rendering",
+      "jtbd": "When the end customer navigates the application, I want actual usage telemetry to be collected and displayed, so that real user activity is accurately represented.",
+      "kanoClass": "Must-Be",
+      "cynefinDomain": "complex",
+      "sixSigmaMetric": "telemetry ingestion success rate",
+      "tocConstraintRef": "telemetry backend endpoint",
+      "sourceIndex": 1,
+      "requirements": [
+        "R1: Implement a real TelemetryController in the backend to ingest and serve actual telemetry data.",
+        "R2: Wire the frontend NavigationTelemetry component to consume real data from the TelemetryController."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Telemetry Data Schema",
+          "roleTag": "BARCAN-TAG-08",
+          "jtbd": "When implementing the schema for telemetry, I want to model the database tables, so that telemetry data can be persisted and queried.",
+          "acceptanceCriteria": "Given telemetry data, When it arrives, Then it can be securely persisted.\nGiven a query for telemetry, When executed, Then data is retrieved efficiently.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "database schema migration",
+          "sixSigmaMetric": "schema deployment success rate",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1"
+          ]
+        },
+        {
+          "title": "Define Telemetry API Contract",
+          "roleTag": "BARCAN-TAG-12",
+          "jtbd": "When implementing the API contract for this epic, I want to define the telemetry payload structure, so that backend and frontend can develop in parallel.",
+          "acceptanceCriteria": "Given the need for telemetry, When the contract is defined, Then it specifies endpoints for ingestion and retrieval.\nGiven the contract, When a request is formed, Then the DTO shapes are explicitly documented.",
+          "leanValue": "essential",
+          "cynefinDomain": "complex",
+          "tocConstraintRef": "API contract finalization",
+          "sixSigmaMetric": "contract defect density",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1",
+            "R2"
+          ]
+        },
+        {
+          "title": "Backend Telemetry Controller",
+          "roleTag": "BARCAN-TAG-02",
+          "jtbd": "When implementing the backend for this epic, I want to create the TelemetryController, so that telemetry data can be ingested and served.",
+          "acceptanceCriteria": "Given valid telemetry data, When sent to the ingestion endpoint, Then it is processed and saved.\nGiven a request for telemetry, When querying the endpoint, Then the actual data is returned.",
+          "leanValue": "essential",
+          "cynefinDomain": "complex",
+          "tocConstraintRef": "telemetry backend endpoint",
+          "sixSigmaMetric": "telemetry ingestion success rate",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1"
+          ]
+        },
+        {
+          "title": "Frontend Telemetry Integration",
+          "roleTag": "BARCAN-TAG-11",
+          "jtbd": "When implementing the frontend for this epic, I want to wire the NavigationTelemetry component, so that it displays real data.",
+          "acceptanceCriteria": "Given the application is loaded, When the user interacts, Then telemetry events are sent to the backend.\nGiven the NavigationTelemetry component, When it renders, Then it fetches and displays real data from the backend.\nGiven the UI is accessed via keyboard, When navigated, Then focus states are visible and it complies with WCAG 2.1 level AA.",
+          "leanValue": "essential",
+          "cynefinDomain": "complex",
+          "tocConstraintRef": "telemetry frontend rendering",
+          "sixSigmaMetric": "telemetry display accuracy",
+          "hasUi": true,
+          "requirementRefs": [
+            "R2"
+          ]
+        },
+        {
+          "title": "QA Verification for Telemetry Integration",
+          "roleTag": "BARCAN-TAG-06",
+          "jtbd": "When implementing tests for this epic, I want to verify the end-to-end telemetry flow, so that data collection and rendering are guaranteed.",
+          "acceptanceCriteria": "Given a user session, When interactions occur, Then telemetry is successfully saved in the backend.\nGiven stored telemetry, When the frontend component loads, Then it correctly displays the retrieved data.",
+          "leanValue": "essential",
+          "cynefinDomain": "complex",
+          "tocConstraintRef": "E2E test execution",
+          "sixSigmaMetric": "test pass rate",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1",
+            "R2"
+          ]
+        }
+      ]
+    },
+    {
+      "existingEpicId": null,
+      "title": "Secure Data Erasure Confirmation",
+      "jtbd": "When a data subject requests erasure, I want the process to use secure cryptographic confirmation, so that arbitrary or unauthorized erasure is prevented.",
+      "kanoClass": "Must-Be",
+      "cynefinDomain": "complex",
+      "sixSigmaMetric": "cryptographic token generation error rate",
+      "tocConstraintRef": "token verification logic",
+      "sourceIndex": 2,
+      "requirements": [
+        "R1: Generate a secure, random confirmation token and store it securely in the database or cache.",
+        "R2: Email the token to the user and verify the provided token against the stored one during confirmation."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Data Schema for Confirmation Token",
+          "roleTag": "BARCAN-TAG-08",
+          "jtbd": "When implementing the token schema for this epic, I want to model the secure token storage, so that tokens can be persisted and retrieved for verification.",
+          "acceptanceCriteria": "Given a token generation event, When the data is saved, Then it is stored securely with an expiration timestamp.\nGiven a token verification attempt, When querying the database, Then the stored token is retrieved efficiently.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "database schema migration",
+          "sixSigmaMetric": "schema migration success rate",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1"
+          ]
+        },
+        {
+          "title": "Implement Cryptographic Token Verification",
+          "roleTag": "BARCAN-TAG-02",
+          "jtbd": "When implementing the backend for this epic, I want to replace deterministic string checks with secure token generation and verification, so that the erasure process is secure.",
+          "acceptanceCriteria": "Given a data erasure request, When initiated, Then a secure random token is generated and emailed to the user.\nGiven a token confirmation request, When verified against the stored token, Then it only succeeds if they match.",
+          "leanValue": "essential",
+          "cynefinDomain": "complex",
+          "tocConstraintRef": "token verification logic",
+          "sixSigmaMetric": "cryptographic token generation error rate",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1",
+            "R2"
+          ]
+        },
+        {
+          "title": "QA Verification for Secure Erasure Confirmation",
+          "roleTag": "BARCAN-TAG-06",
+          "jtbd": "When implementing tests for this epic, I want to verify that deterministic strings fail and secure tokens succeed, so that security guarantees are upheld.",
+          "acceptanceCriteria": "Given an erasure confirmation attempt, When using a deterministic string, Then the request is rejected.\nGiven a valid secure token, When submitted, Then the erasure is successfully confirmed.",
+          "leanValue": "essential",
+          "cynefinDomain": "complex",
+          "tocConstraintRef": "integration test execution",
+          "sixSigmaMetric": "test pass rate",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1",
+            "R2"
+          ]
+        }
+      ]
+    },
+    {
+      "existingEpicId": null,
+      "title": "Irreversible Account Hard-Delete Process",
+      "jtbd": "When a data subject deletes their account, I want the deletion to be an irreversible hard delete across all related records, so that the system complies with privacy promises.",
+      "kanoClass": "Must-Be",
+      "cynefinDomain": "complex",
+      "sixSigmaMetric": "orphaned personal data record count",
+      "tocConstraintRef": "database cascade delete process",
+      "sourceIndex": 3,
+      "requirements": [
+        "R1: Ensure that the account deletion process performs a full, irreversible hard delete of all related user data in the database."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Implement Hard Delete Cascading",
+          "roleTag": "BARCAN-TAG-02",
+          "jtbd": "When implementing the backend for this epic, I want to ensure the deleteUser method performs a full hard delete, so that no orphaned personal data remains.",
+          "acceptanceCriteria": "Given an account deletion request, When executed in the backend, Then the user record is hard-deleted from the database.\nGiven related user data in other tables, When the user is deleted, Then all associated records are also permanently removed.",
+          "leanValue": "essential",
+          "cynefinDomain": "complex",
+          "tocConstraintRef": "database cascade delete process",
+          "sixSigmaMetric": "orphaned personal data record count",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1"
+          ]
+        },
+        {
+          "title": "QA Verification for Hard Delete",
+          "roleTag": "BARCAN-TAG-06",
+          "jtbd": "When implementing tests for this epic, I want to verify that no residual data exists after deletion, so that privacy compliance is guaranteed.",
+          "acceptanceCriteria": "Given an existing user with related data, When the account is deleted, Then querying the database for the user returns no results.\nGiven the deleted user's ID, When querying related tables, Then no associated data is found.",
+          "leanValue": "essential",
+          "cynefinDomain": "complex",
+          "tocConstraintRef": "integration test execution",
+          "sixSigmaMetric": "test pass rate",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1"
+          ]
+        }
+      ]
+    },
+    {
+      "existingEpicId": null,
+      "title": "Cascade Soft-Deletes for Mereological Integrity",
+      "jtbd": "When a user dismisses an epic, I want all constituent parts to share the soft-delete lifecycle, so that orphaned child entities do not clutter the system.",
+      "kanoClass": "Performance",
+      "cynefinDomain": "complex",
+      "sixSigmaMetric": "orphaned active child entity rate",
+      "tocConstraintRef": "soft-delete cascade logic",
+      "sourceIndex": 4,
+      "requirements": [
+        "R1: Ensure that when an Epic is soft-deleted, all its constituent parts (Features, Stories, Tasks) are also appropriately marked as deleted."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Implement Soft-Delete Cascading",
+          "roleTag": "BARCAN-TAG-02",
+          "jtbd": "When implementing the backend for this epic, I want to cascade the dismissedAt timestamp to child entities, so that structural integrity is maintained.",
+          "acceptanceCriteria": "Given an epic is soft-deleted, When processed, Then all associated Features, Stories, and Tasks are updated with a soft-delete timestamp.\nGiven queries for active entities, When executed, Then soft-deleted child entities are excluded.",
+          "leanValue": "essential",
+          "cynefinDomain": "complex",
+          "tocConstraintRef": "soft-delete cascade logic",
+          "sixSigmaMetric": "orphaned active child entity rate",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1"
+          ]
+        },
+        {
+          "title": "QA Verification for Soft-Delete Cascading",
+          "roleTag": "BARCAN-TAG-06",
+          "jtbd": "When implementing tests for this epic, I want to verify that child entities reflect the epic's soft-delete status, so that mereological correctness is enforced.",
+          "acceptanceCriteria": "Given an epic with child entities, When the epic is soft-deleted, Then the child entities also appear as soft-deleted.\nGiven the soft-deleted epic, When restoring it (if applicable), Then child states are managed appropriately or remain deleted as defined.",
+          "leanValue": "essential",
+          "cynefinDomain": "complex",
+          "tocConstraintRef": "integration test execution",
+          "sixSigmaMetric": "test pass rate",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1"
+          ]
+        }
+      ]
+    },
+    {
+      "existingEpicId": null,
+      "title": "UI Contextual Help and Cognitive Offloading",
+      "jtbd": "When a user fills out complex forms, I want real-time validation and contextual help to be provided, so that cognitive load is reduced and errors are prevented.",
+      "kanoClass": "Performance",
+      "cynefinDomain": "complex",
+      "sixSigmaMetric": "form validation error rate",
+      "tocConstraintRef": "frontend form rendering",
+      "sourceIndex": 5,
+      "requirements": [
+        "R1: Add real-time validation markers to inputs in RegistrationForm and PrivacySettings.",
+        "R2: Add informative tooltips and persistent contextual help artifacts to form inputs."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Implement UI Contextual Help and Validation",
+          "roleTag": "BARCAN-TAG-11",
+          "jtbd": "When implementing the frontend for this epic, I want to add validation markers and tooltips, so that users receive immediate, helpful feedback.",
+          "acceptanceCriteria": "Given a user interacts with a form input, When the data is invalid, Then real-time validation markers immediately indicate the error.\nGiven a complex form field, When the user focuses on it, Then an informative tooltip provides contextual help.\nGiven the contextual help and forms, When navigated with a keyboard, Then all elements have visible focus and meet WCAG 2.1 level AA.",
+          "leanValue": "valuable",
+          "cynefinDomain": "complex",
+          "tocConstraintRef": "frontend form rendering",
+          "sixSigmaMetric": "form validation error rate",
+          "hasUi": true,
+          "requirementRefs": [
+            "R1",
+            "R2"
+          ]
+        },
+        {
+          "title": "QA Verification for UI Help and Validation",
+          "roleTag": "BARCAN-TAG-06",
+          "jtbd": "When implementing tests for this epic, I want to verify that tooltips and validation markers function correctly, so that the cognitive offloading features are robust.",
+          "acceptanceCriteria": "Given the RegistrationForm, When invalid data is entered, Then validation errors are visually rendered.\nGiven the PrivacySettings, When hovering over fields, Then the corresponding tooltips are displayed.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "frontend test execution",
+          "sixSigmaMetric": "test pass rate",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1",
+            "R2"
+          ]
+        }
+      ]
+    },
+    {
+      "existingEpicId": "3f39f1a7-d7cd-4c01-9a16-e951a621cca7",
+      "sourceIndex": 6,
+      "requirements": [
+        "R1: Resolve finding 1: automated review verdict approves a non-existent PR.",
+        "R2: Resolve finding 2: coverage audit report falsely claims zero gaps.",
+        "R3: Resolve finding 3: core requirement to fix HTTP 401 errors is unaddressed.",
+        "R4: Resolve finding 4: parsed JWT claims are unwired to the persistence layer.",
+        "R5: Resolve finding 5: PR claims to verify access control but only modifies mocked JWT payload."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Patch Codebase to Resolve Falsification Findings",
+          "roleTag": "BARCAN-TAG-02",
+          "jtbd": "When implementing the patch for this epic, I want to fix all confirmed falsification findings directly, so that the pipeline and authorization logic function correctly.",
+          "acceptanceCriteria": "Given the falsification findings, When the patch is applied, Then the review verdict logic no longer approves non-existent PRs and coverage gaps are accurately reported.\nGiven the authorization logic, When processing requests, Then HTTP 401 errors are fixed and JWT claims are properly verified against the persistence layer.",
+          "leanValue": "essential",
+          "cynefinDomain": "complex",
+          "tocConstraintRef": "authorization patch deployment",
+          "sixSigmaMetric": "falsification finding resolution rate",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1",
+            "R2",
+            "R3",
+            "R4",
+            "R5"
+          ]
+        }
+      ]
+    },
+    {
+      "existingEpicId": "ca087fd2-45a6-4a9a-80a5-b0278aea4494",
+      "sourceIndex": 7,
+      "requirements": [
+        "R1: Implement automatic synchronization of Moodle role hierarchy to the archive role model.",
+        "R2: Display the current Moodle role hierarchy mappings in the Moodle role management interface."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Patch Moodle Role Synchronization",
+          "roleTag": "BARCAN-TAG-02",
+          "jtbd": "When implementing the patch for this epic, I want to sync roles automatically, so that user access remains correct.",
+          "acceptanceCriteria": "Given a role update in Moodle, When the synchronization process runs, Then the user's role in the archive is updated.",
+          "leanValue": "essential",
+          "cynefinDomain": "complex",
+          "tocConstraintRef": "role sync background job",
+          "sixSigmaMetric": "role mapping accuracy",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1"
+          ]
+        },
+        {
+          "title": "Moodle Role Hierarchy UI Display",
+          "roleTag": "BARCAN-TAG-11",
+          "jtbd": "When implementing the frontend for this epic, I want to display the role hierarchy mappings, so that administrators can inspect them.",
+          "acceptanceCriteria": "Given an authenticated administrator, When navigating to the Moodle role management interface, Then the frontend should fetch and render the Moodle role hierarchy mappings.\nGiven the UI is accessed, When using a keyboard, Then it complies with WCAG 2.1 level AA.",
+          "leanValue": "essential",
+          "cynefinDomain": "complex",
+          "tocConstraintRef": "frontend role mapping display",
+          "sixSigmaMetric": "UI render success rate",
+          "hasUi": true,
+          "requirementRefs": [
+            "R2"
+          ]
+        }
+      ]
+    },
+    {
+      "existingEpicId": "0194cf5d-1caa-4d6b-86e8-ebbe0331442d",
+      "sourceIndex": 8,
+      "requirements": [
+        "R1: Implement fully autonomous fallback for auth processing when the external LMS fails, preventing 500 errors."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Patch Authentication Fallback Logic",
+          "roleTag": "BARCAN-TAG-02",
+          "jtbd": "When implementing the patch for this epic, I want to handle LMS failures gracefully with cached claims, so that the workflow remains uninterrupted.",
+          "acceptanceCriteria": "Given LMS is down, When the system processes an auth token, Then it uses autonomous fallback gracefully without throwing a 500 server error.\nGiven a failed SSO attempt, When the fallback is engaged, Then the user seamlessly retains access based on local credentials or cached claims.",
+          "leanValue": "essential",
+          "cynefinDomain": "complicated",
+          "tocConstraintRef": "auth fallback execution path",
+          "sixSigmaMetric": "auth fallback success rate",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1"
+          ]
+        }
+      ]
+    },
+    {
+      "existingEpicId": "ca087fd2-45a6-4a9a-80a5-b0278aea4494",
+      "sourceIndex": 9,
+      "requirements": [
+        "R1: Implement true SSO logic in /sso/moodle to verify tokens securely against the identity provider."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Patch SSO Token Verification Logic",
+          "roleTag": "BARCAN-TAG-02",
+          "jtbd": "When implementing the patch for this epic, I want to verify OAuth2/OIDC or SAML tokens securely, so that arbitrary auth bypass is prevented.",
+          "acceptanceCriteria": "Given valid SSO credentials, When a user calls /sso/moodle, Then the token is securely verified and logged in.\nGiven invalid credentials, When submitted, Then the system rejects the token rather than matching hardcoded stubs.",
+          "leanValue": "essential",
+          "cynefinDomain": "complex",
+          "tocConstraintRef": "SSO verification endpoint",
+          "sixSigmaMetric": "SSO login success rate",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1"
+          ]
+        }
+      ]
+    },
+    {
+      "existingEpicId": "ca087fd2-45a6-4a9a-80a5-b0278aea4494",
+      "sourceIndex": 10,
+      "requirements": [
+        "R1: Ensure proper cryptographic verification for SSO tokens against the IdP JWKS or HMAC-SHA1 signatures."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Patch Cryptographic Verification for SSO",
+          "roleTag": "BARCAN-TAG-02",
+          "jtbd": "When implementing the patch for this epic, I want to enforce cryptographic token validation, so that unauthorized access via spoofed tokens is blocked.",
+          "acceptanceCriteria": "Given an OIDC or LTI login request, When the payload is processed, Then the system verifies the token signature against the IdP JWKS.\nGiven an unverified or manipulated token, When processed, Then it is strictly rejected.",
+          "leanValue": "essential",
+          "cynefinDomain": "complex",
+          "tocConstraintRef": "token signature validation",
+          "sixSigmaMetric": "token verification failure rate",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1"
+          ]
+        }
+      ]
+    },
+    {
+      "existingEpicId": "f48551f9-16ea-46ee-80ed-4fa844b9d407",
+      "sourceIndex": 11,
+      "requirements": [
+        "R1: Restrict protocol access via DocumentController to only users with RESEARCHER, EPIDEMIOLOGIST, or ADMIN roles."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Patch Protocol Access Authorization",
+          "roleTag": "BARCAN-TAG-02",
+          "jtbd": "When implementing the patch for this epic, I want to apply role-based checks to DocumentController, so that sensitive protocols are secured.",
+          "acceptanceCriteria": "Given an authenticated user without the correct role, When they attempt to access documents via /api/v1/documents, Then they are not able to retrieve PROTOCOL documents.\nGiven an authorized user, When they request protocols, Then the documents are successfully returned.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "document endpoint authorization",
+          "sixSigmaMetric": "unauthorized protocol access rate",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1"
+          ]
+        }
+      ]
+    },
+    {
+      "existingEpicId": "ca087fd2-45a6-4a9a-80a5-b0278aea4494",
+      "sourceIndex": 12,
+      "requirements": [
+        "R1: Respond to LTI Form Launches with an HTML view or a 302 redirect instead of a raw JSON payload."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Patch LTI Form Launch Web Response",
+          "roleTag": "BARCAN-TAG-02",
+          "jtbd": "When implementing the patch for this epic, I want to return valid HTML or redirects for LTI launches, so that the tool renders properly in the LMS iframe.",
+          "acceptanceCriteria": "Given a valid LTI launch request from Moodle, When the tool processes the launch, Then it responds with a 302 redirect or an HTML view.\nGiven a raw JSON response previously returned, When processed, Then it is successfully replaced by standard LTI response formats.",
+          "leanValue": "essential",
+          "cynefinDomain": "complicated",
+          "tocConstraintRef": "LTI launch response handling",
+          "sixSigmaMetric": "LTI launch success rate",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1"
+          ]
+        }
+      ]
+    }
+  ]
+}
