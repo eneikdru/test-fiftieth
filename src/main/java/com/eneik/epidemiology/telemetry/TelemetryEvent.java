@@ -38,6 +38,15 @@ public class TelemetryEvent {
     @Column(name = "created_at", nullable = false)
     private OffsetDateTime createdAt;
 
+    @Column(name = "module", length = 128)
+    private String module;
+
+    @Column(name = "title", length = 255)
+    private String title;
+
+    @Column(name = "success")
+    private Boolean success;
+
     public TelemetryEvent() {
     }
 
@@ -147,5 +156,29 @@ public class TelemetryEvent {
 
     public void setEndTime(OffsetDateTime endTime) {
         this.endTime = endTime;
+    }
+
+    public String getModule() {
+        return module;
+    }
+
+    public void setModule(String module) {
+        this.module = module;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public Boolean getSuccess() {
+        return success;
+    }
+
+    public void setSuccess(Boolean success) {
+        this.success = success;
     }
 }
