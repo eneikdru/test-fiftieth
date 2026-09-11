@@ -32,15 +32,15 @@ services:
     environment:
       UPLOADS_DIR: /app/data/docs/uploads
     volumes:
-      - ./scripts/backup.sh:/usr/local/bin/backup.sh:ro
+      - ./scripts:/scripts:ro
       - app_uploads:/app/data/docs/uploads:ro
       - backup_data:/backups
     entrypoint: >
       /bin/sh -c "
       apk add --no-cache bash tar gzip findutils;
-      echo \"$${BACKUP_SCHEDULE} /usr/local/bin/backup.sh >> /var/log/backup.log 2>&1\" > /etc/crontabs/root;
+      echo \"$${BACKUP_SCHEDULE} /bin/bash /scripts/backup.sh >> /var/log/backup.log 2>&1\" > /etc/crontabs/root;
       echo 'Running initial startup backup check...';
-      /usr/local/bin/backup.sh;
+      /bin/bash /scripts/backup.sh;
       echo 'Starting cron daemon with schedule: $${BACKUP_SCHEDULE}';
       crond -f -l 2
       "
