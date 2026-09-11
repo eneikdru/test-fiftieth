@@ -317,6 +317,7 @@ components:
         - token_type
         - expires_in
         - user
+        - token_structure
       properties:
         access_token:
           type: string
@@ -338,6 +339,88 @@ components:
           example: 3600
         user:
           $ref: '#/components/schemas/UserInfo'
+        token_structure:
+          $ref: '#/components/schemas/JwtTokenStructure'
+
+    JwtTokenStructure:
+      type: object
+      description: Explicit structure of the issued JSON Web Token (JWT) composed of Header, Payload (Claims), and Signature.
+      required:
+        - header
+        - payload
+        - signature
+      properties:
+        header:
+          $ref: '#/components/schemas/JwtHeader'
+        payload:
+          $ref: '#/components/schemas/JwtPayload'
+        signature:
+          type: string
+          description: Cryptographic signature verifying token authenticity and integrity
+          example: "SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
+
+    JwtHeader:
+      type: object
+      description: Header section of the JWT specifying algorithm and token type
+      required:
+        - alg
+        - typ
+      properties:
+        alg:
+          type: string
+          enum: [HS256, RS256, RS384, RS512]
+          description: Signing algorithm used for JWT authentication token verification
+          example: "HS256"
+        typ:
+          type: string
+          enum: [JWT]
+          default: "JWT"
+          description: Token type identifier
+          example: "JWT"
+
+    JwtPayload:
+      type: object
+      description: Payload section of the JWT containing standard and custom claims
+      required:
+        - sub
+        - role
+        - iat
+        - exp
+      properties:
+        sub:
+          type: string
+          description: Subject identifier (username or user ID)
+          example: "ivanov_ii"
+        role:
+          type: string
+          enum: [ADMIN, RESEARCHER, USER, EPIDEMIOLOGIST]
+          description: Primary user authorization role
+          example: "RESEARCHER"
+        department:
+          type: string
+          nullable: true
+          description: User department or laboratory association
+          example: "Лаборатория геномики"
+        courses:
+          type: string
+          nullable: true
+          description: Comma-separated list of assigned courses or scopes
+          example: "EPID-101,EPID-102"
+        iat:
+          type: integer
+          format: int64
+          description: Issued-at timestamp in epoch seconds
+          example: 1772428800
+        exp:
+          type: integer
+          format: int64
+          description: Expiration timestamp in epoch seconds
+          example: 1772432400
+        iss:
+          type: string
+          nullable: true
+          description: Issuer URL or domain string
+          example: "https://epidemiology-inst.ru"
 
     UserInfo:
       type: object
@@ -357,7 +440,7 @@ components:
           example: "ivanov_ii"
         role:
           type: string
-          enum: [ADMIN, RESEARCHER, USER]
+          enum: [ADMIN, RESEARCHER, USER, EPIDEMIOLOGIST]
           description: Access control role within the institute portal
           example: "RESEARCHER"
         full_name:
