@@ -1,0 +1,201 @@
+openapi: 3.0.3
+info:
+  title: API Телеметрии (Telemetry API)
+  description: Контракт API для сбора, передачи и запрашивания телеметрических данных системы.
+  version: 1.0.0
+servers:
+  - url: /api/v1
+    description: Основной сервер API
+paths:
+  /telemetry/events:
+    post:
+      summary: Сбор и сохранение события телеметрии
+      description: Отправляет событие телеметрии в систему для сохранения и последующего анализа.
+      operationId: ingestTelemetryEvent
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TelemetryEventRequest'
+      responses:
+        '201':
+          description: Событие телеметрии успешно сохранено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TelemetryEventResponse'
+        '400':
+          description: Ошибка валидации запроса телеметрии
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Пользователь не авторизован
+
+    get:
+      summary: Запрос сохраненных событий телеметрии
+      description: Возвращает список событий телеметрии с возможной фильтрацией по типу события или идентификатору документа.
+      operationId: getTelemetryEvents
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: eventType
+          in: query
+          required: false
+          description: Тип события телеметрии (e.g., ZERO_RESULTS, DOWNLOAD_SUCCESS, WORKFLOW_DURATION_MEASURED)
+          schema:
+            type: string
+        - name: documentId
+          in: query
+          required: false
+          description: Идентификатор документа
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Список событий телеметрии
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TelemetryEventResponse'
+        '401':
+          description: Пользователь не авторизован
+
+components:
+  schemas:
+    TelemetryEventRequest:
+      type: object
+      required:
+        - eventType
+      properties:
+        eventType:
+          type: string
+          description: Тип события телеметрии
+          example: "NAVIGATE_TAB"
+        queryTerm:
+          type: string
+          description: Поисковый запрос или имя рабочего процесса
+          example: "протокол"
+        documentId:
+          type: integer
+          format: int64
+          description: Идентификатор связанного документа
+          example: 42
+        resultsCount:
+          type: integer
+          description: Количество результатов
+          example: 0
+        processingTimeMs:
+          type: integer
+          format: int64
+          description: Время обработки в миллисекундах
+          example: 120
+        workflowDurationMs:
+          type: integer
+          format: int64
+          description: Длительность рабочего процесса в миллисекундах
+          example: 350
+        module:
+          type: string
+          description: Модуль приложения
+          example: "Core Module"
+        title:
+          type: string
+          description: Заголовок или действие
+          example: "Dashboard Loaded"
+        success:
+          type: boolean
+          description: Флаг успешности операции
+          example: true
+        startTime:
+          type: string
+          format: date-time
+          description: Время начала события
+        endTime:
+          type: string
+          format: date-time
+          description: Время окончания события
+
+    TelemetryEventResponse:
+      type: object
+      required:
+        - id
+        - eventType
+        - createdAt
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: Уникальный идентификатор записи телеметрии
+          example: 101
+        eventType:
+          type: string
+          description: Тип события
+          example: "NAVIGATE_TAB"
+        queryTerm:
+          type: string
+          description: Поисковый запрос или идентификатор
+        documentId:
+          type: integer
+          format: int64
+          description: Идентификатор документа
+        resultsCount:
+          type: integer
+          description: Количество результатов
+        processingTimeMs:
+          type: integer
+          format: int64
+          description: Время обработки в мс
+        workflowDurationMs:
+          type: integer
+          format: int64
+          description: Длительность процесса в мс
+        module:
+          type: string
+          description: Имя модуля
+        title:
+          type: string
+          description: Заголовок события
+        success:
+          type: boolean
+          description: Статус успешности
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+          description: Время создания записи
+
+    ErrorResponse:
+      type: object
+      required:
+        - error_code
+        - message
+        - timestamp
+      properties:
+        error_code:
+          type: string
+          example: "VALIDATION_ERROR"
+        message:
+          type: string
+          example: "Поле eventType не может быть пустым."
+        timestamp:
+          type: string
+          format: date-time
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

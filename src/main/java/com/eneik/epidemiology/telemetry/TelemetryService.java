@@ -157,6 +157,19 @@ public class TelemetryService {
         return telemetryEventRepository.save(event);
     }
 
+    @Transactional
+    public TelemetryEvent ingestEvent(TelemetryEvent event) {
+        if (event.getCreatedAt() == null) {
+            event.setCreatedAt(OffsetDateTime.now(clock));
+        }
+        return telemetryEventRepository.save(event);
+    }
+
+    @Transactional(readOnly = true)
+    public List<TelemetryEvent> getAllEvents() {
+        return telemetryEventRepository.findAll();
+    }
+
     @Transactional(readOnly = true)
     public List<TelemetryEvent> getEventsByType(String eventType) {
         return telemetryEventRepository.findByEventType(eventType);
