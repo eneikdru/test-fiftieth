@@ -36,6 +36,9 @@ public class AuthController {
     @org.springframework.beans.factory.annotation.Value("${moodle.lti.consumer.secret:moodle_lti_secret}")
     private String moodleLtiSecret = "moodle_lti_secret";
 
+    @org.springframework.beans.factory.annotation.Value("${app.frontend.url:/}")
+    private String frontendUrl = "/";
+
     private final org.springframework.web.client.RestTemplate restTemplate;
     private final UserService userService;
     private final JwtTokenProvider jwtTokenProvider;
@@ -329,13 +332,16 @@ public class AuthController {
         String accessToken = jwtTokenProvider.generateToken(user.getUsername(), user.getRole(), user.getDepartment(), user.getCourses());
         String refreshToken = jwtTokenProvider.generateRefreshToken(user.getUsername());
 
-        return ResponseEntity.ok(Map.of(
-                "access_token", accessToken,
-                "refresh_token", refreshToken,
-                "token_type", "Bearer",
-                "expires_in", 3600,
-                "user", buildUserInfo(user)
-        ));
+        String redirectUrl = frontendUrl;
+        if (redirectUrl.contains("?")) {
+            redirectUrl += "&access_token=" + accessToken + "&refresh_token=" + refreshToken;
+        } else {
+            redirectUrl += "?access_token=" + accessToken + "&refresh_token=" + refreshToken;
+        }
+
+        return ResponseEntity.status(HttpStatus.FOUND)
+                .location(java.net.URI.create(redirectUrl))
+                .build();
     }
 
     @PostMapping("/register")
@@ -498,13 +504,16 @@ public class AuthController {
         String accessToken = jwtTokenProvider.generateToken(user.getUsername(), user.getRole(), user.getDepartment(), user.getCourses());
         String refreshToken = jwtTokenProvider.generateRefreshToken(user.getUsername());
 
-        return ResponseEntity.ok(Map.of(
-                "access_token", accessToken,
-                "refresh_token", refreshToken,
-                "token_type", "Bearer",
-                "expires_in", 3600,
-                "user", buildUserInfo(user)
-        ));
+        String redirectUrl = frontendUrl;
+        if (redirectUrl.contains("?")) {
+            redirectUrl += "&access_token=" + accessToken + "&refresh_token=" + refreshToken;
+        } else {
+            redirectUrl += "?access_token=" + accessToken + "&refresh_token=" + refreshToken;
+        }
+
+        return ResponseEntity.status(HttpStatus.FOUND)
+                .location(java.net.URI.create(redirectUrl))
+                .build();
     }
 
     private String getLtiParam(Map<String, String> params, String... keys) {
