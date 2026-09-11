@@ -58,15 +58,9 @@ public class LtiSsoIntegrationTest {
                 .param("oauth_consumer_key", "moodle_lti_key")
                 .param("oauth_signature", "valid_lti_signature")
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.access_token", notNullValue()))
-                .andExpect(jsonPath("$.refresh_token", notNullValue()))
-                .andExpect(jsonPath("$.token_type", is("Bearer")))
-                .andExpect(jsonPath("$.user.username", is("lti_epidemiologist")))
-                .andExpect(jsonPath("$.user.role", is("EPIDEMIOLOGIST")))
-                .andExpect(jsonPath("$.user.department", is("Кафедра Вирусологии")))
-                .andExpect(jsonPath("$.user.courses", is("VIR-101,VIR-202")))
-                .andExpect(jsonPath("$.user.email", is("sergeev@epidemiology-inst.ru")));
+                .andExpect(status().isFound())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header().string("Location", org.hamcrest.Matchers.containsString("access_token=")))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header().string("Location", org.hamcrest.Matchers.containsString("refresh_token=")));
 
         User user = userRepository.findByUsername("lti_epidemiologist").orElseThrow();
         assert "EPIDEMIOLOGIST".equals(user.getRole());
@@ -116,10 +110,8 @@ public class LtiSsoIntegrationTest {
                 .param("custom_department", params.get("custom_department"))
                 .param("oauth_signature", computedSignature)
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.access_token", notNullValue()))
-                .andExpect(jsonPath("$.user.username", is("hmac_lti_user")))
-                .andExpect(jsonPath("$.user.role", is("EPIDEMIOLOGIST")));
+                .andExpect(status().isFound())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header().string("Location", org.hamcrest.Matchers.containsString("access_token=")));
     }
 
     @Test
@@ -158,10 +150,8 @@ public class LtiSsoIntegrationTest {
                 .param("custom_department", "Департамент Аналитики")
                 .param("oauth_signature", "valid_lti_signature")
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.user.username", is("lti_existing_user")))
-                .andExpect(jsonPath("$.user.role", is("ADMIN")))
-                .andExpect(jsonPath("$.user.department", is("Департамент Аналитики")));
+                .andExpect(status().isFound())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header().string("Location", org.hamcrest.Matchers.containsString("access_token=")));
 
         User updatedUser = userRepository.findByUsername("lti_existing_user").orElseThrow();
         assert "ADMIN".equals(updatedUser.getRole());

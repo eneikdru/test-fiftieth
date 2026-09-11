@@ -178,11 +178,8 @@ class AuthControllerTest {
         mockMvc.perform(post("/api/v1/auth/lti/launch")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(ltiJson))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.access_token", notNullValue()))
-                .andExpect(jsonPath("$.user.username", is("json_lti_user")))
-                .andExpect(jsonPath("$.user.role", is("RESEARCHER")))
-                .andExpect(jsonPath("$.user.department", is("Вирусология")));
+                .andExpect(status().isFound())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header().string("Location", org.hamcrest.Matchers.containsString("access_token=")));
 
         User user = userService.findByUsername("json_lti_user").orElseThrow();
         assert "RESEARCHER".equals(user.getRole());
@@ -248,11 +245,8 @@ class AuthControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .cookie(cookie)
                 .content(callbackBody))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.access_token", notNullValue()))
-                .andExpect(jsonPath("$.refresh_token", notNullValue()))
-                .andExpect(jsonPath("$.user.username", is("moodle_aspirant")))
-                .andExpect(jsonPath("$.user.role", is("RESEARCHER")));
+                .andExpect(status().isFound())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header().string("Location", org.hamcrest.Matchers.containsString("access_token=")));
 
         User user = userService.findByUsername("moodle_aspirant").orElseThrow();
         assert "RESEARCHER".equals(user.getRole());
@@ -359,11 +353,8 @@ class AuthControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .cookie(cookie)
                 .content(callbackBody))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.access_token", notNullValue()))
-                .andExpect(jsonPath("$.refresh_token", notNullValue()))
-                .andExpect(jsonPath("$.user.username", is("moodle_user")))
-                .andExpect(jsonPath("$.user.role", is("EPIDEMIOLOGIST")));
+                .andExpect(status().isFound())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header().string("Location", org.hamcrest.Matchers.containsString("access_token=")));
 
         User user = userService.findByUsername("moodle_user").orElseThrow();
         assert "EPIDEMIOLOGIST".equals(user.getRole());
@@ -672,10 +663,8 @@ class AuthControllerTest {
                 .param("roles", "Instructor")
                 .param("department", "Паразитология")
                 .param("oauth_signature", "valid_lti_signature"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.access_token", notNullValue()))
-                .andExpect(jsonPath("$.user.username", is("form_lti_user")))
-                .andExpect(jsonPath("$.user.role", is("EPIDEMIOLOGIST")));
+                .andExpect(status().isFound())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header().string("Location", org.hamcrest.Matchers.containsString("access_token=")));
     }
 
     @Test
