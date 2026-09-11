@@ -147,21 +147,26 @@
                 ` : ''}
 
                 <form onsubmit="handleExportData(event)" class="space-y-4">
-                  <div>
+                  <div class="relative group">
                     <label for="export-format-select" class="block text-xs font-semibold text-[#191c1e] mb-1">
                       Формат архива экспорта
                     </label>
                     <select
                       id="export-format-select"
                       onchange="state.requestedFormat = this.value"
+                      title="Выберите желаемый формат для архивации персональных данных"
+                      data-tooltip="Формат архивации: ZIP содержит файлы и метаданные, JSON содержит только структурированные записи."
                       class="w-full h-11 px-3 bg-[#f7f9fb] border border-[#c2c6d4] rounded-lg text-sm text-[#191c1e] focus:outline-none focus:border-[#003f87]"
                     >
                       <option value="ZIP" ${state.requestedFormat === 'ZIP' ? 'selected' : ''}>ZIP-архив (Документы и JSON)</option>
                       <option value="JSON" ${state.requestedFormat === 'JSON' ? 'selected' : ''}>JSON (Только структуры данных)</option>
                     </select>
+                    <div id="export-format-tooltip" role="tooltip" class="hidden group-hover:block group-focus-within:block absolute z-20 left-0 -top-8 bg-[#191c1e] text-white text-[11px] px-2.5 py-1 rounded shadow-md whitespace-nowrap">
+                      Выберите желаемый формат для архивации персональных данных
+                    </div>
                   </div>
 
-                  <div>
+                  <div class="relative group">
                     <label for="export-notes-input" class="block text-xs font-semibold text-[#191c1e] mb-1">
                       Примечание к запросу (необязательно)
                     </label>
@@ -170,9 +175,14 @@
                       type="text"
                       value="${state.exportNotes}"
                       oninput="state.exportNotes = this.value"
+                      title="Укажите назначение выгрузки для внутреннего аудита"
+                      data-tooltip="Заметка сохраняется в журнале 152-ФЗ для аудита безопасности"
                       placeholder="Например: Запрос для личного архива"
                       class="w-full h-11 px-3.5 bg-[#f7f9fb] border border-[#c2c6d4] rounded-lg text-sm text-[#191c1e] focus:outline-none focus:border-[#003f87]"
                     />
+                    <div id="export-notes-tooltip" role="tooltip" class="hidden group-hover:block group-focus-within:block absolute z-20 left-0 -top-8 bg-[#191c1e] text-white text-[11px] px-2.5 py-1 rounded shadow-md whitespace-nowrap">
+                      Укажите назначение выгрузки для внутреннего аудита
+                    </div>
                   </div>
 
                   <div class="pt-2">

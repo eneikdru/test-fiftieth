@@ -186,4 +186,22 @@ test.describe('Data Subject Rights E2E Tests (152-FZ Compliance)', () => {
 
     expect(nonEssentialCookies.length).toBe(0);
   });
+
+  test('Given PrivacySettings, When hovering over fields, Then the corresponding tooltips are displayed', async ({ page }) => {
+    await page.goto('/privacy-harness.html');
+
+    // Hover over export format select
+    const formatSelect = page.locator('#export-format-select');
+    await formatSelect.hover();
+    const formatTooltip = page.locator('#export-format-tooltip');
+    await expect(formatTooltip).toBeVisible();
+    await expect(formatTooltip).toContainText('Выберите желаемый формат');
+
+    // Hover over export notes input
+    const notesInput = page.locator('#export-notes-input');
+    await notesInput.hover();
+    const notesTooltip = page.locator('#export-notes-tooltip');
+    await expect(notesTooltip).toBeVisible();
+    await expect(notesTooltip).toContainText('Укажите назначение выгрузки');
+  });
 });

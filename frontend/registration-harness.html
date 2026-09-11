@@ -19,16 +19,30 @@
         const response = await fetch('./src/components/RegistrationForm.svelte');
         const source = await response.text();
 
+        // Dummy mock for ImprintModal import if referenced
+        const imprintModalCode = `
+          import { SvelteComponent, init, safe_not_equal, element, insert, detach } from "https://unpkg.com/svelte@3.59.2/internal/index.mjs";
+          class ImprintModal extends SvelteComponent {
+            constructor(options) {
+              super();
+              init(this, options, null, null, safe_not_equal, {});
+            }
+          }
+          export default ImprintModal;
+        `;
+        const imprintBlob = new Blob([imprintModalCode], { type: 'application/javascript' });
+        const imprintBlobUrl = URL.createObjectURL(imprintBlob);
+
         // Compile using the unpkg compiler to ESM
         const { js } = window.svelte.compile(source, {
           format: 'esm',
           name: 'RegistrationForm',
-          sveltePath: 'svelte' // Keep it basic, we will map it below
+          sveltePath: 'svelte'
         });
 
-        // Instead of data URI which might conflict, let's create a blob URL
-        // We replace standard 'svelte/internal' imports with full unpkg URL
-        const codeWithMjs = js.code.replace(/from "svelte\/internal"/g, `from "https://unpkg.com/svelte@3.59.2/internal/index.mjs"`);
+        // Replace imports with full unpkg URLs or blob URLs
+        let codeWithMjs = js.code.replace(/from ["']svelte\/internal["']/g, `from "https://unpkg.com/svelte@3.59.2/internal/index.mjs"`);
+        codeWithMjs = codeWithMjs.replace(/from ["']\.\/ImprintModal\.svelte["']/g, `from "${imprintBlobUrl}"`);
 
         const blob = new Blob([codeWithMjs], { type: 'application/javascript' });
         const blobUrl = URL.createObjectURL(blob);
