@@ -10,6 +10,8 @@ import java.util.UUID;
 
 public interface RecoveryTaskRepository extends JpaRepository<RecoveryTask, UUID> {
 
+    void deleteBySubjectId(String subjectId);
+
     @Modifying
     @Query("UPDATE RecoveryTask r SET r.status = :newStatus, r.updatedAt = :now WHERE r.id = :id AND r.status = :expectedStatus")
     int updateStatusAtomically(

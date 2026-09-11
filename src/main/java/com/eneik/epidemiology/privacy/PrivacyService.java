@@ -27,6 +27,8 @@ public class PrivacyService {
     private final UserRepository userRepository;
     private final EmployeeDocumentRepository employeeDocumentRepository;
     private final DossierReportRepository dossierReportRepository;
+    private final DataErasureTokenRepository erasureTokenRepository;
+    private final RecoveryTaskRepository recoveryTaskRepository;
     private final ObjectMapper objectMapper;
     private final Clock clock;
 
@@ -37,9 +39,11 @@ public class PrivacyService {
         UserRepository userRepository,
         EmployeeDocumentRepository employeeDocumentRepository,
         DossierReportRepository dossierReportRepository,
+        DataErasureTokenRepository erasureTokenRepository,
+        RecoveryTaskRepository recoveryTaskRepository,
         ObjectMapper objectMapper
     ) {
-        this(exportJobRepository, erasureJobRepository, userRepository, employeeDocumentRepository, dossierReportRepository, objectMapper, Clock.systemUTC());
+        this(exportJobRepository, erasureJobRepository, userRepository, employeeDocumentRepository, dossierReportRepository, erasureTokenRepository, recoveryTaskRepository, objectMapper, Clock.systemUTC());
     }
 
     public PrivacyService(
@@ -49,7 +53,7 @@ public class PrivacyService {
         ObjectMapper objectMapper,
         Clock clock
     ) {
-        this(exportJobRepository, erasureJobRepository, userRepository, null, null, objectMapper, clock);
+        this(exportJobRepository, erasureJobRepository, userRepository, null, null, null, null, objectMapper, clock);
     }
 
     public PrivacyService(
@@ -58,6 +62,8 @@ public class PrivacyService {
         UserRepository userRepository,
         EmployeeDocumentRepository employeeDocumentRepository,
         DossierReportRepository dossierReportRepository,
+        DataErasureTokenRepository erasureTokenRepository,
+        RecoveryTaskRepository recoveryTaskRepository,
         ObjectMapper objectMapper,
         Clock clock
     ) {
@@ -66,6 +72,8 @@ public class PrivacyService {
         this.userRepository = userRepository;
         this.employeeDocumentRepository = employeeDocumentRepository;
         this.dossierReportRepository = dossierReportRepository;
+        this.erasureTokenRepository = erasureTokenRepository;
+        this.recoveryTaskRepository = recoveryTaskRepository;
         this.objectMapper = objectMapper;
         this.clock = clock;
     }
@@ -284,6 +292,20 @@ public class PrivacyService {
                 dossierReportRepository.deleteAll(reports);
                 dossierReportRepository.flush();
             }
+        }
+
+        // Hard Delete Cascading for remaining privacy items
+        if (exportJobRepository != null) {
+            exportJobRepository.deleteBySubjectId(user.getUsername());
+        }
+        if (erasureJobRepository != null) {
+            erasureJobRepository.deleteBySubjectIdAndRequestIdNot(user.getUsername(), job.getRequestId());
+        }
+        if (erasureTokenRepository != null) {
+            erasureTokenRepository.deleteBySubjectId(user.getUsername());
+        }
+        if (recoveryTaskRepository != null) {
+            recoveryTaskRepository.deleteBySubjectId(user.getUsername());
         }
 
         // Execute permanent removal of identifiable user data from database

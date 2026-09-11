@@ -11,6 +11,8 @@ import java.util.Optional;
 public interface DataErasureTokenRepository extends JpaRepository<DataErasureToken, Long> {
     Optional<DataErasureToken> findByToken(String token);
 
+    void deleteBySubjectId(String subjectId);
+
     @Modifying
     @Query("UPDATE DataErasureToken t SET t.used = true WHERE t.id = :id AND t.used = false")
     int markTokenAsUsed(@Param("id") Long id);

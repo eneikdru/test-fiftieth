@@ -45,6 +45,12 @@ class PrivacyServiceTest {
     private DossierReportRepository dossierReportRepository;
 
     @Autowired
+    private DataErasureTokenRepository erasureTokenRepository;
+
+    @Autowired
+    private RecoveryTaskRepository recoveryTaskRepository;
+
+    @Autowired
     private ObjectMapper objectMapper;
 
     private PrivacyService privacyService;
@@ -58,6 +64,8 @@ class PrivacyServiceTest {
             userRepository,
             employeeDocumentRepository,
             dossierReportRepository,
+            erasureTokenRepository,
+            recoveryTaskRepository,
             objectMapper,
             fixedClock
         );
@@ -151,6 +159,14 @@ class PrivacyServiceTest {
         DossierReport report = new DossierReport("erasure_target", "MONTHLY_SUMMARY", "GENERATED", "Monthly report", 1, "/api/v1/dossier/download/2");
         dossierReportRepository.save(report);
 
+        DataExportJob exportJob = new DataExportJob();
+        exportJob.setRequestId("test-export-job");
+        exportJob.setSubjectId("erasure_target");
+        exportJob.setStatus("PENDING");
+        exportJob.setRequestedFormat("JSON");
+        exportJob.setCreatedAt(java.time.OffsetDateTime.now(fixedClock));
+        exportJobRepository.save(exportJob);
+
         String token = "CONFIRM_ERASURE_erasure_target";
         DataErasureJob job = privacyService.initiateDataErasure("erasure_target", token, "152-FZ", "ALL_PERSONAL_DATA");
 
@@ -166,6 +182,8 @@ class PrivacyServiceTest {
 
         List<DossierReport> remainingReports = dossierReportRepository.findByEmployeeId("erasure_target");
         assertTrue(remainingReports.isEmpty(), "Dossier reports must be permanently deleted from database");
+
+        assertTrue(exportJobRepository.findBySubjectIdAndStatusIn("erasure_target", List.of("PENDING", "COMPLETED", "FAILED")).isEmpty(), "Export jobs must be permanently deleted from database");
     }
 
     @Test

@@ -64,6 +64,12 @@ class DataSubjectRightsVerificationTest {
     @Autowired
     private DataSource dataSource;
 
+    @Autowired
+    private DataErasureTokenRepository erasureTokenRepository;
+
+    @Autowired
+    private RecoveryTaskRepository recoveryTaskRepository;
+
     private PrivacyService privacyService;
     private final Clock fixedClock = Clock.fixed(Instant.parse("2026-08-22T15:00:00Z"), ZoneId.of("UTC"));
 
@@ -75,6 +81,8 @@ class DataSubjectRightsVerificationTest {
             userRepository,
             employeeDocumentRepository,
             dossierReportRepository,
+            erasureTokenRepository,
+            recoveryTaskRepository,
             objectMapper,
             fixedClock
         );
