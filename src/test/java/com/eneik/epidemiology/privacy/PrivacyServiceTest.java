@@ -45,6 +45,9 @@ class PrivacyServiceTest {
     private DossierReportRepository dossierReportRepository;
 
     @Autowired
+    private DataErasureTokenRepository erasureTokenRepository;
+
+    @Autowired
     private ObjectMapper objectMapper;
 
     private PrivacyService privacyService;
@@ -55,6 +58,7 @@ class PrivacyServiceTest {
         privacyService = new PrivacyService(
             exportJobRepository,
             erasureJobRepository,
+            erasureTokenRepository,
             userRepository,
             employeeDocumentRepository,
             dossierReportRepository,
@@ -151,8 +155,16 @@ class PrivacyServiceTest {
         DossierReport report = new DossierReport("erasure_target", "MONTHLY_SUMMARY", "GENERATED", "Monthly report", 1, "/api/v1/dossier/download/2");
         dossierReportRepository.save(report);
 
-        String token = "CONFIRM_ERASURE_erasure_target";
-        DataErasureJob job = privacyService.initiateDataErasure("erasure_target", token, "152-FZ", "ALL_PERSONAL_DATA");
+        String secureToken = "sec_tok_privacy_service_test_001";
+        DataErasureToken tokenEntity = new DataErasureToken();
+        tokenEntity.setSubjectId("erasure_target");
+        tokenEntity.setToken(secureToken);
+        tokenEntity.setCreatedAt(java.time.OffsetDateTime.now(fixedClock));
+        tokenEntity.setExpiresAt(java.time.OffsetDateTime.now(fixedClock).plusMinutes(30));
+        tokenEntity.setUsed(false);
+        erasureTokenRepository.saveAndFlush(tokenEntity);
+
+        DataErasureJob job = privacyService.initiateDataErasure("erasure_target", secureToken, "152-FZ", "ALL_PERSONAL_DATA");
 
         assertNotNull(job);
         assertEquals("COMPLETED", job.getStatus());
@@ -169,10 +181,14 @@ class PrivacyServiceTest {
     }
 
     @Test
-    @DisplayName("Given an erasure request with invalid confirmation token, When submitted, Then bad request exception is thrown")
+    @DisplayName("Given an erasure request with invalid confirmation token or deterministic token, When submitted, Then bad request exception is thrown")
     void testDataErasureInvalidToken() {
         User user = new User("erasure_invalid_token", "hash789", "RESEARCHER");
         userRepository.save(user);
+
+        assertThrows(PrivacyService.PrivacyBadRequestException.class, () ->
+            privacyService.initiateDataErasure("erasure_invalid_token", "CONFIRM_ERASURE_erasure_invalid_token", "Reason", "ALL_PERSONAL_DATA")
+        );
 
         assertThrows(PrivacyService.PrivacyBadRequestException.class, () ->
             privacyService.initiateDataErasure("erasure_invalid_token", "WRONG_TOKEN", "Reason", "ALL_PERSONAL_DATA")
