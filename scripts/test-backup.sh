@@ -7,6 +7,24 @@ TEST_BACKUPS="${TEST_DIR}/backups"
 
 echo "=== Running Backup Verification Test ==="
 
+# 0. Validate script file integrity and parent directory bind mount configuration
+if [ ! -f "scripts/backup.sh" ] || [ -d "scripts/backup.sh" ]; then
+    echo "ERROR: scripts/backup.sh must be a regular file, not a directory!" >&2
+    exit 1
+fi
+
+if [ ! -x "scripts/backup.sh" ]; then
+    echo "ERROR: scripts/backup.sh is not executable!" >&2
+    exit 1
+fi
+
+if grep -q "\./scripts/backup\.sh:" docker-compose.override.yml 2>/dev/null; then
+    echo "ERROR: docker-compose.override.yml must mount parent directory ./scripts:/scripts:ro, not a discrete file!" >&2
+    exit 1
+fi
+
+echo "Verified: scripts/backup.sh file integrity and directory bind mount settings."
+
 # Cleanup any leftover test files
 rm -rf "${TEST_DIR}"
 mkdir -p "${TEST_UPLOADS}" "${TEST_BACKUPS}"
