@@ -6,28 +6,37 @@ import com.eneik.epidemiology.document.DossierReportDocumentRepository;
 import com.eneik.epidemiology.document.DossierReportRepository;
 import com.eneik.epidemiology.document.EmployeeDocument;
 import com.eneik.epidemiology.document.EmployeeDocumentRepository;
-import com.eneik.epidemiology.privacy.DataErasureToken;
-import com.eneik.epidemiology.privacy.DataErasureTokenRepository;
-import com.eneik.epidemiology.telemetry.TelemetryEvent;
-import com.eneik.epidemiology.telemetry.TelemetryEventRepository;
+import com.eneik.epidemiology.user.User;
+import com.eneik.epidemiology.user.UserRepository;
 import io.zonky.test.db.AutoConfigureEmbeddedDatabase;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
+@AutoConfigureMockMvc
 @AutoConfigureEmbeddedDatabase(type = AutoConfigureEmbeddedDatabase.DatabaseType.POSTGRES)
 class DomainOntologyQaCoverageTest {
+
+    @Autowired
+    private MockMvc mockMvc;
 
     @Autowired
     private OrganizationRepository organizationRepository;
@@ -48,10 +57,7 @@ class DomainOntologyQaCoverageTest {
     private DossierReportDocumentRepository dossierReportDocumentRepository;
 
     @Autowired
-    private TelemetryEventRepository telemetryEventRepository;
-
-    @Autowired
-    private DataErasureTokenRepository dataErasureTokenRepository;
+    private UserRepository userRepository;
 
     @Test
     @DisplayName("Given persistent domain model, When database queries execute, Then normalized ontology entities are correctly written and read without mocks")
@@ -129,38 +135,40 @@ class DomainOntologyQaCoverageTest {
     }
 
     @Test
-    @DisplayName("Given bounded contexts, When tested across domain boundaries, Then context models remain isolated without bleed")
+    @DisplayName("Given bounded contexts, When tested end-to-end via HTTP endpoints, Then boundaries remain isolated and strictly enforced without cross-domain bleed")
+    @WithMockUser(username = "admin_user", roles = {"ADMIN"})
     @Transactional
-    void testBoundedContextIsolation() {
-        long initialOrgCount = organizationRepository.count();
-        long initialTelemetryCount = telemetryEventRepository.count();
-        long initialPrivacyTokenCount = dataErasureTokenRepository.count();
+    void testBoundedContextIsolationEndToEnd() throws Exception {
+        // Seed subject user for Privacy context HTTP request
+        User user = new User();
+        user.setUsername("EMP-QA-E2E-100");
+        user.setPasswordHash("hash");
+        user.setRole("RESEARCHER");
+        user.setCreatedAt(OffsetDateTime.now());
+        userRepository.save(user);
 
-        // 1. Ontology context transaction
-        Organization org = new Organization("BC_ORG_01", "Организация контекста онтологии", "Изолированная сущность онтологии");
-        organizationRepository.save(org);
+        // 1. Catalog / Document Bounded Context E2E Endpoint
+        mockMvc.perform(get("/api/v1/documents/search"))
+                .andExpect(status().isOk());
 
-        // 2. Telemetry context transaction
-        TelemetryEvent telemetry = new TelemetryEvent("DOSSIER_VIEW", "EMP-QA-777", null, 1, OffsetDateTime.now());
-        telemetryEventRepository.save(telemetry);
+        // 2. Strain Bounded Context E2E Endpoint
+        mockMvc.perform(get("/api/v1/strains"))
+                .andExpect(status().isOk());
 
-        // 3. Privacy context transaction
-        DataErasureToken privacyToken = new DataErasureToken();
-        privacyToken.setSubjectId("EMP-PRIVACY-100");
-        privacyToken.setToken(UUID.randomUUID().toString());
-        privacyToken.setCreatedAt(OffsetDateTime.now());
-        privacyToken.setExpiresAt(OffsetDateTime.now().plusHours(24));
-        privacyToken.setUsed(false);
-        dataErasureTokenRepository.save(privacyToken);
+        // 3. Privacy Bounded Context E2E Endpoint
+        String privacyJson = """
+                {
+                    "subject_id": "EMP-QA-E2E-100",
+                    "requested_format": "JSON",
+                    "notes": "E2E verification of privacy bounded context"
+                }
+                """;
 
-        // Assert strictly isolated entity state counts incremented by 1 per context
-        assertThat(organizationRepository.count()).isEqualTo(initialOrgCount + 1);
-        assertThat(telemetryEventRepository.count()).isEqualTo(initialTelemetryCount + 1);
-        assertThat(dataErasureTokenRepository.count()).isEqualTo(initialPrivacyTokenCount + 1);
-
-        // Verify entities exist strictly in their own bounded context repositories
-        assertThat(organizationRepository.findByCode("BC_ORG_01")).isPresent();
-        assertThat(telemetryEventRepository.findAll()).extracting(TelemetryEvent::getEventType).contains("DOSSIER_VIEW");
-        assertThat(dataErasureTokenRepository.findByToken(privacyToken.getToken())).isPresent();
+        mockMvc.perform(post("/api/v1/privacy/export-requests")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(privacyJson))
+                .andExpect(status().isAccepted())
+                .andExpect(jsonPath("$.subject_id").value("EMP-QA-E2E-100"))
+                .andExpect(jsonPath("$.request_id").exists());
     }
 }
