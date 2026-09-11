@@ -108,6 +108,33 @@ public class JwtTokenProvider {
         return clock.instant().getEpochSecond() <= exp;
     }
 
+    public java.util.Map<String, Object> getTokenStructure(String token) {
+        if (token == null || !token.contains(".")) {
+            return java.util.Collections.emptyMap();
+        }
+        String[] parts = token.split("\\.");
+        if (parts.length != 3) {
+            return java.util.Collections.emptyMap();
+        }
+
+        try {
+            String headerJson = new String(Base64.getUrlDecoder().decode(parts[0]), StandardCharsets.UTF_8);
+            String payloadJson = new String(Base64.getUrlDecoder().decode(parts[1]), StandardCharsets.UTF_8);
+
+            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+            java.util.Map<String, Object> header = mapper.readValue(headerJson, new com.fasterxml.jackson.core.type.TypeReference<java.util.Map<String, Object>>() {});
+            java.util.Map<String, Object> payload = mapper.readValue(payloadJson, new com.fasterxml.jackson.core.type.TypeReference<java.util.Map<String, Object>>() {});
+
+            java.util.Map<String, Object> structure = new java.util.HashMap<>();
+            structure.put("header", header);
+            structure.put("payload", payload);
+            structure.put("signature", parts[2]);
+            return structure;
+        } catch (Exception e) {
+            return java.util.Collections.emptyMap();
+        }
+    }
+
     public String getUsername(String token) {
         String[] parts = token.split("\\.");
         String payload = new String(Base64.getUrlDecoder().decode(parts[1]), StandardCharsets.UTF_8);

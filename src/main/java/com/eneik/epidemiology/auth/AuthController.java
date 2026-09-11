@@ -407,7 +407,8 @@ public class AuthController {
                 "refresh_token", refreshToken,
                 "token_type", "Bearer",
                 "expires_in", 3600,
-                "user", buildUserInfo(user)
+                "user", buildUserInfo(user),
+                "token_structure", jwtTokenProvider.getTokenStructure(accessToken)
         );
 
         return ResponseEntity.ok(response);
@@ -596,12 +597,13 @@ public class AuthController {
                     String refreshToken = jwtTokenProvider.generateRefreshToken(user.getUsername());
 
                     Map<String, Object> response = Map.of(
-                            "access_token", accessToken,
-                            "refresh_token", refreshToken,
-                            "token_type", "Bearer",
-                            "expires_in", 3600,
-                            "user", buildUserInfo(user)
-                    );
+                "access_token", accessToken,
+                "refresh_token", refreshToken,
+                "token_type", "Bearer",
+                "expires_in", 3600,
+                "user", buildUserInfo(user),
+                "token_structure", jwtTokenProvider.getTokenStructure(accessToken)
+        );
 
                     return ResponseEntity.ok(response);
                 }
@@ -669,7 +671,8 @@ public class AuthController {
                 "refresh_token", refreshToken,
                 "token_type", "Bearer",
                 "expires_in", 3600,
-                "user", buildUserInfo(user)
+                "user", buildUserInfo(user),
+                "token_structure", jwtTokenProvider.getTokenStructure(accessToken)
         );
 
         return ResponseEntity.ok(response);
@@ -706,12 +709,13 @@ public class AuthController {
                     String refreshToken = jwtTokenProvider.generateRefreshToken(user.getUsername());
 
                     Map<String, Object> response = Map.of(
-                            "access_token", accessToken,
-                            "refresh_token", refreshToken,
-                            "token_type", "Bearer",
-                            "expires_in", 3600,
-                            "user", buildUserInfo(user)
-                    );
+                "access_token", accessToken,
+                "refresh_token", refreshToken,
+                "token_type", "Bearer",
+                "expires_in", 3600,
+                "user", buildUserInfo(user),
+                "token_structure", jwtTokenProvider.getTokenStructure(accessToken)
+        );
 
                     return ResponseEntity.ok(response);
                 }
@@ -774,7 +778,8 @@ public class AuthController {
                 "refresh_token", refreshToken,
                 "token_type", "Bearer",
                 "expires_in", 3600,
-                "user", buildUserInfo(user)
+                "user", buildUserInfo(user),
+                "token_structure", jwtTokenProvider.getTokenStructure(accessToken)
         );
 
         return ResponseEntity.ok(response);
@@ -826,7 +831,8 @@ public class AuthController {
                 "refresh_token", newRefreshToken,
                 "token_type", "Bearer",
                 "expires_in", 3600,
-                "user", buildUserInfo(user)
+                "user", buildUserInfo(user),
+                "token_structure", jwtTokenProvider.getTokenStructure(newAccessToken)
         );
 
         return ResponseEntity.ok(response);
