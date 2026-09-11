@@ -128,15 +128,10 @@ class StrainControllerTest {
         when(authentication.getName()).thenReturn("unknownUser");
         when(userRepository.findByUsername("unknownUser")).thenReturn(Optional.empty());
 
-        org.springframework.data.domain.Page<Strain> mockPage = new org.springframework.data.domain.PageImpl<>(java.util.Collections.emptyList(), org.springframework.data.domain.PageRequest.of(0, 20), 0);
-        when(strainRepository.findAccessibleStrains(eq(false), eq(""), eq(java.util.Collections.emptyList()), any(org.springframework.data.domain.Pageable.class)))
-                .thenReturn(mockPage);
-
-
         ResponseEntity<List<Strain>> responseUnknownUser = strainController.getStrains(authentication, 0, 20);
-        assertEquals(HttpStatus.OK, responseUnknownUser.getStatusCode());
+        assertEquals(HttpStatus.UNAUTHORIZED, responseUnknownUser.getStatusCode());
 
-        // verify(strainRepository, never()).findAccessibleStrains(anyBoolean(), any(), any(), any());
+        verify(strainRepository, never()).findAccessibleStrains(anyBoolean(), any(), any(), any());
     }
 
     @Test
