@@ -1,9 +1,13 @@
 <script>
-  import { createEventDispatcher } from 'svelte';
+  import { createEventDispatcher, onMount } from 'svelte';
   import CatalogSearch from './CatalogSearch.svelte';
   import DossierSearch from './DossierSearch.svelte';
   import PrivacySettings from './PrivacySettings.svelte';
   import NavigationTelemetry from './NavigationTelemetry.svelte';
+
+  import { catalogStore } from '../stores/catalogStore.js';
+  import { telemetryStore } from '../stores/telemetryStore.js';
+  import { privacyStore } from '../stores/privacyStore.js';
 
   const dispatch = createEventDispatcher();
 
@@ -16,17 +20,6 @@
     email: 'ivanov@epidemiology-inst.ru'
   };
 
-  let telemetryState = {
-    totalClicks: 0,
-    tabNavigations: 0,
-    successfulLoads: 1,
-    failedLoads: 0,
-    activities: [
-      { id: 1, title: 'Dashboard Loaded', module: 'Core Module', latencyMs: 24, timestamp: 'Just now', success: true }
-    ],
-    preConsolidationTaps: 3.2
-  };
-
   const tabs = [
     { id: 'tab-catalog', key: 'catalog', title: 'Каталог протоколов', icon: '📁' },
     { id: 'tab-dossier', key: 'dossier', title: 'Аналитика досье', icon: '📊' },
@@ -36,33 +29,13 @@
   ];
 
   function switchTab(tabKey) {
-    const startTime = performance.now();
     activeTab = tabKey;
-
-    // Telemetry tracking update
-    telemetryState.totalClicks += 1;
-    telemetryState.tabNavigations += 1;
-    telemetryState.successfulLoads += 1;
-
-    const latency = Math.max(12, Math.round(performance.now() - startTime));
     const tabObject = tabs.find(t => t.key === tabKey);
-
-    telemetryState.activities = [
-      {
-        id: Date.now(),
-        title: `Переход на ${tabObject ? tabObject.title : tabKey}`,
-        module: `${tabKey.toUpperCase()} Module`,
-        latencyMs: latency,
-        timestamp: 'Только что',
-        success: true
-      },
-      ...telemetryState.activities
-    ].slice(0, 10);
-
-    dispatch('tabChange', { tab: tabKey, telemetry: telemetryState });
+    telemetryStore.recordTabNavigation(tabKey, tabObject ? tabObject.title : tabKey);
+    dispatch('tabChange', { tab: tabKey });
   }
 
-  // RootCause / Outbreaks categorisation state
+  // RootCause / Outbreaks categorisation state (Foci Bounded Context)
   let fociQuery = '';
   let fociResults = [
     { id: 'FOC-001', location: 'г. Москва, ВАО', hazardLevel: 'HIGH', category: 'Пищевой очаг (Сальмонеллез)', status: 'ACTIVE', cases: 14 },
@@ -99,7 +72,7 @@
         <div class="flex items-center gap-3">
           <div class="hidden md:flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-lg border border-white/20 text-xs font-mono">
             <span class="text-white/80">Кликов:</span>
-            <span class="font-bold text-emerald-300" id="header-click-distance">{telemetryState.totalClicks > 0 ? (telemetryState.totalClicks / telemetryState.tabNavigations).toFixed(1) : '1.8'}</span>
+            <span class="font-bold text-emerald-300" id="header-click-distance">{$telemetryStore.totalClicks > 0 ? ($telemetryStore.totalClicks / $telemetryStore.tabNavigations).toFixed(1) : '1.8'}</span>
             <span class="text-white/40">|</span>
             <span class="text-white/80">Успех:</span>
             <span class="font-bold text-emerald-300" id="header-tab-load-success">100%</span>
@@ -218,7 +191,7 @@
       </section>
     {:else if activeTab === 'telemetry'}
       <section id="panel-telemetry" role="tabpanel" aria-labelledby="tab-telemetry" class="space-y-6">
-        <NavigationTelemetry telemetry={telemetryState} />
+        <NavigationTelemetry telemetry={$telemetryStore} />
       </section>
     {:else if activeTab === 'privacy'}
       <section id="panel-privacy" role="tabpanel" aria-labelledby="tab-privacy" class="space-y-6">

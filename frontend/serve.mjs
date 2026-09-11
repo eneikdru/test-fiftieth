@@ -19,6 +19,8 @@ const MIME_TYPES = {
   '.pdf': 'application/pdf',
 };
 
+let uploadedDocsSeq = 100;
+
 const server = http.createServer((req, res) => {
   const parsedUrl = new URL(req.url, `http://localhost:${PORT}`);
   const pathname = parsedUrl.pathname;
@@ -30,6 +32,41 @@ const server = http.createServer((req, res) => {
       'Content-Disposition': 'attachment; filename="salmonella_outbreak.pdf"',
     });
     res.end('Содержимое документа: Протокол эпидемиологического расследования вспышки сальмонеллеза');
+    return;
+  }
+
+  if (pathname === '/api/v1/documents/upload' && req.method === 'POST') {
+    let body = '';
+    req.on('data', chunk => { body += chunk.toString(); });
+    req.on('end', () => {
+      try {
+        const payload = JSON.parse(body || '{}');
+        uploadedDocsSeq += 1;
+        const newDoc = {
+          id: String(uploadedDocsSeq),
+          title: payload.title || 'Новый документ',
+          author: payload.author || 'НИИ Эпидемиологии',
+          authorOrganization: payload.author || 'НИИ Эпидемиологии',
+          year: payload.year || 2024,
+          publicationYear: payload.year || 2024,
+          docType: payload.docType || 'Протокол расследования',
+          fileName: payload.fileName || 'document.pdf',
+          fileSize: '1.5 МБ',
+          description: payload.description || ''
+        };
+        res.writeHead(201, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify(newDoc));
+      } catch (err) {
+        res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({ message: 'Некорректный запрос' }));
+      }
+    });
+    return;
+  }
+
+  if (pathname.startsWith('/api/v1/documents/') && req.method === 'DELETE') {
+    res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+    res.end(JSON.stringify({ success: true, message: 'Документ удален' }));
     return;
   }
 
@@ -68,6 +105,35 @@ const server = http.createServer((req, res) => {
 
     res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
     res.end(JSON.stringify(filtered));
+    return;
+  }
+
+  if (pathname === '/api/v1/privacy/export-requests' && req.method === 'POST') {
+    let body = '';
+    req.on('data', chunk => { body += chunk.toString(); });
+    req.on('end', () => {
+      res.writeHead(202, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify({
+        request_id: 'exp-' + Date.now(),
+        status: 'COMPLETED',
+        download_url: '/api/v1/privacy/export-requests/download-sample',
+        created_at: new Date().toISOString()
+      }));
+    });
+    return;
+  }
+
+  if (pathname === '/api/v1/privacy/erasure-requests' && req.method === 'POST') {
+    let body = '';
+    req.on('data', chunk => { body += chunk.toString(); });
+    req.on('end', () => {
+      res.writeHead(202, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify({
+        request_id: 'eras-' + Date.now(),
+        status: 'COMPLETED',
+        created_at: new Date().toISOString()
+      }));
+    });
     return;
   }
 
