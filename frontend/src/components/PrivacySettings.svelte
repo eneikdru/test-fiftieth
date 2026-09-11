@@ -30,6 +30,7 @@
   let exportJob = null;
 
   // Erasure / Delete Account states
+
   let isDeleteModalOpen = false;
   let erasureReason = 'Отозвано согласие на обработку персональных данных (152-ФЗ)';
   let erasureScope = 'ALL_PERSONAL_DATA';
@@ -38,6 +39,19 @@
   let deleteError = '';
   let deleteSuccess = '';
   let erasureJob = null;
+
+  // Validation functions (inline)
+  let touchedFieldsPrivacy = { erasureReason: false, confirmationInput: false };
+  let focusedFieldsPrivacy = { erasureReason: false, confirmationInput: false };
+
+  $: errorsPrivacy = {
+    erasureReason: touchedFieldsPrivacy.erasureReason && (!erasureReason ? 'Поле не может быть пустым.' : ''),
+    confirmationInput: touchedFieldsPrivacy.confirmationInput && (!confirmationInput ? 'Обязательное поле.' : (confirmationInput !== expectedConfirmationToken ? 'Неверный код подтверждения.' : ''))
+  };
+
+  const handleFocusP = (field) => { focusedFieldsPrivacy[field] = true; };
+  const handleBlurP = (field) => { focusedFieldsPrivacy[field] = false; touchedFieldsPrivacy[field] = true; };
+
   let showImprint = false;
 
   // Confirmation token expected for destructive action
@@ -348,27 +362,77 @@
               <label for="erasure-reason-input" class="block text-xs font-semibold text-[#191c1e] mb-1">
                 Основание для удаления (152-ФЗ)
               </label>
+              <div class="relative">
               <input
                 id="erasure-reason-input"
                 type="text"
                 bind:value={erasureReason}
                 required
-                class="w-full h-10 px-3 bg-[#f7f9fb] border border-[#c2c6d4] rounded-md text-xs text-[#191c1e] focus:outline-none focus:border-[#ba1a1a]"
+                on:focus={() => handleFocusP('erasureReason')}
+                on:blur={() => handleBlurP('erasureReason')}
+                aria-invalid={!!errorsPrivacy.erasureReason}
+                aria-describedby={errorsPrivacy.erasureReason ? 'erasureReason-error' : (focusedFieldsPrivacy.erasureReason ? 'erasureReason-tooltip' : null)}
+                class="w-full h-10 px-3 bg-[#f7f9fb] border border-[#c2c6d4] rounded-md text-xs text-[#191c1e] focus:outline-none focus:border-[#ba1a1a] {errorsPrivacy.erasureReason ? 'border-[#ba1a1a] focus:ring-[#ba1a1a]/10' : ''}"
               />
+              {#if errorsPrivacy.erasureReason}
+                <div class="absolute right-3 top-1/2 -translate-y-1/2 text-[#ba1a1a]" aria-hidden="true">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                </div>
+              {/if}
+            </div>
+
+            <div class="h-4 mt-1 relative w-full">
+              {#if errorsPrivacy.erasureReason}
+                <div id="erasureReason-error" role="alert" class="absolute inset-0 text-[10px] text-[#ba1a1a] truncate">
+                  {errorsPrivacy.erasureReason}
+                </div>
+              {/if}
+            </div>
+
+            {#if focusedFieldsPrivacy.erasureReason && !errorsPrivacy.erasureReason}
+              <div id="erasureReason-tooltip" class="absolute z-10 w-64 p-2 mt-1 text-[10px] text-white bg-[#1a1c1e] rounded shadow-lg animate-fade-in pointer-events-none" role="tooltip">
+                Основание необходимо для соблюдения требований 152-ФЗ.
+              </div>
+            {/if}
             </div>
 
             <div>
               <label for="confirmation-input" class="block text-xs font-bold text-[#ba1a1a] mb-1">
                 Для подтверждения введите фразовый код: <span class="bg-[#ffdad6] px-1.5 py-0.5 rounded select-all font-mono">{expectedConfirmationToken}</span>
               </label>
+              <div class="relative">
               <input
                 id="confirmation-input"
                 type="text"
                 bind:value={confirmationInput}
                 placeholder={expectedConfirmationToken}
                 required
-                class="w-full h-11 px-3.5 bg-[#f7f9fb] border-2 border-[#ba1a1a]/50 rounded-lg text-sm text-[#191c1e] focus:outline-none focus:border-[#ba1a1a] font-mono"
+                on:focus={() => handleFocusP('confirmationInput')}
+                on:blur={() => handleBlurP('confirmationInput')}
+                aria-invalid={!!errorsPrivacy.confirmationInput}
+                aria-describedby={errorsPrivacy.confirmationInput ? 'confirmationInput-error' : (focusedFieldsPrivacy.confirmationInput ? 'confirmationInput-tooltip' : null)}
+                class="w-full h-11 px-3.5 bg-[#f7f9fb] border-2 border-[#ba1a1a]/50 rounded-lg text-sm text-[#191c1e] focus:outline-none focus:border-[#ba1a1a] font-mono {errorsPrivacy.confirmationInput ? 'border-[#ba1a1a] focus:ring-[#ba1a1a]/10' : ''}"
               />
+              {#if errorsPrivacy.confirmationInput}
+                <div class="absolute right-3 top-1/2 -translate-y-1/2 text-[#ba1a1a]" aria-hidden="true">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                </div>
+              {/if}
+            </div>
+
+            <div class="h-4 mt-1 relative w-full">
+              {#if errorsPrivacy.confirmationInput}
+                <div id="confirmationInput-error" role="alert" class="absolute inset-0 text-[10px] text-[#ba1a1a] truncate">
+                  {errorsPrivacy.confirmationInput}
+                </div>
+              {/if}
+            </div>
+
+            {#if focusedFieldsPrivacy.confirmationInput && !errorsPrivacy.confirmationInput}
+              <div id="confirmationInput-tooltip" class="absolute z-10 w-64 p-2 mt-1 text-[10px] text-white bg-[#1a1c1e] rounded shadow-lg animate-fade-in pointer-events-none" role="tooltip">
+                Введите точный код из красного поля для подтверждения безвозвратного удаления.
+              </div>
+            {/if}
             </div>
 
             <div class="flex items-center justify-end gap-3 pt-4 border-t border-[#e0e3e5]">

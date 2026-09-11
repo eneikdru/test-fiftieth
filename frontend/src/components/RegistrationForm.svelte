@@ -19,6 +19,20 @@
   let lastName = '';
   let organization = '';
 
+
+  let touchedFields = { username: false, email: false, password: false, confirmPassword: false };
+  let focusedFields = { username: false, email: false, password: false, confirmPassword: false };
+
+  $: errors = {
+    username: touchedFields.username && (!username ? 'Пожалуйста, заполните все обязательные поля.' : (username.length < 3 ? 'Имя пользователя должно содержать не менее 3 символов.' : '')),
+    email: touchedFields.email && (!email ? 'Пожалуйста, заполните все обязательные поля.' : (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? 'Неверный формат электронной почты.' : '')),
+    password: touchedFields.password && (!password ? 'Пожалуйста, заполните все обязательные поля.' : (password.length < 8 ? 'Пароль должен содержать не менее 8 символов.' : '')),
+    confirmPassword: touchedFields.confirmPassword && (!confirmPassword ? 'Пожалуйста, заполните все обязательные поля.' : (confirmPassword !== password ? 'Пароли не совпадают.' : ''))
+  };
+
+  const handleFocus = (field) => { focusedFields[field] = true; };
+  const handleBlur = (field) => { focusedFields[field] = false; touchedFields[field] = true; };
+
   function handleRegistration(e) {
     e.preventDefault();
     errorMessage = '';
@@ -134,50 +148,150 @@
         <form on:submit={handleRegistration} class="space-y-5" novalidate>
           <div>
             <label for="username" class="block text-sm font-semibold text-[#1a1c1e] mb-1.5">Имя пользователя</label>
-            <input
-              id="username"
-              type="text"
-              bind:value={username}
-              disabled={isLoading}
-              required
-              class="w-full h-12 px-4 rounded-md border border-[#c3c6d6] focus:border-[#00328a] focus:ring-2 focus:ring-[#00328a]/10 outline-none transition-all text-[#1a1c1e] text-base"
-            />
+            <div class="relative">
+              <input
+                id="username"
+                type="text"
+                bind:value={username}
+                disabled={isLoading}
+                required
+                on:focus={() => handleFocus('username')}
+                on:blur={() => handleBlur('username')}
+                aria-invalid={!!errors.username}
+                aria-describedby={errors.username ? 'username-error' : (focusedFields.username ? 'username-tooltip' : null)}
+                class="w-full h-12 px-4 rounded-md border border-[#c3c6d6] focus:border-[#00328a] focus:ring-2 focus:ring-[#00328a]/10 outline-none transition-all text-[#1a1c1e] text-base {errors.username ? 'border-[#ba1a1a] focus:border-[#ba1a1a] focus:ring-[#ba1a1a]/10' : ''}"
+              />
+              {#if errors.username}
+                <div class="absolute right-3 top-1/2 -translate-y-1/2 text-[#ba1a1a]" aria-hidden="true">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                </div>
+              {/if}
+            </div>
+
+            <div class="h-5 mt-1 relative w-full">
+              {#if errors.username}
+                <div id="username-error" role="alert" class="absolute inset-0 text-xs text-[#ba1a1a] truncate">
+                  {errors.username}
+                </div>
+              {/if}
+            </div>
+
+            {#if focusedFields.username && !errors.username}
+              <div id="username-tooltip" class="absolute z-10 w-64 p-2 mt-1 text-xs text-white bg-[#1a1c1e] rounded shadow-lg animate-fade-in pointer-events-none" role="tooltip">
+                Может содержать буквы, цифры и знаки подчеркивания.
+              </div>
+            {/if}
           </div>
 
           <div>
             <label for="email" class="block text-sm font-semibold text-[#1a1c1e] mb-1.5">Электронная почта</label>
-            <input
-              id="email"
-              type="email"
-              bind:value={email}
-              disabled={isLoading}
-              required
-              class="w-full h-12 px-4 rounded-md border border-[#c3c6d6] focus:border-[#00328a] focus:ring-2 focus:ring-[#00328a]/10 outline-none transition-all text-[#1a1c1e] text-base"
-            />
+            <div class="relative">
+              <input
+                id="email"
+                type="email"
+                bind:value={email}
+                disabled={isLoading}
+                required
+                on:focus={() => handleFocus('email')}
+                on:blur={() => handleBlur('email')}
+                aria-invalid={!!errors.email}
+                aria-describedby={errors.email ? 'email-error' : (focusedFields.email ? 'email-tooltip' : null)}
+                class="w-full h-12 px-4 rounded-md border border-[#c3c6d6] focus:border-[#00328a] focus:ring-2 focus:ring-[#00328a]/10 outline-none transition-all text-[#1a1c1e] text-base {errors.email ? 'border-[#ba1a1a] focus:border-[#ba1a1a] focus:ring-[#ba1a1a]/10' : ''}"
+              />
+              {#if errors.email}
+                <div class="absolute right-3 top-1/2 -translate-y-1/2 text-[#ba1a1a]" aria-hidden="true">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                </div>
+              {/if}
+            </div>
+
+            <div class="h-5 mt-1 relative w-full">
+              {#if errors.email}
+                <div id="email-error" role="alert" class="absolute inset-0 text-xs text-[#ba1a1a] truncate">
+                  {errors.email}
+                </div>
+              {/if}
+            </div>
+
+            {#if focusedFields.email && !errors.email}
+              <div id="email-tooltip" class="absolute z-10 w-64 p-2 mt-1 text-xs text-white bg-[#1a1c1e] rounded shadow-lg animate-fade-in pointer-events-none" role="tooltip">
+                Используйте ваш рабочий адрес электронной почты.
+              </div>
+            {/if}
           </div>
 
           <div>
             <label for="password" class="block text-sm font-semibold text-[#1a1c1e] mb-1.5">Пароль</label>
-            <input
-              id="password"
-              type="password"
-              bind:value={password}
-              disabled={isLoading}
-              required
-              class="w-full h-12 px-4 rounded-md border border-[#c3c6d6] focus:border-[#00328a] focus:ring-2 focus:ring-[#00328a]/10 outline-none transition-all text-[#1a1c1e] text-base"
-            />
+            <div class="relative">
+              <input
+                id="password"
+                type="password"
+                bind:value={password}
+                disabled={isLoading}
+                required
+                on:focus={() => handleFocus('password')}
+                on:blur={() => handleBlur('password')}
+                aria-invalid={!!errors.password}
+                aria-describedby={errors.password ? 'password-error' : (focusedFields.password ? 'password-tooltip' : null)}
+                class="w-full h-12 px-4 rounded-md border border-[#c3c6d6] focus:border-[#00328a] focus:ring-2 focus:ring-[#00328a]/10 outline-none transition-all text-[#1a1c1e] text-base {errors.password ? 'border-[#ba1a1a] focus:border-[#ba1a1a] focus:ring-[#ba1a1a]/10' : ''}"
+              />
+              {#if errors.password}
+                <div class="absolute right-3 top-1/2 -translate-y-1/2 text-[#ba1a1a]" aria-hidden="true">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                </div>
+              {/if}
+            </div>
+
+            <div class="h-5 mt-1 relative w-full">
+              {#if errors.password}
+                <div id="password-error" role="alert" class="absolute inset-0 text-xs text-[#ba1a1a] truncate">
+                  {errors.password}
+                </div>
+              {/if}
+            </div>
+
+            {#if focusedFields.password && !errors.password}
+              <div id="password-tooltip" class="absolute z-10 w-64 p-2 mt-1 text-xs text-white bg-[#1a1c1e] rounded shadow-lg animate-fade-in pointer-events-none" role="tooltip">
+                Пароль должен содержать минимум 8 символов.
+              </div>
+            {/if}
           </div>
 
           <div>
             <label for="confirm-password" class="block text-sm font-semibold text-[#1a1c1e] mb-1.5">Подтвердите пароль</label>
-            <input
-              id="confirm-password"
-              type="password"
-              bind:value={confirmPassword}
-              disabled={isLoading}
-              required
-              class="w-full h-12 px-4 rounded-md border border-[#c3c6d6] focus:border-[#00328a] focus:ring-2 focus:ring-[#00328a]/10 outline-none transition-all text-[#1a1c1e] text-base"
-            />
+            <div class="relative">
+              <input
+                id="confirm-password"
+                type="password"
+                bind:value={confirmPassword}
+                disabled={isLoading}
+                required
+                on:focus={() => handleFocus('confirmPassword')}
+                on:blur={() => handleBlur('confirmPassword')}
+                aria-invalid={!!errors.confirmPassword}
+                aria-describedby={errors.confirmPassword ? 'confirm-password-error' : (focusedFields.confirmPassword ? 'confirm-password-tooltip' : null)}
+                class="w-full h-12 px-4 rounded-md border border-[#c3c6d6] focus:border-[#00328a] focus:ring-2 focus:ring-[#00328a]/10 outline-none transition-all text-[#1a1c1e] text-base {errors.confirmPassword ? 'border-[#ba1a1a] focus:border-[#ba1a1a] focus:ring-[#ba1a1a]/10' : ''}"
+              />
+              {#if errors.confirmPassword}
+                <div class="absolute right-3 top-1/2 -translate-y-1/2 text-[#ba1a1a]" aria-hidden="true">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                </div>
+              {/if}
+            </div>
+
+            <div class="h-5 mt-1 relative w-full">
+              {#if errors.confirmPassword}
+                <div id="confirm-password-error" role="alert" class="absolute inset-0 text-xs text-[#ba1a1a] truncate">
+                  {errors.confirmPassword}
+                </div>
+              {/if}
+            </div>
+
+            {#if focusedFields.confirmPassword && !errors.confirmPassword}
+              <div id="confirm-password-tooltip" class="absolute z-10 w-64 p-2 mt-1 text-xs text-white bg-[#1a1c1e] rounded shadow-lg animate-fade-in pointer-events-none" role="tooltip">
+                Повторите введенный пароль для подтверждения.
+              </div>
+            {/if}
           </div>
 
           <div class="pt-2">

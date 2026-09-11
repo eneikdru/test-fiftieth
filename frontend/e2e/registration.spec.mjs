@@ -33,7 +33,7 @@ test.describe('Registration and Onboarding Flow', () => {
     await page.click('button[type="submit"]');
 
     // Expect error
-    await expect(page.locator('div[role="alert"]')).toContainText('Пароли не совпадают');
+    await expect(page.locator('div[role="alert"]').first()).toContainText('Пароли не совпадают');
 
     // Expect typed input preserved
     await expect(page.locator('input#username')).toHaveValue('testuser');

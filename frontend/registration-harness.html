@@ -17,7 +17,10 @@
     async function loadComponent() {
       try {
         const response = await fetch('./src/components/RegistrationForm.svelte');
-        const source = await response.text();
+        let source = await response.text();
+        source = source.replace(/import ImprintModal from '\.\/ImprintModal\.svelte';/, "");
+        source = source.replace(/<ImprintModal.*\/>/, "");
+
 
         // Compile using the unpkg compiler to ESM
         const { js } = window.svelte.compile(source, {
