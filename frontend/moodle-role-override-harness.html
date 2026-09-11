@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Управление ролями Moodle — Иерархия и сопоставление</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary": "#003f87",
+            "on-primary": "#ffffff",
+            "background": "#f7f9fb",
+            "on-surface": "#191c1e",
+            "on-surface-variant": "#424752",
+            "outline": "#727784",
+            "outline-variant": "#c2c6d4",
+            "surface-container-lowest": "#ffffff",
+            "surface-container": "#eceef0",
+            "surface-container-low": "#f2f4f7",
+            "surface-variant": "#e0e3e5",
+            "error": "#ba1a1a",
+            "error-container": "#ffdad6",
+            "on-error-container": "#93000a"
+          },
+          fontFamily: {
+            "sans": ["Inter", "sans-serif"]
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-[#f7f9fb] min-h-screen text-[#191c1e] antialiased font-sans">
+  <div id="app"></div>
+
+  <script>
+    let state = {
+      currentUser: {
+        id: 101,
+        username: 'admin_user',
+        role: 'ADMIN',
+        full_name: 'Иванов И.И. (Администратор)',
+        email: 'ivanov@epidemiology-inst.ru'
+      },
+      newRole: 'ADMIN',
+      mappings: [
+        { id: 1, moodle_role_pattern: 'администратор', internal_role: 'ADMIN' },
+        { id: 2, moodle_role_pattern: 'преподаватель', internal_role: 'EPIDEMIOLOGIST' },
+        { id: 3, moodle_role_pattern: 'старший научный сотрудник', internal_role: 'EPIDEMIOLOGIST' },
+        { id: 4, moodle_role_pattern: 'студент', internal_role: 'RESEARCHER' },
+        { id: 5, moodle_role_pattern: 'исследователь', internal_role: 'RESEARCHER' }
+      ],
+      isLoadingMappings: false,
+      isSaving: false,
+      saveSuccessMessage: ''
+    };
+
+    const roleLabelMap = {
+      'ADMIN': 'Администратор (ADMIN)',
+      'EPIDEMIOLOGIST': 'Эпидемиолог (EPIDEMIOLOGIST)',
+      'RESEARCHER': 'Исследователь (RESEARCHER)',
+      'USER': 'Пользователь (USER)'
+    };
+
+    function formatInternalRole(role) {
+      return roleLabelMap[role] || role;
+    }
+
+    function render() {
+      const app = document.getElementById('app');
+
+      app.innerHTML = `
+        <div class="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-6 font-sans text-[#191c1e] bg-[#f7f9fb] min-h-screen">
+          <!-- Top App Bar -->
+          <header class="mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-[#c2c6d4] pb-4">
+            <div>
+              <span class="text-xs font-semibold uppercase text-[#424752] tracking-wider">Панель администрирования</span>
+              <h1 class="text-2xl font-bold text-[#003f87]">Управление интеграцией Moodle</h1>
+            </div>
+            <div class="flex items-center gap-3 bg-white p-2.5 rounded-lg border border-[#e0e3e5] shadow-sm">
+              <div class="w-8 h-8 rounded-full bg-[#003f87] text-white flex items-center justify-center font-bold text-xs">
+                И
+              </div>
+              <div>
+                <div class="text-xs font-semibold text-[#191c1e]">${state.currentUser.full_name}</div>
+                <div class="text-[11px] text-[#424752]">Роль: <span class="font-bold text-[#003f87]">${state.currentUser.role}</span></div>
+              </div>
+            </div>
+          </header>
+
+          <main class="max-w-3xl mx-auto space-y-6">
+            <div class="bg-white p-6 rounded-xl border border-[#c2c6d4] shadow-sm space-y-6">
+              <div>
+                <h2 class="text-lg font-bold text-[#191c1e]">Синхронизация и иерархия ролей Moodle</h2>
+                <p class="text-xs text-[#424752] mt-1">
+                  Просмотр правил сопоставления внешних ролей Moodle с внутренней ролевой моделью архива
+                </p>
+              </div>
+
+              <!-- MoodleRoleOverride component markup -->
+              <div class="p-4 bg-[#f2f4f7] border border-[#c2c6d4] rounded-lg space-y-4">
+                <!-- Moodle Role Hierarchy Mappings Display -->
+                <div>
+                  <div class="flex items-center justify-between mb-2">
+                    <h5 class="text-sm font-semibold text-[#191c1e]">Иерархия ролей Moodle и правила сопоставления</h5>
+                    <button
+                      type="button"
+                      onclick="refreshMappings()"
+                      class="text-xs font-medium text-[#003f87] hover:underline focus:outline-none focus:ring-2 focus:ring-[#003f87]/50 rounded px-1.5 py-0.5"
+                      aria-label="Обновить иерархию ролей Moodle"
+                    >
+                      Обновить
+                    </button>
+                  </div>
+
+                  <div class="overflow-x-auto border border-[#c2c6d4] rounded bg-white">
+                    <table class="w-full text-left text-xs border-collapse" aria-label="Таблица сопоставления ролей Moodle">
+                      <thead class="bg-[#e0e3e5] text-[#191c1e] font-semibold border-b border-[#c2c6d4]">
+                        <tr>
+                          <th scope="col" class="py-2.5 px-3">Паттерн роли Moodle</th>
+                          <th scope="col" class="py-2.5 px-3">Внутренняя роль архива</th>
+                        </tr>
+                      </thead>
+                      <tbody class="divide-y divide-[#c2c6d4]/40 text-[#191c1e]">
+                        ${state.mappings.map(m => `
+                          <tr class="hover:bg-[#ffffff] transition-colors">
+                            <td class="py-2.5 px-3 font-mono text-[11px] text-[#003f87] font-medium">${m.moodle_role_pattern}</td>
+                            <td class="py-2.5 px-3 font-medium">${formatInternalRole(m.internal_role)}</td>
+                          </tr>
+                        `).join('')}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <hr class="border-[#c2c6d4]/60" />
+
+                <!-- Individual User Role Override Section -->
+                <div>
+                  <h5 class="text-sm font-semibold text-[#191c1e] mb-2">Индивидуальное переопределение роли пользователя</h5>
+                  <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                    <select
+                      aria-label="Выберите роль для пользователя"
+                      class="flex-grow h-10 px-3 bg-white border border-[#c2c6d4] rounded text-sm text-[#191c1e] focus:outline-none focus:ring-2 focus:ring-[#003f87]"
+                      onchange="state.newRole = this.value"
+                    >
+                      <option value="ADMIN" ${state.newRole === 'ADMIN' ? 'selected' : ''}>Администратор (ADMIN)</option>
+                      <option value="EPIDEMIOLOGIST" ${state.newRole === 'EPIDEMIOLOGIST' ? 'selected' : ''}>Эпидемиолог (EPIDEMIOLOGIST)</option>
+                      <option value="RESEARCHER" ${state.newRole === 'RESEARCHER' ? 'selected' : ''}>Исследователь (RESEARCHER)</option>
+                      <option value="USER" ${state.newRole === 'USER' ? 'selected' : ''}>Пользователь (USER)</option>
+                    </select>
+                    <button
+                      type="button"
+                      class="h-10 px-4 bg-[#003f87] text-white text-sm rounded font-medium hover:bg-[#002b5e] focus:outline-none focus:ring-2 focus:ring-[#003f87]/50 transition-colors disabled:opacity-60"
+                      onclick="saveRole()"
+                    >
+                      ${state.isSaving ? 'Сохранение...' : 'Сохранить'}
+                    </button>
+                  </div>
+                  ${state.saveSuccessMessage ? `
+                    <p class="text-xs text-[#003f87] font-medium mt-2">✓ ${state.saveSuccessMessage}</p>
+                  ` : ''}
+                </div>
+              </div>
+            </div>
+          </main>
+
+          <footer class="w-full py-4 text-center text-xs text-[#727784] border-t border-[#e0e3e5] mt-12">
+            <p>Российский научно-исследовательский институт эпидемиологии</p>
+          </footer>
+        </div>
+      `;
+    }
+
+    function refreshMappings() {
+      state.isLoadingMappings = true;
+      render();
+      setTimeout(() => {
+        state.isLoadingMappings = false;
+        render();
+      }, 200);
+    }
+
+    function saveRole() {
+      state.isSaving = true;
+      render();
+      setTimeout(() => {
+        state.isSaving = false;
+        state.saveSuccessMessage = 'Роль пользователя успешно обновлена.';
+        render();
+      }, 300);
+    }
+
+    render();
+  </script>
+</body>
+</html>

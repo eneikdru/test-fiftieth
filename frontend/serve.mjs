@@ -24,6 +24,31 @@ const server = http.createServer((req, res) => {
   const pathname = parsedUrl.pathname;
 
   // Mock API endpoints
+  if (pathname === '/api/v1/auth/moodle/override-role') {
+    if (req.method === 'GET') {
+      res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify({
+        mappings: [
+          { id: 1, moodle_role_pattern: 'администратор', internal_role: 'ADMIN' },
+          { id: 2, moodle_role_pattern: 'преподаватель', internal_role: 'EPIDEMIOLOGIST' },
+          { id: 3, moodle_role_pattern: 'студент', internal_role: 'RESEARCHER' }
+        ],
+        total: 3
+      }));
+      return;
+    }
+    if (req.method === 'POST') {
+      res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify({
+        success: true,
+        message: 'Роль пользователя успешно изменена.',
+        user_id: 101,
+        role: 'ADMIN'
+      }));
+      return;
+    }
+  }
+
   if (pathname === '/api/v1/documents/1/download' || (pathname.startsWith('/api/v1/documents/') && pathname.endsWith('/download'))) {
     res.writeHead(200, {
       'Content-Type': 'application/pdf',

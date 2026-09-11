@@ -30,6 +30,18 @@ test.describe('Authentication, Role Access, and Recovery E2E Tests', () => {
     await expect(page.locator('#employee-message')).toContainText('загрузка и удаление ограничены администратором института');
   });
 
+  test('Given an administrator user, When fetching Moodle role override endpoint, Then GET /api/v1/auth/moodle/override-role returns hierarchy mappings', async ({ page }) => {
+    // Direct API request verification for GET /api/v1/auth/moodle/override-role
+    const response = await page.request.get('/api/v1/auth/moodle/override-role');
+    expect(response.ok()).toBeTruthy();
+    const data = await response.json();
+    expect(data).toHaveProperty('mappings');
+    expect(Array.isArray(data.mappings)).toBeTruthy();
+    expect(data.mappings.length).toBeGreaterThan(0);
+    expect(data.mappings[0]).toHaveProperty('moodle_role_pattern');
+    expect(data.mappings[0]).toHaveProperty('internal_role');
+  });
+
   test('Given a locked-out user, When the test runs the self-service recovery flow, Then access is successfully restored', async ({ page }) => {
     // Navigate to test harness page
     await page.goto(harnessPath);
