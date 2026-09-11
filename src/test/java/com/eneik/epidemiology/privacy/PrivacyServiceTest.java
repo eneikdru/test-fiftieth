@@ -178,4 +178,33 @@ class PrivacyServiceTest {
             privacyService.initiateDataErasure("erasure_invalid_token", "WRONG_TOKEN", "Reason", "ALL_PERSONAL_DATA")
         );
     }
+
+    @org.junit.jupiter.api.Disabled("Pending TAG-02 implementation of secure token (wishlist)")
+    @Test
+    @DisplayName("Given an erasure confirmation attempt, When using a deterministic string, Then the request is rejected")
+    void testDeterministicTokenRejected() {
+        User user = new User("det_target", "hash456", "RESEARCHER");
+        userRepository.save(user);
+
+        String token = "CONFIRM_ERASURE_det_target";
+
+        assertThrows(PrivacyService.PrivacyBadRequestException.class, () ->
+            privacyService.initiateDataErasure("det_target", token, "152-FZ", "ALL_PERSONAL_DATA")
+        );
+    }
+
+    @org.junit.jupiter.api.Disabled("Pending TAG-02 implementation of secure token (wishlist)")
+    @Test
+    @DisplayName("Given a valid secure token, When submitted, Then the erasure is successfully confirmed")
+    void testSecureTokenAccepted() {
+        User user = new User("secure_target", "hash456", "RESEARCHER");
+        userRepository.save(user);
+
+        String token = "8e3b7a5a-4e2b-4d4b-9f9a-1b2c3d4e5f6a";
+
+        DataErasureJob job = privacyService.initiateDataErasure("secure_target", token, "152-FZ", "ALL_PERSONAL_DATA");
+
+        assertNotNull(job);
+        assertEquals("COMPLETED", job.getStatus());
+    }
 }
