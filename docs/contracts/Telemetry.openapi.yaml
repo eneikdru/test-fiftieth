@@ -1,0 +1,384 @@
+openapi: 3.0.3
+info:
+  title: Telemetry API Contract
+  description: Shared API contract for ingesting and retrieving navigation, search, workflow, and performance telemetry data.
+  version: 1.0.0
+servers:
+  - url: /api/v1
+    description: Primary API endpoint base path
+
+paths:
+  /telemetry/events:
+    post:
+      summary: Ingest telemetry event
+      description: Ingests a new telemetry event recorded by backend services or frontend UI components.
+      operationId: recordTelemetryEvent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TelemetryEventIngestionRequest'
+      responses:
+        '201':
+          description: Telemetry event successfully recorded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TelemetryEventResponse'
+        '400':
+          description: Invalid request payload or validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized access
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error while processing telemetry
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    get:
+      summary: Query telemetry events
+      description: Retrieves a filtered list of telemetry events based on event type, document ID, module, or time range.
+      operationId: getTelemetryEvents
+      parameters:
+        - name: event_type
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter events by event_type (e.g., ZERO_RESULTS, WORKFLOW_DURATION_MEASURED, TAB_NAVIGATION)
+          example: "WORKFLOW_DURATION_MEASURED"
+        - name: document_id
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int64
+          description: Filter events by associated document ID
+          example: 42
+        - name: module
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter events by component or system module
+          example: "Core Module"
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 50
+            maximum: 500
+          description: Maximum number of events to return
+          example: 50
+      responses:
+        '200':
+          description: List of telemetry events matching query filters
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TelemetryEventResponse'
+        '400':
+          description: Invalid query parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized access
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /telemetry/summary:
+    get:
+      summary: Get SPA navigation & performance summary
+      description: Returns aggregated metrics (click distance, load success rate, total loads, activity log) for the Navigation Telemetry dashboard.
+      operationId: getNavigationTelemetrySummary
+      responses:
+        '200':
+          description: Aggregated telemetry summary metrics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NavigationTelemetrySummaryResponse'
+        '401':
+          description: Unauthorized access
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    TelemetryEventIngestionRequest:
+      type: object
+      required:
+        - event_type
+      properties:
+        event_type:
+          type: string
+          description: Category or type of the recorded event
+          example: "WORKFLOW_DURATION_MEASURED"
+        query_term:
+          type: string
+          nullable: true
+          description: Search query term, PR identifier, or workflow name
+          example: "COVID-2026"
+        document_id:
+          type: integer
+          format: int64
+          nullable: true
+          description: Associated document identifier
+          example: 101
+        results_count:
+          type: integer
+          nullable: true
+          description: Number of search results or count associated with the event
+          example: 0
+        processing_time_ms:
+          type: integer
+          format: int64
+          nullable: true
+          description: Processing duration in milliseconds
+          example: 120
+        workflow_duration_ms:
+          type: integer
+          format: int64
+          nullable: true
+          description: Total workflow execution time in milliseconds
+          example: 350
+        latency_ms:
+          type: integer
+          format: int64
+          nullable: true
+          description: Network or client rendering latency in milliseconds
+          example: 42
+        module:
+          type: string
+          nullable: true
+          description: Module or component name generating the event
+          example: "Data Module"
+        title:
+          type: string
+          nullable: true
+          description: Human-readable title or description of the action
+          example: "Metrics Fetched"
+        success:
+          type: boolean
+          nullable: true
+          description: Outcome status of the recorded action
+          example: true
+        start_time:
+          type: string
+          format: date-time
+          nullable: true
+          description: ISO-8601 start timestamp
+          example: "2026-09-11T10:00:00Z"
+        end_time:
+          type: string
+          format: date-time
+          nullable: true
+          description: ISO-8601 end timestamp
+          example: "2026-09-11T10:00:00.350Z"
+
+    TelemetryEventResponse:
+      type: object
+      required:
+        - id
+        - event_type
+        - created_at
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: Unique telemetry event record identifier
+          example: 501
+        event_type:
+          type: string
+          description: Category or type of the recorded event
+          example: "WORKFLOW_DURATION_MEASURED"
+        query_term:
+          type: string
+          nullable: true
+          description: Search query term, PR identifier, or workflow name
+          example: "COVID-2026"
+        document_id:
+          type: integer
+          format: int64
+          nullable: true
+          description: Associated document identifier
+          example: 101
+        results_count:
+          type: integer
+          nullable: true
+          description: Number of search results or count associated with the event
+          example: 0
+        processing_time_ms:
+          type: integer
+          format: int64
+          nullable: true
+          description: Processing duration in milliseconds
+          example: 120
+        workflow_duration_ms:
+          type: integer
+          format: int64
+          nullable: true
+          description: Total workflow execution time in milliseconds
+          example: 350
+        latency_ms:
+          type: integer
+          format: int64
+          nullable: true
+          description: Network or client rendering latency in milliseconds
+          example: 42
+        module:
+          type: string
+          nullable: true
+          description: Module or component name generating the event
+          example: "Data Module"
+        title:
+          type: string
+          nullable: true
+          description: Human-readable title or description of the action
+          example: "Metrics Fetched"
+        success:
+          type: boolean
+          nullable: true
+          description: Outcome status of the recorded action
+          example: true
+        start_time:
+          type: string
+          format: date-time
+          nullable: true
+          description: ISO-8601 start timestamp
+        end_time:
+          type: string
+          format: date-time
+          nullable: true
+          description: ISO-8601 end timestamp
+        created_at:
+          type: string
+          format: date-time
+          description: Timestamp when the event was saved to datastore
+          example: "2026-09-11T10:00:00.355Z"
+
+    NavigationTelemetrySummaryResponse:
+      type: object
+      required:
+        - total_clicks
+        - tab_navigations
+        - successful_loads
+        - failed_loads
+        - pre_consolidation_taps
+        - activities
+      properties:
+        total_clicks:
+          type: integer
+          description: Total user clicks registered across navigation tabs
+          example: 18
+        tab_navigations:
+          type: integer
+          description: Number of tab navigation switches
+          example: 10
+        successful_loads:
+          type: integer
+          description: Count of successful tab/view loads
+          example: 10
+        failed_loads:
+          type: integer
+          description: Count of failed tab/view loads
+          example: 0
+        pre_consolidation_taps:
+          type: number
+          format: double
+          description: Baseline average taps/clicks prior to SPA consolidation
+          example: 3.2
+        activities:
+          type: array
+          items:
+            $ref: '#/components/schemas/TelemetryActivityItem'
+
+    TelemetryActivityItem:
+      type: object
+      required:
+        - id
+        - title
+        - module
+        - latency_ms
+        - timestamp
+        - success
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: Unique activity log identifier
+          example: 1
+        title:
+          type: string
+          description: Description of the activity action
+          example: "Dashboard Loaded"
+        module:
+          type: string
+          description: Associated application module
+          example: "Core Module"
+        latency_ms:
+          type: integer
+          format: int64
+          description: Measured latency in milliseconds
+          example: 24
+        timestamp:
+          type: string
+          description: Relative or formatted timestamp string
+          example: "Just now"
+        success:
+          type: boolean
+          description: Whether the activity succeeded
+          example: true
+
+    ErrorResponse:
+      type: object
+      required:
+        - error_code
+        - message
+        - timestamp
+      properties:
+        error_code:
+          type: string
+          description: Machine-readable error code string
+          example: "INVALID_TELEMETRY_PAYLOAD"
+        message:
+          type: string
+          description: Human-readable error message in Russian
+          example: "Некорректная структура полезной нагрузки телеметрии."
+        details:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Additional validation details or context
+        timestamp:
+          type: string
+          format: date-time
+          description: Server timestamp when error occurred
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - BearerAuth: []
