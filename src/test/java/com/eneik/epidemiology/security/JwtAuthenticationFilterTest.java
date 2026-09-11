@@ -19,6 +19,7 @@ import java.util.Collections;
 
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -57,7 +58,7 @@ public class JwtAuthenticationFilterTest {
         configureMockToken(token, "persistent_user", "USER");
         Mockito.when(userService.resolveRoleByUsername("persistent_user")).thenReturn(java.util.Optional.of("RESEARCHER"));
 
-        Mockito.when(documentRepository.fullTextSearch(isNull(), Mockito.eq("PROTOCOL"), isNull(), isNull(), any(Pageable.class)))
+        Mockito.when(documentRepository.fullTextSearch(isNull(), Mockito.eq("PROTOCOL"), isNull(), isNull(), anyBoolean(), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(Collections.emptyList()));
 
         mockMvc.perform(get("/api/v1/protocols")
@@ -71,7 +72,7 @@ public class JwtAuthenticationFilterTest {
         String token = "mock_valid_token_1";
         configureMockToken(token, "researcher_user", "RESEARCHER");
 
-        Mockito.when(documentRepository.fullTextSearch(isNull(), Mockito.eq("PROTOCOL"), isNull(), isNull(), any(Pageable.class)))
+        Mockito.when(documentRepository.fullTextSearch(isNull(), Mockito.eq("PROTOCOL"), isNull(), isNull(), anyBoolean(), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(Collections.emptyList()));
 
         mockMvc.perform(get("/api/v1/protocols")
@@ -85,7 +86,7 @@ public class JwtAuthenticationFilterTest {
         String token = "mock_valid_token_2";
         configureMockToken(token, "researcher_user", "RESEARCHER");
 
-        Mockito.when(documentRepository.fullTextSearch(isNull(), Mockito.eq("PROTOCOL"), isNull(), isNull(), any(Pageable.class)))
+        Mockito.when(documentRepository.fullTextSearch(isNull(), Mockito.eq("PROTOCOL"), isNull(), isNull(), anyBoolean(), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(Collections.emptyList()));
 
         mockMvc.perform(get("/api/v1/protocols")
@@ -99,7 +100,7 @@ public class JwtAuthenticationFilterTest {
         String token = "mock_valid_token_3";
         configureMockToken(token, "researcher_user", "researcher");
 
-        Mockito.when(documentRepository.fullTextSearch(isNull(), Mockito.eq("PROTOCOL"), isNull(), isNull(), any(Pageable.class)))
+        Mockito.when(documentRepository.fullTextSearch(isNull(), Mockito.eq("PROTOCOL"), isNull(), isNull(), anyBoolean(), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(Collections.emptyList()));
 
         mockMvc.perform(get("/api/v1/protocols")
@@ -113,7 +114,7 @@ public class JwtAuthenticationFilterTest {
         String token = "mock_valid_param_token";
         configureMockToken(token, "researcher_user", "RESEARCHER");
 
-        Mockito.when(documentRepository.fullTextSearch(isNull(), Mockito.eq("PROTOCOL"), isNull(), isNull(), any(Pageable.class)))
+        Mockito.when(documentRepository.fullTextSearch(isNull(), Mockito.eq("PROTOCOL"), isNull(), isNull(), anyBoolean(), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(Collections.emptyList()));
 
         mockMvc.perform(get("/api/v1/protocols")

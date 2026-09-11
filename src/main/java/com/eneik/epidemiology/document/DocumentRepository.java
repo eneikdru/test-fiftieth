@@ -19,10 +19,12 @@ public interface DocumentRepository extends JpaRepository<Document, Long> {
     @Query("SELECT d FROM Document d WHERE " +
            "(:query IS NULL OR LOWER(CAST(d.title AS java.lang.String)) LIKE LOWER(CONCAT('%', CAST(:query AS java.lang.String), '%'))) AND " +
            "(:author IS NULL OR LOWER(CAST(d.authorOrganization AS java.lang.String)) LIKE LOWER(CONCAT('%', CAST(:author AS java.lang.String), '%'))) AND " +
-           "(:year IS NULL OR d.publicationYear = :year)")
+           "(:year IS NULL OR d.publicationYear = :year) AND " +
+           "(:excludeProtocols = false OR d.docType IS NULL OR d.docType <> 'PROTOCOL')")
     Page<Document> searchDocuments(@Param("query") String query,
                                    @Param("author") String author,
                                    @Param("year") Integer year,
+                                   @Param("excludeProtocols") boolean excludeProtocols,
                                    Pageable pageable);
 
     @Query("SELECT d FROM Document d WHERE " +
@@ -31,10 +33,12 @@ public interface DocumentRepository extends JpaRepository<Document, Long> {
            " (d.textContent IS NOT NULL AND LOWER(CAST(d.textContent AS java.lang.String)) LIKE LOWER(CONCAT('%', CAST(:q AS java.lang.String), '%')))) AND " +
            "(:docType IS NULL OR d.docType = :docType) AND " +
            "(CAST(:fromDate AS java.time.LocalDate) IS NULL OR d.publicationDate >= :fromDate) AND " +
-           "(CAST(:toDate AS java.time.LocalDate) IS NULL OR d.publicationDate <= :toDate)")
+           "(CAST(:toDate AS java.time.LocalDate) IS NULL OR d.publicationDate <= :toDate) AND " +
+           "(:excludeProtocols = false OR d.docType IS NULL OR d.docType <> 'PROTOCOL')")
     Page<Document> fullTextSearch(@Param("q") String q,
                                  @Param("docType") String docType,
                                  @Param("fromDate") LocalDate fromDate,
                                  @Param("toDate") LocalDate toDate,
+                                 @Param("excludeProtocols") boolean excludeProtocols,
                                  Pageable pageable);
 }

@@ -38,6 +38,16 @@ public class DocumentController {
         this.telemetryService = telemetryService;
     }
 
+    private boolean canAccessProtocols() {
+        org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated()) return false;
+        return auth.getAuthorities().stream()
+                .anyMatch(a -> {
+                    String role = a.getAuthority();
+                    return role.equals("ROLE_ADMIN") || role.equals("ROLE_RESEARCHER") || role.equals("ROLE_EPIDEMIOLOGIST");
+                });
+    }
+
     private boolean isValidExtension(String originalFilename) {
         if (originalFilename == null || !originalFilename.contains(".")) {
             return false;
@@ -103,6 +113,11 @@ public class DocumentController {
     @GetMapping
     public ResponseEntity<?> getAllDocuments() {
         List<Document> documents = documentRepository.findAll();
+        if (!canAccessProtocols()) {
+            documents = documents.stream()
+                .filter(doc -> !"PROTOCOL".equalsIgnoreCase(doc.getDocType()))
+                .collect(Collectors.toList());
+        }
         return ResponseEntity.ok(documents);
     }
 
@@ -149,6 +164,7 @@ public class DocumentController {
                     (docType != null && !docType.trim().isEmpty()) ? docType.trim() : null,
                     fromDate,
                     toDate,
+                    !canAccessProtocols(),
                     pageable
             );
 
@@ -189,7 +205,7 @@ public class DocumentController {
         String normalizedAuthor = (author != null && !author.trim().isEmpty()) ? author.trim() : null;
 
         Pageable pageable = PageRequest.of(page, size);
-        Page<Document> resultPage = documentRepository.searchDocuments(normalizedQuery, normalizedAuthor, year, pageable);
+        Page<Document> resultPage = documentRepository.searchDocuments(normalizedQuery, normalizedAuthor, year, !canAccessProtocols(), pageable);
 
         String telemetryQuery = query != null ? query : (author != null ? author : "");
         telemetryService.recordSearchTelemetry(telemetryQuery, resultPage.getContent().size());
@@ -253,6 +269,12 @@ public class DocumentController {
 
         return documentRepository.findById(id)
                 .map(doc -> {
+                    if ("PROTOCOL".equalsIgnoreCase(doc.getDocType()) && !canAccessProtocols()) {
+                        return ResponseEntity.status(HttpStatus.FORBIDDEN).body((Object) Map.of(
+                                "error_code", "ACCESS_DENIED",
+                                "message", "Недостаточно прав для доступа к протоколам."
+                        ));
+                    }
                     String fileName = doc.getFilePath().substring(doc.getFilePath().lastIndexOf('/') + 1);
                     if (fileName.isEmpty()) {
                         fileName = "document_" + id + ".pdf";
@@ -305,6 +327,12 @@ public class DocumentController {
 
         return documentRepository.findById(id)
                 .map(doc -> {
+                    if ("PROTOCOL".equalsIgnoreCase(doc.getDocType()) && !canAccessProtocols()) {
+                        return ResponseEntity.status(HttpStatus.FORBIDDEN).body((Object) Map.of(
+                                "error_code", "ACCESS_DENIED",
+                                "message", "Недостаточно прав для доступа к протоколам."
+                        ));
+                    }
                     byte[] content = ("Содержимое документа: " + doc.getTitle()).getBytes(StandardCharsets.UTF_8);
                     String fileName = doc.getFilePath().substring(doc.getFilePath().lastIndexOf('/') + 1);
                     if (fileName.isEmpty()) {

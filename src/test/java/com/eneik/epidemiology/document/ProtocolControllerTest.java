@@ -38,7 +38,7 @@ class ProtocolControllerTest {
         protocolDoc.setId(101L);
         protocolDoc.setDocType("PROTOCOL");
 
-        Mockito.when(documentRepository.fullTextSearch(eq("Salmonella"), eq("PROTOCOL"), isNull(), isNull(), any(Pageable.class)))
+        Mockito.when(documentRepository.fullTextSearch(eq("Salmonella"), eq("PROTOCOL"), isNull(), isNull(), org.mockito.ArgumentMatchers.anyBoolean(), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(protocolDoc)));
 
         mockMvc.perform(get("/api/v1/protocols?q=Salmonella"))
