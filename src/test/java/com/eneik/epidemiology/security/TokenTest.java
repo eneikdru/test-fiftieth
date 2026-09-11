@@ -15,6 +15,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
+@io.zonky.test.db.AutoConfigureEmbeddedDatabase
 public class TokenTest {
 
     @Autowired
@@ -28,7 +29,7 @@ public class TokenTest {
         // Create a custom JwtTokenProvider with a clock fixed in the past
         Clock pastClock = Clock.fixed(Instant.now().minusSeconds(10000), ZoneId.of("UTC"));
         JwtTokenProvider expiredTokenProvider = new JwtTokenProvider(
-                "default-secret-key-for-jwt-signing-2026-epidemiology-portal",
+                "test-jwt-secret-key-for-unit-testing",
                 3600, // valid for 1 hour from creation
                 pastClock
         );

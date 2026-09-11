@@ -20,7 +20,7 @@ public class JwtTokenProvider {
 
     @Autowired
     public JwtTokenProvider(
-            @Value("${app.jwt.secret:default-secret-key-for-jwt-signing-2026-epidemiology-portal}") String secretKey,
+            @Value("${app.jwt.secret:}") String secretKey,
             @Value("${app.jwt.expiration-seconds:3600}") long accessTokenValidityInSeconds) {
         this(secretKey, accessTokenValidityInSeconds, Clock.systemUTC());
     }

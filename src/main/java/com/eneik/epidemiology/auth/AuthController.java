@@ -33,8 +33,8 @@ public class AuthController {
     @org.springframework.beans.factory.annotation.Value("${moodle.redirect.uri:http://localhost:8080/auth/moodle/callback}")
     private String moodleRedirectUri = "http://localhost:8080/auth/moodle/callback";
 
-    @org.springframework.beans.factory.annotation.Value("${moodle.lti.consumer.secret:moodle_lti_secret}")
-    private String moodleLtiSecret = "moodle_lti_secret";
+    @org.springframework.beans.factory.annotation.Value("${moodle.lti.consumer.secret:}")
+    private String moodleLtiSecret = "";
 
     @org.springframework.beans.factory.annotation.Value("${app.frontend.url:/}")
     private String frontendUrl = "/";
