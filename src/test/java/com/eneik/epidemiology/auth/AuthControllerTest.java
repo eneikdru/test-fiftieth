@@ -166,14 +166,23 @@ class AuthControllerTest {
     @Test
     @DisplayName("Given valid LTI launch request via JSON body, When POST /api/v1/auth/lti/launch called, Then authenticates user and returns session tokens")
     void testLtiLaunch_JsonPayload_Success() throws Exception {
-        String ltiJson = "{" +
+        java.util.Map<String, String> params = new java.util.TreeMap<>();
+        params.put("department", "Вирусология");
+        params.put("email", "json_lti@epidemiology-inst.ru");
+        params.put("full_name", "Иван Провайдеров");
+        params.put("roles", "Learner");
+        params.put("username", "json_lti_user");
+
+        String computedSig = calculateLtiHmacSha1(params, "moodle_lti_secret");
+
+        String ltiJson = String.format("{" +
                 "\"username\":\"json_lti_user\"," +
                 "\"full_name\":\"Иван Провайдеров\"," +
                 "\"email\":\"json_lti@epidemiology-inst.ru\"," +
                 "\"roles\":\"Learner\"," +
                 "\"department\":\"Вирусология\"," +
-                "\"oauth_signature\":\"valid_lti_signature\"" +
-                "}";
+                "\"oauth_signature\":\"%s\"" +
+                "}", computedSig);
 
         mockMvc.perform(post("/api/v1/auth/lti/launch")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -664,14 +673,23 @@ class AuthControllerTest {
     @Test
     @DisplayName("Given valid LTI launch request via form urlencoded body, When processLtiLaunchForm is invoked, Then authenticates user successfully")
     void testLtiLaunch_FormPayload_Success() throws Exception {
+        java.util.Map<String, String> params = new java.util.TreeMap<>();
+        params.put("department", "Паразитология");
+        params.put("email", "form_lti@epidemiology-inst.ru");
+        params.put("full_name", "Форм Пользователь");
+        params.put("roles", "Instructor");
+        params.put("username", "form_lti_user");
+
+        String computedSig = calculateLtiHmacSha1(params, "moodle_lti_secret");
+
         mockMvc.perform(post("/api/v1/auth/lti/launch")
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                .param("username", "form_lti_user")
-                .param("full_name", "Форм Пользователь")
-                .param("email", "form_lti@epidemiology-inst.ru")
-                .param("roles", "Instructor")
-                .param("department", "Паразитология")
-                .param("oauth_signature", "valid_lti_signature"))
+                .param("username", params.get("username"))
+                .param("full_name", params.get("full_name"))
+                .param("email", params.get("email"))
+                .param("roles", params.get("roles"))
+                .param("department", params.get("department"))
+                .param("oauth_signature", computedSig))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.access_token", notNullValue()))
                 .andExpect(jsonPath("$.user.username", is("form_lti_user")))
@@ -735,6 +753,73 @@ class AuthControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.access_token", notNullValue()))
                 .andExpect(jsonPath("$.user.username", is("auto_sso_user")));
+    }
+
+    @Test
+    @DisplayName("Given valid OIDC RS256 token signed with private RSA key and matching IdP JWKS, When POST /api/v1/auth/sso/oidc received, Then token signature is cryptographically verified and user authenticated")
+    void testOidcLogin_JwksVerification_Success() throws Exception {
+        java.security.KeyPairGenerator keyPairGenerator = java.security.KeyPairGenerator.getInstance("RSA");
+        keyPairGenerator.initialize(2048);
+        java.security.KeyPair keyPair = keyPairGenerator.generateKeyPair();
+        java.security.interfaces.RSAPublicKey publicKey = (java.security.interfaces.RSAPublicKey) keyPair.getPublic();
+        java.security.interfaces.RSAPrivateKey privateKey = (java.security.interfaces.RSAPrivateKey) keyPair.getPrivate();
+
+        String kid = "key-2026-test";
+        String nBase64 = java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(publicKey.getModulus().toByteArray());
+        String eBase64 = java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(publicKey.getPublicExponent().toByteArray());
+
+        String jwksJson = String.format("{\"keys\":[{\"kty\":\"RSA\",\"use\":\"sig\",\"alg\":\"RS256\",\"kid\":\"%s\",\"n\":\"%s\",\"e\":\"%s\"}]}", kid, nBase64, eBase64);
+        authController.setMoodleJwksJson(jwksJson);
+
+        String headerJson = String.format("{\"alg\":\"RS256\",\"typ\":\"JWT\",\"kid\":\"%s\"}", kid);
+        long now = System.currentTimeMillis() / 1000;
+        String payloadJson = String.format("{\"sub\":\"jwks_oidc_user\",\"role\":\"Instructor\",\"department\":\"Кафедра Эпидемиологии\",\"exp\":%d}", now + 3600);
+
+        String encodedHeader = java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(headerJson.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        String encodedPayload = java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(payloadJson.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+
+        String contentToSign = encodedHeader + "." + encodedPayload;
+        java.security.Signature sig = java.security.Signature.getInstance("SHA256withRSA");
+        sig.initSign(privateKey);
+        sig.update(contentToSign.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        String signature = java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(sig.sign());
+
+        String rsaJwtToken = contentToSign + "." + signature;
+
+        String ssoBody = String.format("{\"username\":\"jwks_oidc_user\",\"oidc_token\":\"%s\"}", rsaJwtToken);
+
+        mockMvc.perform(post("/api/v1/auth/sso/oidc")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(ssoBody))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.access_token", notNullValue()))
+                .andExpect(jsonPath("$.user.username", is("jwks_oidc_user")))
+                .andExpect(jsonPath("$.user.role", is("EPIDEMIOLOGIST")))
+                .andExpect(jsonPath("$.user.department", is("Кафедра Эпидемиологии")));
+    }
+
+    private String calculateLtiHmacSha1(java.util.Map<String, String> params, String ltiSecret) throws Exception {
+        String secret = ltiSecret + "&";
+        javax.crypto.Mac mac = javax.crypto.Mac.getInstance("HmacSHA1");
+        javax.crypto.spec.SecretKeySpec secretKey = new javax.crypto.spec.SecretKeySpec(
+                secret.getBytes(java.nio.charset.StandardCharsets.UTF_8), "HmacSHA1");
+        mac.init(secretKey);
+
+        java.util.List<String> sortedKeys = new java.util.ArrayList<>(params.keySet());
+        java.util.Collections.sort(sortedKeys);
+
+        StringBuilder paramString = new StringBuilder();
+        for (String k : sortedKeys) {
+            String v = params.get(k);
+            if (v == null) continue;
+            if (paramString.length() > 0) paramString.append("&");
+            paramString.append(java.net.URLEncoder.encode(k, java.nio.charset.StandardCharsets.UTF_8.name()))
+                    .append("=")
+                    .append(java.net.URLEncoder.encode(v, java.nio.charset.StandardCharsets.UTF_8.name()));
+        }
+
+        byte[] rawHmac = mac.doFinal(paramString.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        return java.util.Base64.getEncoder().encodeToString(rawHmac);
     }
 
 }

@@ -47,16 +47,28 @@ public class LtiSsoIntegrationTest {
     @Test
     @DisplayName("Given valid LTI launch request from Moodle with valid signature, When POST /api/v1/auth/lti/launch received, Then user is authenticated, synced with role and department, and token returned")
     void testLtiLaunch_ValidParametersAndSignature_AuthenticatesAndSyncs() throws Exception {
+        java.util.Map<String, String> params = new java.util.TreeMap<>();
+        params.put("user_id", "moodle_lti_100");
+        params.put("ext_user_username", "lti_epidemiologist");
+        params.put("lis_person_name_full", "Сергеев Сергей Сергеевич");
+        params.put("lis_person_contact_email_primary", "sergeev@epidemiology-inst.ru");
+        params.put("roles", "Instructor");
+        params.put("custom_department", "Кафедра Вирусологии");
+        params.put("custom_courses", "VIR-101,VIR-202");
+        params.put("oauth_consumer_key", "moodle_lti_key");
+
+        String computedSignature = calculateLtiHmacSha1(params, "moodle_lti_secret");
+
         mockMvc.perform(post("/api/v1/auth/lti/launch")
-                .param("user_id", "moodle_lti_100")
-                .param("ext_user_username", "lti_epidemiologist")
-                .param("lis_person_name_full", "Сергеев Сергей Сергеевич")
-                .param("lis_person_contact_email_primary", "sergeev@epidemiology-inst.ru")
-                .param("roles", "Instructor")
-                .param("custom_department", "Кафедра Вирусологии")
-                .param("custom_courses", "VIR-101,VIR-202")
-                .param("oauth_consumer_key", "moodle_lti_key")
-                .param("oauth_signature", "valid_lti_signature")
+                .param("user_id", params.get("user_id"))
+                .param("ext_user_username", params.get("ext_user_username"))
+                .param("lis_person_name_full", params.get("lis_person_name_full"))
+                .param("lis_person_contact_email_primary", params.get("lis_person_contact_email_primary"))
+                .param("roles", params.get("roles"))
+                .param("custom_department", params.get("custom_department"))
+                .param("custom_courses", params.get("custom_courses"))
+                .param("oauth_consumer_key", params.get("oauth_consumer_key"))
+                .param("oauth_signature", computedSignature)
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.access_token", notNullValue()))
@@ -152,11 +164,18 @@ public class LtiSsoIntegrationTest {
     void testLtiLaunch_ExistingUserRoleAndDepartmentUpdate() throws Exception {
         userService.createUser("lti_existing_user", "OldPass123!", "existing@inst.ru", "Существующий Пользователь", "USER");
 
+        java.util.Map<String, String> params = new java.util.TreeMap<>();
+        params.put("username", "lti_existing_user");
+        params.put("roles", "Administrator");
+        params.put("custom_department", "Департамент Аналитики");
+
+        String computedSignature = calculateLtiHmacSha1(params, "moodle_lti_secret");
+
         mockMvc.perform(post("/api/v1/auth/lti/launch")
-                .param("username", "lti_existing_user")
-                .param("roles", "Administrator")
-                .param("custom_department", "Департамент Аналитики")
-                .param("oauth_signature", "valid_lti_signature")
+                .param("username", params.get("username"))
+                .param("roles", params.get("roles"))
+                .param("custom_department", params.get("custom_department"))
+                .param("oauth_signature", computedSignature)
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.user.username", is("lti_existing_user")))
@@ -166,5 +185,29 @@ public class LtiSsoIntegrationTest {
         User updatedUser = userRepository.findByUsername("lti_existing_user").orElseThrow();
         assert "ADMIN".equals(updatedUser.getRole());
         assert "Департамент Аналитики".equals(updatedUser.getDepartment());
+    }
+
+    private String calculateLtiHmacSha1(java.util.Map<String, String> params, String ltiSecret) throws Exception {
+        String secret = ltiSecret + "&";
+        javax.crypto.Mac mac = javax.crypto.Mac.getInstance("HmacSHA1");
+        javax.crypto.spec.SecretKeySpec secretKey = new javax.crypto.spec.SecretKeySpec(
+                secret.getBytes(java.nio.charset.StandardCharsets.UTF_8), "HmacSHA1");
+        mac.init(secretKey);
+
+        java.util.List<String> sortedKeys = new java.util.ArrayList<>(params.keySet());
+        java.util.Collections.sort(sortedKeys);
+
+        StringBuilder paramString = new StringBuilder();
+        for (String k : sortedKeys) {
+            String v = params.get(k);
+            if (v == null) continue;
+            if (paramString.length() > 0) paramString.append("&");
+            paramString.append(java.net.URLEncoder.encode(k, java.nio.charset.StandardCharsets.UTF_8.name()))
+                    .append("=")
+                    .append(java.net.URLEncoder.encode(v, java.nio.charset.StandardCharsets.UTF_8.name()));
+        }
+
+        byte[] rawHmac = mac.doFinal(paramString.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        return java.util.Base64.getEncoder().encodeToString(rawHmac);
     }
 }

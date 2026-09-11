@@ -36,6 +36,12 @@ public class AuthController {
     @org.springframework.beans.factory.annotation.Value("${moodle.lti.consumer.secret:moodle_lti_secret}")
     private String moodleLtiSecret = "moodle_lti_secret";
 
+    @org.springframework.beans.factory.annotation.Value("${moodle.jwks.url:}")
+    private String moodleJwksUrl = "";
+
+    @org.springframework.beans.factory.annotation.Value("${moodle.jwks.json:}")
+    private String moodleJwksJson = "";
+
     private final org.springframework.web.client.RestTemplate restTemplate;
     private final UserService userService;
     private final JwtTokenProvider jwtTokenProvider;
@@ -65,6 +71,14 @@ public class AuthController {
 
     public void setMoodleServerUrl(String moodleServerUrl) {
         this.moodleServerUrl = moodleServerUrl;
+    }
+
+    public void setMoodleJwksUrl(String moodleJwksUrl) {
+        this.moodleJwksUrl = moodleJwksUrl;
+    }
+
+    public void setMoodleJwksJson(String moodleJwksJson) {
+        this.moodleJwksJson = moodleJwksJson;
     }
 
     public record RegistrationRequest(String username, String password, String email, String full_name) {}
@@ -526,9 +540,6 @@ public class AuthController {
 
         if ("invalid_signature".equalsIgnoreCase(signature.trim())) {
             return false;
-        }
-        if ("valid_lti_signature".equalsIgnoreCase(signature.trim())) {
-            return true;
         }
 
         try {
@@ -1117,10 +1128,116 @@ public class AuthController {
         if (jwtTokenProvider.validateToken(token)) {
             return true;
         }
+        if (validateJwksTokenSignature(token)) {
+            return true;
+        }
         if (moodleClientSecret != null && !moodleClientSecret.trim().isEmpty()) {
             return validateTokenWithSecret(token, moodleClientSecret);
         }
         return false;
+    }
+
+    private boolean validateJwksTokenSignature(String token) {
+        if (token == null || !token.contains(".")) {
+            return false;
+        }
+        String[] parts = token.split("\\.");
+        if (parts.length != 3) {
+            return false;
+        }
+
+        try {
+            String payloadJson = new String(java.util.Base64.getUrlDecoder().decode(parts[1]), java.nio.charset.StandardCharsets.UTF_8);
+            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+            com.fasterxml.jackson.databind.JsonNode payloadNode = mapper.readTree(payloadJson);
+            if (payloadNode.has("exp")) {
+                long exp = payloadNode.get("exp").asLong();
+                if (System.currentTimeMillis() / 1000 > exp) {
+                    return false;
+                }
+            }
+
+            String headerJson = new String(java.util.Base64.getUrlDecoder().decode(parts[0]), java.nio.charset.StandardCharsets.UTF_8);
+            com.fasterxml.jackson.databind.JsonNode headerNode = mapper.readTree(headerJson);
+            String kid = headerNode.has("kid") ? headerNode.get("kid").asText() : null;
+            String alg = headerNode.has("alg") ? headerNode.get("alg").asText() : "RS256";
+
+            com.fasterxml.jackson.databind.JsonNode jwksNode = fetchOrGetJwksJson();
+            if (jwksNode == null || !jwksNode.has("keys")) {
+                return false;
+            }
+
+            com.fasterxml.jackson.databind.JsonNode keysArray = jwksNode.get("keys");
+            com.fasterxml.jackson.databind.JsonNode matchingKey = null;
+            for (com.fasterxml.jackson.databind.JsonNode keyNode : keysArray) {
+                if (kid != null && keyNode.has("kid") && kid.equals(keyNode.get("kid").asText())) {
+                    matchingKey = keyNode;
+                    break;
+                }
+            }
+            if (matchingKey == null && keysArray.size() > 0) {
+                matchingKey = keysArray.get(0);
+            }
+            if (matchingKey == null) {
+                return false;
+            }
+
+            String kty = matchingKey.has("kty") ? matchingKey.get("kty").asText() : "RSA";
+            if (!"RSA".equalsIgnoreCase(kty)) {
+                return false;
+            }
+
+            String nStr = matchingKey.get("n").asText();
+            String eStr = matchingKey.get("e").asText();
+
+            byte[] nBytes = java.util.Base64.getUrlDecoder().decode(nStr);
+            byte[] eBytes = java.util.Base64.getUrlDecoder().decode(eStr);
+
+            java.math.BigInteger modulus = new java.math.BigInteger(1, nBytes);
+            java.math.BigInteger publicExponent = new java.math.BigInteger(1, eBytes);
+
+            java.security.spec.RSAPublicKeySpec spec = new java.security.spec.RSAPublicKeySpec(modulus, publicExponent);
+            java.security.KeyFactory kf = java.security.KeyFactory.getInstance("RSA");
+            java.security.PublicKey publicKey = kf.generatePublic(spec);
+
+            String sigAlg;
+            if ("RS384".equalsIgnoreCase(alg)) {
+                sigAlg = "SHA384withRSA";
+            } else if ("RS512".equalsIgnoreCase(alg)) {
+                sigAlg = "SHA512withRSA";
+            } else {
+                sigAlg = "SHA256withRSA";
+            }
+
+            java.security.Signature signature = java.security.Signature.getInstance(sigAlg);
+            signature.initVerify(publicKey);
+            byte[] signedData = (parts[0] + "." + parts[1]).getBytes(java.nio.charset.StandardCharsets.UTF_8);
+            signature.update(signedData);
+            byte[] sigBytes = java.util.Base64.getUrlDecoder().decode(parts[2]);
+
+            return signature.verify(sigBytes);
+        } catch (Exception e) {
+            log.debug("JWKS token verification failed", e);
+            return false;
+        }
+    }
+
+    private com.fasterxml.jackson.databind.JsonNode fetchOrGetJwksJson() {
+        try {
+            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+            if (moodleJwksJson != null && !moodleJwksJson.trim().isEmpty()) {
+                return mapper.readTree(moodleJwksJson);
+            }
+            if (moodleJwksUrl != null && !moodleJwksUrl.trim().isEmpty()) {
+                String response = restTemplate.getForObject(moodleJwksUrl, String.class);
+                if (response != null) {
+                    return mapper.readTree(response);
+                }
+            }
+        } catch (Exception e) {
+            log.warn("Failed to retrieve or parse JWKS JSON", e);
+        }
+        return null;
     }
 
     private boolean validateTokenWithSecret(String token, String secret) {
