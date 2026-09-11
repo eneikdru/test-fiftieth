@@ -48,6 +48,7 @@ public class JwtAuthenticationFilterTest {
         Mockito.when(tokenRevocationService.isTokenRevoked(token)).thenReturn(false);
         Mockito.when(jwtTokenProvider.getUsername(token)).thenReturn(username);
         Mockito.when(jwtTokenProvider.getRole(token)).thenReturn(role);
+        Mockito.when(userService.resolveRoleByUsername(username)).thenReturn(java.util.Optional.of(role));
     }
 
     @Test
@@ -119,6 +120,21 @@ public class JwtAuthenticationFilterTest {
         mockMvc.perform(get("/api/v1/protocols")
                 .param("access_token", token))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("Given a valid token for a user that does not exist in DB, When requested, Then rejects with 401 Unauthorized")
+    void testNonExistentUserInDatabase_Rejected401() throws Exception {
+        String token = "token_non_existent_user";
+        Mockito.when(jwtTokenProvider.validateToken(token)).thenReturn(true);
+        Mockito.when(tokenRevocationService.isTokenRevoked(token)).thenReturn(false);
+        Mockito.when(jwtTokenProvider.getUsername(token)).thenReturn("ghost_user");
+        Mockito.when(userService.resolveRoleByUsername("ghost_user")).thenReturn(java.util.Optional.empty());
+
+        mockMvc.perform(get("/api/v1/protocols")
+                .header("Authorization", "Bearer " + token))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.error_code", is("UNAUTHORIZED")));
     }
 
     @Test

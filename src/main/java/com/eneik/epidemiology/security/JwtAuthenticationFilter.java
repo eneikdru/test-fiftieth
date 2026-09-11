@@ -46,31 +46,38 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             if (jwtTokenProvider.validateToken(token) && !tokenRevocationService.isTokenRevoked(token)) {
                 String username = jwtTokenProvider.getUsername(token);
 
+                boolean userVerifiedInPersistence = true;
                 String role = null;
                 if (username != null && !username.trim().isEmpty() && userService != null) {
                     Optional<String> persistentRole = userService.resolveRoleByUsername(username);
-                    if (persistentRole.isPresent() && !persistentRole.get().trim().isEmpty()) {
-                        role = persistentRole.get();
+                    if (persistentRole.isPresent()) {
+                        if (!persistentRole.get().trim().isEmpty()) {
+                            role = persistentRole.get();
+                        }
+                    } else {
+                        userVerifiedInPersistence = false;
                     }
                 }
 
-                if (role == null || role.trim().isEmpty()) {
-                    role = jwtTokenProvider.getRole(token);
+                if (userVerifiedInPersistence) {
+                    if (role == null || role.trim().isEmpty()) {
+                        role = jwtTokenProvider.getRole(token);
+                    }
+
+                    if (role == null || role.trim().isEmpty()) {
+                        role = "USER";
+                    }
+                    role = role.trim().toUpperCase();
+
+                    String authorityRole = role.startsWith("ROLE_") ? role : "ROLE_" + role;
+                    SimpleGrantedAuthority authority = new SimpleGrantedAuthority(authorityRole);
+
+                    UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                            username, null, Collections.singletonList(authority));
+                    authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
                 }
-
-                if (role == null || role.trim().isEmpty()) {
-                    role = "USER";
-                }
-                role = role.trim().toUpperCase();
-
-                String authorityRole = role.startsWith("ROLE_") ? role : "ROLE_" + role;
-                SimpleGrantedAuthority authority = new SimpleGrantedAuthority(authorityRole);
-
-                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                        username, null, Collections.singletonList(authority));
-                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-
-                SecurityContextHolder.getContext().setAuthentication(authentication);
             }
         }
 

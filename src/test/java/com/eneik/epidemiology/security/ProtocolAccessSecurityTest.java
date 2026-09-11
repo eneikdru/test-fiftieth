@@ -48,6 +48,7 @@ class ProtocolAccessSecurityTest {
         Mockito.when(tokenRevocationService.isTokenRevoked(token)).thenReturn(false);
         Mockito.when(jwtTokenProvider.getUsername(token)).thenReturn(username);
         Mockito.when(jwtTokenProvider.getRole(token)).thenReturn(role);
+        Mockito.when(userService.resolveRoleByUsername(username)).thenReturn(java.util.Optional.of(role));
     }
 
     @Test
