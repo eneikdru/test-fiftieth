@@ -30,7 +30,6 @@ public class ProtocolController {
                 "PROTOCOL",
                 null,
                 null,
-                false,
                 pageable
         );
 
