@@ -68,7 +68,12 @@ public class StrainController {
         User user = userRepository.findByUsername(username).orElse(null);
 
         if (user == null) {
-            return ResponseEntity.status(401).build();
+            user = new User();
+            user.setUsername(username);
+            String role = authentication.getAuthorities().stream().map(a -> a.getAuthority().replace("ROLE_", "")).findFirst().orElse("USER");
+            user.setRole(role);
+            user.setDepartment("");
+            user.setCourses("");
         }
 
         boolean isAdmin = "ADMIN".equals(user.getRole());
@@ -103,7 +108,12 @@ public class StrainController {
         User user = userRepository.findByUsername(username).orElse(null);
 
         if (user == null) {
-            return ResponseEntity.status(401).build();
+            user = new User();
+            user.setUsername(username);
+            String role = authentication.getAuthorities().stream().map(a -> a.getAuthority().replace("ROLE_", "")).findFirst().orElse("USER");
+            user.setRole(role);
+            user.setDepartment("");
+            user.setCourses("");
         }
 
         Strain strain = strainRepository.findById(id).orElse(null);
@@ -130,7 +140,12 @@ public class StrainController {
         User user = userRepository.findByUsername(username).orElse(null);
 
         if (user == null) {
-            return ResponseEntity.status(401).build();
+            user = new User();
+            user.setUsername(username);
+            String role = authentication.getAuthorities().stream().map(a -> a.getAuthority().replace("ROLE_", "")).findFirst().orElse("USER");
+            user.setRole(role);
+            user.setDepartment("");
+            user.setCourses("");
         }
 
         if (request == null || request.getName() == null || request.getName().trim().isEmpty()) {
@@ -165,7 +180,12 @@ public class StrainController {
         User user = userRepository.findByUsername(username).orElse(null);
 
         if (user == null) {
-            return ResponseEntity.status(401).build();
+            user = new User();
+            user.setUsername(username);
+            String role = authentication.getAuthorities().stream().map(a -> a.getAuthority().replace("ROLE_", "")).findFirst().orElse("USER");
+            user.setRole(role);
+            user.setDepartment("");
+            user.setCourses("");
         }
 
         Strain strain = strainRepository.findById(id).orElse(null);
@@ -206,7 +226,12 @@ public class StrainController {
         User user = userRepository.findByUsername(username).orElse(null);
 
         if (user == null) {
-            return ResponseEntity.status(401).build();
+            user = new User();
+            user.setUsername(username);
+            String role = authentication.getAuthorities().stream().map(a -> a.getAuthority().replace("ROLE_", "")).findFirst().orElse("USER");
+            user.setRole(role);
+            user.setDepartment("");
+            user.setCourses("");
         }
 
         Strain strain = strainRepository.findById(id).orElse(null);

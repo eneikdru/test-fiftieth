@@ -295,11 +295,15 @@
       state.privacyExportSuccess = '';
       render();
 
-      setTimeout(() => {
+      fetch(`/api/v1/privacy/export-requests`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ subject_id: state.currentUser.username || state.currentUser.id, requested_format: "JSON" }) }).then(res => { if (!res.ok) throw new Error("Server Error"); return res.json(); }).then(data => {
         state.isExportingPrivacy = false;
         state.privacyExportSuccess = 'Запрос на экспорт данных успешно создан и обрабатывается.';
         render();
-      }, 500);
+      }).catch(err => {
+        state.isExportingPrivacy = false;
+        state.privacyExportError = 'Ошибка при экспорте данных.';
+        render();
+      });
     }
 
     function handleConfirmPrivacyDelete(e) {
@@ -314,12 +318,16 @@
       state.isDeletingPrivacy = true;
       render();
 
-      setTimeout(() => {
+      fetch(`/api/v1/privacy/erasure-requests`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ subject_id: state.currentUser.username || state.currentUser.id, confirmation_token: `CONFIRM_ERASURE_${state.currentUser.username || state.currentUser.id}`, reason: state.erasureReason || "User requested", erasure_scope: "FULL" }) }).then(res => { if (!res.ok) throw new Error("Server Error"); return res.json(); }).then(data => {
         state.isDeletingPrivacy = false;
         state.privacyDeleteSuccess = 'Запрос на удаление данных принят. Аккаунт и персональные данные будут удалены.';
         state.isPrivacyDeleteModalOpen = false;
         render();
-      }, 500);
+      }).catch(err => {
+        state.isDeletingPrivacy = false;
+        state.privacyDeleteError = 'Ошибка при удалении данных.';
+        render();
+      });
     }
 
     function render() {
