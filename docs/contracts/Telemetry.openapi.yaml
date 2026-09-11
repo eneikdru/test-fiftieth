@@ -1,0 +1,233 @@
+openapi: 3.0.3
+info:
+  title: API Телеметрии
+  description: Контракт API для записи событий телеметрии и получения агрегированных метрик использования.
+  version: 1.0.0
+servers:
+  - url: /api/v1
+    description: Основной сервер API
+
+paths:
+  /telemetry/events:
+    post:
+      summary: Регистрация события телеметрии
+      description: Фиксирует операционное событие (поиск, скачивание документа, время обработки, навигацию).
+      operationId: recordTelemetryEvent
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TelemetryEventRequest'
+      responses:
+        '201':
+          description: Событие телеметрии успешно зарегистрировано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TelemetryEventResponse'
+        '400':
+          description: Некорректные параметры события телеметрии
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Пользователь не авторизован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    get:
+      summary: Получение лога событий телеметрии
+      description: Возвращает журнал зафиксированных событий телеметрии с фильтрацией по типу события или ID документа.
+      operationId: getTelemetryEvents
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: event_type
+          in: query
+          description: Фильтр по типу события (например, SEARCH, DOWNLOAD, WORKFLOW)
+          required: false
+          schema:
+            type: string
+        - name: document_id
+          in: query
+          description: Фильтр по идентификатору документа
+          required: false
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Список событий телеметрии
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TelemetryEventResponse'
+        '401':
+          description: Пользователь не авторизован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /telemetry/metrics:
+    get:
+      summary: Получение сводных метрик телеметрии
+      description: Возвращает агрегированную статистику использования и производительности для UI дашборда.
+      operationId: getTelemetryMetrics
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Сводная статистика телеметрии
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TelemetryMetricsResponse'
+        '401':
+          description: Пользователь не авторизован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    TelemetryEventRequest:
+      type: object
+      required:
+        - event_type
+      properties:
+        event_type:
+          type: string
+          description: Тип фиксируемого события
+          example: "SEARCH"
+        query_term:
+          type: string
+          nullable: true
+          description: Поисковый запрос
+          example: "грипп"
+        document_id:
+          type: integer
+          format: int64
+          nullable: true
+          description: Идентификатор документа
+          example: 42
+        results_count:
+          type: integer
+          nullable: true
+          description: Количество результатов поиска
+          example: 10
+        processing_time_ms:
+          type: integer
+          format: int64
+          nullable: true
+          description: Длительность выполнения операции в миллисекундах
+          example: 120
+        workflow_type:
+          type: string
+          nullable: true
+          description: Наименование рабочего процесса
+          example: "DOSSIER_GENERATION"
+
+    TelemetryEventResponse:
+      type: object
+      required:
+        - id
+        - event_type
+        - created_at
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: Уникальный идентификатор записи телеметрии
+          example: 1001
+        event_type:
+          type: string
+          description: Тип события
+          example: "SEARCH"
+        query_term:
+          type: string
+          nullable: true
+          example: "грипп"
+        document_id:
+          type: integer
+          format: int64
+          nullable: true
+          example: 42
+        results_count:
+          type: integer
+          nullable: true
+          example: 10
+        processing_time_ms:
+          type: integer
+          format: int64
+          nullable: true
+          example: 120
+        created_at:
+          type: string
+          format: date-time
+          description: Метка времени фиксации события
+
+    TelemetryMetricsResponse:
+      type: object
+      required:
+        - total_searches
+        - avg_processing_time_ms
+        - total_downloads
+      properties:
+        total_searches:
+          type: integer
+          format: int64
+          description: Общее количество выполненных поисковых запросов
+          example: 1500
+        avg_processing_time_ms:
+          type: number
+          format: double
+          description: Среднее время обработки запросов в миллисекундах
+          example: 45.5
+        total_downloads:
+          type: integer
+          format: int64
+          description: Общее количество скачиваний документов
+          example: 320
+        active_sessions:
+          type: integer
+          description: Количество активных сессий пользователей
+          example: 12
+
+    ErrorResponse:
+      type: object
+      required:
+        - error_code
+        - message
+        - timestamp
+      properties:
+        error_code:
+          type: string
+          description: Машинно-читаемый код ошибки
+          example: "TELEMETRY_RECORDING_FAILED"
+        message:
+          type: string
+          description: Человекочитаемое сообщение об ошибке на русском языке
+          example: "Ошибка при сохранении события телеметрии."
+        details:
+          type: object
+          additionalProperties: true
+          nullable: true
+        timestamp:
+          type: string
+          format: date-time
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
