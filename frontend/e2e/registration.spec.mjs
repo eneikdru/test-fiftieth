@@ -11,6 +11,23 @@ test.describe('Registration and Onboarding Flow', () => {
     }
   });
 
+  test('Imprint modal accessibility - Link is present and opens Imprint modal', async ({ page }) => {
+    await page.goto('/registration-harness.html');
+    await page.waitForTimeout(500);
+
+    const imprintBtn = page.locator('#imprint-link-reg');
+    await expect(imprintBtn).toBeVisible();
+    await expect(imprintBtn).toContainText('Выходные данные (Imprint / Impressum)');
+
+    await imprintBtn.click();
+    await expect(page.locator('#imprint-modal')).toBeVisible();
+    await expect(page.locator('#imprint-modal-title')).toContainText('Выходные данные');
+
+    // Close modal
+    await page.click('button[aria-label="Закрыть выходные данные"]');
+    await expect(page.locator('#imprint-modal')).not.toBeVisible();
+  });
+
   test('Mobile interaction - Validation and preservation of input', async ({ page }) => {
     // Mobile viewport
     await page.setViewportSize({ width: 375, height: 667 });

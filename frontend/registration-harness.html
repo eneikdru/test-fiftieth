@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>База знаний по эпидемиологии — Регистрация и Онбординг</title>
-  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link rel="stylesheet" href="./tailwind.css" />
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
   <script src="https://unpkg.com/svelte@3.59.2/compiler.js"></script>
@@ -14,26 +14,41 @@
   <script type="module">
     import * as svelteInternal from 'https://unpkg.com/svelte@3.59.2/internal/index.mjs';
 
+    async function compileSvelteComponent(path) {
+      const response = await fetch(path);
+      const source = await response.text();
+
+      const name = path.split('/').pop().replace('.svelte', '');
+      const { js } = window.svelte.compile(source, {
+        format: 'esm',
+        name,
+        sveltePath: 'https://unpkg.com/svelte@3.59.2'
+      });
+
+      return js.code;
+    }
+
     async function loadComponent() {
       try {
-        const response = await fetch('./src/components/RegistrationForm.svelte');
-        const source = await response.text();
+        // Compile ImprintModal first
+        const imprintCode = await compileSvelteComponent('./src/components/ImprintModal.svelte');
+        const imprintCodeMjs = imprintCode
+          .replace(/from ['"]https:\/\/unpkg\.com\/svelte@3\.59\.2\/internal['"]/g, `from "https://unpkg.com/svelte@3.59.2/internal/index.mjs"`)
+          .replace(/from ['"]https:\/\/unpkg\.com\/svelte@3\.59\.2['"]/g, `from "https://unpkg.com/svelte@3.59.2/index.mjs"`);
+        const imprintBlob = new Blob([imprintCodeMjs], { type: 'application/javascript' });
+        const imprintBlobUrl = URL.createObjectURL(imprintBlob);
 
-        // Compile using the unpkg compiler to ESM
-        const { js } = window.svelte.compile(source, {
-          format: 'esm',
-          name: 'RegistrationForm',
-          sveltePath: 'svelte' // Keep it basic, we will map it below
-        });
+        // Compile RegistrationForm
+        const regCode = await compileSvelteComponent('./src/components/RegistrationForm.svelte');
+        const regCodeMjs = regCode
+          .replace(/from ['"]https:\/\/unpkg\.com\/svelte@3\.59\.2\/internal['"]/g, `from "https://unpkg.com/svelte@3.59.2/internal/index.mjs"`)
+          .replace(/from ['"]https:\/\/unpkg\.com\/svelte@3\.59\.2['"]/g, `from "https://unpkg.com/svelte@3.59.2/index.mjs"`)
+          .replace(/from ['"]\.\/ImprintModal\.svelte['"]/g, `from "${imprintBlobUrl}"`);
 
-        // Instead of data URI which might conflict, let's create a blob URL
-        // We replace standard 'svelte/internal' imports with full unpkg URL
-        const codeWithMjs = js.code.replace(/from "svelte\/internal"/g, `from "https://unpkg.com/svelte@3.59.2/internal/index.mjs"`);
+        const regBlob = new Blob([regCodeMjs], { type: 'application/javascript' });
+        const regBlobUrl = URL.createObjectURL(regBlob);
 
-        const blob = new Blob([codeWithMjs], { type: 'application/javascript' });
-        const blobUrl = URL.createObjectURL(blob);
-
-        const module = await import(blobUrl);
+        const module = await import(regBlobUrl);
         const RegistrationForm = module.default;
 
         new RegistrationForm({
