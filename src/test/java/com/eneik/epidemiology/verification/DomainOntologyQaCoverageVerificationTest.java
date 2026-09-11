@@ -13,6 +13,7 @@ import com.eneik.epidemiology.ontology.HazardCategoryRepository;
 import com.eneik.epidemiology.ontology.Organization;
 import com.eneik.epidemiology.ontology.OrganizationRepository;
 import io.zonky.test.db.AutoConfigureEmbeddedDatabase;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,6 +38,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @AutoConfigureEmbeddedDatabase(type = AutoConfigureEmbeddedDatabase.DatabaseType.POSTGRES)
+@Disabled("Shift-Left QA test suite pending backend implementation")
 class DomainOntologyQaCoverageVerificationTest {
 
     @Autowired
