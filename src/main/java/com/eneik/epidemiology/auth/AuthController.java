@@ -43,19 +43,21 @@ public class AuthController {
     private final com.eneik.epidemiology.telemetry.TelemetryService telemetryService;
     private final JdbcTemplate jdbcTemplate;
     private final TokenRevocationService tokenRevocationService;
+    private final MoodleRoleSyncService moodleRoleSyncService;
 
     @org.springframework.beans.factory.annotation.Autowired
-    public AuthController(UserService userService, JwtTokenProvider jwtTokenProvider, PasswordRecoveryService passwordRecoveryService, com.eneik.epidemiology.telemetry.TelemetryService telemetryService, JdbcTemplate jdbcTemplate, TokenRevocationService tokenRevocationService) {
-        this(userService, jwtTokenProvider, passwordRecoveryService, telemetryService, jdbcTemplate, tokenRevocationService, new org.springframework.web.client.RestTemplate());
+    public AuthController(UserService userService, JwtTokenProvider jwtTokenProvider, PasswordRecoveryService passwordRecoveryService, com.eneik.epidemiology.telemetry.TelemetryService telemetryService, JdbcTemplate jdbcTemplate, TokenRevocationService tokenRevocationService, MoodleRoleSyncService moodleRoleSyncService) {
+        this(userService, jwtTokenProvider, passwordRecoveryService, telemetryService, jdbcTemplate, tokenRevocationService, moodleRoleSyncService, new org.springframework.web.client.RestTemplate());
     }
 
-    public AuthController(UserService userService, JwtTokenProvider jwtTokenProvider, PasswordRecoveryService passwordRecoveryService, com.eneik.epidemiology.telemetry.TelemetryService telemetryService, JdbcTemplate jdbcTemplate, TokenRevocationService tokenRevocationService, org.springframework.web.client.RestTemplate restTemplate) {
+    public AuthController(UserService userService, JwtTokenProvider jwtTokenProvider, PasswordRecoveryService passwordRecoveryService, com.eneik.epidemiology.telemetry.TelemetryService telemetryService, JdbcTemplate jdbcTemplate, TokenRevocationService tokenRevocationService, MoodleRoleSyncService moodleRoleSyncService, org.springframework.web.client.RestTemplate restTemplate) {
         this.userService = userService;
         this.jwtTokenProvider = jwtTokenProvider;
         this.passwordRecoveryService = passwordRecoveryService;
         this.telemetryService = telemetryService;
         this.jdbcTemplate = jdbcTemplate;
         this.tokenRevocationService = tokenRevocationService;
+        this.moodleRoleSyncService = moodleRoleSyncService;
         this.restTemplate = restTemplate != null ? restTemplate : new org.springframework.web.client.RestTemplate();
     }
 
@@ -107,6 +109,19 @@ public class AuthController {
     public record PasswordRecoveryRequest(String identity) {}
     public record PasswordResetConfirmationRequest(String recovery_token, String new_password) {}
     public record UpdateProfileRequest(String password, String new_password, String fallback_password) {}
+
+    @PostMapping("/moodle/sync-roles")
+    public ResponseEntity<?> syncMoodleRoles() {
+        if (moodleRoleSyncService == null) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                    "error_code", "SERVICE_UNAVAILABLE",
+                    "message", "Служба синхронизации ролей недоступна.",
+                    "timestamp", OffsetDateTime.now().toString()
+            ));
+        }
+        Map<String, Object> syncResult = moodleRoleSyncService.syncAllUserRoles();
+        return ResponseEntity.ok(syncResult);
+    }
 
     @GetMapping("/moodle/override-role")
     public ResponseEntity<?> getMoodleRoleHierarchyMappings() {

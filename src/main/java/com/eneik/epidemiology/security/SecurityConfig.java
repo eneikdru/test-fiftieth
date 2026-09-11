@@ -52,7 +52,7 @@ public class SecurityConfig {
             )
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/", "/*.html", "/*.js", "/*.css", "/*.ico", "/*.png", "/*.svg", "/static/**", "/assets/**").permitAll()
-                .requestMatchers("/api/v1/auth/moodle/override-role", "/api/v1/auth/moodle/override-role/**").hasRole("ADMIN")
+                .requestMatchers("/api/v1/auth/moodle/override-role", "/api/v1/auth/moodle/override-role/**", "/api/v1/auth/moodle/sync-roles", "/api/v1/auth/moodle/sync-roles/**").hasRole("ADMIN")
                 .requestMatchers("/health", "/actuator/**", "/api/v1/auth/**", "/api/v1/recovery/**").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/v1/documents/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.DELETE, "/api/v1/documents/**").hasRole("ADMIN")
