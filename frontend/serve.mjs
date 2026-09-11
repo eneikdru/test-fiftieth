@@ -24,41 +24,6 @@ const server = http.createServer((req, res) => {
   const pathname = parsedUrl.pathname;
 
   // Mock API endpoints
-  if (req.method === 'POST' && pathname === '/api/v1/auth/login') {
-    let body = '';
-    req.on('data', chunk => body += chunk);
-    req.on('end', () => {
-      try {
-        const payload = JSON.parse(body || '{}');
-        if (payload.username === 'invalid_user' || payload.password === 'WrongPassword!') {
-          res.writeHead(401, { 'Content-Type': 'application/json; charset=utf-8' });
-          res.end(JSON.stringify({
-            error_code: 'INVALID_CREDENTIALS',
-            message: 'Неверное имя пользователя или пароль.'
-          }));
-        } else {
-          res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
-          res.end(JSON.stringify({
-            access_token: 'mock-jwt-token-12345',
-            refresh_token: 'mock-refresh-token-12345',
-            token_type: 'Bearer',
-            user: {
-              id: 101,
-              username: payload.username || 'admin_user',
-              role: payload.username === 'employee_user' ? 'RESEARCHER' : 'ADMIN',
-              full_name: payload.username === 'employee_user' ? 'Петров П.П. (Сотрудник)' : 'Иванов И.И. (Администратор)',
-              email: `${payload.username || 'admin'}@epidemiology-inst.ru`
-            }
-          }));
-        }
-      } catch (e) {
-        res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
-        res.end(JSON.stringify({ error_code: 'INVALID_REQUEST', message: 'Invalid JSON body' }));
-      }
-    });
-    return;
-  }
-
   if (pathname === '/api/v1/documents/1/download' || (pathname.startsWith('/api/v1/documents/') && pathname.endsWith('/download'))) {
     res.writeHead(200, {
       'Content-Type': 'application/pdf',
