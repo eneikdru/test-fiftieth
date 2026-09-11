@@ -67,4 +67,64 @@ public class RuntimeContractFeatureTest {
         assertEquals(1, activeFeatures.size(), "Only valid feature should be active");
         assertEquals("feat-2", activeFeatures.get(0).getId());
     }
+
+    @Test
+    public void deleteValuelessEpics_cascadesSoftDeleteToChildEntities() {
+        // Given a project with a valueless epic and child features
+        String projectId = "proj-cascade";
+        Feature parentEpic = new Feature("epic-100", projectId, null, null, true);
+        Feature child1 = new Feature("child-101", projectId, "epic-100", null, false);
+        Feature child2 = new Feature("child-102", projectId, "epic-100", null, false);
+
+        featureRepository.save(parentEpic);
+        featureRepository.save(child1);
+        featureRepository.save(child2);
+
+        // When deleteValuelessEpicsForProject is called
+        int totalUpdated = featureService.deleteValuelessEpicsForProject(projectId);
+
+        // Then both the parent epic and child features are soft-deleted (3 total)
+        assertEquals(3, totalUpdated, "Should soft delete 1 parent epic and 2 child features");
+
+        Feature fetchedEpic = featureRepository.findById("epic-100").orElseThrow();
+        Feature fetchedChild1 = featureRepository.findById("child-101").orElseThrow();
+        Feature fetchedChild2 = featureRepository.findById("child-102").orElseThrow();
+
+        assertNotNull(fetchedEpic.getDismissedAt(), "Parent epic dismissedAt should be populated");
+        assertNotNull(fetchedChild1.getDismissedAt(), "Child feature 1 dismissedAt should be populated");
+        assertNotNull(fetchedChild2.getDismissedAt(), "Child feature 2 dismissedAt should be populated");
+
+        List<Feature> activeFeatures = featureService.getActiveFeatures(projectId);
+        assertTrue(activeFeatures.isEmpty(), "No active features should remain in the project");
+    }
+
+    @Test
+    public void restoreEpic_restoresEpicAndChildEntities() {
+        // Given a soft-deleted epic and child features
+        String projectId = "proj-restore";
+        Feature parentEpic = new Feature("epic-200", projectId, null, OffsetDateTime.now(), true);
+        Feature child1 = new Feature("child-201", projectId, "epic-200", OffsetDateTime.now(), false);
+        Feature child2 = new Feature("child-202", projectId, "epic-200", OffsetDateTime.now(), false);
+
+        featureRepository.save(parentEpic);
+        featureRepository.save(child1);
+        featureRepository.save(child2);
+
+        // When restoring the parent epic
+        int restoredCount = featureService.restoreEpic("epic-200");
+
+        // Then the epic and its children are restored
+        assertEquals(3, restoredCount, "Should restore 1 parent epic and 2 child features");
+
+        Feature restoredEpic = featureRepository.findById("epic-200").orElseThrow();
+        Feature restoredChild1 = featureRepository.findById("child-201").orElseThrow();
+        Feature restoredChild2 = featureRepository.findById("child-202").orElseThrow();
+
+        assertNull(restoredEpic.getDismissedAt(), "Parent epic dismissedAt should be cleared");
+        assertNull(restoredChild1.getDismissedAt(), "Child 1 dismissedAt should be cleared");
+        assertNull(restoredChild2.getDismissedAt(), "Child 2 dismissedAt should be cleared");
+
+        List<Feature> activeFeatures = featureService.getActiveFeatures(projectId);
+        assertEquals(3, activeFeatures.size(), "Restored epic and children should be returned as active");
+    }
 }

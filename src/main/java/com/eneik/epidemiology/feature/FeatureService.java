@@ -28,13 +28,36 @@ public class FeatureService {
         }
 
         OffsetDateTime now = OffsetDateTime.now();
-        int updatedCount = featureRepository.softDeleteValuelessEpics(projectId, now);
+        List<String> epicIds = featureRepository.findValuelessEpicIdsByProjectId(projectId);
 
-        log.info("Soft deleted {} valueless epics for project {} by setting dismissedAt", updatedCount, projectId);
-        return updatedCount;
+        int updatedEpicsCount = featureRepository.softDeleteValuelessEpics(projectId, now);
+
+        int updatedChildrenCount = 0;
+        if (!epicIds.isEmpty()) {
+            updatedChildrenCount = featureRepository.softDeleteChildrenOfEpics(epicIds, now);
+        }
+
+        int totalUpdated = updatedEpicsCount + updatedChildrenCount;
+        log.info("Soft deleted {} valueless epics and {} child features for project {}", updatedEpicsCount, updatedChildrenCount, projectId);
+        return totalUpdated;
+    }
+
+    @Transactional
+    public int restoreEpic(String epicId) {
+        if (epicId == null || epicId.isBlank()) {
+            throw new IllegalArgumentException("epicId must not be null or blank");
+        }
+
+        int restoredCount = featureRepository.restoreEpicAndChildren(epicId);
+        log.info("Restored epic {} and its children (total rows restored: {})", epicId, restoredCount);
+        return restoredCount;
     }
 
     public List<Feature> getActiveFeatures(String projectId) {
         return featureRepository.findByProjectIdAndDismissedAtIsNull(projectId);
+    }
+
+    public List<Feature> getChildFeatures(String originFeatureId) {
+        return featureRepository.findByOriginFeatureId(originFeatureId);
     }
 }
