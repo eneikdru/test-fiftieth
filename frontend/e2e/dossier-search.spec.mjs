@@ -9,8 +9,7 @@ test.describe('Dossier Search E2E', () => {
         await expect(page.locator('#document-list')).toBeVisible();
         await expect(page.locator('#search-query-input')).toHaveValue('Иванов');
 
-        await page.click('#generate-report-button');
-        await expect(page.locator('#loading-spinner')).toBeVisible();
+        await expect(page.locator('#generate-report-button')).toBeDisabled();
     });
 
     test('Dossier Search Design Check Screenshots', async ({ page }) => {

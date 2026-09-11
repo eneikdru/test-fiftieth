@@ -72,12 +72,8 @@
             {/each}
         </ul>
         <div class="report-section">
-            <button on:click={generateReport} id="generate-report-button" aria-label="Сформировать итоговую справку" disabled={loading}>
-                {#if loading}
-                    <span id="loading-spinner">Загрузка...</span>
-                {:else}
-                    Сформировать итоговую справку
-                {/if}
+            <button id="generate-report-button" aria-label="Сформировать итоговую справку" disabled>
+                Сформировать итоговую справку
             </button>
         </div>
         {#if feedback}

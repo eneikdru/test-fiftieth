@@ -338,8 +338,8 @@
       {#if isAdmin}
         <button
           type="button"
-          on:click={openUploadModal}
-          class="ml-2 px-3 py-2 bg-[#003f87] hover:bg-[#002b5e] focus:ring-2 focus:ring-[#003f87]/50 focus:outline-none text-white rounded-md text-xs font-medium transition-colors flex items-center gap-1.5 shadow-sm"
+          disabled
+          class="ml-2 px-3 py-2 bg-[#a0c4ff] text-white rounded-md text-xs font-medium flex items-center gap-1.5 shadow-sm cursor-not-allowed"
         >
           <span>+ Загрузить документ</span>
         </button>
