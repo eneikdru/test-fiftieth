@@ -14,6 +14,18 @@
   let password = '';
   let confirmPassword = '';
 
+  let touched = {
+    username: false,
+    email: false,
+    password: false,
+    confirmPassword: false
+  };
+
+  $: usernameError = touched.username && (!username ? 'Пожалуйста, укажите имя пользователя' : username.length < 3 ? 'Имя пользователя должно быть не менее 3 символов' : '');
+  $: emailError = touched.email && (!email ? 'Пожалуйста, укажите электронную почту' : !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? 'Введите корректный адрес электронной почты' : '');
+  $: passwordError = touched.password && (!password ? 'Пожалуйста, укажите пароль' : password.length < 6 ? 'Пароль должен содержать не менее 6 символов' : '');
+  $: confirmPasswordError = touched.confirmPassword && (!confirmPassword ? 'Подтвердите пароль' : password !== confirmPassword ? 'Пароли не совпадают' : '');
+
   // Onboarding fields
   let firstName = '';
   let lastName = '';
@@ -23,13 +35,24 @@
     e.preventDefault();
     errorMessage = '';
 
+    touched = {
+      username: true,
+      email: true,
+      password: true,
+      confirmPassword: true
+    };
+
     if (!username || !email || !password || !confirmPassword) {
       errorMessage = 'Пожалуйста, заполните все обязательные поля.';
       return;
     }
 
-    if (password !== confirmPassword) {
-      errorMessage = 'Пароли не совпадают.';
+    if (usernameError || emailError || passwordError || confirmPasswordError) {
+      if (password !== confirmPassword) {
+        errorMessage = 'Пароли не совпадают.';
+      } else {
+        errorMessage = 'Пожалуйста, исправьте ошибки в форме.';
+      }
       return;
     }
 
@@ -125,7 +148,7 @@
         <h2 class="text-2xl font-bold text-[#1a1c1e] mb-6 tracking-tight text-center">Создать аккаунт</h2>
 
         {#if errorMessage}
-          <div role="alert" class="mb-6 p-4 rounded-lg bg-[#ffdad6] text-[#93000a] text-sm border border-[#ba1a1a]/20 flex items-start space-x-2">
+          <div id="registration-error-alert" role="alert" class="mb-6 p-4 rounded-lg bg-[#ffdad6] text-[#93000a] text-sm border border-[#ba1a1a]/20 flex items-start space-x-2">
             <span class="font-bold material-symbols-outlined text-base">error</span>
             <span>{errorMessage}</span>
           </div>
@@ -138,10 +161,18 @@
               id="username"
               type="text"
               bind:value={username}
+              on:input={() => touched.username = true}
+              on:blur={() => touched.username = true}
               disabled={isLoading}
               required
-              class="w-full h-12 px-4 rounded-md border border-[#c3c6d6] focus:border-[#00328a] focus:ring-2 focus:ring-[#00328a]/10 outline-none transition-all text-[#1a1c1e] text-base"
+              class="w-full h-12 px-4 rounded-md border {usernameError ? 'border-[#ba1a1a] bg-[#fff8f7]' : 'border-[#c3c6d6]'} focus:border-[#00328a] focus:ring-2 focus:ring-[#00328a]/10 outline-none transition-all text-[#1a1c1e] text-base"
             />
+            {#if usernameError}
+              <div role="alert" class="validation-error text-xs text-[#ba1a1a] mt-1 font-medium flex items-center gap-1">
+                <span>⚠</span>
+                <span>{usernameError}</span>
+              </div>
+            {/if}
           </div>
 
           <div>
@@ -150,10 +181,18 @@
               id="email"
               type="email"
               bind:value={email}
+              on:input={() => touched.email = true}
+              on:blur={() => touched.email = true}
               disabled={isLoading}
               required
-              class="w-full h-12 px-4 rounded-md border border-[#c3c6d6] focus:border-[#00328a] focus:ring-2 focus:ring-[#00328a]/10 outline-none transition-all text-[#1a1c1e] text-base"
+              class="w-full h-12 px-4 rounded-md border {emailError ? 'border-[#ba1a1a] bg-[#fff8f7]' : 'border-[#c3c6d6]'} focus:border-[#00328a] focus:ring-2 focus:ring-[#00328a]/10 outline-none transition-all text-[#1a1c1e] text-base"
             />
+            {#if emailError}
+              <div role="alert" class="validation-error text-xs text-[#ba1a1a] mt-1 font-medium flex items-center gap-1">
+                <span>⚠</span>
+                <span>{emailError}</span>
+              </div>
+            {/if}
           </div>
 
           <div>
@@ -162,10 +201,18 @@
               id="password"
               type="password"
               bind:value={password}
+              on:input={() => touched.password = true}
+              on:blur={() => touched.password = true}
               disabled={isLoading}
               required
-              class="w-full h-12 px-4 rounded-md border border-[#c3c6d6] focus:border-[#00328a] focus:ring-2 focus:ring-[#00328a]/10 outline-none transition-all text-[#1a1c1e] text-base"
+              class="w-full h-12 px-4 rounded-md border {passwordError ? 'border-[#ba1a1a] bg-[#fff8f7]' : 'border-[#c3c6d6]'} focus:border-[#00328a] focus:ring-2 focus:ring-[#00328a]/10 outline-none transition-all text-[#1a1c1e] text-base"
             />
+            {#if passwordError}
+              <div role="alert" class="validation-error text-xs text-[#ba1a1a] mt-1 font-medium flex items-center gap-1">
+                <span>⚠</span>
+                <span>{passwordError}</span>
+              </div>
+            {/if}
           </div>
 
           <div>
@@ -174,10 +221,18 @@
               id="confirm-password"
               type="password"
               bind:value={confirmPassword}
+              on:input={() => touched.confirmPassword = true}
+              on:blur={() => touched.confirmPassword = true}
               disabled={isLoading}
               required
-              class="w-full h-12 px-4 rounded-md border border-[#c3c6d6] focus:border-[#00328a] focus:ring-2 focus:ring-[#00328a]/10 outline-none transition-all text-[#1a1c1e] text-base"
+              class="w-full h-12 px-4 rounded-md border {confirmPasswordError ? 'border-[#ba1a1a] bg-[#fff8f7]' : 'border-[#c3c6d6]'} focus:border-[#00328a] focus:ring-2 focus:ring-[#00328a]/10 outline-none transition-all text-[#1a1c1e] text-base"
             />
+            {#if confirmPasswordError}
+              <div role="alert" class="validation-error text-xs text-[#ba1a1a] mt-1 font-medium flex items-center gap-1">
+                <span>⚠</span>
+                <span>{confirmPasswordError}</span>
+              </div>
+            {/if}
           </div>
 
           <div class="pt-2">

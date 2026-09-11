@@ -211,7 +211,7 @@
         {/if}
 
         <form on:submit={handleExportData} class="space-y-4">
-          <div>
+          <div class="relative group">
             <label for="export-format-select" class="block text-xs font-semibold text-[#191c1e] mb-1">
               Формат архива экспорта
             </label>
@@ -223,9 +223,16 @@
               <option value="ZIP">ZIP-архив (Документы и JSON)</option>
               <option value="JSON">JSON (Только структуры данных)</option>
             </select>
+            <div
+              role="tooltip"
+              data-tooltip-for="export-format-select"
+              class="tooltip pointer-events-none opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity absolute left-0 -top-8 bg-[#191c1e] text-white text-[11px] px-2.5 py-1 rounded shadow-lg z-20 whitespace-nowrap"
+            >
+              Формат архива: ZIP включает документы и JSON, JSON — только метаданные
+            </div>
           </div>
 
-          <div>
+          <div class="relative group">
             <label for="export-notes-input" class="block text-xs font-semibold text-[#191c1e] mb-1">
               Примечание к запросу (необязательно)
             </label>
@@ -236,9 +243,16 @@
               placeholder="Например: Запрос для личного архива"
               class="w-full h-11 px-3.5 bg-[#f7f9fb] border border-[#c2c6d4] rounded-lg text-sm text-[#191c1e] focus:outline-none focus:border-[#003f87]"
             />
+            <div
+              role="tooltip"
+              data-tooltip-for="export-notes-input"
+              class="tooltip pointer-events-none opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity absolute left-0 -top-8 bg-[#191c1e] text-white text-[11px] px-2.5 py-1 rounded shadow-lg z-20 whitespace-nowrap"
+            >
+              Примечание регистрируется в журнале аудита согласно 152-ФЗ
+            </div>
           </div>
 
-          <div class="pt-2">
+          <div class="relative group pt-2">
             <button
               type="submit"
               id="export-data-btn"
@@ -251,6 +265,13 @@
               </svg>
               <span>{isExporting ? 'Формирование архива...' : 'Запросить выгрузку данных'}</span>
             </button>
+            <div
+              role="tooltip"
+              data-tooltip-for="export-data-btn"
+              class="tooltip pointer-events-none opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity absolute left-0 -top-8 bg-[#191c1e] text-white text-[11px] px-2.5 py-1 rounded shadow-lg z-20 whitespace-nowrap"
+            >
+              Запуск сборки архива персональных данных (152-ФЗ)
+            </div>
           </div>
         </form>
       </div>
@@ -280,7 +301,7 @@
           </p>
         </div>
 
-        <div>
+        <div class="relative group">
           <button
             type="button"
             id="open-delete-account-btn"
@@ -293,6 +314,13 @@
             </svg>
             <span>Удалить аккаунт и данные</span>
           </button>
+          <div
+            role="tooltip"
+            data-tooltip-for="open-delete-account-btn"
+            class="tooltip pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity absolute left-0 -top-8 bg-[#191c1e] text-white text-[11px] px-2.5 py-1 rounded shadow-lg z-20 whitespace-nowrap"
+          >
+            Открыть окно подтверждения отзыва согласия на обработку данных
+          </div>
         </div>
       </div>
     </section>

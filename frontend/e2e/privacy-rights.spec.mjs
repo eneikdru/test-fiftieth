@@ -24,6 +24,34 @@ test.describe('Data Subject Rights E2E Tests (152-FZ Compliance)', () => {
     });
   });
 
+  test('Given the PrivacySettings, When hovering over fields, Then the corresponding tooltips are displayed', async ({ page }) => {
+    await page.goto('/privacy-harness.html');
+
+    // Hover over export format select
+    await page.hover('#export-format-select');
+    const formatTooltip = page.locator('[data-tooltip-for="export-format-select"]');
+    await expect(formatTooltip).toBeAttached();
+    await expect(formatTooltip).toContainText('Формат архива: ZIP');
+
+    // Hover over export notes input
+    await page.hover('#export-notes-input');
+    const notesTooltip = page.locator('[data-tooltip-for="export-notes-input"]');
+    await expect(notesTooltip).toBeAttached();
+    await expect(notesTooltip).toContainText('Примечание');
+
+    // Hover over export data button
+    await page.hover('#export-data-btn');
+    const exportBtnTooltip = page.locator('[data-tooltip-for="export-data-btn"]');
+    await expect(exportBtnTooltip).toBeAttached();
+    await expect(exportBtnTooltip).toContainText('Запуск');
+
+    // Hover over open delete account button
+    await page.hover('#open-delete-account-btn');
+    const deleteBtnTooltip = page.locator('[data-tooltip-for="open-delete-account-btn"]');
+    await expect(deleteBtnTooltip).toBeAttached();
+    await expect(deleteBtnTooltip).toContainText('Открыть окно');
+  });
+
   test('Given a test user with personal data, When the export flow is executed via E2E test, Then a complete personal data payload is received', async ({ page }) => {
     const exportRequestId = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
     let exportPayloadRequested = false;
