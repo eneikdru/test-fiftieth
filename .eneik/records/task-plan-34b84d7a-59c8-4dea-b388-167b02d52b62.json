@@ -1,0 +1,52 @@
+{
+  "epics": [
+    {
+      "existingEpicId": "0194cf5d-1caa-4d6b-86e8-ebbe0331442d",
+      "sourceIndex": 0,
+      "requirements": [
+        "R1: The system must securely generate a randomized fallback password (e.g., using SecureRandom) for new users authenticating via SSO, rather than deterministically deriving it from their username."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Secure Fallback Password Generation",
+          "roleTag": "BARCAN-TAG-07",
+          "jtbd": "When implementing secure fallback passwords for this epic, I want the password to be randomly generated, so that the fallback account cannot be trivially compromised using the username.",
+          "acceptanceCriteria": "Given a new user authenticating via SSO,\nWhen their local fallback account is created,\nThen their initial fallback password is securely randomized rather than deterministically derived from their username.\nAnd appropriate tests verify the password is no longer derived from the username.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "insecure fallback auth flow",
+          "sixSigmaMetric": "password entropy / vulnerability count",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1"
+          ]
+        }
+      ]
+    },
+    {
+      "existingEpicId": "ca087fd2-45a6-4a9a-80a5-b0278aea4494",
+      "sourceIndex": 1,
+      "requirements": [
+        "R1: The system must rigorously validate the 'iss' (Issuer) claim against the trusted Moodle provider and the 'aud' (Audience) claim against the application's client ID for all incoming OIDC ID tokens."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "OIDC Token Audience and Issuer Validation",
+          "roleTag": "BARCAN-TAG-07",
+          "jtbd": "When implementing OIDC token validation for this epic, I want to verify 'iss' and 'aud' claims, so that tokens from untrusted sources or for other clients are rejected.",
+          "acceptanceCriteria": "Given an incoming OIDC ID token,\nWhen the system validates it,\nThen it must verify that the 'iss' claim matches the trusted Moodle provider and the 'aud' claim matches the application's client ID.\nAnd tokens failing these checks are rejected.\nAnd automated tests verify that tokens with invalid 'iss' or 'aud' claims are denied access.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "OIDC token validation flow",
+          "sixSigmaMetric": "rejected invalid tokens / authentication success rate",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1"
+          ]
+        }
+      ]
+    }
+  ]
+}
