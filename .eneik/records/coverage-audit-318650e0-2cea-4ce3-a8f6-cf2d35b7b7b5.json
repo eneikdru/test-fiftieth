@@ -1,0 +1,16 @@
+{"gaps": [
+  {
+    "title": "Insecure Fallback Password Generation",
+    "roleTag": "BARCAN-TAG-02",
+    "jtbd": "When the external LMS is unavailable and I need to log in, I want my fallback credentials to be securely generated or manually set, so that unauthorized actors cannot trivially guess my password using my username.",
+    "acceptanceCriteria": "Given a new user authenticating via SSO, When their local fallback account is created, Then their initial fallback password is securely randomized (e.g., using SecureRandom) rather than deterministically derived from their username.",
+    "reason": "domain-standard expectation: Fallback authentication must not compromise system security by using predictable credentials. The current fallback generates a password using Math.abs(username.hashCode()), allowing trivial unauthorized access."
+  },
+  {
+    "title": "Missing OIDC Token Audience and Issuer Validation",
+    "roleTag": "BARCAN-TAG-02",
+    "jtbd": "When I log in via OIDC, I want the system to rigorously validate the OIDC ID token, so that tokens intended for other clients or from untrusted issuers cannot be used to gain access.",
+    "acceptanceCriteria": "Given an incoming OIDC ID token, When the system validates it, Then it must verify that the 'iss' claim matches the trusted Moodle provider and the 'aud' claim matches the application's client ID, rejecting tokens that fail these checks.",
+    "reason": "domain-standard expectation: The OIDC core specification strictly requires verifying the 'iss' (Issuer) and 'aud' (Audience) claims to prevent token substitution attacks from other clients or identity providers."
+  }
+]}
