@@ -332,9 +332,11 @@ public class AuthController {
             }
             if (needsUpdate) {
                 int updated = userService.updateRoleAndDepartmentAtomically(user.getId(), user.getRole(), internalRole != null ? internalRole : user.getRole(), profile.department(), profile.courses());
+
                 if (updated == 0) {
-                    jdbcTemplate.update("UPDATE users SET role = ?, department = ?, courses = ? WHERE id = ?",
-                            internalRole != null ? internalRole : user.getRole(), profile.department(), profile.courses(), user.getId());
+
+                    throw new org.springframework.dao.OptimisticLockingFailureException("Concurrent role/department update detected");
+
                 }
                 user.setRole(internalRole != null ? internalRole : user.getRole());
                 user.setDepartment(profile.department());
@@ -504,9 +506,11 @@ public class AuthController {
             }
             if (needsUpdate) {
                 int updated = userService.updateRoleAndDepartmentAtomically(user.getId(), user.getRole(), internalRole != null ? internalRole : user.getRole(), department, courses);
+
                 if (updated == 0) {
-                    jdbcTemplate.update("UPDATE users SET role = ?, department = ?, courses = ? WHERE id = ?",
-                            internalRole != null ? internalRole : user.getRole(), department, courses, user.getId());
+
+                    throw new org.springframework.dao.OptimisticLockingFailureException("Concurrent role/department update detected");
+
                 }
                 user.setRole(internalRole != null ? internalRole : user.getRole());
                 user.setDepartment(department);
@@ -663,9 +667,11 @@ public class AuthController {
             }
             if (needsUpdate) {
                 int updated = userService.updateRoleAndDepartmentAtomically(user.getId(), user.getRole(), internalRole != null ? internalRole : user.getRole(), profile.department(), profile.courses());
+
                 if (updated == 0) {
-                    jdbcTemplate.update("UPDATE users SET role = ?, department = ?, courses = ? WHERE id = ?",
-                            internalRole != null ? internalRole : user.getRole(), profile.department(), profile.courses(), user.getId());
+
+                    throw new org.springframework.dao.OptimisticLockingFailureException("Concurrent role/department update detected");
+
                 }
                 user.setRole(internalRole != null ? internalRole : user.getRole());
                 user.setDepartment(profile.department());
@@ -768,9 +774,11 @@ public class AuthController {
             }
             if (needsUpdate) {
                 int updated = userService.updateRoleAndDepartmentAtomically(user.getId(), user.getRole(), internalRole != null ? internalRole : user.getRole(), profile.department(), profile.courses());
+
                 if (updated == 0) {
-                    jdbcTemplate.update("UPDATE users SET role = ?, department = ?, courses = ? WHERE id = ?",
-                            internalRole != null ? internalRole : user.getRole(), profile.department(), profile.courses(), user.getId());
+
+                    throw new org.springframework.dao.OptimisticLockingFailureException("Concurrent role/department update detected");
+
                 }
                 user.setRole(internalRole != null ? internalRole : user.getRole());
                 user.setDepartment(profile.department());
@@ -1111,8 +1119,11 @@ public class AuthController {
         }
 
         try {
-            DecodedJWT jwt = JWT.decode(token);
-            String payloadJson = new String(java.util.Base64.getUrlDecoder().decode(jwt.getPayload()), java.nio.charset.StandardCharsets.UTF_8);
+            String[] parts = token.split("\\.");
+            if (parts.length != 3) {
+                return null;
+            }
+            String payloadJson = new String(java.util.Base64.getUrlDecoder().decode(parts[1]), java.nio.charset.StandardCharsets.UTF_8);
             com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
             com.fasterxml.jackson.databind.JsonNode claims = mapper.readTree(payloadJson);
 
@@ -1180,11 +1191,19 @@ public class AuthController {
     private boolean validateOidcTokenSignature(String token) {
         JwkProvider provider = getJwkProvider();
         try {
-            DecodedJWT jwt = JWT.decode(token);
-
-            Jwk jwk = provider.get(jwt.getKeyId());
+            String[] parts = token.split("\\.");
+            if (parts.length != 3) {
+                return false;
+            }
+            String headerJson = new String(java.util.Base64.getUrlDecoder().decode(parts[0]), java.nio.charset.StandardCharsets.UTF_8);
+            com.fasterxml.jackson.databind.JsonNode headerNode = new com.fasterxml.jackson.databind.ObjectMapper().readTree(headerJson);
+            if (!headerNode.has("kid")) {
+                return false;
+            }
+            String keyId = headerNode.get("kid").asText();
+            Jwk jwk = provider.get(keyId);
             Algorithm algorithm = Algorithm.RSA256((RSAPublicKey) jwk.getPublicKey(), null);
-            algorithm.verify(jwt);
+            DecodedJWT jwt = JWT.require(algorithm).build().verify(token);
 
             if (jwt.getExpiresAt() != null && jwt.getExpiresAt().before(new java.util.Date())) {
                 return false;
