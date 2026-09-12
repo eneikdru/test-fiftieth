@@ -1,0 +1,32 @@
+{
+  "epics": [
+    {
+      "existingEpicId": "3f39f1a7-d7cd-4c01-9a16-e951a621cca7",
+      "sourceIndex": 0,
+      "requirements": [
+        "R1: Fix the coverage audit report to accurately identify gaps (e.g., Moodle role sync, course-based access control, autonomous LMS fallback, 401 API failures) instead of claiming an empty gaps list.",
+        "R2: Fix the review verdict process to evaluate real code instead of approving a non-existent 'PR #0'.",
+        "R3: Enhance AuthController.fetchOidcProfile to cryptographically verify the JWT signature against the Moodle provider's public keys rather than just decoding the Base64 payload."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Resolve Self-Falsification Audit Findings",
+          "roleTag": "BARCAN-TAG-07",
+          "jtbd": "When implementing the security and audit fixes for this epic, I want to enforce OIDC cryptographic signature verification and correct the stubbed review and coverage reports, so that the self-falsification cycle is closed with genuine implementations.",
+          "acceptanceCriteria": "Given a generated coverage audit report, When it evaluates the codebase, Then it correctly identifies actual missing requirements instead of faking success.\nGiven a review verdict, When it is recorded, Then it evaluates real code and does not approve a non-existent PR #0.\nGiven an OIDC login attempt with a JWT, When AuthController.fetchOidcProfile processes it, Then it cryptographically verifies the signature against Moodle's public keys before extracting claims.\nGiven the self-falsification findings, When the fixes are applied, Then QA tests confirm the signature verification and audit repairs are functionally covered.",
+          "leanValue": "essential",
+          "cynefinDomain": "complicated",
+          "tocConstraintRef": "OIDC JWT signature verification and audit reporting",
+          "sixSigmaMetric": "Defect resolution completeness rate",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1",
+            "R2",
+            "R3"
+          ]
+        }
+      ]
+    }
+  ]
+}
