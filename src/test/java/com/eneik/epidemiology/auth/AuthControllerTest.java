@@ -474,6 +474,52 @@ class AuthControllerTest {
     }
 
     @Test
+    @DisplayName("Given new SSO user provisioned without explicit fallback password, Then generated password uses seedable random source and is not deterministic from username")
+    void testSsoLogin_NewUserAutoProvisioning_GeneratesRandomFallbackPasswordNotFromUsername() throws Exception {
+        Random fixedRandom = new Random(123456789L);
+        byte[] expectedBytes = new byte[16];
+        fixedRandom.nextBytes(expectedBytes);
+        String expectedPassword = java.util.Base64.getEncoder().encodeToString(expectedBytes);
+
+        // Instantiate AuthController directly with seedable fixed random
+        AuthController customAuthController = new AuthController(
+                userService,
+                jwtTokenProvider,
+                authController.getRestTemplate() != null ? null : null, // Not needed for this method directly
+                new com.eneik.epidemiology.telemetry.TelemetryService(telemetryEventRepository),
+                null,
+                null,
+                authController.getRestTemplate(),
+                new Random(123456789L)
+        );
+
+        // Call ssoLogin with custom controller
+        AuthController.SsoLoginRequest ssoRequest = new AuthController.SsoLoginRequest("seedable_user", "mock_token", null);
+
+        // Mock LMS profile response via MockRestServiceServer or directly test password generation with fixed seed controller
+        mockServer.expect(org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo("https://moodle.epidemiology-inst.ru/oauth2/userinfo"))
+                .andExpect(org.springframework.test.web.client.match.MockRestRequestMatchers.header("Authorization", "Bearer mock_token"))
+                .andRespond(org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess(
+                        "{\"username\":\"seedable_user\",\"moodle_role\":\"Пользователь\",\"department\":\"IT\",\"email\":\"seedable@inst.ru\",\"full_name\":\"Seedable User\"}",
+                        MediaType.APPLICATION_JSON));
+
+        customAuthController.ssoLogin(ssoRequest);
+
+        User user = userService.findByUsername("seedable_user").orElseThrow();
+        String oldDeterministicPassword = "Fallback" + Math.abs("seedable_user".hashCode()) + "!";
+
+        org.junit.jupiter.api.Assertions.assertFalse(
+                userService.verifyPassword(oldDeterministicPassword, user.getPasswordHash()),
+                "Default fallback password must not be derived from Math.abs(username.hashCode())"
+        );
+
+        org.junit.jupiter.api.Assertions.assertTrue(
+                userService.verifyPassword(expectedPassword, user.getPasswordHash()),
+                "Generated password must match the reproducible value from the injected fixed seed Random"
+        );
+    }
+
+    @Test
     @DisplayName("Given invalid credentials, When login endpoint called, Then returns 401 Unauthorized")
     void testLogin_InvalidCredentials_ReturnsUnauthorized() throws Exception {
         String invalidLogin = "{\"username\":\"unknown_user\",\"password\":\"WrongPassword!\"}";
