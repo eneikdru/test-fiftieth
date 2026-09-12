@@ -46,14 +46,18 @@ public class AuthController {
     private final com.eneik.epidemiology.telemetry.TelemetryService telemetryService;
     private final JdbcTemplate jdbcTemplate;
     private final TokenRevocationService tokenRevocationService;
-    private final java.security.SecureRandom secureRandom = new java.security.SecureRandom();
+    private final java.util.Random random;
 
     @org.springframework.beans.factory.annotation.Autowired
     public AuthController(UserService userService, JwtTokenProvider jwtTokenProvider, PasswordRecoveryService passwordRecoveryService, com.eneik.epidemiology.telemetry.TelemetryService telemetryService, JdbcTemplate jdbcTemplate, TokenRevocationService tokenRevocationService) {
-        this(userService, jwtTokenProvider, passwordRecoveryService, telemetryService, jdbcTemplate, tokenRevocationService, new org.springframework.web.client.RestTemplate());
+        this(userService, jwtTokenProvider, passwordRecoveryService, telemetryService, jdbcTemplate, tokenRevocationService, new org.springframework.web.client.RestTemplate(), new java.security.SecureRandom());
     }
 
     public AuthController(UserService userService, JwtTokenProvider jwtTokenProvider, PasswordRecoveryService passwordRecoveryService, com.eneik.epidemiology.telemetry.TelemetryService telemetryService, JdbcTemplate jdbcTemplate, TokenRevocationService tokenRevocationService, org.springframework.web.client.RestTemplate restTemplate) {
+        this(userService, jwtTokenProvider, passwordRecoveryService, telemetryService, jdbcTemplate, tokenRevocationService, restTemplate, new java.security.SecureRandom());
+    }
+
+    public AuthController(UserService userService, JwtTokenProvider jwtTokenProvider, PasswordRecoveryService passwordRecoveryService, com.eneik.epidemiology.telemetry.TelemetryService telemetryService, JdbcTemplate jdbcTemplate, TokenRevocationService tokenRevocationService, org.springframework.web.client.RestTemplate restTemplate, java.util.Random random) {
         this.userService = userService;
         this.jwtTokenProvider = jwtTokenProvider;
         this.passwordRecoveryService = passwordRecoveryService;
@@ -61,6 +65,7 @@ public class AuthController {
         this.jdbcTemplate = jdbcTemplate;
         this.tokenRevocationService = tokenRevocationService;
         this.restTemplate = restTemplate != null ? restTemplate : new org.springframework.web.client.RestTemplate();
+        this.random = random != null ? random : new java.security.SecureRandom();
     }
 
     public org.springframework.web.client.RestTemplate getRestTemplate() {
@@ -1188,7 +1193,7 @@ public class AuthController {
 
     private String generateSecureFallbackPassword() {
         byte[] randomBytes = new byte[16];
-        secureRandom.nextBytes(randomBytes);
+        random.nextBytes(randomBytes);
         return java.util.Base64.getEncoder().encodeToString(randomBytes);
     }
 
