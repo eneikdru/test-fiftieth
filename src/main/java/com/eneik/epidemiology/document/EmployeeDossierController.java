@@ -172,9 +172,10 @@ public class EmployeeDossierController {
                         : java.util.Collections.emptyList();
                 documents = documents.stream().filter(d -> {
                     if (!"STRAIN_ISOLATION".equals(d.getDocType()) && !"REPORT".equals(d.getDocType())) return true;
+                    boolean isPublic = d.getAccessDepartment() == null && d.getAccessCourse() == null;
                     boolean depMatch = d.getAccessDepartment() != null && d.getAccessDepartment().equals(currentUser.getDepartment());
                     boolean courseMatch = d.getAccessCourse() != null && userCoursesList.contains(d.getAccessCourse());
-                    return depMatch || courseMatch;
+                    return isPublic || depMatch || courseMatch;
                 }).toList();
             }
 
