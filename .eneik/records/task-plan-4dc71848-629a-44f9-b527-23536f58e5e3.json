@@ -1,0 +1,36 @@
+{
+  "epics": [
+    {
+      "existingEpicId": "3f39f1a7-d7cd-4c01-9a16-e951a621cca7",
+      "sourceIndex": 0,
+      "requirements": [
+        "R1: Fix JWT validation to verify signature before extracting Key ID and reject invalid PRs.",
+        "R2: Implement Moodle role synchronization into the internal archive role model.",
+        "R3: Implement course-based access control based on the OIDC token payload.",
+        "R4: Implement autonomous fallback authentication for LMS failures.",
+        "R5: Replace hardcoded coverage audit stubs with genuine tests verifying role synchronization."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Resolve Security, Role Sync, and Coverage Stubs",
+          "roleTag": "BARCAN-TAG-02",
+          "jtbd": "When implementing the falsification fixes for this epic, I want to patch the JWT validation, Moodle role synchronization, and fallback logic, so that the findings are resolved without inventing adjacent scope.",
+          "acceptanceCriteria": "Given an incoming JWT token, When authenticating, Then the signature is verified prior to decoding the payload or extracting the Key ID.\nGiven a valid Moodle OIDC payload, When the user logs in, Then their Moodle roles and courses are correctly synchronized to the internal archive model.\nGiven the LMS is unreachable, When logging in with autonomous fallback credentials, Then access is granted.\nGiven the test suite is run, When validating the pipeline, Then genuine assertions verify role synchronization and no stubbed coverage reports are generated.",
+          "leanValue": "essential",
+          "cynefinDomain": "complicated",
+          "tocConstraintRef": "falsification-resolution-cycle",
+          "sixSigmaMetric": "falsification-defect-clearance",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1",
+            "R2",
+            "R3",
+            "R4",
+            "R5"
+          ]
+        }
+      ]
+    }
+  ]
+}
