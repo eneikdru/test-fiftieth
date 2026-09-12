@@ -1094,6 +1094,7 @@ public class AuthController {
                         .build();
             } catch (Exception e) {
                 log.error("Failed to initialize JwkProvider", e);
+                throw new IllegalStateException("Failed to initialize JwkProvider", e);
             }
         }
         return jwkProvider;
@@ -1177,13 +1178,10 @@ public class AuthController {
     }
 
     private boolean validateOidcTokenSignature(String token) {
+        JwkProvider provider = getJwkProvider();
         try {
             DecodedJWT jwt = JWT.decode(token);
 
-            JwkProvider provider = getJwkProvider();
-            if (provider == null) {
-                return false;
-            }
             Jwk jwk = provider.get(jwt.getKeyId());
             Algorithm algorithm = Algorithm.RSA256((RSAPublicKey) jwk.getPublicKey(), null);
             algorithm.verify(jwt);
@@ -1192,6 +1190,9 @@ public class AuthController {
                 return false;
             }
             return true;
+        } catch (com.auth0.jwk.JwkException | com.auth0.jwt.exceptions.JWTVerificationException e) {
+            log.warn("OIDC signature validation exception: " + e.getMessage());
+            return false;
         } catch (Exception e) {
             log.warn("OIDC signature validation exception: " + e.getMessage());
             return false;
