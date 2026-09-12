@@ -72,10 +72,33 @@ class AuthControllerTest {
         userRepository.deleteAll();
     }
 
+    private String generateTestOidcToken(String username, String role, String department, String courses) throws Exception {
+        String header = "{\"alg\":\"HS256\",\"typ\":\"JWT\"}";
+        StringBuilder payloadBuilder = new StringBuilder();
+        payloadBuilder.append(String.format("{\"sub\":\"%s\",\"role\":\"%s\",\"iss\":\"https://moodle.epidemiology-inst.ru\",\"aud\":\"epidemiology_portal\"", username, role));
+        if (department != null) payloadBuilder.append(String.format(",\"department\":\"%s\"", department));
+        if (courses != null) payloadBuilder.append(String.format(",\"courses\":\"%s\"", courses));
+        payloadBuilder.append(String.format(",\"exp\":%d}", (System.currentTimeMillis() / 1000) + 3600));
+
+        String encodedHeader = java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(header.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        String encodedPayload = java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(payloadBuilder.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8));
+
+        String contentToSign = encodedHeader + "." + encodedPayload;
+        javax.crypto.Mac mac = javax.crypto.Mac.getInstance("HmacSHA256");
+        javax.crypto.spec.SecretKeySpec secretKeySpec = new javax.crypto.spec.SecretKeySpec(
+                jwtTokenProvider != null ? "default-secret-key-for-jwt-signing-2026-epidemiology-portal".getBytes(java.nio.charset.StandardCharsets.UTF_8) : "default-secret-key-for-jwt-signing-2026-epidemiology-portal".getBytes(java.nio.charset.StandardCharsets.UTF_8), "HmacSHA256");
+        mac.init(secretKeySpec);
+        byte[] rawHmac = mac.doFinal(contentToSign.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        String signature = java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(rawHmac);
+
+        return contentToSign + "." + signature;
+    }
+
+
     @Test
     @DisplayName("Given an authenticated request, When the user has department and courses in their OIDC token, Then integration tests must assert they are successfully wired into the application's access control.")
     void testOidcLogin_ExtractsDepartmentAndCourses_WiresToJwt() throws Exception {
-        String validOidcToken = jwtTokenProvider.generateToken("oidc_jwt_user", "Исследователь", "Лаборатория геномики", "EPID-101,EPID-102");
+        String validOidcToken = generateTestOidcToken("oidc_jwt_user", "Исследователь", "Лаборатория геномики", "EPID-101,EPID-102");
 
         String ssoBody = String.format("{\"username\":\"oidc_jwt_user\",\"oidc_token\":\"%s\"}", validOidcToken);
 
@@ -256,7 +279,7 @@ class AuthControllerTest {
     @Test
     @DisplayName("Given an OIDC SSO request, When a valid signed OIDC token is provided, Then system verifies JWT signature locally and authenticates user")
     void testOidcLogin_Success() throws Exception {
-        String validOidcToken = jwtTokenProvider.generateToken("oidc_user", "Исследователь");
+        String validOidcToken = generateTestOidcToken("oidc_user", "Исследователь", null, null);
 
         String ssoBody = String.format("{\"username\":\"oidc_user\",\"oidc_token\":\"%s\"}", validOidcToken);
 
@@ -281,7 +304,7 @@ class AuthControllerTest {
     @Test
     @DisplayName("Given an OIDC token containing department and courses claims, When OIDC auth endpoint called, Then department and courses are wired into user profile and returned in response")
     void testOidcLogin_ExtractsDepartmentAndCourses_WiresToUserProfile() throws Exception {
-        String validOidcToken = jwtTokenProvider.generateToken("oidc_dept_user", "Исследователь", "Лаборатория геномики", "EPID-101,EPID-102");
+        String validOidcToken = generateTestOidcToken("oidc_dept_user", "Исследователь", "Лаборатория геномики", "EPID-101,EPID-102");
 
         String ssoBody = String.format("{\"username\":\"oidc_dept_user\",\"oidc_token\":\"%s\"}", validOidcToken);
 

@@ -53,8 +53,8 @@ public class OidcTokenValidationSecurityTest {
     void testInvalidIssuer() throws Exception {
         String token = createOidcToken("https://bad-issuer.com", "epidemiology_portal", jwtSecret);
 
-        String ssoBody = "{\"username\":\"user\",\"moodle_token\":\"" + token + "\",\"fallback_password\":\"pass\"}";
-        mockMvc.perform(post("/api/v1/auth/sso/moodle")
+        String ssoBody = "{\"username\":\"user\",\"oidc_token\":\"" + token + "\",\"fallback_password\":\"pass\"}";
+        mockMvc.perform(post("/api/v1/auth/sso/oidc")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(ssoBody))
                 .andExpect(status().isUnauthorized());
@@ -65,8 +65,8 @@ public class OidcTokenValidationSecurityTest {
     void testInvalidAudience() throws Exception {
         String token = createOidcToken("https://moodle.epidemiology-inst.ru", "bad_client", jwtSecret);
 
-        String ssoBody = "{\"username\":\"user\",\"moodle_token\":\"" + token + "\",\"fallback_password\":\"pass\"}";
-        mockMvc.perform(post("/api/v1/auth/sso/moodle")
+        String ssoBody = "{\"username\":\"user\",\"oidc_token\":\"" + token + "\",\"fallback_password\":\"pass\"}";
+        mockMvc.perform(post("/api/v1/auth/sso/oidc")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(ssoBody))
                 .andExpect(status().isUnauthorized());
