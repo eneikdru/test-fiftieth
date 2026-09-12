@@ -1088,6 +1088,41 @@ public class AuthController {
             com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
             com.fasterxml.jackson.databind.JsonNode claims = mapper.readTree(payloadJson);
 
+            // Validate 'iss' (Issuer) claim
+            if (!claims.has("iss") || claims.get("iss").isNull()) {
+                log.warn("OIDC token missing 'iss' claim");
+                return null;
+            }
+            String tokenIssuer = claims.get("iss").asText().trim();
+            if (!tokenIssuer.equalsIgnoreCase(moodleServerUrl.trim())) {
+                log.warn("OIDC token issuer '{}' does not match trusted Moodle provider '{}'", tokenIssuer, moodleServerUrl);
+                return null;
+            }
+
+            // Validate 'aud' (Audience) claim
+            if (!claims.has("aud") || claims.get("aud").isNull()) {
+                log.warn("OIDC token missing 'aud' claim");
+                return null;
+            }
+            boolean audienceValid = false;
+            com.fasterxml.jackson.databind.JsonNode audNode = claims.get("aud");
+            if (audNode.isArray()) {
+                for (com.fasterxml.jackson.databind.JsonNode element : audNode) {
+                    if (moodleClientId.trim().equalsIgnoreCase(element.asText().trim())) {
+                        audienceValid = true;
+                        break;
+                    }
+                }
+            } else {
+                if (moodleClientId.trim().equalsIgnoreCase(audNode.asText().trim())) {
+                    audienceValid = true;
+                }
+            }
+            if (!audienceValid) {
+                log.warn("OIDC token audience does not match application client ID '{}'", moodleClientId);
+                return null;
+            }
+
             String username = claims.has("username") ? claims.get("username").asText() :
                              (claims.has("preferred_username") ? claims.get("preferred_username").asText() :
                              (claims.has("sub") ? claims.get("sub").asText() : null));

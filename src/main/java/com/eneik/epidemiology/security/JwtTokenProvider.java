@@ -57,6 +57,10 @@ public class JwtTokenProvider {
     }
 
     public String generateToken(String username, String role, String department, String courses) {
+        return generateToken(username, role, department, courses, "https://moodle.epidemiology-inst.ru", "epidemiology_portal");
+    }
+
+    public String generateToken(String username, String role, String department, String courses, String issuer, String audience) {
         Instant now = clock.instant();
         Instant exp = now.plusSeconds(accessTokenValidityInSeconds);
 
@@ -72,6 +76,12 @@ public class JwtTokenProvider {
         }
         if (courses != null && !courses.trim().isEmpty()) {
             payloadBuilder.append(String.format(",\"courses\":\"%s\"", escapeJson(courses.trim())));
+        }
+        if (issuer != null && !issuer.trim().isEmpty()) {
+            payloadBuilder.append(String.format(",\"iss\":\"%s\"", escapeJson(issuer.trim())));
+        }
+        if (audience != null && !audience.trim().isEmpty()) {
+            payloadBuilder.append(String.format(",\"aud\":\"%s\"", escapeJson(audience.trim())));
         }
         payloadBuilder.append(String.format(",\"iat\":%d,\"exp\":%d}", now.getEpochSecond(), exp.getEpochSecond()));
 
