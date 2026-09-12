@@ -1084,6 +1084,16 @@ public class AuthController {
             com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
             com.fasterxml.jackson.databind.JsonNode claims = mapper.readTree(payloadJson);
 
+            if (!claims.has("iss") || !claims.get("iss").asText().equals(moodleServerUrl)) {
+                log.warn("OIDC ID token issuer validation failed. Expected: {}, Actual: {}", moodleServerUrl, claims.has("iss") ? claims.get("iss").asText() : null);
+                return null;
+            }
+
+            if (!claims.has("aud") || !claims.get("aud").asText().equals(moodleClientId)) {
+                log.warn("OIDC ID token audience validation failed. Expected: {}, Actual: {}", moodleClientId, claims.has("aud") ? claims.get("aud").asText() : null);
+                return null;
+            }
+
             String username = claims.has("username") ? claims.get("username").asText() :
                              (claims.has("preferred_username") ? claims.get("preferred_username").asText() :
                              (claims.has("sub") ? claims.get("sub").asText() : null));
