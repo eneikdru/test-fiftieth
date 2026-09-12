@@ -20,7 +20,7 @@ services:
     environment:
       SERVER_PORT: "18080"
     healthcheck:
-      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:18080/actuator/health || true"]
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:18080/health || wget --no-verbose --tries=1 --spider http://localhost:18080/actuator/health"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -38,9 +38,11 @@ services:
     entrypoint: >
       /bin/sh -c "
       apk add --no-cache bash tar gzip findutils;
-      echo \"$${BACKUP_SCHEDULE} /bin/bash /scripts/backup.sh >> /var/log/backup.log 2>&1\" > /etc/crontabs/root;
+      BACKUP_SCRIPT='/scripts/backup.sh';
+      if [ -d \"$$BACKUP_SCRIPT\" ] && [ -f \"$$BACKUP_SCRIPT/backup.sh\" ]; then BACKUP_SCRIPT=\"$$BACKUP_SCRIPT/backup.sh\"; fi;
+      echo \"$${BACKUP_SCHEDULE} /bin/bash $$BACKUP_SCRIPT >> /var/log/backup.log 2>&1\" > /etc/crontabs/root;
       echo 'Running initial startup backup check...';
-      /bin/bash /scripts/backup.sh;
+      if [ -f \"$$BACKUP_SCRIPT\" ]; then /bin/bash \"$$BACKUP_SCRIPT\"; else echo 'Backup script not found or is directory'; fi;
       echo 'Starting cron daemon with schedule: $${BACKUP_SCHEDULE}';
       crond -f -l 2
       "
