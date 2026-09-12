@@ -13,6 +13,16 @@ import java.time.OffsetDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import com.auth0.jwk.JwkProvider;
+import com.auth0.jwk.JwkProviderBuilder;
+import com.auth0.jwk.Jwk;
+import com.auth0.jwt.JWT;
+import com.auth0.jwt.algorithms.Algorithm;
+import com.auth0.jwt.interfaces.DecodedJWT;
+import java.security.interfaces.RSAPublicKey;
+import java.net.URL;
+import java.util.concurrent.TimeUnit;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -1069,6 +1079,26 @@ public class AuthController {
         return fetchProfileWithToken(token);
     }
 
+        private JwkProvider jwkProvider;
+
+    public void setJwkProvider(JwkProvider jwkProvider) {
+        this.jwkProvider = jwkProvider;
+    }
+
+    private JwkProvider getJwkProvider() {
+        if (jwkProvider == null) {
+            try {
+                jwkProvider = new JwkProviderBuilder(new URL(moodleServerUrl + "/oauth2/jwks"))
+                        .cached(10, 24, TimeUnit.HOURS)
+                        .rateLimited(10, 1, TimeUnit.MINUTES)
+                        .build();
+            } catch (Exception e) {
+                log.error("Failed to initialize JwkProvider", e);
+            }
+        }
+        return jwkProvider;
+    }
+
     private MoodleProfile fetchOidcProfile(String token) {
         if (token == null || token.trim().isEmpty()) {
             return null;
@@ -1080,11 +1110,8 @@ public class AuthController {
         }
 
         try {
-            String[] parts = token.split("\\.");
-            if (parts.length != 3) {
-                return null;
-            }
-            String payloadJson = new String(java.util.Base64.getUrlDecoder().decode(parts[1]), java.nio.charset.StandardCharsets.UTF_8);
+            DecodedJWT jwt = JWT.decode(token);
+            String payloadJson = new String(java.util.Base64.getUrlDecoder().decode(jwt.getPayload()), java.nio.charset.StandardCharsets.UTF_8);
             com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
             com.fasterxml.jackson.databind.JsonNode claims = mapper.readTree(payloadJson);
 
@@ -1150,49 +1177,23 @@ public class AuthController {
     }
 
     private boolean validateOidcTokenSignature(String token) {
-        if (jwtTokenProvider.validateToken(token)) {
-            return true;
-        }
-        if (moodleClientSecret != null && !moodleClientSecret.trim().isEmpty()) {
-            return validateTokenWithSecret(token, moodleClientSecret);
-        }
-        return false;
-    }
-
-    private boolean validateTokenWithSecret(String token, String secret) {
         try {
-            if (token == null || !token.contains(".")) {
-                return false;
-            }
-            String[] parts = token.split("\\.");
-            if (parts.length != 3) {
-                return false;
-            }
-            String contentToSign = parts[0] + "." + parts[1];
-            javax.crypto.Mac mac = javax.crypto.Mac.getInstance("HmacSHA256");
-            javax.crypto.spec.SecretKeySpec secretKeySpec = new javax.crypto.spec.SecretKeySpec(
-                    secret.getBytes(java.nio.charset.StandardCharsets.UTF_8), "HmacSHA256");
-            mac.init(secretKeySpec);
-            byte[] rawHmac = mac.doFinal(contentToSign.getBytes(java.nio.charset.StandardCharsets.UTF_8));
-            String expectedSignature = java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(rawHmac);
+            DecodedJWT jwt = JWT.decode(token);
 
-            byte[] expectedBytes = expectedSignature.getBytes(java.nio.charset.StandardCharsets.UTF_8);
-            byte[] actualBytes = parts[2].getBytes(java.nio.charset.StandardCharsets.UTF_8);
-            if (!java.security.MessageDigest.isEqual(expectedBytes, actualBytes)) {
+            JwkProvider provider = getJwkProvider();
+            if (provider == null) {
                 return false;
             }
+            Jwk jwk = provider.get(jwt.getKeyId());
+            Algorithm algorithm = Algorithm.RSA256((RSAPublicKey) jwk.getPublicKey(), null);
+            algorithm.verify(jwt);
 
-            String payload = new String(java.util.Base64.getUrlDecoder().decode(parts[1]), java.nio.charset.StandardCharsets.UTF_8);
-            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
-            com.fasterxml.jackson.databind.JsonNode jsonNode = mapper.readTree(payload);
-            if (jsonNode.has("exp")) {
-                long exp = jsonNode.get("exp").asLong();
-                if (System.currentTimeMillis() / 1000 > exp) {
-                    return false;
-                }
+            if (jwt.getExpiresAt() != null && jwt.getExpiresAt().before(new java.util.Date())) {
+                return false;
             }
             return true;
         } catch (Exception e) {
+            log.warn("OIDC signature validation exception: " + e.getMessage());
             return false;
         }
     }
