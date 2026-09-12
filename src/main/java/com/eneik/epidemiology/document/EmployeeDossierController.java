@@ -59,12 +59,22 @@ public class EmployeeDossierController {
         }
 
         String currentUsername = authentication.getName();
-        User currentUser = userRepository.findByUsername(currentUsername).orElse(null);
+        User currentUser = userRepository.findByUsername(currentUsername).orElseGet(() -> {
+            User transientUser = new User();
+            transientUser.setUsername(currentUsername);
+            String role = authentication.getAuthorities().stream()
+                    .map(a -> a.getAuthority().replace("ROLE_", ""))
+                    .findFirst().orElse("USER");
+            transientUser.setRole(role);
+            transientUser.setDepartment("");
+            transientUser.setCourses("");
+            return transientUser;
+        });
 
         org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size);
-        boolean isAdmin = currentUser != null && "ADMIN".equals(currentUser.getRole());
-        String userDepartment = currentUser != null ? currentUser.getDepartment() : null;
-        List<String> userCoursesList = currentUser != null && currentUser.getCourses() != null && !currentUser.getCourses().isEmpty()
+        boolean isAdmin = "ADMIN".equals(currentUser.getRole());
+        String userDepartment = currentUser.getDepartment();
+        List<String> userCoursesList = currentUser.getCourses() != null && !currentUser.getCourses().isEmpty()
                 ? java.util.Arrays.asList(currentUser.getCourses().split("\\s*,\\s*"))
                 : java.util.Collections.emptyList();
 
@@ -144,9 +154,19 @@ public class EmployeeDossierController {
             }
 
             String currentUsername = authentication.getName();
-            User currentUser = userRepository.findByUsername(currentUsername).orElse(null);
+            User currentUser = userRepository.findByUsername(currentUsername).orElseGet(() -> {
+                User transientUser = new User();
+                transientUser.setUsername(currentUsername);
+                String role = authentication.getAuthorities().stream()
+                        .map(a -> a.getAuthority().replace("ROLE_", ""))
+                        .findFirst().orElse("USER");
+                transientUser.setRole(role);
+                transientUser.setDepartment("");
+                transientUser.setCourses("");
+                return transientUser;
+            });
 
-            if (currentUser != null && !"ADMIN".equals(currentUser.getRole())) {
+            if (!"ADMIN".equals(currentUser.getRole())) {
                 List<String> userCoursesList = currentUser.getCourses() != null && !currentUser.getCourses().isEmpty()
                         ? java.util.Arrays.asList(currentUser.getCourses().split("\\s*,\\s*"))
                         : java.util.Collections.emptyList();
@@ -211,12 +231,22 @@ public class EmployeeDossierController {
         }
 
         String currentUsername = authentication.getName();
-        User currentUser = userRepository.findByUsername(currentUsername).orElse(null);
+        User currentUser = userRepository.findByUsername(currentUsername).orElseGet(() -> {
+            User transientUser = new User();
+            transientUser.setUsername(currentUsername);
+            String role = authentication.getAuthorities().stream()
+                    .map(a -> a.getAuthority().replace("ROLE_", ""))
+                    .findFirst().orElse("USER");
+            transientUser.setRole(role);
+            transientUser.setDepartment("");
+            transientUser.setCourses("");
+            return transientUser;
+        });
 
         org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size);
-        boolean isAdmin = currentUser != null && "ADMIN".equals(currentUser.getRole());
-        String userDepartment = currentUser != null ? currentUser.getDepartment() : null;
-        List<String> userCoursesList = currentUser != null && currentUser.getCourses() != null && !currentUser.getCourses().isEmpty()
+        boolean isAdmin = "ADMIN".equals(currentUser.getRole());
+        String userDepartment = currentUser.getDepartment();
+        List<String> userCoursesList = currentUser.getCourses() != null && !currentUser.getCourses().isEmpty()
                 ? java.util.Arrays.asList(currentUser.getCourses().split("\\s*,\\s*"))
                 : java.util.Collections.emptyList();
 
