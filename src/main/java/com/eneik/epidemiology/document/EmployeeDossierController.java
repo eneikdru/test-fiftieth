@@ -53,14 +53,13 @@ public class EmployeeDossierController {
             @RequestParam(value = "page", defaultValue = "0") int page,
             @RequestParam(value = "size", defaultValue = "20") int size) {
 
-        if (SecurityContextHolder.getContext().getAuthentication() == null) {
+        org.springframework.security.core.Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated() || "anonymousUser".equals(authentication.getName())) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error_code", "UNAUTHORIZED", "message", "Требуется авторизация для выполнения данной операции."));
         }
-        String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
+
+        String currentUsername = authentication.getName();
         User currentUser = userRepository.findByUsername(currentUsername).orElse(null);
-        if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error_code", "UNAUTHORIZED", "message", "Требуется авторизация для выполнения данной операции."));
-        }
 
         org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size);
         boolean isAdmin = currentUser != null && "ADMIN".equals(currentUser.getRole());
@@ -72,11 +71,11 @@ public class EmployeeDossierController {
         org.springframework.data.domain.Page<EmployeeDocument> documentPage = employeeDocumentRepository.searchEmployeeDocumentsSecure(
                 employeeId, employeeSurname, docType, scientificDirection, query, fromDate, toDate, isAdmin, userDepartment, userCoursesList, pageable
         );
-        List<EmployeeDocument> documents = documentPage.getContent();
+        List<EmployeeDocument> documents = documentPage != null ? documentPage.getContent() : java.util.Collections.emptyList();
 
         org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
-        headers.add("X-Total-Count", String.valueOf(documentPage.getTotalElements()));
-        headers.add("X-Total-Pages", String.valueOf(documentPage.getTotalPages()));
+        headers.add("X-Total-Count", String.valueOf(documentPage != null ? documentPage.getTotalElements() : 0));
+        headers.add("X-Total-Pages", String.valueOf(documentPage != null ? documentPage.getTotalPages() : 0));
 
         return ResponseEntity.ok().headers(headers).body(documents);
     }
@@ -139,16 +138,15 @@ public class EmployeeDossierController {
                  documents = documents.stream().filter(d -> docTypes.contains(d.getDocType())).toList();
             }
 
-            if (SecurityContextHolder.getContext().getAuthentication() == null) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error_code", "UNAUTHORIZED", "message", "Требуется авторизация для выполнения данной операции."));
-            }
-            String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
-            User currentUser = userRepository.findByUsername(currentUsername).orElse(null);
-            if (currentUser == null) {
+            org.springframework.security.core.Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            if (authentication == null || !authentication.isAuthenticated() || "anonymousUser".equals(authentication.getName())) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error_code", "UNAUTHORIZED", "message", "Требуется авторизация для выполнения данной операции."));
             }
 
-            if (!"ADMIN".equals(currentUser.getRole())) {
+            String currentUsername = authentication.getName();
+            User currentUser = userRepository.findByUsername(currentUsername).orElse(null);
+
+            if (currentUser != null && !"ADMIN".equals(currentUser.getRole())) {
                 List<String> userCoursesList = currentUser.getCourses() != null && !currentUser.getCourses().isEmpty()
                         ? java.util.Arrays.asList(currentUser.getCourses().split("\\s*,\\s*"))
                         : java.util.Collections.emptyList();
@@ -207,14 +205,13 @@ public class EmployeeDossierController {
             @RequestParam(value = "page", defaultValue = "0") int page,
             @RequestParam(value = "size", defaultValue = "20") int size) {
 
-        if (SecurityContextHolder.getContext().getAuthentication() == null) {
+        org.springframework.security.core.Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated() || "anonymousUser".equals(authentication.getName())) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error_code", "UNAUTHORIZED", "message", "Требуется авторизация для выполнения данной операции."));
         }
-        String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
+
+        String currentUsername = authentication.getName();
         User currentUser = userRepository.findByUsername(currentUsername).orElse(null);
-        if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error_code", "UNAUTHORIZED", "message", "Требуется авторизация для выполнения данной операции."));
-        }
 
         org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size);
         boolean isAdmin = currentUser != null && "ADMIN".equals(currentUser.getRole());
