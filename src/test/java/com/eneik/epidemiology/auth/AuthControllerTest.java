@@ -332,6 +332,45 @@ class AuthControllerTest {
     }
 
     @Test
+    @DisplayName("Given an OIDC token with invalid issuer claim, When OIDC login occurs, Then token is rejected with 401 Unauthorized")
+    void testOidcLogin_InvalidIssuer_Returns401() throws Exception {
+        String invalidIssToken = jwtTokenProvider.generateToken("oidc_iss_user", "Исследователь", null, null, "https://untrusted-issuer.org", "epidemiology_portal");
+        String ssoBody = String.format("{\"username\":\"oidc_iss_user\",\"oidc_token\":\"%s\"}", invalidIssToken);
+
+        mockMvc.perform(post("/api/v1/auth/sso/oidc")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(ssoBody))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.error_code", is("INVALID_SSO_TOKEN")));
+    }
+
+    @Test
+    @DisplayName("Given an OIDC token with invalid audience claim, When OIDC login occurs, Then token is rejected with 401 Unauthorized")
+    void testOidcLogin_InvalidAudience_Returns401() throws Exception {
+        String invalidAudToken = jwtTokenProvider.generateToken("oidc_aud_user", "Исследователь", null, null, "https://moodle.epidemiology-inst.ru", "other_client_id");
+        String ssoBody = String.format("{\"username\":\"oidc_aud_user\",\"oidc_token\":\"%s\"}", invalidAudToken);
+
+        mockMvc.perform(post("/api/v1/auth/sso/oidc")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(ssoBody))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.error_code", is("INVALID_SSO_TOKEN")));
+    }
+
+    @Test
+    @DisplayName("Given an OIDC token missing issuer or audience claims, When OIDC login occurs, Then token is rejected with 401 Unauthorized")
+    void testOidcLogin_MissingIssOrAud_Returns401() throws Exception {
+        String tokenWithoutIssOrAud = jwtTokenProvider.generateToken("oidc_no_claims_user", "Исследователь", null, null, null, null);
+        String ssoBody = String.format("{\"username\":\"oidc_no_claims_user\",\"oidc_token\":\"%s\"}", tokenWithoutIssOrAud);
+
+        mockMvc.perform(post("/api/v1/auth/sso/oidc")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(ssoBody))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.error_code", is("INVALID_SSO_TOKEN")));
+    }
+
+    @Test
     @DisplayName("Given Moodle SSO callback with valid auth code, When callback endpoint called, Then exchanges code for profile and authenticates user")
     void testMoodleCallback_ValidCode_AuthenticatesAndSyncsRole() throws Exception {
         mockServer.expect(org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo("https://moodle.epidemiology-inst.ru/oauth2/token"))
