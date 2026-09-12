@@ -1,0 +1,52 @@
+{
+  "reportPath": "coverage-audit-report.json",
+  "requirements": [
+    {
+      "id": "REQ-AUTH-001",
+      "description": "Authenticated requests with valid credentials must access Employee Dossier endpoints with HTTP 200/201",
+      "covered": false
+    },
+    {
+      "id": "REQ-DOSSIER-001",
+      "description": "Employee Dossier Search and Document Listing must return paginated records",
+      "covered": false
+    },
+    {
+      "id": "REQ-DOSSIER-002",
+      "description": "Dossier Report Generation must create and persist signed report records",
+      "covered": false
+    }
+  ],
+  "gaps": [
+    {
+      "testClass": "EmployeeDossierControllerTest",
+      "issue": "HTTP 401 Unauthorized returned on authenticated requests",
+      "evidence": "PR #1308 / test failures in CI on EmployeeDossierControllerTest",
+      "description": "12 tests expecting 200/201 receive 401 due to security context / authentication handling desynchronization."
+    },
+    {
+      "testClass": "EmployeeDossierApiSliceVerificationTest",
+      "issue": "HTTP 401 Unauthorized returned on API slice verification endpoints",
+      "evidence": "PR #1308 / test failures in CI on EmployeeDossierApiSliceVerificationTest",
+      "description": "Endpoints expecting successful response return 401 Unauthorized."
+    },
+    {
+      "testClass": "EmployeeDossierE2ETest",
+      "issue": "E2E workflow failure on employee dossier endpoints",
+      "evidence": "PR #1308 / test failures in CI on EmployeeDossierE2ETest",
+      "description": "End-to-end dossier workflows fail due to authentication boundary rejections."
+    },
+    {
+      "testClass": "DossierTelemetryVerificationTest",
+      "issue": "Telemetry recording failure on dossier actions",
+      "evidence": "PR #1308 / test failures in CI on DossierTelemetryVerificationTest",
+      "description": "Telemetry emission metrics fail to record during unauthenticated 401 rejections."
+    },
+    {
+      "testClass": "FrontendBackendIntegrationE2ETest",
+      "issue": "Frontend-backend integration test failures",
+      "evidence": "PR #1308 / test failures in CI on FrontendBackendIntegrationE2ETest",
+      "description": "Frontend requests fail to communicate with backend API due to auth 401 drops."
+    }
+  ]
+}
