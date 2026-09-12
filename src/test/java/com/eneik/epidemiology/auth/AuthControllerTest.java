@@ -15,6 +15,15 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.auth0.jwt.JWT;
+import com.auth0.jwt.algorithms.Algorithm;
+import com.auth0.jwk.JwkProvider;
+import com.auth0.jwk.Jwk;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.interfaces.RSAPrivateKey;
+import java.security.interfaces.RSAPublicKey;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.time.Clock;
@@ -64,18 +73,70 @@ class AuthControllerTest {
 
     private org.springframework.test.web.client.MockRestServiceServer mockServer;
 
+
+    private KeyPair rsaKeyPair;
+    private RSAPublicKey rsaPublicKey;
+    private RSAPrivateKey rsaPrivateKey;
+
     @BeforeEach
-    void setUp() {
+    void setUp() throws Exception {
         mockServer = org.springframework.test.web.client.MockRestServiceServer.createServer(authController.getRestTemplate());
         telemetryEventRepository.deleteAll();
         recoveryTokenRepository.deleteAll();
         userRepository.deleteAll();
+
+        KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
+        kpg.initialize(2048);
+        rsaKeyPair = kpg.generateKeyPair();
+        rsaPublicKey = (RSAPublicKey) rsaKeyPair.getPublic();
+        rsaPrivateKey = (RSAPrivateKey) rsaKeyPair.getPrivate();
+
+        JwkProvider mockJwkProvider = new JwkProvider() {
+            @Override
+            public Jwk get(String keyId) throws com.auth0.jwk.JwkException {
+                if ("test-kid".equals(keyId)) {
+                    return com.auth0.jwk.Jwk.fromValues(java.util.Map.of(
+                        "kid", "test-kid",
+                        "kty", "RSA",
+                        "alg", "RS256",
+                        "use", "sig",
+                        "n", java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(rsaPublicKey.getModulus().toByteArray()),
+                        "e", java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(rsaPublicKey.getPublicExponent().toByteArray())
+                    ));
+                }
+                throw new com.auth0.jwk.JwkException("Key not found");
+            }
+        };
+        authController.setJwkProvider(mockJwkProvider);
     }
+
+    private String generateMockOidcToken(String username, String role, String department, String courses, String issuer, String audience) {
+        try {
+            Algorithm algorithm = Algorithm.RSA256(rsaPublicKey, rsaPrivateKey);
+            com.auth0.jwt.JWTCreator.Builder builder = JWT.create()
+                .withKeyId("test-kid")
+                .withSubject(username)
+                .withClaim("username", username)
+                .withClaim("role", role)
+                .withIssuedAt(new java.util.Date())
+                .withExpiresAt(new java.util.Date(System.currentTimeMillis() + 3600000));
+
+            if (department != null) builder.withClaim("department", department);
+            if (courses != null) builder.withClaim("courses", courses);
+            if (issuer != null) builder.withIssuer(issuer);
+            if (audience != null) builder.withAudience(audience);
+
+            return builder.sign(algorithm);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
 
     @Test
     @DisplayName("Given an authenticated request, When the user has department and courses in their OIDC token, Then integration tests must assert they are successfully wired into the application's access control.")
     void testOidcLogin_ExtractsDepartmentAndCourses_WiresToJwt() throws Exception {
-        String validOidcToken = jwtTokenProvider.generateToken("oidc_jwt_user", "Исследователь", "Лаборатория геномики", "EPID-101,EPID-102");
+        String validOidcToken = generateMockOidcToken("oidc_jwt_user", "Исследователь", "Лаборатория геномики", "EPID-101,EPID-102", "https://moodle.epidemiology-inst.ru", "epidemiology_portal");
 
         String ssoBody = String.format("{\"username\":\"oidc_jwt_user\",\"oidc_token\":\"%s\"}", validOidcToken);
 
@@ -256,7 +317,7 @@ class AuthControllerTest {
     @Test
     @DisplayName("Given an OIDC SSO request, When a valid signed OIDC token is provided, Then system verifies JWT signature locally and authenticates user")
     void testOidcLogin_Success() throws Exception {
-        String validOidcToken = jwtTokenProvider.generateToken("oidc_user", "Исследователь");
+        String validOidcToken = generateMockOidcToken("oidc_user", "Исследователь", null, null, "https://moodle.epidemiology-inst.ru", "epidemiology_portal");
 
         String ssoBody = String.format("{\"username\":\"oidc_user\",\"oidc_token\":\"%s\"}", validOidcToken);
 
@@ -281,7 +342,7 @@ class AuthControllerTest {
     @Test
     @DisplayName("Given an OIDC token containing department and courses claims, When OIDC auth endpoint called, Then department and courses are wired into user profile and returned in response")
     void testOidcLogin_ExtractsDepartmentAndCourses_WiresToUserProfile() throws Exception {
-        String validOidcToken = jwtTokenProvider.generateToken("oidc_dept_user", "Исследователь", "Лаборатория геномики", "EPID-101,EPID-102");
+        String validOidcToken = generateMockOidcToken("oidc_dept_user", "Исследователь", "Лаборатория геномики", "EPID-101,EPID-102", "https://moodle.epidemiology-inst.ru", "epidemiology_portal");
 
         String ssoBody = String.format("{\"username\":\"oidc_dept_user\",\"oidc_token\":\"%s\"}", validOidcToken);
 
@@ -319,7 +380,7 @@ class AuthControllerTest {
     @Test
     @DisplayName("Given a tampered OIDC token, When validation occurs, Then token is rejected and 401 response returned")
     void testOidcLogin_TamperedToken_Returns401() throws Exception {
-        String validToken = jwtTokenProvider.generateToken("oidc_user", "RESEARCHER");
+        String validToken = generateMockOidcToken("oidc_user", "RESEARCHER", null, null, "https://moodle.epidemiology-inst.ru", "epidemiology_portal");
         String tamperedToken = validToken + "tampered_extra_bytes";
 
         String ssoBody = String.format("{\"username\":\"oidc_user\",\"oidc_token\":\"%s\"}", tamperedToken);
@@ -334,7 +395,7 @@ class AuthControllerTest {
     @Test
     @DisplayName("Given an OIDC token with invalid issuer claim, When OIDC login occurs, Then token is rejected with 401 Unauthorized")
     void testOidcLogin_InvalidIssuer_Returns401() throws Exception {
-        String invalidIssToken = jwtTokenProvider.generateToken("oidc_iss_user", "Исследователь", null, null, "https://untrusted-issuer.org", "epidemiology_portal");
+        String invalidIssToken = generateMockOidcToken("oidc_iss_user", "Исследователь", null, null, "https://untrusted-issuer.org", "epidemiology_portal");
         String ssoBody = String.format("{\"username\":\"oidc_iss_user\",\"oidc_token\":\"%s\"}", invalidIssToken);
 
         mockMvc.perform(post("/api/v1/auth/sso/oidc")
@@ -347,7 +408,7 @@ class AuthControllerTest {
     @Test
     @DisplayName("Given an OIDC token with invalid audience claim, When OIDC login occurs, Then token is rejected with 401 Unauthorized")
     void testOidcLogin_InvalidAudience_Returns401() throws Exception {
-        String invalidAudToken = jwtTokenProvider.generateToken("oidc_aud_user", "Исследователь", null, null, "https://moodle.epidemiology-inst.ru", "other_client_id");
+        String invalidAudToken = generateMockOidcToken("oidc_aud_user", "Исследователь", null, null, "https://moodle.epidemiology-inst.ru", "other_client_id");
         String ssoBody = String.format("{\"username\":\"oidc_aud_user\",\"oidc_token\":\"%s\"}", invalidAudToken);
 
         mockMvc.perform(post("/api/v1/auth/sso/oidc")
@@ -360,7 +421,7 @@ class AuthControllerTest {
     @Test
     @DisplayName("Given an OIDC token missing issuer or audience claims, When OIDC login occurs, Then token is rejected with 401 Unauthorized")
     void testOidcLogin_MissingIssOrAud_Returns401() throws Exception {
-        String tokenWithoutIssOrAud = jwtTokenProvider.generateToken("oidc_no_claims_user", "Исследователь", null, null, null, null);
+        String tokenWithoutIssOrAud = generateMockOidcToken("oidc_no_claims_user", "Исследователь", null, null, null, null);
         String ssoBody = String.format("{\"username\":\"oidc_no_claims_user\",\"oidc_token\":\"%s\"}", tokenWithoutIssOrAud);
 
         mockMvc.perform(post("/api/v1/auth/sso/oidc")
