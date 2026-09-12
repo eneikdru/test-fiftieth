@@ -142,24 +142,16 @@ public class EmployeeDossierSecurityTest {
     }
 
     @Test
-    @DisplayName("Given the agent logic, When falsifiability checks are tested, Then they correctly refute false claims that 401 errors are resolved")
-    void testDossierEndpoints_MissingDatabaseUser_Refutes401ResolutionClaim() throws Exception {
+    @DisplayName("Given a missing database user, When requesting dossier documents, Then returns 401 Unauthorized")
+    void testDossierEndpoints_MissingDatabaseUser_Returns401Unauthorized() throws Exception {
         String token = "valid_but_deleted_user_token";
         configureMockToken(token, "deleted_user", "USER");
 
         Mockito.when(userRepository.findByUsername("deleted_user")).thenReturn(java.util.Optional.empty());
 
-        Mockito.when(employeeDocumentRepository.searchEmployeeDocumentsSecure(
-                isNull(), isNull(), isNull(), isNull(), isNull(), isNull(), isNull(),
-                Mockito.eq(false), isNull(), Mockito.eq(java.util.Collections.emptyList()), any(Pageable.class)
-        )).thenReturn(new PageImpl<>(java.util.Collections.emptyList()));
-
-        // This check actively refutes the agent's claim that 401 errors are resolved by proving
-        // the endpoint still incorrectly returns 200 OK when a user is not found in the database.
-        // Expecting 200 OK (the current broken behavior) allows the test to execute and pass in CI,
-        // acting as a documented counter-example to the claim that 401 handling is fully secured.
         mockMvc.perform(get("/api/v1/dossier/documents")
                         .header("Authorization", "Bearer " + token))
-               .andExpect(status().isOk());
+               .andExpect(status().isUnauthorized())
+               .andExpect(jsonPath("$.error_code", is("UNAUTHORIZED")));
     }
 }
