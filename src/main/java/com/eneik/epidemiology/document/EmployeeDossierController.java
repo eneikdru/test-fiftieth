@@ -53,24 +53,39 @@ public class EmployeeDossierController {
             @RequestParam(value = "page", defaultValue = "0") int page,
             @RequestParam(value = "size", defaultValue = "20") int size) {
 
-        String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
-        User currentUser = userRepository.findByUsername(currentUsername).orElse(null);
+        org.springframework.security.core.Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated() || "anonymousUser".equals(authentication.getName())) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error_code", "UNAUTHORIZED", "message", "Требуется авторизация для выполнения данной операции."));
+        }
+
+        String currentUsername = authentication.getName();
+        User currentUser = userRepository.findByUsername(currentUsername).orElseGet(() -> {
+            User transientUser = new User();
+            transientUser.setUsername(currentUsername);
+            String role = authentication.getAuthorities().stream()
+                    .map(a -> a.getAuthority().replace("ROLE_", ""))
+                    .findFirst().orElse("USER");
+            transientUser.setRole(role);
+            transientUser.setDepartment("");
+            transientUser.setCourses("");
+            return transientUser;
+        });
 
         org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size);
-        boolean isAdmin = currentUser != null && "ADMIN".equals(currentUser.getRole());
-        String userDepartment = currentUser != null ? currentUser.getDepartment() : null;
-        List<String> userCoursesList = currentUser != null && currentUser.getCourses() != null && !currentUser.getCourses().isEmpty()
+        boolean isAdmin = "ADMIN".equals(currentUser.getRole());
+        String userDepartment = currentUser.getDepartment();
+        List<String> userCoursesList = currentUser.getCourses() != null && !currentUser.getCourses().isEmpty()
                 ? java.util.Arrays.asList(currentUser.getCourses().split("\\s*,\\s*"))
                 : java.util.Collections.emptyList();
 
         org.springframework.data.domain.Page<EmployeeDocument> documentPage = employeeDocumentRepository.searchEmployeeDocumentsSecure(
                 employeeId, employeeSurname, docType, scientificDirection, query, fromDate, toDate, isAdmin, userDepartment, userCoursesList, pageable
         );
-        List<EmployeeDocument> documents = documentPage.getContent();
+        List<EmployeeDocument> documents = documentPage != null ? documentPage.getContent() : java.util.Collections.emptyList();
 
         org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
-        headers.add("X-Total-Count", String.valueOf(documentPage.getTotalElements()));
-        headers.add("X-Total-Pages", String.valueOf(documentPage.getTotalPages()));
+        headers.add("X-Total-Count", String.valueOf(documentPage != null ? documentPage.getTotalElements() : 0));
+        headers.add("X-Total-Pages", String.valueOf(documentPage != null ? documentPage.getTotalPages() : 0));
 
         return ResponseEntity.ok().headers(headers).body(documents);
     }
@@ -133,18 +148,34 @@ public class EmployeeDossierController {
                  documents = documents.stream().filter(d -> docTypes.contains(d.getDocType())).toList();
             }
 
-            String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
-            User currentUser = userRepository.findByUsername(currentUsername).orElse(null);
+            org.springframework.security.core.Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            if (authentication == null || !authentication.isAuthenticated() || "anonymousUser".equals(authentication.getName())) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error_code", "UNAUTHORIZED", "message", "Требуется авторизация для выполнения данной операции."));
+            }
 
-            if (currentUser != null && !"ADMIN".equals(currentUser.getRole())) {
+            String currentUsername = authentication.getName();
+            User currentUser = userRepository.findByUsername(currentUsername).orElseGet(() -> {
+                User transientUser = new User();
+                transientUser.setUsername(currentUsername);
+                String role = authentication.getAuthorities().stream()
+                        .map(a -> a.getAuthority().replace("ROLE_", ""))
+                        .findFirst().orElse("USER");
+                transientUser.setRole(role);
+                transientUser.setDepartment("");
+                transientUser.setCourses("");
+                return transientUser;
+            });
+
+            if (!"ADMIN".equals(currentUser.getRole())) {
                 List<String> userCoursesList = currentUser.getCourses() != null && !currentUser.getCourses().isEmpty()
                         ? java.util.Arrays.asList(currentUser.getCourses().split("\\s*,\\s*"))
                         : java.util.Collections.emptyList();
                 documents = documents.stream().filter(d -> {
                     if (!"STRAIN_ISOLATION".equals(d.getDocType()) && !"REPORT".equals(d.getDocType())) return true;
+                    boolean isPublic = d.getAccessDepartment() == null && d.getAccessCourse() == null;
                     boolean depMatch = d.getAccessDepartment() != null && d.getAccessDepartment().equals(currentUser.getDepartment());
                     boolean courseMatch = d.getAccessCourse() != null && userCoursesList.contains(d.getAccessCourse());
-                    return depMatch || courseMatch;
+                    return isPublic || depMatch || courseMatch;
                 }).toList();
             }
 
@@ -195,13 +226,28 @@ public class EmployeeDossierController {
             @RequestParam(value = "page", defaultValue = "0") int page,
             @RequestParam(value = "size", defaultValue = "20") int size) {
 
-        String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
-        User currentUser = userRepository.findByUsername(currentUsername).orElse(null);
+        org.springframework.security.core.Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated() || "anonymousUser".equals(authentication.getName())) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error_code", "UNAUTHORIZED", "message", "Требуется авторизация для выполнения данной операции."));
+        }
+
+        String currentUsername = authentication.getName();
+        User currentUser = userRepository.findByUsername(currentUsername).orElseGet(() -> {
+            User transientUser = new User();
+            transientUser.setUsername(currentUsername);
+            String role = authentication.getAuthorities().stream()
+                    .map(a -> a.getAuthority().replace("ROLE_", ""))
+                    .findFirst().orElse("USER");
+            transientUser.setRole(role);
+            transientUser.setDepartment("");
+            transientUser.setCourses("");
+            return transientUser;
+        });
 
         org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size);
-        boolean isAdmin = currentUser != null && "ADMIN".equals(currentUser.getRole());
-        String userDepartment = currentUser != null ? currentUser.getDepartment() : null;
-        List<String> userCoursesList = currentUser != null && currentUser.getCourses() != null && !currentUser.getCourses().isEmpty()
+        boolean isAdmin = "ADMIN".equals(currentUser.getRole());
+        String userDepartment = currentUser.getDepartment();
+        List<String> userCoursesList = currentUser.getCourses() != null && !currentUser.getCourses().isEmpty()
                 ? java.util.Arrays.asList(currentUser.getCourses().split("\\s*,\\s*"))
                 : java.util.Collections.emptyList();
 
