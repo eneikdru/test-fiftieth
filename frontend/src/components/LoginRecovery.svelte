@@ -10,6 +10,11 @@
     const urlParams = new URLSearchParams(window.location.search);
     const errorParam = urlParams.get('error');
     if (errorParam === 'sso_failed') {
+      const moodleUser = urlParams.get('username') || '';
+      if (moodleUser) {
+        username = moodleUser;
+      }
+      mode = 'moodle_fallback';
       errorMessage = 'Ошибка аутентификации через Moodle. Пожалуйста, используйте локальный вход.';
     } else if (errorParam) {
       errorMessage = 'Ошибка SSO: ' + errorParam;
@@ -297,6 +302,62 @@
           >
             <span aria-hidden="true" class="material-symbols-outlined text-on-primary">domain</span>
             <span>Login via Moodle</span>
+          </button>
+        </div>
+      </form>
+
+    {:else if mode === 'moodle_fallback'}
+      <!-- MOODLE FALLBACK VIEW -->
+      <div class="mb-8">
+        <h2 class="text-3xl font-bold text-[#1a1c1e] mb-2 tracking-tight">Вход в систему</h2>
+        <p class="text-base text-[#434653]">
+          Внешняя система недоступна. Пожалуйста, используйте локальный пароль.
+        </p>
+      </div>
+
+      {#if errorMessage}
+        <div role="alert" class="mb-6 p-4 rounded-lg bg-[#ffdad6] text-[#93000a] text-sm border border-[#ba1a1a]/20 flex items-start space-x-2">
+          <span class="font-bold">!</span>
+          <span>{errorMessage}</span>
+        </div>
+      {/if}
+
+      <form on:submit={handleLogin} class="flex flex-col space-y-5" novalidate>
+        <div>
+          <label for="username-input" class="block text-sm font-semibold text-[#1a1c1e] mb-2">
+            Имя пользователя или Email
+          </label>
+          <div class="relative rounded-md border border-[#c3c6d6] bg-white focus-within:border-[#00328a] focus-within:ring-2 focus-within:ring-[#00328a]/10 transition-all">
+            <input
+              id="username-input"
+              type="text"
+              bind:value={username}
+              required
+              disabled={isLoading}
+              class="w-full h-14 px-4 bg-transparent border-none rounded-md focus:outline-none text-base text-[#1a1c1e]"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label for="password-input" class="block text-sm font-semibold text-[#1a1c1e] mb-2">
+            Пароль
+          </label>
+          <div class="relative rounded-md border border-[#c3c6d6] bg-white focus-within:border-[#00328a] focus-within:ring-2 focus-within:ring-[#00328a]/10 transition-all">
+            <input
+              id="password-input"
+              type="password"
+              bind:value={password}
+              required
+              disabled={isLoading}
+              class="w-full h-14 px-4 bg-transparent border-none rounded-md focus:outline-none text-base text-[#1a1c1e]"
+            />
+          </div>
+        </div>
+
+        <div class="pt-4">
+          <button type="submit" disabled={isLoading} class="w-full h-13 bg-[#00328a] text-white rounded-lg font-medium text-base py-3 flex items-center justify-center hover:bg-[#002566] active:scale-[0.98] transition-all disabled:opacity-60 disabled:cursor-not-allowed shadow-sm">
+            {#if isLoading}<svg class="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" fill="currentColor"></path></svg>{:else}<span>Войти</span>{/if}
           </button>
         </div>
       </form>
