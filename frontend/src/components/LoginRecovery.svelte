@@ -11,8 +11,10 @@
     const errorParam = urlParams.get('error');
     if (errorParam === 'sso_failed') {
       errorMessage = 'Ошибка аутентификации через Moodle. Пожалуйста, используйте локальный вход.';
+      mode = 'login';
     } else if (errorParam) {
       errorMessage = 'Ошибка SSO: ' + errorParam;
+      mode = 'login';
     }
   });
 
