@@ -474,6 +474,32 @@ class AuthControllerTest {
     }
 
     @Test
+    @DisplayName("Given new SSO user provisioned without explicit fallback password, Then generated password is secure random and not deterministic from username")
+    void testSsoLogin_NewUserAutoProvisioning_GeneratesRandomFallbackPasswordNotFromUsername() throws Exception {
+        mockServer.expect(org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo("https://moodle.epidemiology-inst.ru/oauth2/userinfo"))
+                .andExpect(org.springframework.test.web.client.match.MockRestRequestMatchers.header("Authorization", "Bearer mock_valid_random_moodle_token1"))
+                .andRespond(org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess(
+                        "{\"username\":\"random_fallback_user\",\"moodle_role\":\"Пользователь\",\"department\":\"IT\",\"email\":\"random1@inst.ru\",\"full_name\":\"Random User 1\"}",
+                        MediaType.APPLICATION_JSON));
+
+        String ssoBody1 = "{\"username\":\"random_fallback_user\",\"moodle_token\":\"mock_valid_random_moodle_token1\"}";
+
+        mockMvc.perform(post("/api/v1/auth/sso/moodle")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(ssoBody1))
+                .andExpect(status().isOk());
+
+        User user1 = userService.findByUsername("random_fallback_user").orElseThrow();
+        String oldDeterministicPassword = "Fallback" + Math.abs("random_fallback_user".hashCode()) + "!";
+
+        // Verify initial fallback password is NOT derived from Math.abs(username.hashCode())
+        org.junit.jupiter.api.Assertions.assertFalse(
+                userService.verifyPassword(oldDeterministicPassword, user1.getPasswordHash()),
+                "Default fallback password must not be derived from Math.abs(username.hashCode())"
+        );
+    }
+
+    @Test
     @DisplayName("Given invalid credentials, When login endpoint called, Then returns 401 Unauthorized")
     void testLogin_InvalidCredentials_ReturnsUnauthorized() throws Exception {
         String invalidLogin = "{\"username\":\"unknown_user\",\"password\":\"WrongPassword!\"}";

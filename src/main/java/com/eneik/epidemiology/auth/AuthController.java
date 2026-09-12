@@ -46,6 +46,7 @@ public class AuthController {
     private final com.eneik.epidemiology.telemetry.TelemetryService telemetryService;
     private final JdbcTemplate jdbcTemplate;
     private final TokenRevocationService tokenRevocationService;
+    private final java.security.SecureRandom secureRandom = new java.security.SecureRandom();
 
     @org.springframework.beans.factory.annotation.Autowired
     public AuthController(UserService userService, JwtTokenProvider jwtTokenProvider, PasswordRecoveryService passwordRecoveryService, com.eneik.epidemiology.telemetry.TelemetryService telemetryService, JdbcTemplate jdbcTemplate, TokenRevocationService tokenRevocationService) {
@@ -292,7 +293,7 @@ public class AuthController {
         if (user == null) {
             String defaultPassword = (request.fallback_password() != null && !request.fallback_password().trim().isEmpty())
                     ? request.fallback_password().trim()
-                    : "Fallback" + Math.abs(profile.username().hashCode()) + "!";
+                    : generateSecureFallbackPassword();
             user = userService.createUserWithMoodle(
                     profile.username().trim(),
                     defaultPassword,
@@ -464,7 +465,7 @@ public class AuthController {
         }
 
         if (user == null) {
-            String defaultPassword = "LtiFallback" + Math.abs(username.hashCode()) + "!";
+            String defaultPassword = generateSecureFallbackPassword();
             user = userService.createUserWithMoodle(
                     username.trim(),
                     defaultPassword,
@@ -622,9 +623,7 @@ public class AuthController {
             if (request.fallback_password() != null && !request.fallback_password().trim().isEmpty()) {
                 defaultPassword = request.fallback_password().trim();
             } else {
-                byte[] randomBytes = new byte[16];
-                new java.security.SecureRandom().nextBytes(randomBytes);
-                defaultPassword = java.util.Base64.getEncoder().encodeToString(randomBytes);
+                defaultPassword = generateSecureFallbackPassword();
             }
             user = userService.createUserWithMoodle(
                 profile.username().trim(),
@@ -730,7 +729,7 @@ public class AuthController {
         if (user == null) {
             String defaultPassword = (request.fallback_password() != null && !request.fallback_password().trim().isEmpty())
                 ? request.fallback_password().trim()
-                : "Fallback" + Math.abs(profile.username().hashCode()) + "!";
+                : generateSecureFallbackPassword();
             user = userService.createUserWithMoodle(
                 profile.username().trim(),
                 defaultPassword,
@@ -1185,6 +1184,12 @@ public class AuthController {
             return "RESEARCHER";
         }
         return "USER";
+    }
+
+    private String generateSecureFallbackPassword() {
+        byte[] randomBytes = new byte[16];
+        secureRandom.nextBytes(randomBytes);
+        return java.util.Base64.getEncoder().encodeToString(randomBytes);
     }
 
     private static boolean isBlank(String str) {
