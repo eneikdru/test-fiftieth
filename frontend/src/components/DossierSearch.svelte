@@ -3,6 +3,11 @@
     let documents = [];
     let loading = false;
     let feedback = "";
+    let generatedReportId = null;
+    let signature = "";
+    let signLoading = false;
+    let signFeedback = "";
+
     let page = 0;
     let size = 10;
     let hasNext = false;
@@ -43,13 +48,39 @@
         searchDossier();
     }
 
-    function generateReport() {
+        function generateReport() {
         loading = true;
         feedback = "";
+        signFeedback = "";
         setTimeout(() => {
             loading = false;
             feedback = "✓ Итоговая справка успешно сформирована.";
+            generatedReportId = 123; // Mock ID
         }, 1000);
+    }
+
+    async function signReport() {
+        if (!signature.trim() || !generatedReportId) return;
+        signLoading = true;
+        signFeedback = "";
+        try {
+            const res = await fetch(`/api/v1/dossier/reports/${generatedReportId}/sign`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ signature })
+            });
+            if (res.ok) {
+                const data = await res.json();
+                signFeedback = "✓ Справка успешно подписана.";
+            } else {
+                signFeedback = "Ошибка при подписании.";
+            }
+        } catch (e) {
+            console.error(e);
+            signFeedback = "Ошибка сети.";
+        } finally {
+            signLoading = false;
+        }
     }
 </script>
 
@@ -85,6 +116,24 @@
                 {feedback}
             </div>
         {/if}
+
+        {#if generatedReportId}
+            <div class="sign-section">
+                <input type="text" bind:value={signature} placeholder="Введите подпись" aria-label="Подпись" id="signature-input" />
+                <button on:click={signReport} id="sign-report-button" aria-label="Подписать" disabled={signLoading || !signature.trim()}>
+                    {#if signLoading}
+                        <span id="sign-loading-spinner">Загрузка...</span>
+                    {:else}
+                        Подписать
+                    {/if}
+                </button>
+            </div>
+            {#if signFeedback}
+                <div role="status" aria-live="polite" class="feedback-notice">
+                    {signFeedback}
+                </div>
+            {/if}
+        {/if}
     {/if}
 
     <div class="pagination-section">
@@ -113,6 +162,8 @@
     .document-list li { padding: 8px; border-bottom: 1px solid #767676; color: #111; }
     .report-section { display: flex; align-items: center; }
     .feedback-notice { margin-top: 15px; padding: 10px; background-color: #d9e3f1; color: #001a40; border-radius: 4px; font-size: 14px; border: 1px solid #003f87; }
+
+    .sign-section { margin-top: 20px; display: flex; gap: 10px; align-items: center; }
     .pagination-section { margin-top: 20px; display: flex; justify-content: space-between; align-items: center; color: #111; }
     .dossier-footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #767676; text-align: center; font-size: 12px; color: #333; display: flex; justify-content: space-between; align-items: center; }
     .imprint-btn { background: none; border: none; color: #005fcc; text-decoration: underline; cursor: pointer; padding: 0; }

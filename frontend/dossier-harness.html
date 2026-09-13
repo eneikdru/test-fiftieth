@@ -27,6 +27,8 @@
                 <div class="report-section">
                     <button id="generate-report-button">Сформировать итоговую справку</button>
                 </div>
+                <div id="sign-section" style="display: none; margin-top: 15px; gap: 10px; align-items: center;">
+                </div>
             </div>
         </div>
     </div>
@@ -59,6 +61,30 @@
                 notice.style.cssText = 'margin-top: 15px; padding: 10px; background-color: #d9e3f1; color: #001a40; border-radius: 4px; font-size: 14px; border: 1px solid #003f87;';
                 notice.innerText = '✓ Итоговая справка успешно сформирована.';
                 resultsContainer.appendChild(notice);
+
+                // Show signature section
+                const signSection = document.getElementById('sign-section');
+                signSection.innerHTML = `
+                    <input type="text" id="signature-input" placeholder="Введите подпись" style="padding: 8px; flex-grow: 1; border: 1px solid #ccc; border-radius: 4px;" />
+                    <button id="sign-report-button" style="padding: 8px 16px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">Подписать</button>
+                `;
+                signSection.style.display = 'flex';
+
+                document.getElementById('sign-report-button').addEventListener('click', () => {
+                    const btn = document.getElementById('sign-report-button');
+                    btn.disabled = true;
+                    btn.innerText = 'Загрузка...';
+                    setTimeout(() => {
+                        btn.disabled = false;
+                        btn.innerText = 'Подписать';
+                        const signNotice = document.createElement('div');
+                        signNotice.setAttribute('role', 'status');
+                        signNotice.setAttribute('aria-live', 'polite');
+                        signNotice.style.cssText = 'margin-top: 15px; padding: 10px; background-color: #d9e3f1; color: #001a40; border-radius: 4px; font-size: 14px; border: 1px solid #003f87;';
+                        signNotice.innerText = '✓ Справка успешно подписана.';
+                        resultsContainer.appendChild(signNotice);
+                    }, 500);
+                });
             }, 1000);
         });
     </script>
