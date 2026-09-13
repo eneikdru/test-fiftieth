@@ -2,8 +2,6 @@ import { test, expect } from '@playwright/test';
 import path from 'path';
 import fs from 'fs';
 
-const harnessPath = '/test-harness.html';
-
 test.describe('Catalog Search and Document Management E2E Tests', () => {
 
   test('Given a fresh deployment pre-populated with sample "Epidemiological Protocol" documents, When the E2E test downloads a document, Then it correctly hits the system API using a configured Playwright baseURL', async ({ page, request, baseURL }) => {
@@ -36,7 +34,7 @@ test.describe('Catalog Search and Document Management E2E Tests', () => {
   });
 
   test('Given an admin user session, When the test executes, Then it uploads and deletes a document and strictly verifies that the catalog reflects these changes', async ({ page }) => {
-    await page.goto(harnessPath);
+    await page.goto('/');
 
     // Open upload modal as Admin
     await page.click('#open-upload-modal-btn');
@@ -73,7 +71,7 @@ test.describe('Catalog Search and Document Management E2E Tests', () => {
   });
 
   test('Given a user submits a search with no matches, When the UI updates, Then an explicit "нет материалов" message is shown in Russian', async ({ page }) => {
-    await page.goto(harnessPath);
+    await page.goto('/');
 
     // Enter a search query that yields no matches
     await page.fill('#search-query-input', 'НесуществующийЗапрос12345');
@@ -89,7 +87,7 @@ test.describe('Catalog Search and Document Management E2E Tests', () => {
   });
 
   test('Given an admin uploads a document but the network fails, When the error occurs, Then the entered metadata remains in the form so it is not lost', async ({ page }) => {
-    await page.goto(harnessPath);
+    await page.goto('/');
 
     // Ensure Admin view
     await page.click('#open-upload-modal-btn');
@@ -132,13 +130,13 @@ test.describe('Catalog Search and Document Management E2E Tests', () => {
 
     // Desktop viewport (1440px width)
     await page.setViewportSize({ width: 1440, height: 900 });
-    await page.goto(harnessPath);
+    await page.goto('/');
     await page.waitForLoadState('networkidle');
     await page.screenshot({ path: path.join(recordDir, 'desktop-1440.png'), fullPage: true });
 
     // Mobile viewport (375px width)
     await page.setViewportSize({ width: 375, height: 812 });
-    await page.goto(harnessPath);
+    await page.goto('/');
     await page.waitForLoadState('networkidle');
     await page.screenshot({ path: path.join(recordDir, 'mobile-375.png'), fullPage: true });
 
