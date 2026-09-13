@@ -186,4 +186,29 @@ test.describe('Data Subject Rights E2E Tests (152-FZ Compliance)', () => {
 
     expect(nonEssentialCookies.length).toBe(0);
   });
+
+  test('Given a clean browser state, When loading the app without interacting with the banner, Then no tracking network requests are fired', async ({ page }) => {
+    const trackingRequests = [];
+
+    // Listen for outgoing network requests to check for tracking/telemetry endpoints
+    page.on('request', request => {
+      const url = request.url();
+      if (
+        url.includes('/api/v1/telemetry/track') ||
+        url.includes('/api/v1/analytics') ||
+        url.includes('/api/v1/tracking') ||
+        url.includes('google-analytics.com') ||
+        url.includes('mixpanel.com')
+      ) {
+        trackingRequests.push(url);
+      }
+    });
+
+    // Navigate to the main application page in a clean browser state
+    await page.goto('/');
+    await page.waitForTimeout(1000);
+
+    // Verify zero tracking network requests were fired
+    expect(trackingRequests).toEqual([]);
+  });
 });

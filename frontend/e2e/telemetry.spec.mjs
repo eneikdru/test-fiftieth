@@ -14,10 +14,6 @@ test.describe('SPA Navigation Telemetry E2E Tests', () => {
     await page.click('#tab-dossier');
     await expect(page.locator('#panel-dossier')).toBeVisible();
 
-    // Click Privacy tab (#tab-privacy)
-    await page.click('#tab-privacy');
-    await expect(page.locator('#panel-privacy')).toBeVisible();
-
     // Click Foci tab (#tab-foci)
     await page.click('#tab-foci');
     await expect(page.locator('#panel-foci')).toBeVisible();
