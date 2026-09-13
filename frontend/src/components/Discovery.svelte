@@ -1,4 +1,5 @@
 <script>
+  import ImprintModal from './ImprintModal.svelte';
     import { onMount } from 'svelte';
 
     let searchQuery = '';
@@ -62,6 +63,7 @@
     function getMockSize(doc) {
         return "1.2 MB";
     }
+  let showImprint = false;
 </script>
 
 <div class="antialiased w-full h-screen flex flex-col" style="background-color: #f7f9fb; color: #191c1e; font-family: Inter, sans-serif;">
@@ -171,7 +173,7 @@
     <!-- Footer / Imprint -->
     <footer class="w-full py-4 px-6 text-center text-xs text-[#76777d] border-t border-[#c6c6cd] flex justify-between items-center mb-20 bg-[#f7f9fb]">
         <span>Российский научно-исследовательский институт эпидемиологии</span>
-        <button on:click={() => alert('Выходные данные (Imprint / Impressum):\nФБУН «НИИ Эпидемиологии»\nг. Москва, ул. Новогиреевская, 3А')} class="text-[#003f87] underline font-semibold hover:opacity-80">
+        <button on:click={() => showImprint = true} class="text-[#003f87] underline font-semibold hover:opacity-80">
             Imprint / Impressum
         </button>
     </footer>
@@ -203,3 +205,8 @@
         overflow: hidden;
     }
 </style>
+
+
+{#if showImprint}
+  <ImprintModal on:close={() => showImprint = false} />
+{/if}
