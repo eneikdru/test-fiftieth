@@ -87,4 +87,72 @@ public class AuthBoundaryValidationTest {
                 .andExpect(jsonPath("$.error_code", is("INVALID_CREDENTIALS")))
                 .andExpect(jsonPath("$.message", notNullValue()));
     }
+
+    @Test
+    @DisplayName("Given valid registration request, When authenticating endpoint called, Then returns 201 Created and user information")
+    void testAuthenticationBoundary_ValidRegistration_Returns201Created() throws Exception {
+        String registerPayload = "{" +
+                "\"username\":\"new_boundary_user\"," +
+                "\"password\":\"StrongPass123!\"," +
+                "\"email\":\"new_boundary@epidemiology-inst.ru\"," +
+                "\"full_name\":\"Новый Пользователь\"" +
+                "}";
+
+        mockMvc.perform(post("/api/v1/auth/register")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(registerPayload))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.success", is(true)))
+                .andExpect(jsonPath("$.user.username", is("new_boundary_user")));
+    }
+
+    @Test
+    @DisplayName("Given missing request parameters, When authenticating or registering, Then returns 400 Bad Request")
+    void testAuthenticationBoundary_MissingParameters_Returns400BadRequest() throws Exception {
+        String invalidPayload = "{\"username\":\"incomplete_user\"}";
+
+        mockMvc.perform(post("/api/v1/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(invalidPayload))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error_code", is("INVALID_REQUEST")));
+
+        mockMvc.perform(post("/api/v1/auth/register")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(invalidPayload))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error_code", is("INVALID_REQUEST")));
+    }
+
+    @Test
+    @DisplayName("Given missing or unauthenticated request, When accessing protected endpoints, Then returns 401 Unauthorized")
+    void testAuthenticationBoundary_UnauthenticatedRequest_Returns401Unauthorized() throws Exception {
+        mockMvc.perform(get("/api/v1/auth/profile"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.error_code", is("UNAUTHORIZED")));
+    }
+
+    @Test
+    @DisplayName("Given a non-admin authenticated user, When accessing admin-restricted endpoint, Then returns 403 Forbidden")
+    void testAuthenticationBoundary_InsufficientPermissions_Returns403Forbidden() throws Exception {
+        String loginPayload = "{" +
+                "\"username\":\"valid_auth_user\"," +
+                "\"password\":\"ValidSecurePassword123!\"" +
+                "}";
+
+        MvcResult result = mockMvc.perform(post("/api/v1/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(loginPayload))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        String responseJson = result.getResponse().getContentAsString();
+        JsonNode jsonNode = objectMapper.readTree(responseJson);
+        String accessToken = jsonNode.get("access_token").asText();
+
+        mockMvc.perform(get("/api/v1/auth/moodle/override-role")
+                .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.error_code", is("ACCESS_DENIED")));
+    }
 }
