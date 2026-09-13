@@ -4,6 +4,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
@@ -17,18 +20,24 @@ public class JwtTokenProvider {
     private final String secretKey;
     private final long accessTokenValidityInSeconds;
     private final Clock clock;
+    private final ObjectMapper objectMapper;
 
     @Autowired
     public JwtTokenProvider(
             @Value("${app.jwt.secret:default-secret-key-for-jwt-signing-2026-epidemiology-portal}") String secretKey,
             @Value("${app.jwt.expiration-seconds:3600}") long accessTokenValidityInSeconds) {
-        this(secretKey, accessTokenValidityInSeconds, Clock.systemUTC());
+        this(secretKey, accessTokenValidityInSeconds, Clock.systemUTC(), new ObjectMapper());
     }
 
     public JwtTokenProvider(String secretKey, long accessTokenValidityInSeconds, Clock clock) {
+        this(secretKey, accessTokenValidityInSeconds, clock, new ObjectMapper());
+    }
+
+    public JwtTokenProvider(String secretKey, long accessTokenValidityInSeconds, Clock clock, ObjectMapper objectMapper) {
         this.secretKey = secretKey;
         this.accessTokenValidityInSeconds = accessTokenValidityInSeconds;
         this.clock = clock;
+        this.objectMapper = objectMapper != null ? objectMapper : new ObjectMapper();
     }
 
     public String generateToken(String username, String role) {
@@ -141,22 +150,14 @@ public class JwtTokenProvider {
     }
 
     private String extractJsonValue(String json, String key) {
-        String keyPattern = "\"" + key + "\":";
-        int idx = json.indexOf(keyPattern);
-        if (idx == -1) {
-            return "";
-        }
-        int start = idx + keyPattern.length();
-        if (json.charAt(start) == '"') {
-            start++;
-            int end = json.indexOf('"', start);
-            return json.substring(start, end);
-        } else {
-            int end = json.indexOf(',', start);
-            if (end == -1) {
-                end = json.indexOf('}', start);
+        try {
+            JsonNode tree = objectMapper.readTree(json);
+            if (tree.has(key) && !tree.get(key).isNull()) {
+                return tree.get(key).asText();
             }
-            return json.substring(start, end).trim();
+            return "";
+        } catch (Exception e) {
+            return "";
         }
     }
 
