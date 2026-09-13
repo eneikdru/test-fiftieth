@@ -186,4 +186,21 @@ test.describe('Data Subject Rights E2E Tests (152-FZ Compliance)', () => {
 
     expect(nonEssentialCookies.length).toBe(0);
   });
+
+  test('Given a clean browser state, When loading the app without interacting with the banner, Then no tracking network requests are fired', async ({ page }) => {
+    const trackingRequests = [];
+
+    // Listen to network requests made by the page
+    page.on('request', request => {
+      const url = request.url();
+      if (url.includes('/api/v1/telemetry') || url.includes('/api/v1/tracking') || url.includes('/api/v1/analytics')) {
+        trackingRequests.push(url);
+      }
+    });
+
+    await page.goto('/privacy-harness.html');
+    await page.waitForTimeout(500);
+
+    expect(trackingRequests.length).toBe(0);
+  });
 });
