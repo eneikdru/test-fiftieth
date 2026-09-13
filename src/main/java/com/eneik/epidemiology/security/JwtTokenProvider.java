@@ -128,12 +128,18 @@ public class JwtTokenProvider {
     }
 
     public String getUsername(String token) {
+        if (!validateToken(token)) {
+            throw new IllegalArgumentException("Invalid or unverified JWT token signature or expiration");
+        }
         String[] parts = token.split("\\.");
         String payload = new String(Base64.getUrlDecoder().decode(parts[1]), StandardCharsets.UTF_8);
         return extractJsonValue(payload, "sub");
     }
 
     public String getRole(String token) {
+        if (!validateToken(token)) {
+            throw new IllegalArgumentException("Invalid or unverified JWT token signature or expiration");
+        }
         String[] parts = token.split("\\.");
         String payload = new String(Base64.getUrlDecoder().decode(parts[1]), StandardCharsets.UTF_8);
         return extractJsonValue(payload, "role");
@@ -149,15 +155,17 @@ public class JwtTokenProvider {
         }
     }
 
-    private String extractJsonValue(String json, String key) {
+    public String extractJsonValue(String json, String key) {
         try {
             JsonNode tree = objectMapper.readTree(json);
-            if (tree.has(key) && !tree.get(key).isNull()) {
+            if (tree != null && tree.has(key) && !tree.get(key).isNull()) {
                 return tree.get(key).asText();
             }
-            return "";
+            throw new IllegalArgumentException("Key '" + key + "' not found in JSON payload");
+        } catch (IllegalArgumentException e) {
+            throw e;
         } catch (Exception e) {
-            return "";
+            throw new IllegalArgumentException("Malformed JSON payload: " + e.getMessage(), e);
         }
     }
 
