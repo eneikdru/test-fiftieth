@@ -132,42 +132,23 @@ test.describe('Catalog Search and Document Management E2E Tests', () => {
     await expect(page.locator('#upload-modal')).toBeVisible();
 
     // Fill form data
-    const uploadTitle = 'Сетевой протокол 2024';
-    const uploadAuthor = 'Институт Эпидемиологии';
+    const uploadTitle = 'Эпидемиологический протокол 2024';
+    const uploadAuthor = 'Филиал НИИ Эпидемиологии';
     const uploadYear = '2024';
     await page.fill('#upload-title-input', uploadTitle);
     await page.fill('#upload-author-input', uploadAuthor);
     await page.fill('#upload-year-input', uploadYear);
 
-    // Intercept POST /api/v1/documents/upload and verify request payload
-    let networkRequestCaptured = false;
-    await page.route('**/api/v1/documents/upload', async route => {
-      networkRequestCaptured = true;
-      await route.fulfill({
-        status: 201,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          success: true,
-          message: 'Документ успешно загружен.',
-          document: {
-            id: 'net-doc-100',
-            title: uploadTitle,
-            author: uploadAuthor,
-            authorOrganization: uploadAuthor,
-            year: 2024,
-            publicationYear: 2024,
-            docType: 'Протокол расследования',
-            fileName: 'document.pdf',
-            fileSize: '1.2 МБ',
-            description: 'Загружено в E2E тесте'
-          }
-        })
-      });
-    });
+    // Submit upload form to real backend endpoint served by serve.mjs (without page.route mocking)
+    const [request] = await Promise.all([
+      page.waitForRequest(req => req.url().includes('/api/v1/documents/upload') && req.method() === 'POST'),
+      page.click('#upload-submit-btn')
+    ]);
 
-    await page.click('#upload-submit-btn');
+    expect(request).toBeTruthy();
+
+    // Confirm modal closes and document grid displays uploaded document from real backend response
     await expect(page.locator('#upload-modal')).not.toBeVisible();
-    expect(networkRequestCaptured).toBe(true);
     await expect(page.locator('#document-grid')).toContainText(uploadTitle);
 
     // Now test simulated network error on upload endpoint
