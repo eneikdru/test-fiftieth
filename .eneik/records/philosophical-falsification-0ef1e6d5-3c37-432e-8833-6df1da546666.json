@@ -107,6 +107,42 @@
       "confidence": "high",
       "evidence": "src/main/java/com/eneik/epidemiology/document/EmployeeDossierController.java inside signDossierReport method.",
       "screenshotFile": ""
+    },
+    {
+      "roleTag": "BARCAN-TAG-05",
+      "philosopher": "Уэсли Сэлмон",
+      "worldview": "Scientific Explanation and the Causal Structure of the World - causal processes: a genuine causal process is distinguished by its ability to transmit a mark continuously through space and time.",
+      "critique": "The architecture severs the causal chain between the frontend and backend. Frontend SPA actions (like searches or navigation) make API calls (e.g., fetch to /api/v1/documents/search) without transmitting any correlation ID or trace identifier (a 'mark') in the request headers. This prevents SREs from tracing the continuous causal process of a user's action through the system during incident reconstruction.",
+      "proposal": "Inject a robust correlation ID (e.g., X-Request-ID or W3C Trace Context) at the frontend for all outgoing API requests, and ensure the backend logs and propagates this mark.",
+      "dislike": "Severing causal visibility at the network boundary, making holistic system tracing impossible.",
+      "kanoClass": "Must-Be",
+      "confidence": "high",
+      "evidence": "frontend/index.html fetch calls lack header instrumentation for tracing; backend TelemetryService expects session/trace contexts that are never transmitted.",
+      "screenshotFile": ""
+    },
+    {
+      "roleTag": "BARCAN-TAG-06",
+      "philosopher": "Альфред Тарский",
+      "worldview": "The Concept of Truth in Formalized Languages - semantic conception of truth (T-schema): the statement 'P' is true if and only if P is actually the case in reality.",
+      "critique": "The frontend's telemetry harness explicitly fabricates performance metrics. When tracking tab navigations, it records 'latencyMs: 15 + (activitySeq % 10) * 2' instead of measuring the actual time elapsed. According to the semantic conception of truth, the log asserting 'latency was 17ms' is false because the event did not possess that property in reality. This breaks the fundamental epistemological trust in the QA/Telemetry system.",
+      "proposal": "Remove fabricated data generation. If performance is to be measured, use actual browser performance APIs (e.g., performance.now()) to record the true temporal duration of the event.",
+      "dislike": "Presenting fabricated heuristics as empirical measurements, destroying the truth-value of system observability.",
+      "kanoClass": "Must-Be",
+      "confidence": "high",
+      "evidence": "frontend/index.html inside switchTab() function, where 'latencyMs' is calculated using a modulo formula rather than a real timer.",
+      "screenshotFile": ""
+    },
+    {
+      "roleTag": "BARCAN-TAG-07",
+      "philosopher": "Тимоти Уильямсон",
+      "worldview": "Knowledge and Its Limits - knowledge-first epistemology: do not authorize a risky action from belief, heuristic, or intention alone; require strict, knowledge-grade evidence.",
+      "critique": "The application grants the highly privileged 'ADMIN' role based on a weak, heuristic substring match (`lowerRole.contains(\"admin\")`) during LMS authentication mapping. This means any user whose role merely happens to contain the letters 'admin' (e.g., 'non-admin visitor', 'administrative assistant') is granted full system control. The system acts on an unsafe belief rather than exact, knowledge-grade evidence of authority.",
+      "proposal": "Replace the loose substring match with strict, exact string matching against a predefined set of trusted roles or explicit cryptographic claims to establish knowledge-grade authorization.",
+      "dislike": "Treating a loose heuristic or guess as sufficient evidence for granting absolute authority.",
+      "kanoClass": "Must-Be",
+      "confidence": "high",
+      "evidence": "src/main/java/com/eneik/epidemiology/auth/AuthController.java inside mapMoodleRole(), using lowerRole.contains(\"admin\") to return \"ADMIN\".",
+      "screenshotFile": ""
     }
   ]
 }
