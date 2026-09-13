@@ -36,6 +36,9 @@ class TelemetryControllerTest {
     private UserRepository userRepository;
 
     @Autowired
+    private com.eneik.epidemiology.document.DocumentRepository documentRepository;
+
+    @Autowired
     private JwtTokenProvider jwtTokenProvider;
 
     private String authToken;
@@ -72,7 +75,9 @@ class TelemetryControllerTest {
     @Test
     @DisplayName("Given user downloads a document, When action completes, Then download success event is recorded in database")
     void testDownloadSuccessTelemetryIntegration() throws Exception {
-        Long docId = 42L;
+        com.eneik.epidemiology.document.Document doc = new com.eneik.epidemiology.document.Document("Test Doc", "Test Org", 2024, "/data/docs/uploads/test.pdf");
+        doc = documentRepository.save(doc);
+        Long docId = doc.getId();
 
         mockMvc.perform(get("/api/v1/documents/" + docId + "/download")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + authToken))
