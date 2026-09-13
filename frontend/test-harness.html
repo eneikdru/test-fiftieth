@@ -124,7 +124,6 @@
       uploadDocType: 'Протокол расследования',
       uploadDescription: '',
       uploadFileName: '',
-      simulateNetworkError: false,
       isUploading: false,
       uploadError: '',
       uploadSuccess: ''
@@ -430,18 +429,7 @@
               </form>
 
               <!-- Harness Testing Toggle for Backend Stopped Simulation -->
-              <div class="mt-3 pt-3 border-t border-[#f2f4f6]">
-                <label class="flex items-center gap-2 text-xs text-[#424752] cursor-pointer">
-                  <input
-                    id="simulate-backend-stopped-checkbox"
-                    type="checkbox"
-                    ${state.backendStopped ? 'checked' : ''}
-                    onchange="state.backendStopped = this.checked; fetchDocuments();"
-                    class="rounded border-[#c2c6d4] text-[#003f87] focus:ring-[#003f87]"
-                  />
-                  <span>Симулировать остановленный бэкенд (Backend Stopped Error State)</span>
-                </label>
-              </div>
+
             </section>
 
             <!-- Document List Section -->
@@ -677,20 +665,6 @@
                       />
                     </div>
 
-                    <!-- Switch for simulating network error -->
-                    <div class="pt-2 border-t border-[#f2f4f6]">
-                      <label class="flex items-center gap-2 text-xs text-[#424752] cursor-pointer">
-                        <input
-                          id="simulate-network-error-checkbox"
-                          type="checkbox"
-                          ${state.simulateNetworkError ? 'checked' : ''}
-                          onchange="state.simulateNetworkError = this.checked"
-                          class="rounded border-[#c2c6d4] text-[#003f87] focus:ring-[#003f87]"
-                        />
-                        <span>Симулировать сбой сети при отправке</span>
-                      </label>
-                    </div>
-
                     <div class="flex items-center justify-end gap-3 pt-4 border-t border-[#e0e3e5]">
                       <button
                         type="button"
@@ -804,13 +778,7 @@
       render();
 
       setTimeout(() => {
-        if (state.simulateNetworkError) {
-          // KEY AC: On network failure, error is shown, but state metadata remains INTACT in the form!
-          state.uploadError = 'Ошибка сети при загрузке документа. Попробуйте еще раз.';
-          state.isUploading = false;
-          render();
-          return;
-        }
+
 
         const titleSlug = state.uploadTitle.trim().toLowerCase().replace(/\s+/g, '-');
         const newDoc = {

@@ -51,8 +51,6 @@
   let uploadDocType = 'Протокол расследования';
   let uploadDescription = '';
   let uploadFileName = '';
-  let simulateNetworkError = false;
-
   let viewerDocument = null;
 
   let isUploading = false;
@@ -212,11 +210,7 @@
     isUploading = true;
 
     try {
-      if (simulateNetworkError) {
-        // Simulate network failure
-        await new Promise(resolve => setTimeout(resolve, 300));
-        throw new Error('Ошибка сети при загрузке документа. Попробуйте еще раз.');
-      }
+
 
       const response = await fetch(`${getApiBaseUrl()}/documents/upload`, {
         method: 'POST',
@@ -745,17 +739,7 @@
           </div>
 
           <!-- Network Failure Testing Switch -->
-          <div class="pt-2 border-t border-[#f2f4f6]">
-            <label class="flex items-center gap-2 text-xs text-[#424752] cursor-pointer">
-              <input
-                id="simulate-network-error-checkbox"
-                type="checkbox"
-                bind:checked={simulateNetworkError}
-                class="rounded border-[#c2c6d4] text-[#003f87] focus:ring-2 focus:ring-[#003f87]/50 focus:outline-none"
-              />
-              <span>Симулировать сбой сети при отправке</span>
-            </label>
-          </div>
+
 
           <div class="flex items-center justify-end gap-3 pt-4 border-t border-[#e0e3e5]">
             <button
