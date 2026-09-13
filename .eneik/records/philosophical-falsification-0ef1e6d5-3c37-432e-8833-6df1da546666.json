@@ -71,6 +71,42 @@
       "confidence": "high",
       "evidence": "frontend/index.html 'Телеметрия' tab and its associated UI.",
       "screenshotFile": "frontend-1440.png"
+    },
+    {
+      "roleTag": "BARCAN-TAG-02",
+      "philosopher": "Сол Крипке",
+      "worldview": "Naming and Necessity - rigid designation and necessary identity: an identifier must rigidly designate a specific, necessarily identical entity across all contexts.",
+      "critique": "In the `/api/v1/documents/{id}/download` endpoint, if a document ID is not found, the backend silently invents a fake document payload ('Содержимое документа ' + id) and returns it with a 200 OK status. This destroys the rigid designation of the ID by allowing it to point to a dynamically hallucinated fallback entity rather than preserving the necessary identity of the missing object.",
+      "proposal": "Return a 404 Not Found error when a document ID does not exist in the repository, preserving the strict mapping between the identifier and its actual referent.",
+      "dislike": "Hallucinating referents for empty designators instead of explicitly admitting their absence.",
+      "kanoClass": "Must-Be",
+      "confidence": "high",
+      "evidence": "src/main/java/com/eneik/epidemiology/document/DocumentController.java inside downloadDocument method (orElseGet block returning fallback byte content).",
+      "screenshotFile": ""
+    },
+    {
+      "roleTag": "BARCAN-TAG-03",
+      "philosopher": "Томас Метцингер",
+      "worldview": "Being No One - self-model and phenomenal tunnel: a cohesive experience requires that the representational mechanics of the interface remain transparent and invisible to the user.",
+      "critique": "The production UI explicitly exposes developer testing controls, such as a checkbox to 'Симулировать остановленный бэкенд' (Simulate backend stopped) and 'simulateNetworkError'. This forces the user to interact with the artificial 'mechanics' of the application, actively shattering their phenomenal tunnel, breaking immersion, and causing deep confusion.",
+      "proposal": "Completely remove all debugging, simulation, and test harness checkboxes from the end-user interface. These belong in isolated test environments.",
+      "dislike": "Exposing the representational mechanics and testing tools to the user, breaking their immersion and trust in the system.",
+      "kanoClass": "Reverse",
+      "confidence": "high",
+      "evidence": "frontend/index.html contains UI checkboxes and state variables (backendStopped, simulateNetworkError) exposed directly in the main catalog and upload forms.",
+      "screenshotFile": "frontend-catalog-1440.png"
+    },
+    {
+      "roleTag": "BARCAN-TAG-04",
+      "philosopher": "Питер Гэрденфорс",
+      "worldview": "Knowledge in Flux - AGM belief revision: epistemic states must rationally distinguish between different reasons for a belief failing or requiring revision.",
+      "critique": "In the `signDossierReport` endpoint, the system relies on a single `updatedCount == 0` check from the database update to handle failures. This collapses two completely distinct epistemic states—'the report is not yet completed' versus 'the report is already signed'—into a single, ambiguous error message. This conflation prevents the client (and user) from rationally updating their understanding of the report's true state.",
+      "proposal": "Explicitly query the current state of the report before attempting the update, and return distinct, accurate errors reflecting the actual state of the world (e.g., one error for not ready, another for already signed).",
+      "dislike": "Conflating mutually exclusive states of reality into a single ambiguous representation.",
+      "kanoClass": "Performance",
+      "confidence": "high",
+      "evidence": "src/main/java/com/eneik/epidemiology/document/EmployeeDossierController.java inside signDossierReport method.",
+      "screenshotFile": ""
     }
   ]
 }
