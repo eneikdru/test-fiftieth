@@ -74,7 +74,8 @@ class AnalysisSpeedTelemetryUnitTest {
         OffsetDateTime start = OffsetDateTime.of(2026, 8, 28, 10, 0, 0, 0, ZoneOffset.UTC);
         OffsetDateTime end = OffsetDateTime.of(2026, 8, 28, 10, 15, 0, 0, ZoneOffset.UTC); // 15 min = 900,000 ms
 
-        TelemetryEvent event = telemetryService.recordAnalysisSpeedTelemetry("SESS-001", start, end, null);
+        java.util.concurrent.CompletableFuture<TelemetryEvent> future = telemetryService.recordAnalysisSpeedTelemetry("SESS-001", start, end, null);
+        TelemetryEvent event = future.join();
 
         assertNotNull(event);
         assertEquals(TelemetryService.EVENT_ANALYSIS_SPEED_MEASURED, event.getEventType());

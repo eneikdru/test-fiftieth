@@ -42,7 +42,8 @@ class AnalysisSpeedTelemetryCalculationUnitTest {
         OffsetDateTime start = OffsetDateTime.of(2026, 8, 28, 10, 0, 0, 0, ZoneOffset.UTC);
         OffsetDateTime end = OffsetDateTime.of(2026, 8, 28, 10, 15, 30, 0, ZoneOffset.UTC); // 15 min 30 sec = 930,000 ms
 
-        TelemetryEvent event = telemetryService.recordAnalysisSpeedTelemetry("ANALYSIS-SESS-100", start, end, null);
+        java.util.concurrent.CompletableFuture<TelemetryEvent> future = telemetryService.recordAnalysisSpeedTelemetry("ANALYSIS-SESS-100", start, end, null);
+        TelemetryEvent event = future.join();
 
         assertNotNull(event, "Emitted telemetry event must not be null");
         assertEquals(TelemetryService.EVENT_ANALYSIS_SPEED_MEASURED, event.getEventType(), "Event type must match ANALYSIS_SPEED_MEASURED");
@@ -64,7 +65,8 @@ class AnalysisSpeedTelemetryCalculationUnitTest {
         OffsetDateTime start = OffsetDateTime.of(2026, 8, 28, 10, 0, 0, 0, ZoneOffset.UTC);
         OffsetDateTime end = OffsetDateTime.of(2026, 8, 28, 10, 20, 0, 0, ZoneOffset.UTC);
 
-        TelemetryEvent event = telemetryService.recordAnalysisSpeedTelemetry("ANALYSIS-SESS-200", start, end, 500000L);
+        java.util.concurrent.CompletableFuture<TelemetryEvent> future = telemetryService.recordAnalysisSpeedTelemetry("ANALYSIS-SESS-200", start, end, 500000L);
+        TelemetryEvent event = future.join();
 
         assertNotNull(event);
         assertEquals(TelemetryService.EVENT_ANALYSIS_SPEED_MEASURED, event.getEventType());
@@ -80,7 +82,8 @@ class AnalysisSpeedTelemetryCalculationUnitTest {
         when(telemetryEventRepository.save(any(TelemetryEvent.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
-        TelemetryEvent event = telemetryService.recordAnalysisSpeedTelemetry("ANALYSIS-SESS-300", null, null, null);
+        java.util.concurrent.CompletableFuture<TelemetryEvent> future = telemetryService.recordAnalysisSpeedTelemetry("ANALYSIS-SESS-300", null, null, null);
+        TelemetryEvent event = future.join();
 
         assertNotNull(event);
         assertEquals(TelemetryService.EVENT_ANALYSIS_SPEED_MEASURED, event.getEventType());

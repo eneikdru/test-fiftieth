@@ -42,7 +42,8 @@ class TelemetryElapsedTimeVerificationTest {
         OffsetDateTime startTime = OffsetDateTime.of(2026, 9, 5, 0, 0, 0, 0, ZoneOffset.UTC);
         OffsetDateTime endTime = OffsetDateTime.of(2026, 9, 5, 0, 5, 30, 0, ZoneOffset.UTC); // 330 seconds = 330,000 ms
 
-        TelemetryEvent event = telemetryService.recordWorkflowTelemetry("ANALYSIS_SIMULATION", startTime, endTime, null);
+        java.util.concurrent.CompletableFuture<TelemetryEvent> future = telemetryService.recordWorkflowTelemetry("ANALYSIS_SIMULATION", startTime, endTime, null);
+        TelemetryEvent event = future.join();
 
         assertNotNull(event, "Recorded telemetry event must not be null");
         assertEquals(TelemetryService.EVENT_WORKFLOW_DURATION_MEASURED, event.getEventType());
@@ -63,7 +64,8 @@ class TelemetryElapsedTimeVerificationTest {
         OffsetDateTime startTime = OffsetDateTime.of(2026, 9, 5, 0, 10, 0, 0, ZoneOffset.UTC);
         OffsetDateTime endTime = OffsetDateTime.of(2026, 9, 5, 0, 12, 15, 500_000_000, ZoneOffset.UTC); // 135,500 ms
 
-        TelemetryEvent event = telemetryService.recordAnalysisSpeedTelemetry("SESS-VAL-001", startTime, endTime, null);
+        java.util.concurrent.CompletableFuture<TelemetryEvent> future = telemetryService.recordAnalysisSpeedTelemetry("SESS-VAL-001", startTime, endTime, null);
+        TelemetryEvent event = future.join();
 
         assertNotNull(event, "Recorded telemetry event must not be null");
         assertEquals(TelemetryService.EVENT_ANALYSIS_SPEED_MEASURED, event.getEventType());
@@ -102,7 +104,8 @@ class TelemetryElapsedTimeVerificationTest {
         OffsetDateTime endTime = OffsetDateTime.of(2026, 9, 5, 0, 1, 0, 0, ZoneOffset.UTC);
         long explicitDuration = 120000L;
 
-        TelemetryEvent event = telemetryService.recordWorkflowTelemetry("PIPELINE_BATCH", startTime, endTime, explicitDuration);
+        java.util.concurrent.CompletableFuture<TelemetryEvent> future = telemetryService.recordWorkflowTelemetry("PIPELINE_BATCH", startTime, endTime, explicitDuration);
+        TelemetryEvent event = future.join();
 
         assertNotNull(event);
         assertEquals(explicitDuration, event.getWorkflowDurationMs(), "Explicit duration must take precedence");

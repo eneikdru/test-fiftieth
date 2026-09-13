@@ -3,6 +3,8 @@ package com.eneik.epidemiology.telemetry;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.scheduling.annotation.Async;
+import java.util.concurrent.CompletableFuture;
 
 import java.time.Clock;
 import java.time.Duration;
@@ -64,8 +66,9 @@ public class TelemetryService {
         return telemetryEventRepository.save(event);
     }
 
+    @Async
     @Transactional
-    public TelemetryEvent recordAnalysisSpeedTelemetry(String sessionId, OffsetDateTime startTime, OffsetDateTime endTime, Long durationMs) {
+    public CompletableFuture<TelemetryEvent> recordAnalysisSpeedTelemetry(String sessionId, OffsetDateTime startTime, OffsetDateTime endTime, Long durationMs) {
         long computedDuration = (durationMs != null) ? durationMs :
                 ((startTime != null && endTime != null) ? Duration.between(startTime, endTime).toMillis() : 0L);
 
@@ -77,7 +80,7 @@ public class TelemetryService {
                 computedDuration,
                 OffsetDateTime.now(clock)
         );
-        return telemetryEventRepository.save(event);
+        return CompletableFuture.completedFuture(telemetryEventRepository.save(event));
     }
 
     @Transactional
@@ -117,8 +120,9 @@ public class TelemetryService {
         return telemetryEventRepository.save(event);
     }
 
+    @Async
     @Transactional
-    public TelemetryEvent recordWorkflowTelemetry(String workflowType, OffsetDateTime startTime, OffsetDateTime endTime, Long durationMs) {
+    public CompletableFuture<TelemetryEvent> recordWorkflowTelemetry(String workflowType, OffsetDateTime startTime, OffsetDateTime endTime, Long durationMs) {
         long computedDuration = (durationMs != null) ? durationMs :
                 ((startTime != null && endTime != null) ? Duration.between(startTime, endTime).toMillis() : 0L);
 
@@ -130,7 +134,7 @@ public class TelemetryService {
                 computedDuration,
                 OffsetDateTime.now(clock)
         );
-        return telemetryEventRepository.save(event);
+        return CompletableFuture.completedFuture(telemetryEventRepository.save(event));
     }
 
     @Transactional
