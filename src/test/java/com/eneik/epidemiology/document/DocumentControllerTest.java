@@ -222,4 +222,24 @@ class DocumentControllerTest {
                 .andExpect(jsonPath("$.totalElements").exists())
                 .andExpect(jsonPath("$.currentPage", is(0)));
     }
+
+    @Test
+    @DisplayName("Given a non-existent document ID, When downloading document, Then returns 404 Not Found")
+    void testDownloadDocument_NotFound() throws Exception {
+        mockMvc.perform(get("/api/v1/documents/999999/download")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + researcherToken))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("Given an existing document ID, When downloading document, Then returns 200 OK with content headers")
+    void testDownloadDocument_Success() throws Exception {
+        Document doc = documentRepository.findAll().get(0);
+        Long docId = doc.getId();
+
+        mockMvc.perform(get("/api/v1/documents/" + docId + "/download")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + researcherToken))
+                .andExpect(status().isOk())
+                .andExpect(header().string(HttpHeaders.CONTENT_DISPOSITION, containsString("attachment; filename=")));
+    }
 }
