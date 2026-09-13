@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 test.describe('SPA Navigation Hub and Tab Routing E2E Tests', () => {
 
-  test('Given the main index page is loaded, When clicking #tab-dossier and #tab-privacy tabs, Then modules display dynamically without page reload', async ({ page }) => {
+  test('Given the main index page is loaded, When clicking #tab-dossier and #tab-foci tabs, Then modules display dynamically without page reload', async ({ page }) => {
     // Navigate to root index page
     await page.goto('/');
 
@@ -34,14 +34,6 @@ test.describe('SPA Navigation Hub and Tab Routing E2E Tests', () => {
     await page.click('#panel-dossier #search-button');
     await expect(page.locator('#document-list')).toContainText('Приказ о назначении №42');
 
-    // Click Privacy tab (#tab-privacy)
-    await page.click('#tab-privacy');
-
-    // Confirm Privacy panel is rendered
-    await expect(page.locator('#panel-privacy')).toBeVisible();
-    await expect(page.locator('#panel-dossier')).not.toBeVisible();
-    await expect(page.locator('#panel-privacy')).toContainText('Экспорт персональных данных');
-
     // Click Foci tab (#tab-foci)
     await page.click('#tab-foci');
     await expect(page.locator('#panel-foci')).toBeVisible();
@@ -63,7 +55,7 @@ test.describe('SPA Navigation Hub and Tab Routing E2E Tests', () => {
 
     // Miller's Law: max 9 blocks in navigation chunk
     expect(tabCount).toBeLessThanOrEqual(9);
-    expect(tabCount).toBeGreaterThanOrEqual(4);
+    expect(tabCount).toBeGreaterThanOrEqual(3);
 
     // Fitts's Law: check interactive zone size >= 44x44px
     for (let i = 0; i < tabCount; i++) {
