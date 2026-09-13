@@ -124,6 +124,50 @@ test.describe('Catalog Search and Document Management E2E Tests', () => {
     await expect(page.locator('#upload-description-input')).toHaveValue(testDesc);
   });
 
+  test('Given the document upload flow, When submitting an upload with a real network endpoint, Then both success and failed network requests are handled and verified end-to-end', async ({ page }) => {
+    await page.goto(harnessPath);
+
+    // Open upload modal as Admin
+    await page.click('#open-upload-modal-btn');
+    await expect(page.locator('#upload-modal')).toBeVisible();
+
+    // Fill form data
+    const uploadTitle = 'Эпидемиологический протокол 2024';
+    const uploadAuthor = 'Филиал НИИ Эпидемиологии';
+    const uploadYear = '2024';
+    await page.fill('#upload-title-input', uploadTitle);
+    await page.fill('#upload-author-input', uploadAuthor);
+    await page.fill('#upload-year-input', uploadYear);
+
+    // Submit upload form to real backend endpoint served by serve.mjs (without page.route mocking)
+    const [request] = await Promise.all([
+      page.waitForRequest(req => req.url().includes('/api/v1/documents/upload') && req.method() === 'POST'),
+      page.click('#upload-submit-btn')
+    ]);
+
+    expect(request).toBeTruthy();
+
+    // Confirm modal closes and document grid displays uploaded document from real backend response
+    await expect(page.locator('#upload-modal')).not.toBeVisible();
+    await expect(page.locator('#document-grid')).toContainText(uploadTitle);
+
+    // Now test simulated network error on upload endpoint
+    await page.click('#open-upload-modal-btn');
+    await expect(page.locator('#upload-modal')).toBeVisible();
+    await page.fill('#upload-title-input', 'Ошибочный документ');
+    await page.fill('#upload-author-input', 'Филиал');
+    await page.fill('#upload-year-input', '2024');
+
+    await page.route('**/api/v1/documents/upload', async route => {
+      await route.abort('failed');
+    });
+
+    await page.click('#upload-submit-btn');
+    await expect(page.locator('#upload-error-alert')).toBeVisible();
+    await expect(page.locator('#upload-error-alert')).toContainText('Ошибка сети при загрузке документа');
+    await expect(page.locator('#upload-title-input')).toHaveValue('Ошибочный документ');
+  });
+
   test('Given a user accesses the site on desktop and mobile devices, When the UI renders, Then screenshots are saved for design verification', async ({ page }) => {
     const recordDir = path.resolve(process.cwd(), '.eneik/records/design-check-72f86240-fcf6-4d30-9ff6-02ae1b8fb711');
     if (!fs.existsSync(recordDir)) {
