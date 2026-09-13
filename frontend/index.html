@@ -93,6 +93,7 @@
     let state = {
       mode: initialMode, // 'catalog' | 'login' | 'recovery'
       activeTab: initialTab, // 'catalog' | 'dossier' | 'foci' | 'telemetry'
+      cookieConsent: localStorage.getItem('cookie_consent') || null, // 'accepted' | 'declined' | null
       telemetry: {
         totalClicks: 9,
         tabNavigations: 5,
@@ -158,6 +159,7 @@
     };
 
     document.addEventListener('click', () => {
+      if (state.cookieConsent !== 'accepted') return;
       state.telemetry.totalClicks += 1;
       const elem = document.getElementById('metric-click-distance-value');
       if (elem && state.telemetry.tabNavigations > 0) {
@@ -168,27 +170,41 @@
     let activitySeq = 100;
     function switchTab(tabKey) {
       state.activeTab = tabKey;
-      state.telemetry.tabNavigations += 1;
-      state.telemetry.successfulLoads += 1;
+      if (state.cookieConsent === 'accepted') {
+        state.telemetry.tabNavigations += 1;
+        state.telemetry.successfulLoads += 1;
 
-      const tabTitles = {
-        catalog: 'Каталог протоколов',
-        dossier: 'Аналитика досье',
-        foci: 'Категоризация очагов',
-        telemetry: 'Телеметрия навигации'
-      };
+        const tabTitles = {
+          catalog: 'Каталог протоколов',
+          dossier: 'Аналитика досье',
+          foci: 'Категоризация очагов',
+          telemetry: 'Телеметрия навигации'
+        };
 
-      activitySeq += 1;
-      const title = tabTitles[tabKey] || 'Переход по вкладке';
-      state.telemetry.activities.unshift({
-        id: activitySeq,
-        title: `Переход: ${title}`,
-        module: 'SPA Router',
-        latencyMs: 15 + (activitySeq % 10) * 2,
-        timestamp: 'Только что',
-        success: true
-      });
+        activitySeq += 1;
+        const title = tabTitles[tabKey] || 'Переход по вкладке';
+        state.telemetry.activities.unshift({
+          id: activitySeq,
+          title: `Переход: ${title}`,
+          module: 'SPA Router',
+          latencyMs: 15 + (activitySeq % 10) * 2,
+          timestamp: 'Только что',
+          success: true
+        });
+      }
 
+      render();
+    }
+
+    function handleAcceptConsent() {
+      state.cookieConsent = 'accepted';
+      try { localStorage.setItem('cookie_consent', 'accepted'); } catch(e) {}
+      render();
+    }
+
+    function handleDeclineConsent() {
+      state.cookieConsent = 'declined';
+      try { localStorage.setItem('cookie_consent', 'declined'); } catch(e) {}
       render();
     }
 
@@ -1067,6 +1083,45 @@
               </button>
             </div>
           </footer>
+
+          <!-- Cookie Consent Banner (WCAG 2.1 AA Compliant) -->
+          ${state.cookieConsent === null ? `
+            <aside
+              id="cookie-consent-banner"
+              role="region"
+              aria-label="Согласие на использование файлов cookie и аналитики"
+              class="fixed bottom-0 inset-x-0 z-50 bg-[#191c1e] text-white p-4 sm:p-5 border-t-2 border-[#003f87] shadow-2xl"
+            >
+              <div class="max-w-[1440px] mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div class="space-y-1 max-w-3xl">
+                  <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                    <span>🍪</span> Согласие на использование cookie и телеметрии
+                  </h3>
+                  <p class="text-xs text-[#c2c6d4] leading-relaxed">
+                    Мы используем файлы cookie и анонимную телеметрию для улучшения работы сервиса. По умолчанию сбор трекинга заблокирован. Вы можете принять использование или отклонить непроизводственные трекеры.
+                  </p>
+                </div>
+                <div class="flex items-center gap-3 shrink-0">
+                  <button
+                    type="button"
+                    id="decline-consent-btn"
+                    onclick="handleDeclineConsent()"
+                    class="min-h-[44px] min-w-[44px] px-4 py-2 border border-[#c2c6d4] hover:bg-white/10 text-white focus:outline-none focus:ring-2 focus:ring-white rounded-lg text-xs font-semibold transition-colors"
+                  >
+                    Отклонить
+                  </button>
+                  <button
+                    type="button"
+                    id="accept-consent-btn"
+                    onclick="handleAcceptConsent()"
+                    class="min-h-[44px] min-w-[44px] px-4 py-2 bg-[#003f87] hover:bg-[#002b5e] text-white focus:outline-none focus:ring-2 focus:ring-white rounded-lg text-xs font-bold transition-colors shadow-md"
+                  >
+                    Принять
+                  </button>
+                </div>
+              </div>
+            </aside>
+          ` : ''}
         </div>
       `;
     }
