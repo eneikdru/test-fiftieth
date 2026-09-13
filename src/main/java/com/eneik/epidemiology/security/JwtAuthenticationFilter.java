@@ -48,9 +48,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                 String role = null;
                 if (username != null && !username.trim().isEmpty() && userService != null) {
-                    Optional<String> persistentRole = userService.resolveRoleByUsername(username);
-                    if (persistentRole.isPresent() && !persistentRole.get().trim().isEmpty()) {
-                        role = persistentRole.get();
+                    try {
+                        Optional<String> persistentRole = userService.resolveRoleByUsername(username);
+                        if (persistentRole.isPresent() && !persistentRole.get().trim().isEmpty()) {
+                            role = persistentRole.get();
+                        }
+                    } catch (Exception e) {
+                        logger.debug("Could not resolve persistent role for user during JWT filter processing: " + username, e);
                     }
                 }
 
