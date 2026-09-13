@@ -179,6 +179,18 @@
       "confidence": "high",
       "evidence": "frontend/index.html handleGenerateDossierReport uses setTimeout(..., 600) and handleUploadSubmit uses setTimeout(..., 300) to fake processing time.",
       "screenshotFile": "frontend-dossier-1440.png"
+    },
+    {
+      "roleTag": "BARCAN-TAG-12",
+      "philosopher": "Скотт Шапиро",
+      "worldview": "Legality - planning theory of law: shared plans and contracts must be binding and explicitly communicated across boundaries to resolve coordination problems.",
+      "critique": "The frontend implements a mock UI for searching dossier documents (`handleDossierSearch` mapping a query string to hardcoded documents) but there is absolutely no REST API contract defined in the backend (`EmployeeDossierController` or `EmployeeDossierAnalyticsController`) to support this specific frontend action. The shared plan (API contract) between frontend and backend is missing, destroying the binding rule necessary for cross-team coordination.",
+      "proposal": "Define and implement a strict OpenAPI/REST contract in the backend for dossier search (`/api/v1/dossier/search`) that exactly matches the expected inputs and outputs of the frontend components.",
+      "dislike": "Working without a binding, shared plan (API contract) between the frontend and backend boundaries.",
+      "kanoClass": "Must-Be",
+      "confidence": "high",
+      "evidence": "frontend/index.html handleDossierSearch uses a fully mocked response without making a fetch call, and the backend EmployeeDossierController contains endpoints for report status and signing, but lacks any endpoint for searching or listing an employee's dossier.",
+      "screenshotFile": ""
     }
   ]
 }
