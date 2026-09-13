@@ -65,4 +65,41 @@ public class MoodleSsoRoleSyncTest {
         User user = userRepository.findByUsername("sync_user").orElseThrow();
         assert "ADMIN".equals(user.getRole());
     }
+
+    @Test
+    @DisplayName("Given an authenticated ADMIN user, When invoking POST /api/v1/auth/moodle/sync-roles, Then executes role synchronization and returns 200 OK")
+    void testSyncMoodleRolesEndpoint_AdminUser_Returns200OK() throws Exception {
+        User admin = userService.createUser("admin_sync_tester", "AdminPass123!", "ADMIN");
+        com.eneik.epidemiology.security.JwtTokenProvider jwtProvider = new com.eneik.epidemiology.security.JwtTokenProvider("default-secret-key-for-jwt-signing-2026-epidemiology-portal", 3600);
+        String adminToken = jwtProvider.generateToken(admin.getUsername(), admin.getRole());
+
+        // Create a Moodle-linked user whose role needs sync
+        userService.createUserWithMoodle("moodle_sync_target", "Pass123!", "target@inst.ru", "Target User", "USER", "администратор_moodle", "IT", "EPID-101");
+
+        mockMvc.perform(post("/api/v1/auth/moodle/sync-roles")
+                .header("Authorization", "Bearer " + adminToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success", is(true)))
+                .andExpect(jsonPath("$.synced_users_count", notNullValue()));
+
+        User updatedUser = userRepository.findByUsername("moodle_sync_target").orElseThrow();
+        assert "ADMIN".equals(updatedUser.getRole());
+    }
+
+    @Test
+    @DisplayName("Given a non-ADMIN user or unauthenticated request, When invoking POST /api/v1/auth/moodle/sync-roles, Then returns 403 Forbidden or 401 Unauthorized")
+    void testSyncMoodleRolesEndpoint_SecurityEnforcement() throws Exception {
+        // 1. Unauthenticated request -> 401 Unauthorized
+        mockMvc.perform(post("/api/v1/auth/moodle/sync-roles"))
+                .andExpect(status().isUnauthorized());
+
+        // 2. Standard RESEARCHER user -> 403 Forbidden
+        User researcher = userService.createUser("researcher_sync_tester", "Pass123!", "RESEARCHER");
+        com.eneik.epidemiology.security.JwtTokenProvider jwtProvider = new com.eneik.epidemiology.security.JwtTokenProvider("default-secret-key-for-jwt-signing-2026-epidemiology-portal", 3600);
+        String researcherToken = jwtProvider.generateToken(researcher.getUsername(), researcher.getRole());
+
+        mockMvc.perform(post("/api/v1/auth/moodle/sync-roles")
+                .header("Authorization", "Bearer " + researcherToken))
+                .andExpect(status().isForbidden());
+    }
 }
