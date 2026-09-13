@@ -38,7 +38,7 @@
 
       <section>
         <h3 class="font-bold text-[#191c1e] text-base mb-1">Юридический и фактический адрес</h3>
-        <p>111123, г. Москва, ул. Novogireevskaya, д. 3А</p>
+        <p>111123, г. Москва, ул. Новогиреевская, д. 3А</p>
       </section>
 
       <section>

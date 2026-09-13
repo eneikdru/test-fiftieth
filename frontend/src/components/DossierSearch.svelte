@@ -1,4 +1,5 @@
 <script>
+  import ImprintModal from './ImprintModal.svelte';
     let surname = "";
     let documents = [];
     let loading = false;
@@ -51,6 +52,7 @@
             feedback = "✓ Итоговая справка успешно сформирована.";
         }, 1000);
     }
+  let showImprint = false;
 </script>
 
 <div class="dossier-container">
@@ -95,7 +97,7 @@
 
     <footer class="dossier-footer">
         <span>Российский научно-исследовательский институт эпидемиологии</span>
-        <button on:click={() => alert('Выходные данные (Imprint / Impressum):\nФБУН «НИИ Эпидемиологии»\nг. Москва, ул. Новогиреевская, 3А')} class="imprint-btn" aria-label="Выходные данные">
+        <button on:click={() => showImprint = true} class="imprint-btn" aria-label="Выходные данные">
             Выходные данные (Imprint / Impressum)
         </button>
     </footer>
@@ -117,3 +119,7 @@
     .dossier-footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #767676; text-align: center; font-size: 12px; color: #333; display: flex; justify-content: space-between; align-items: center; }
     .imprint-btn { background: none; border: none; color: #005fcc; text-decoration: underline; cursor: pointer; padding: 0; }
 </style>
+
+{#if showImprint}
+  <ImprintModal on:close={() => showImprint = false} />
+{/if}
