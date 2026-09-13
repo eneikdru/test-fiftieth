@@ -1,0 +1,76 @@
+{
+  "critiques": [
+    {
+      "roleTag": "BARCAN-TAG-01",
+      "philosopher": "Рут Баркан Маркус",
+      "worldview": "Quantified Modal Logic - Constructive Proof Object: working only with actual objects and prohibiting abstract stubs.",
+      "critique": "The document upload functionality in the frontend is a complete stub. When a user uploads a document, the form fakes a success response ('Документ успешно загружен в каталог') and pushes a fake document object into a local state array without ever making a network request to the backend to actually save it. This completely breaks the main path by silently ignoring the user's action and presenting an illusion of success.",
+      "proposal": "Implement a real API integration for document upload in the frontend and remove the stub logic. Ensure that a success message is only shown when the backend actually confirms the creation of the document.",
+      "dislike": "Presenting a fake success message for an action that never occurred, working with hypothetical data instead of actual domain objects.",
+      "kanoClass": "Must-Be",
+      "confidence": "high",
+      "evidence": "frontend/index.html handleUploadSubmit function, where no fetch or XMLHttpRequest is made, and state.documents.unshift(newDoc) is used instead.",
+      "screenshotFile": ""
+    },
+    {
+      "roleTag": "BARCAN-TAG-00",
+      "philosopher": "Майкл Дамит",
+      "worldview": "Verificationist Theory Of Meaning: the truth of a claim must be explicitly verifiable, and inconsistent or unknown states must be accurately represented.",
+      "critique": "The frontend silently catches the failure to upload a document to the backend and instead fakes a success state without any verification. The application operates under a 'false green' state where it claims something is true (document uploaded) without the evidence to back it up (the actual backend response).",
+      "proposal": "Change the upload logic to wait for an actual verified response from the backend. If it fails or if the endpoint doesn't exist, represent that failure explicitly rather than defaulting to a fake success message.",
+      "dislike": "Faking truth status without verification, leading to a silent failure indistinguishable from success.",
+      "kanoClass": "Must-Be",
+      "confidence": "high",
+      "evidence": "frontend/index.html handleUploadSubmit function where 'state.uploadSuccess' is hardcoded to a success message unconditionally.",
+      "screenshotFile": ""
+    },
+    {
+      "roleTag": "BARCAN-TAG-09",
+      "philosopher": "European Accessibility Act (Directive 2019/882) / GDPR",
+      "worldview": "Statutory compliance",
+      "critique": "The application lacks a mechanism to collect opt-in consent before loading any non-essential cookies or trackers, violating GDPR Art. 6 and Art. 7. The product implements its own telemetry tracking ('Телеметрия' tab and 'totalClicks' metric) but does not ask for consent.",
+      "proposal": "Implement a cookie/tracker consent banner that blocks the loading of telemetry or other tracking mechanisms until the user explicitly opts in.",
+      "dislike": "Collecting telemetry data without explicit user consent.",
+      "kanoClass": "Must-Be",
+      "confidence": "high",
+      "evidence": "frontend/index.html telemetry state and event listeners, lack of any consent banner code.",
+      "screenshotFile": ""
+    },
+    {
+      "roleTag": "BARCAN-TAG-09",
+      "philosopher": "GDPR (Regulation 2016/679) Art. 15 and Art. 17",
+      "worldview": "Statutory compliance",
+      "critique": "While the backend implements endpoints for data export and erasure (/api/v1/privacy/erasure-requests), there is absolutely no UI path in the frontend SPA for a user to exercise these rights.",
+      "proposal": "Add a privacy settings section in the UI where users can trigger data export and account erasure requests, connecting to the existing backend endpoints.",
+      "dislike": "Hiding statutory rights behind API endpoints with no user-facing interface.",
+      "kanoClass": "Must-Be",
+      "confidence": "high",
+      "evidence": "frontend/index.html does not contain any UI for privacy/export requests, but src/main/java/com/eneik/epidemiology/privacy/PrivacyController.java contains the backend implementation.",
+      "screenshotFile": ""
+    },
+    {
+      "roleTag": "BARCAN-TAG-09",
+      "philosopher": "Digitale-Dienste-Gesetz (DDG)",
+      "worldview": "Statutory compliance",
+      "critique": "The site contains a link in the footer to 'Выходные данные (Imprint / Impressum)', but it is a dead link (href='#') that does not lead to any actual legal entity or contact information page.",
+      "proposal": "Implement a dedicated page or modal containing the required Imprint information and link it correctly from the footer.",
+      "dislike": "A dead link representing a legally required document.",
+      "kanoClass": "Must-Be",
+      "confidence": "high",
+      "evidence": "frontend/index.html footer contains <a href=\"#\" ...>Выходные данные (Imprint / Impressum)</a>.",
+      "screenshotFile": ""
+    },
+    {
+      "roleTag": "BARCAN-TAG-09",
+      "philosopher": "Kano Model Analysis",
+      "worldview": "Product value and satisfaction classification",
+      "critique": "The application contains a highly prominent 'Телеметрия' (Telemetry) tab that exposes internal analytics (like click distance and load success) directly to the end-user. This is actively confusing and provides zero value to an epidemiologist or researcher using the platform. Its presence makes the product actively worse by cluttering the interface with developer/system metrics.",
+      "proposal": "Remove the Telemetry tab from the end-user interface completely. If needed for debugging or administration, move it to a hidden or admin-only section.",
+      "dislike": "Exposing internal developer metrics to the end-user as a primary navigation tab.",
+      "kanoClass": "Reverse",
+      "confidence": "high",
+      "evidence": "frontend/index.html 'Телеметрия' tab and its associated UI.",
+      "screenshotFile": "frontend-1440.png"
+    }
+  ]
+}
