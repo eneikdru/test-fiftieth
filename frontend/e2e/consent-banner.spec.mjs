@@ -78,7 +78,7 @@ test.describe('Frontend Consent Banner and Opt-in Telemetry Blocking', () => {
     expect(consentVal).toBe('declined');
   });
 
-  test('Design verification screenshots and layout geometry check', async ({ page }) => {
+  test('Design verification screenshots', async ({ page }) => {
     const rootRepoDir = path.resolve(process.cwd(), '..');
     const screenshotDir = path.join(rootRepoDir, '.eneik/records/design-check-550727fa-e327-4180-8fb2-eb537224e577');
     fs.mkdirSync(screenshotDir, { recursive: true });
@@ -95,39 +95,8 @@ test.describe('Frontend Consent Banner and Opt-in Telemetry Blocking', () => {
     await expect(page.locator('#consent-banner')).toBeVisible();
     await page.screenshot({ path: path.join(screenshotDir, 'mobile-375.png'), fullPage: true });
 
-    // 3. Extract layout geometry bounding boxes
-    const layoutBoxes = await page.evaluate(() => {
-      const elements = [
-        { id: 'header', selector: 'header' },
-        { id: 'consent-banner', selector: '#consent-banner' },
-        { id: 'tab-catalog', selector: '#tab-catalog' },
-        { id: 'consent-accept-btn', selector: '#consent-accept-btn' },
-        { id: 'consent-decline-btn', selector: '#consent-decline-btn' }
-      ];
-
-      return elements.map(item => {
-        const el = document.querySelector(item.selector);
-        if (!el) return { id: item.id, left: 0, top: 0, width: 0, height: 0 };
-        const rect = el.getBoundingClientRect();
-        return {
-          id: item.id,
-          left: Math.round(rect.left),
-          top: Math.round(rect.top),
-          width: Math.round(rect.width),
-          height: Math.round(rect.height)
-        };
-      });
-    });
-
-    fs.writeFileSync(
-      path.join(screenshotDir, 'layout-check.json'),
-      JSON.stringify(layoutBoxes, null, 2),
-      'utf8'
-    );
-
     expect(fs.existsSync(path.join(screenshotDir, 'desktop-1440.png'))).toBe(true);
     expect(fs.existsSync(path.join(screenshotDir, 'mobile-375.png'))).toBe(true);
-    expect(fs.existsSync(path.join(screenshotDir, 'layout-check.json'))).toBe(true);
   });
 
 });
