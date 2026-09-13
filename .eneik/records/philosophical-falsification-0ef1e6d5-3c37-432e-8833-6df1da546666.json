@@ -143,6 +143,42 @@
       "confidence": "high",
       "evidence": "src/main/java/com/eneik/epidemiology/auth/AuthController.java inside mapMoodleRole(), using lowerRole.contains(\"admin\") to return \"ADMIN\".",
       "screenshotFile": ""
+    },
+    {
+      "roleTag": "BARCAN-TAG-08",
+      "philosopher": "Бертран Рассел",
+      "worldview": "On Denoting / Principia Mathematica - descriptions and logical analysis: distinguishing between grammatical form and logical form, and ensuring that definite descriptions map to properly structured logical types rather than ambiguous string properties.",
+      "critique": "The frontend dossier analytics tab searches for employee records using a raw string input ('Фамилия сотрудника'). However, the mock implementation maps this single ambiguous string directly into a list of generic objects (id, title, type) without verifying the logical type or structure of the employee identity. This violates the principle of type theory by treating a raw string description as logically equivalent to a strongly typed employee identifier, allowing for ambiguous or false mappings.",
+      "proposal": "Implement a proper type separation in the frontend and backend search contracts: the string search must resolve to a strongly-typed Employee domain entity (with a unique ID) before fetching their associated dossier documents, rather than loosely mapping a string directly to documents.",
+      "dislike": "Collapsing logical types by treating a raw text description as if it were a direct reference to structured entities.",
+      "kanoClass": "Performance",
+      "confidence": "high",
+      "evidence": "frontend/index.html handleDossierSearch function uses state.dossierQuery.trim() directly to generate a hardcoded list of document titles, bypassing any resolution of the actual employee identity.",
+      "screenshotFile": ""
+    },
+    {
+      "roleTag": "BARCAN-TAG-10",
+      "philosopher": "Георг Хенрик фон Вригт",
+      "worldview": "Deontic Logic (1951) - formal obligation, permission and prohibition: systems must formally and logically enforce rules of permission, obligation, and prohibition, explicitly verifying them at every boundary.",
+      "critique": "The frontend relies entirely on client-side logic to hide actions the user shouldn't perform (e.g., checking `isAdmin = state.currentUser && state.currentUser.role === 'ADMIN'`). However, the frontend does not explicitly transmit role claims to the backend in its API fetches (e.g., /api/v1/documents/search), nor does it have a formal mechanism to enforce these prohibitions cryptographically (like a verified JWT token). It fakes deontic prohibition by merely hiding buttons.",
+      "proposal": "Implement formal deontic prohibitions by passing verified authentication tokens (JWT or session cookies) with every API request, and enforce permissions (Obligatory/Permitted/Forbidden) strictly on the backend for all actions, rather than relying on UI state hiding.",
+      "dislike": "Faking permission and prohibition rules by merely hiding UI elements instead of formally enforcing them.",
+      "kanoClass": "Must-Be",
+      "confidence": "high",
+      "evidence": "frontend/index.html UI uses state.currentUser.role === 'ADMIN' to toggle buttons, but fetchDocuments() makes an unauthenticated GET request to /api/v1/documents/search without any token or headers.",
+      "screenshotFile": ""
+    },
+    {
+      "roleTag": "BARCAN-TAG-11",
+      "philosopher": "Патриция Черчланд",
+      "worldview": "Neurophilosophy - brain-based explanation of cognition: sensory interfaces must align with human neurophysiological timing and cognitive perception constraints.",
+      "critique": "The frontend intentionally simulates long network delays and arbitrary timeouts (e.g., setTimeout(..., 600) for reports, setTimeout(..., 300) for uploads) to create the illusion of complex work. This arbitrary manipulation of timing violates neurophilosophical timing principles by artificially delaying cognitive feedback to the user, inducing unnecessary cognitive load and disrupting the natural sensory-motor loop.",
+      "proposal": "Remove all artificial `setTimeout` delays in the frontend code. If the backend is fast, let the UI reflect that speed immediately. Only show loading states when waiting on actual, physical network requests.",
+      "dislike": "Artificially degrading system responsiveness to fake the appearance of computational effort.",
+      "kanoClass": "Reverse",
+      "confidence": "high",
+      "evidence": "frontend/index.html handleGenerateDossierReport uses setTimeout(..., 600) and handleUploadSubmit uses setTimeout(..., 300) to fake processing time.",
+      "screenshotFile": "frontend-dossier-1440.png"
     }
   ]
 }
