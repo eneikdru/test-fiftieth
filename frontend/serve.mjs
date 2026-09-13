@@ -33,6 +33,30 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  if (pathname === '/api/v1/documents/upload' && req.method === 'POST') {
+    let body = '';
+    req.on('data', chunk => { body += chunk.toString(); });
+    req.on('end', () => {
+      let parsed = {};
+      try { parsed = JSON.parse(body); } catch (e) {}
+      const newDoc = {
+        id: `doc-${Date.now()}`,
+        title: parsed.title || 'Новый документ',
+        author: parsed.author || 'Автор',
+        authorOrganization: parsed.author || 'Автор',
+        year: parsed.year || 2024,
+        publicationYear: parsed.year || 2024,
+        docType: parsed.docType || 'Протокол расследования',
+        fileName: parsed.fileName || 'document.pdf',
+        fileSize: '1.2 МБ',
+        description: parsed.description || ''
+      };
+      res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify(newDoc));
+    });
+    return;
+  }
+
   if (pathname.startsWith('/api/v1/documents/search')) {
     const query = parsedUrl.searchParams.get('query') || parsedUrl.searchParams.get('q') || '';
     const docs = [

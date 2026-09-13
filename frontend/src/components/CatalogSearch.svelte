@@ -51,7 +51,6 @@
   let uploadDocType = 'Протокол расследования';
   let uploadDescription = '';
   let uploadFileName = '';
-  let simulateNetworkError = false;
 
   let viewerDocument = null;
 
@@ -212,12 +211,6 @@
     isUploading = true;
 
     try {
-      if (simulateNetworkError) {
-        // Simulate network failure
-        await new Promise(resolve => setTimeout(resolve, 300));
-        throw new Error('Ошибка сети при загрузке документа. Попробуйте еще раз.');
-      }
-
       const response = await fetch(`${getApiBaseUrl()}/documents/upload`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -742,19 +735,6 @@
               accept=".pdf,.doc,.docx,.xlsx"
               class="w-full text-xs text-[#424752] file:mr-3 file:py-2 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-[#d9e3f1] file:text-[#003f87] hover:file:bg-[#003f87]/10 focus:ring-2 focus:ring-[#003f87]/50 focus:outline-none"
             />
-          </div>
-
-          <!-- Network Failure Testing Switch -->
-          <div class="pt-2 border-t border-[#f2f4f6]">
-            <label class="flex items-center gap-2 text-xs text-[#424752] cursor-pointer">
-              <input
-                id="simulate-network-error-checkbox"
-                type="checkbox"
-                bind:checked={simulateNetworkError}
-                class="rounded border-[#c2c6d4] text-[#003f87] focus:ring-2 focus:ring-[#003f87]/50 focus:outline-none"
-              />
-              <span>Симулировать сбой сети при отправке</span>
-            </label>
           </div>
 
           <div class="flex items-center justify-end gap-3 pt-4 border-t border-[#e0e3e5]">

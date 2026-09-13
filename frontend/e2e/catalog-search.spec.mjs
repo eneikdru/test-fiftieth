@@ -7,7 +7,7 @@ const harnessPath = '/test-harness.html';
 test.describe('Catalog Search and Document Management E2E Tests', () => {
 
   test('Given a fresh deployment pre-populated with sample "Epidemiological Protocol" documents, When the E2E test downloads a document, Then it correctly hits the system API using a configured Playwright baseURL', async ({ page, request, baseURL }) => {
-    await page.goto('/');
+    await page.goto(harnessPath);
 
     // Search for known sample document (Epidemiological Protocol / сальмонеллеза)
     await page.fill('#search-query-input', 'сальмонеллеза');
@@ -88,6 +88,19 @@ test.describe('Catalog Search and Document Management E2E Tests', () => {
     await expect(page.locator('#empty-catalog-message')).toContainText('По вашему запросу не найдено ни одного документа');
   });
 
+  test('Given the catalog and upload interfaces, When inspecting the DOM, Then simulation controls are strictly absent from the DOM', async ({ page }) => {
+    await page.goto(harnessPath);
+
+    // Verify simulation controls are strictly absent from catalog DOM
+    await expect(page.locator('#simulate-backend-stopped-checkbox')).toHaveCount(0);
+    await expect(page.locator('#simulate-network-error-checkbox')).toHaveCount(0);
+
+    // Open upload modal as Admin and verify simulation control is absent in modal as well
+    await page.click('#open-upload-modal-btn');
+    await expect(page.locator('#upload-modal')).toBeVisible();
+    await expect(page.locator('#simulate-network-error-checkbox')).toHaveCount(0);
+  });
+
   test('Given an admin uploads a document but the network fails, When the error occurs, Then the entered metadata remains in the form so it is not lost', async ({ page }) => {
     await page.goto(harnessPath);
 
@@ -106,8 +119,10 @@ test.describe('Catalog Search and Document Management E2E Tests', () => {
     await page.fill('#upload-year-input', testYear);
     await page.fill('#upload-description-input', testDesc);
 
-    // Enable network error simulation switch
-    await page.check('#simulate-network-error-checkbox');
+    // Intercept API upload endpoint and simulate network failure using Playwright page.route
+    await page.route('**/api/v1/documents/upload', async route => {
+      await route.abort('failed');
+    });
 
     // Submit the upload form
     await page.click('#upload-submit-btn');

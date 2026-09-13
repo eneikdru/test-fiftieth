@@ -116,7 +116,6 @@
       documents: [...defaultSampleDocuments],
       isLoading: false,
       searchError: '',
-      backendStopped: false,
 
       // Upload modal states
       isUploadModalOpen: false,
@@ -126,7 +125,6 @@
       uploadDocType: 'Протокол расследования',
       uploadDescription: '',
       uploadFileName: '',
-      simulateNetworkError: false,
       isUploading: false,
       uploadError: '',
       uploadSuccess: '',
@@ -157,15 +155,6 @@
       state.searchError = '';
       render();
 
-      if (state.backendStopped) {
-        setTimeout(() => {
-          state.isLoading = false;
-          state.documents = [];
-          state.searchError = 'Ошибка подключения к серверу (Backend stopped). Каталог недоступен.';
-          render();
-        }, 150);
-        return;
-      }
 
       try {
         const params = new URLSearchParams();
@@ -515,18 +504,6 @@
                     </div>
                   </form>
 
-                  <div class="mt-3 pt-3 border-t border-[#f2f4f6]">
-                    <label class="flex items-center gap-2 text-xs text-[#424752] cursor-pointer">
-                      <input
-                        id="simulate-backend-stopped-checkbox"
-                        type="checkbox"
-                        ${state.backendStopped ? 'checked' : ''}
-                        onchange="state.backendStopped = this.checked; fetchDocuments();"
-                        class="rounded border-[#c2c6d4] text-[#003f87] focus:ring-[#003f87]"
-                      />
-                      <span>Симулировать остановленный бэкенд (Backend Stopped Error State)</span>
-                    </label>
-                  </div>
                 </div>
 
                 <!-- Document Grid -->
@@ -848,18 +825,6 @@
                     >${state.uploadDescription}</textarea>
                   </div>
 
-                  <div class="pt-2 border-t border-[#f2f4f6]">
-                    <label class="flex items-center gap-2 text-xs text-[#424752] cursor-pointer">
-                      <input
-                        id="simulate-network-error-checkbox"
-                        type="checkbox"
-                        ${state.simulateNetworkError ? 'checked' : ''}
-                        onchange="state.simulateNetworkError = this.checked"
-                        class="rounded border-[#c2c6d4] text-[#003f87]"
-                      />
-                      <span>Симулировать сбой сети при отправке</span>
-                    </label>
-                  </div>
 
                   <div class="flex items-center justify-end gap-3 pt-4 border-t border-[#e0e3e5]">
                     <button
@@ -967,28 +932,27 @@
       state.isUploading = true;
       render();
 
-      setTimeout(() => {
-        if (state.simulateNetworkError) {
-          state.uploadError = 'Ошибка сети при загрузке документа. Попробуйте еще раз.';
-          state.isUploading = false;
-          render();
-          return;
+      try {
+        const response = await fetch('/api/v1/documents/upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: state.uploadTitle.trim(),
+            author: state.uploadAuthor.trim(),
+            year: parseInt(state.uploadYear, 10),
+            docType: state.uploadDocType,
+            description: state.uploadDescription.trim(),
+            fileName: state.uploadFileName || 'document.pdf'
+          })
+        });
+
+        if (!response.ok) {
+          let errData = {};
+          try { errData = await response.json(); } catch (e) {}
+          throw new Error(errData.message || 'Ошибка сети при загрузке документа. Попробуйте еще раз.');
         }
 
-        const titleSlug = state.uploadTitle.trim().toLowerCase().replace(/\s+/g, '-');
-        const newDoc = {
-          id: `doc-${titleSlug}-${state.uploadYear}`,
-          title: state.uploadTitle.trim(),
-          author: state.uploadAuthor.trim(),
-          authorOrganization: state.uploadAuthor.trim(),
-          year: parseInt(state.uploadYear, 10),
-          publicationYear: parseInt(state.uploadYear, 10),
-          docType: state.uploadDocType,
-          fileName: state.uploadFileName || 'document.pdf',
-          fileSize: '1.2 МБ',
-          description: state.uploadDescription.trim() || 'Загруженный документ'
-        };
-
+        const newDoc = await response.json();
         state.documents.unshift(newDoc);
         defaultSampleDocuments.unshift(newDoc);
         state.uploadSuccess = 'Документ успешно загружен в каталог.';
@@ -999,10 +963,13 @@
         state.uploadDocType = 'Протокол расследования';
         state.uploadDescription = '';
         state.uploadFileName = '';
-        state.isUploading = false;
         state.isUploadModalOpen = false;
+      } catch (err) {
+        state.uploadError = err.message || 'Ошибка сети при загрузке документа. Попробуйте еще раз.';
+      } finally {
+        state.isUploading = false;
         render();
-      }, 300);
+      }
     }
 
     function handleDownloadDocument(id) {
