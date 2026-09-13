@@ -789,7 +789,7 @@
       }
     }
 
-    function handleUploadSubmit(event) {
+    async function handleUploadSubmit(event) {
       if (event) event.preventDefault();
       state.uploadError = '';
       state.uploadSuccess = '';
@@ -803,18 +803,37 @@
       state.isUploading = true;
       render();
 
-      setTimeout(() => {
-        if (state.simulateNetworkError) {
-          // KEY AC: On network failure, error is shown, but state metadata remains INTACT in the form!
+      if (state.simulateNetworkError) {
+        setTimeout(() => {
           state.uploadError = 'Ошибка сети при загрузке документа. Попробуйте еще раз.';
           state.isUploading = false;
           render();
-          return;
+        }, 300);
+        return;
+      }
+
+      try {
+        const formData = new FormData();
+        const dummyBlob = new Blob(['sample content'], { type: 'application/pdf' });
+        formData.append('file', dummyBlob, state.uploadFileName || 'document.pdf');
+        formData.append('title', state.uploadTitle.trim());
+        formData.append('authorOrganization', state.uploadAuthor.trim());
+        formData.append('publicationYear', state.uploadYear);
+
+        const response = await fetch('/api/v1/documents/upload', {
+          method: 'POST',
+          body: formData
+        });
+
+        if (!response.ok) {
+          let errData = {};
+          try { errData = await response.json(); } catch(e) {}
+          throw new Error(errData.message || 'Ошибка сети при загрузке документа. Попробуйте еще раз.');
         }
 
-        const titleSlug = state.uploadTitle.trim().toLowerCase().replace(/\s+/g, '-');
-        const newDoc = {
-          id: `doc-${titleSlug}-${state.uploadYear}`,
+        const resData = await response.json();
+        const newDoc = resData.document || {
+          id: resData.id || `doc-${Date.now()}`,
           title: state.uploadTitle.trim(),
           author: state.uploadAuthor.trim(),
           authorOrganization: state.uploadAuthor.trim(),
@@ -840,7 +859,13 @@
         state.isUploading = false;
         state.isUploadModalOpen = false;
         render();
-      }, 300);
+      } catch (err) {
+        state.uploadError = (err && err.message && !err.message.includes('Failed to fetch'))
+          ? err.message
+          : 'Ошибка сети при загрузке документа. Попробуйте еще раз.';
+        state.isUploading = false;
+        render();
+      }
     }
 
     function handleDownloadDocument(id) {

@@ -24,6 +24,31 @@ const server = http.createServer((req, res) => {
   const pathname = parsedUrl.pathname;
 
   // Mock API endpoints
+  if (req.method === 'POST' && (pathname === '/api/v1/documents/upload' || pathname === '/api/v1/documents')) {
+    let body = '';
+    req.on('data', chunk => { body += chunk; });
+    req.on('end', () => {
+      res.writeHead(201, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify({
+        success: true,
+        message: 'Документ успешно загружен.',
+        document: {
+          id: String(Date.now()),
+          title: 'Эпидемиологический протокол 2024',
+          author: 'Филиал НИИ Эпидемиологии',
+          authorOrganization: 'Филиал НИИ Эпидемиологии',
+          year: 2024,
+          publicationYear: 2024,
+          docType: 'Протокол расследования',
+          fileName: 'protocol_2024.pdf',
+          fileSize: '1.2 МБ',
+          description: 'Новый оперативный документ для верификации каталога.'
+        }
+      }));
+    });
+    return;
+  }
+
   if (pathname === '/api/v1/documents/1/download' || (pathname.startsWith('/api/v1/documents/') && pathname.endsWith('/download'))) {
     res.writeHead(200, {
       'Content-Type': 'application/pdf',

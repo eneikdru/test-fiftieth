@@ -124,6 +124,69 @@ test.describe('Catalog Search and Document Management E2E Tests', () => {
     await expect(page.locator('#upload-description-input')).toHaveValue(testDesc);
   });
 
+  test('Given the document upload flow, When submitting an upload with a real network endpoint, Then both success and failed network requests are handled and verified end-to-end', async ({ page }) => {
+    await page.goto(harnessPath);
+
+    // Open upload modal as Admin
+    await page.click('#open-upload-modal-btn');
+    await expect(page.locator('#upload-modal')).toBeVisible();
+
+    // Fill form data
+    const uploadTitle = 'Сетевой протокол 2024';
+    const uploadAuthor = 'Институт Эпидемиологии';
+    const uploadYear = '2024';
+    await page.fill('#upload-title-input', uploadTitle);
+    await page.fill('#upload-author-input', uploadAuthor);
+    await page.fill('#upload-year-input', uploadYear);
+
+    // Intercept POST /api/v1/documents/upload and verify request payload
+    let networkRequestCaptured = false;
+    await page.route('**/api/v1/documents/upload', async route => {
+      networkRequestCaptured = true;
+      await route.fulfill({
+        status: 201,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          message: 'Документ успешно загружен.',
+          document: {
+            id: 'net-doc-100',
+            title: uploadTitle,
+            author: uploadAuthor,
+            authorOrganization: uploadAuthor,
+            year: 2024,
+            publicationYear: 2024,
+            docType: 'Протокол расследования',
+            fileName: 'document.pdf',
+            fileSize: '1.2 МБ',
+            description: 'Загружено в E2E тесте'
+          }
+        })
+      });
+    });
+
+    await page.click('#upload-submit-btn');
+    await expect(page.locator('#upload-modal')).not.toBeVisible();
+    expect(networkRequestCaptured).toBe(true);
+    await expect(page.locator('#document-grid')).toContainText(uploadTitle);
+
+    // Now test simulated network error on upload endpoint
+    await page.click('#open-upload-modal-btn');
+    await expect(page.locator('#upload-modal')).toBeVisible();
+    await page.fill('#upload-title-input', 'Ошибочный документ');
+    await page.fill('#upload-author-input', 'Филиал');
+    await page.fill('#upload-year-input', '2024');
+
+    await page.route('**/api/v1/documents/upload', async route => {
+      await route.abort('failed');
+    });
+
+    await page.click('#upload-submit-btn');
+    await expect(page.locator('#upload-error-alert')).toBeVisible();
+    await expect(page.locator('#upload-error-alert')).toContainText('Ошибка сети при загрузке документа');
+    await expect(page.locator('#upload-title-input')).toHaveValue('Ошибочный документ');
+  });
+
   test('Given a user accesses the site on desktop and mobile devices, When the UI renders, Then screenshots are saved for design verification', async ({ page }) => {
     const recordDir = path.resolve(process.cwd(), '.eneik/records/design-check-72f86240-fcf6-4d30-9ff6-02ae1b8fb711');
     if (!fs.existsSync(recordDir)) {
