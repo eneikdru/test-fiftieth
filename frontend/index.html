@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>База знаний по эпидемиологии — Единая консоль</title>
   <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script src="https://unpkg.com/svelte@3.59.2/compiler.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <script id="tailwind-config">
     tailwind.config = {
@@ -42,6 +43,40 @@
 </head>
 <body class="bg-[#f7f9fb] min-h-screen text-[#191c1e] antialiased font-sans">
   <div id="app"></div>
+  <div id="consent-banner-root"></div>
+
+  <script type="module">
+    import * as svelteInternal from 'https://unpkg.com/svelte@3.59.2/internal/index.mjs';
+
+    async function mountConsentBanner() {
+      try {
+        const root = document.getElementById('consent-banner-root');
+        if (!root) return;
+        const response = await fetch('./src/components/ConsentBanner.svelte');
+        const source = await response.text();
+
+        const { js } = window.svelte.compile(source, {
+          format: 'esm',
+          name: 'ConsentBanner',
+          sveltePath: 'svelte'
+        });
+
+        const codeWithMjs = js.code.replace(/from "svelte\/internal"/g, `from "https://unpkg.com/svelte@3.59.2/internal/index.mjs"`);
+        const blob = new Blob([codeWithMjs], { type: 'application/javascript' });
+        const blobUrl = URL.createObjectURL(blob);
+
+        const module = await import(blobUrl);
+        const ConsentBanner = module.default;
+
+        new ConsentBanner({
+          target: root
+        });
+      } catch (err) {
+        console.error('Failed to mount ConsentBanner component:', err);
+      }
+    }
+    mountConsentBanner();
+  </script>
 
   <script>
     const urlParams = new URLSearchParams(window.location.search);
