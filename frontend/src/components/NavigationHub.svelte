@@ -31,7 +31,6 @@
     { id: 'tab-catalog', key: 'catalog', title: 'Каталог протоколов', icon: '📁' },
     { id: 'tab-dossier', key: 'dossier', title: 'Аналитика досье', icon: '📊' },
     { id: 'tab-foci', key: 'foci', title: 'Категоризация очагов', icon: '🔍' },
-    { id: 'tab-telemetry', key: 'telemetry', title: 'Телеметрия', icon: '📈' },
     { id: 'tab-privacy', key: 'privacy', title: 'Безопасность & GDPR', icon: '🛡️' }
   ];
 
@@ -215,10 +214,6 @@
             </tbody>
           </table>
         </div>
-      </section>
-    {:else if activeTab === 'telemetry'}
-      <section id="panel-telemetry" role="tabpanel" aria-labelledby="tab-telemetry" class="space-y-6">
-        <NavigationTelemetry telemetry={telemetryState} />
       </section>
     {:else if activeTab === 'privacy'}
       <section id="panel-privacy" role="tabpanel" aria-labelledby="tab-privacy" class="space-y-6">
