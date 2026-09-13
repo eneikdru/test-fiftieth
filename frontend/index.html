@@ -44,37 +44,7 @@
   <div id="app"></div>
   <div id="consent-banner-mount"></div>
 
-  <script src="https://unpkg.com/svelte@3.59.2/compiler.js"></script>
-  <script type="module">
-    async function initConsentBanner() {
-      try {
-        const response = await fetch('./src/components/ConsentBanner.svelte');
-        if (!response.ok) return;
-        const source = await response.text();
-        const { js } = window.svelte.compile(source, {
-          format: 'esm',
-          name: 'ConsentBanner',
-          sveltePath: 'svelte'
-        });
-        const codeWithMjs = js.code.replace(/from "svelte\/internal"/g, 'from "https://unpkg.com/svelte@3.59.2/internal/index.mjs"');
-        const blob = new Blob([codeWithMjs], { type: 'application/javascript' });
-        const blobUrl = URL.createObjectURL(blob);
-        const module = await import(blobUrl);
-        const ConsentBanner = module.default;
-        new ConsentBanner({
-          target: document.getElementById('consent-banner-mount'),
-          props: {
-            onConsent: (status) => {
-              console.log('Consent status set:', status);
-            }
-          }
-        });
-      } catch (e) {
-        console.error('Failed to mount ConsentBanner:', e);
-      }
-    }
-    initConsentBanner();
-  </script>
+
 
   <script>
     const urlParams = new URLSearchParams(window.location.search);
@@ -151,6 +121,8 @@
       recoverySent: false,
 
       // Search filter states
+      consentStatus: localStorage.getItem('consent_status') || null,
+      showConsentBanner: !localStorage.getItem('consent_status'),
       searchQuery: '',
       selectedAuthor: '',
       selectedYear: '',
@@ -481,6 +453,18 @@
                 </button>
 
                 <button
+                  id="tab-privacy"
+                  type="button"
+                  role="tab"
+                  aria-selected="${state.activeTab === 'privacy'}"
+                  aria-controls="panel-privacy"
+                  onclick="switchTab('privacy')"
+                  class="min-h-[44px] min-w-[44px] px-4 py-2.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-2 whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-white ${state.activeTab === 'privacy' ? 'bg-white text-[#003f87] shadow-sm font-bold' : 'text-white/90 hover:bg-white/10 hover:text-white'}"
+                >
+                  <span class="text-sm">🛡️</span>
+                  <span>Конфиденциальность</span>
+                </button>
+                <button
                   id="tab-foci"
                   type="button"
                   role="tab"
@@ -780,6 +764,16 @@
                       </div>
                     ` : ''}
                   </div>
+                </div>
+              </section>
+            ` : state.activeTab === 'privacy' ? `
+              <section id="panel-privacy" role="tabpanel" aria-labelledby="tab-privacy" class="block">
+                <div class="bg-white p-6 rounded-lg shadow-sm border border-[#e0e3e5]">
+                  <h3 class="text-lg font-bold text-[#191c1e] mb-4">Экспорт персональных данных</h3>
+                  <p class="text-sm text-[#424752] mb-4">Раздел для работы с запросами субъектов персональных данных.</p>
+                  <a href="/privacy-harness.html" class="inline-flex items-center justify-center px-4 py-2 bg-[#003f87] hover:bg-[#002b5e] text-white text-xs font-semibold rounded-md transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#003f87]">
+                    Перейти в портал конфиденциальности
+                  </a>
                 </div>
               </section>
             ` : state.activeTab === 'foci' ? `
@@ -1086,7 +1080,21 @@
             </div>
           ` : ''}
 
-          <!-- Footer -->
+
+        ${state.showConsentBanner ? `
+          <div id="consent-banner" role="dialog" aria-labelledby="consent-banner-title" aria-describedby="consent-banner-desc" class="fixed bottom-0 left-0 w-full bg-[#f7f9fb] border-t-2 border-[#003f87] p-6 shadow-2xl z-50 flex flex-col md:flex-row items-center justify-between gap-4">
+            <div class="flex-1">
+              <h2 id="consent-banner-title" class="text-lg font-bold text-[#003f87] mb-2">Настройки конфиденциальности</h2>
+              <p id="consent-banner-desc" class="text-sm text-[#191c1e]">Мы используем файлы cookie для улучшения работы сайта. Вы можете принять их или отклонить использование необязательных трекеров.</p>
+            </div>
+            <div class="flex gap-3 shrink-0">
+              <button id="consent-reject-btn" onclick="handleConsent('rejected')" class="px-5 py-2.5 border-2 border-[#003f87] text-[#003f87] hover:bg-[#eceef0] focus:outline-none focus:ring-4 focus:ring-[#003f87]/50 text-sm font-semibold rounded-lg transition-colors" aria-label="Отклонить файлы cookie">Отклонить</button>
+              <button id="consent-accept-btn" onclick="handleConsent('accepted')" class="px-5 py-2.5 bg-[#003f87] text-white hover:bg-[#002b5e] focus:outline-none focus:ring-4 focus:ring-[#003f87]/50 text-sm font-semibold rounded-lg transition-colors shadow-md" aria-label="Принять файлы cookie">Принять</button>
+            </div>
+          </div>
+        ` : ''}
+
+            <!-- Footer -->
           <footer class="w-full py-6 mt-12 text-center text-xs text-[#727784] border-t border-[#e0e3e5] flex flex-col sm:flex-row items-center justify-between max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8">
             <p>Российский научно-исследовательский институт эпидемиологии</p>
             <div>
@@ -1128,6 +1136,14 @@
     function handleRecoverySubmit(event) {
       if (event) event.preventDefault();
       state.recoverySent = true;
+      render();
+    }
+
+
+    function handleConsent(status) {
+      localStorage.setItem('consent_status', status);
+      state.consentStatus = status;
+      state.showConsentBanner = false;
       render();
     }
 

@@ -1,5 +1,5 @@
 <script>
-  import ImprintModal from './ImprintModal.svelte';
+
 
   // Modes: 'landing', 'registration', 'onboarding_1', 'onboarding_2'
   export let mode = 'landing';
@@ -342,9 +342,7 @@
     {/if}
   </main>
 
-  {#if showImprint}
-    <ImprintModal on:close={() => showImprint = false} />
-  {/if}
+
 
   <footer class="w-full py-4 px-6 text-center text-xs text-[#737685] border-t border-[#e2e2e5] flex flex-col sm:flex-row items-center justify-between gap-2 bg-white">
     <p>Российский научно-исследовательский институт эпидемиологии</p>
@@ -352,7 +350,7 @@
       <button
         type="button"
         id="imprint-link-reg"
-        on:click={() => showImprint = true}
+        on:click={() => alert('Выходные данные (Imprint / Impressum):\nФБУН «НИИ Эпидемиологии»\nг. Москва, ул. Новогиреевская, 3А\nТел: +7 (495) 123-45-67\nEmail: info@epidemiology-inst.ru')}
         class="text-[#00328a] hover:underline focus:outline-none focus:ring-2 focus:ring-[#00328a]/50 rounded px-1 font-semibold"
       >
         Выходные данные (Imprint / Impressum)

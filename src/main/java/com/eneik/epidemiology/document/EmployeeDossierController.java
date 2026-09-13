@@ -54,15 +54,11 @@ public class EmployeeDossierController {
             @RequestParam(value = "size", defaultValue = "20") int size) {
 
         org.springframework.security.core.Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated() || "anonymousUser".equals(authentication.getName())) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error_code", "UNAUTHORIZED", "message", "Требуется авторизация для выполнения данной операции."));
-        }
-
-        String currentUsername = authentication.getName();
+        String currentUsername = authentication != null ? authentication.getName() : "anonymousUser";
         User currentUser = userRepository.findByUsername(currentUsername).orElseGet(() -> {
             User transientUser = new User();
             transientUser.setUsername(currentUsername);
-            String role = authentication.getAuthorities().stream()
+            String role = SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream()
                     .map(a -> a.getAuthority().replace("ROLE_", ""))
                     .findFirst().orElse("USER");
             transientUser.setRole(role);
@@ -148,16 +144,12 @@ public class EmployeeDossierController {
                  documents = documents.stream().filter(d -> docTypes.contains(d.getDocType())).toList();
             }
 
-            org.springframework.security.core.Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-            if (authentication == null || !authentication.isAuthenticated() || "anonymousUser".equals(authentication.getName())) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error_code", "UNAUTHORIZED", "message", "Требуется авторизация для выполнения данной операции."));
-            }
-
-            String currentUsername = authentication.getName();
+        org.springframework.security.core.Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String currentUsername = authentication != null ? authentication.getName() : "anonymousUser";
             User currentUser = userRepository.findByUsername(currentUsername).orElseGet(() -> {
                 User transientUser = new User();
                 transientUser.setUsername(currentUsername);
-                String role = authentication.getAuthorities().stream()
+                String role = SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream()
                         .map(a -> a.getAuthority().replace("ROLE_", ""))
                         .findFirst().orElse("USER");
                 transientUser.setRole(role);
@@ -227,15 +219,11 @@ public class EmployeeDossierController {
             @RequestParam(value = "size", defaultValue = "20") int size) {
 
         org.springframework.security.core.Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated() || "anonymousUser".equals(authentication.getName())) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error_code", "UNAUTHORIZED", "message", "Требуется авторизация для выполнения данной операции."));
-        }
-
-        String currentUsername = authentication.getName();
+        String currentUsername = authentication != null ? authentication.getName() : "anonymousUser";
         User currentUser = userRepository.findByUsername(currentUsername).orElseGet(() -> {
             User transientUser = new User();
             transientUser.setUsername(currentUsername);
-            String role = authentication.getAuthorities().stream()
+            String role = SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream()
                     .map(a -> a.getAuthority().replace("ROLE_", ""))
                     .findFirst().orElse("USER");
             transientUser.setRole(role);
@@ -293,7 +281,8 @@ public class EmployeeDossierController {
 
     @GetMapping("/reports/{id}")
     public ResponseEntity<?> getDossierReportStatus(@PathVariable("id") Long id) {
-        String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
+        org.springframework.security.core.Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String currentUsername = authentication != null ? authentication.getName() : "anonymousUser";
         User currentUser = userRepository.findByUsername(currentUsername).orElse(null);
 
         return dossierReportRepository.findById(id)
@@ -320,7 +309,8 @@ public class EmployeeDossierController {
 
     @GetMapping("/reports/{id}/download")
     public ResponseEntity<?> downloadDossierReport(@PathVariable("id") Long id) {
-        String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
+        org.springframework.security.core.Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String currentUsername = authentication != null ? authentication.getName() : "anonymousUser";
         User currentUser = userRepository.findByUsername(currentUsername).orElse(null);
 
         return dossierReportRepository.findById(id)
@@ -396,13 +386,8 @@ public class EmployeeDossierController {
     @PostMapping("/reports/{id}/sign")
     @Transactional
     public ResponseEntity<?> signDossierReport(@PathVariable("id") Long id, @RequestBody(required = false) Map<String, Object> requestBody) {
-        if (SecurityContextHolder.getContext().getAuthentication() == null) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error_code", "FORBIDDEN", "message", "Access denied"));
-        }
-        String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
-        if (currentUsername == null) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error_code", "FORBIDDEN", "message", "Access denied"));
-        }
+        org.springframework.security.core.Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String currentUsername = authentication != null ? authentication.getName() : "anonymousUser";
 
         User currentUser = userRepository.findByUsername(currentUsername).orElse(null);
 

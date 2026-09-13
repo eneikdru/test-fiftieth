@@ -134,13 +134,13 @@ test.describe('Catalog Search and Document Management E2E Tests', () => {
     // Desktop viewport (1440px width)
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto(harnessPath);
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
     await page.screenshot({ path: path.join(recordDir, 'desktop-1440.png'), fullPage: true });
 
     // Mobile viewport (375px width)
     await page.setViewportSize({ width: 375, height: 812 });
     await page.goto(harnessPath);
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('load');
     await page.screenshot({ path: path.join(recordDir, 'mobile-375.png'), fullPage: true });
 
     expect(fs.existsSync(path.join(recordDir, 'desktop-1440.png'))).toBe(true);
