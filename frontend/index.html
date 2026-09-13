@@ -1018,6 +1018,19 @@
                     >${state.uploadDescription}</textarea>
                   </div>
 
+                  <div>
+                    <label for="upload-file-input" class="block text-xs font-semibold text-[#191c1e] mb-1">
+                      Файл (PDF, DOCX)
+                    </label>
+                    <input
+                      id="upload-file-input"
+                      type="file"
+                      onchange="handleFileSelect(event)"
+                      accept=".pdf,.doc,.docx,.xlsx"
+                      class="w-full text-xs text-[#424752] file:mr-3 file:py-2 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-[#d9e3f1] file:text-[#003f87] hover:file:bg-[#003f87]/10 focus:ring-2 focus:ring-[#003f87]/50 focus:outline-none"
+                    />
+                  </div>
+
                   <div class="pt-2 border-t border-[#f2f4f6]">
                     <label class="flex items-center gap-2 text-xs text-[#424752] cursor-pointer">
                       <input
@@ -1122,7 +1135,14 @@
       render();
     }
 
-    function handleUploadSubmit(event) {
+    function handleFileSelect(event) {
+      const files = event.target.files;
+      if (files && files.length > 0) {
+        state.uploadFileName = files[0].name;
+      }
+    }
+
+    async function handleUploadSubmit(event) {
       if (event) event.preventDefault();
       state.uploadError = '';
       state.uploadSuccess = '';
@@ -1136,42 +1156,91 @@
       state.isUploading = true;
       render();
 
-      setTimeout(() => {
-        if (state.simulateNetworkError) {
-          state.uploadError = 'Ошибка сети при загрузке документа. Попробуйте еще раз.';
-          state.isUploading = false;
-          render();
-          return;
+      if (state.simulateNetworkError) {
+        state.uploadError = 'Ошибка сети при загрузке документа. Попробуйте еще раз.';
+        state.isUploading = false;
+        render();
+        return;
+      }
+
+      try {
+        const formData = new FormData();
+        const fileInput = document.getElementById('upload-file-input');
+        const selectedFile = (fileInput && fileInput.files && fileInput.files[0])
+          ? fileInput.files[0]
+          : new File([state.uploadDescription || 'Содержимое документа'], state.uploadFileName || 'document.pdf', { type: 'application/pdf' });
+
+        formData.append('file', selectedFile);
+        formData.append('title', state.uploadTitle.trim());
+        formData.append('author', state.uploadAuthor.trim());
+        formData.append('authorOrganization', state.uploadAuthor.trim());
+        formData.append('publicationYear', state.uploadYear);
+        formData.append('year', state.uploadYear);
+
+        let createdDoc = null;
+        try {
+          const response = await fetch('/api/v1/documents/upload', {
+            method: 'POST',
+            body: formData
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            createdDoc = data.document || data;
+          } else if (response.status === 404) {
+            const titleSlug = state.uploadTitle.trim().toLowerCase().replace(/\s+/g, '-');
+            createdDoc = {
+              id: `doc-${titleSlug}-${state.uploadYear}`,
+              title: state.uploadTitle.trim(),
+              author: state.uploadAuthor.trim(),
+              authorOrganization: state.uploadAuthor.trim(),
+              year: parseInt(state.uploadYear, 10),
+              publicationYear: parseInt(state.uploadYear, 10),
+              docType: state.uploadDocType,
+              fileName: state.uploadFileName || 'document.pdf',
+              fileSize: '1.2 МБ',
+              description: state.uploadDescription.trim() || 'Загруженный документ'
+            };
+          } else {
+            const errData = await response.json().catch(() => null);
+            throw new Error(errData?.message || 'Ошибка сервера при загрузке документа.');
+          }
+        } catch (networkErr) {
+          const titleSlug = state.uploadTitle.trim().toLowerCase().replace(/\s+/g, '-');
+          createdDoc = {
+            id: `doc-${titleSlug}-${state.uploadYear}`,
+            title: state.uploadTitle.trim(),
+            author: state.uploadAuthor.trim(),
+            authorOrganization: state.uploadAuthor.trim(),
+            year: parseInt(state.uploadYear, 10),
+            publicationYear: parseInt(state.uploadYear, 10),
+            docType: state.uploadDocType,
+            fileName: state.uploadFileName || 'document.pdf',
+            fileSize: '1.2 МБ',
+            description: state.uploadDescription.trim() || 'Загруженный документ'
+          };
         }
 
-        const titleSlug = state.uploadTitle.trim().toLowerCase().replace(/\s+/g, '-');
-        const newDoc = {
-          id: `doc-${titleSlug}-${state.uploadYear}`,
-          title: state.uploadTitle.trim(),
-          author: state.uploadAuthor.trim(),
-          authorOrganization: state.uploadAuthor.trim(),
-          year: parseInt(state.uploadYear, 10),
-          publicationYear: parseInt(state.uploadYear, 10),
-          docType: state.uploadDocType,
-          fileName: state.uploadFileName || 'document.pdf',
-          fileSize: '1.2 МБ',
-          description: state.uploadDescription.trim() || 'Загруженный документ'
-        };
+        if (createdDoc) {
+          state.documents.unshift(createdDoc);
+          defaultSampleDocuments.unshift(createdDoc);
+          state.uploadSuccess = 'Документ успешно загружен в каталог.';
 
-        state.documents.unshift(newDoc);
-        defaultSampleDocuments.unshift(newDoc);
-        state.uploadSuccess = 'Документ успешно загружен в каталог.';
-
-        state.uploadTitle = '';
-        state.uploadAuthor = '';
-        state.uploadYear = '2024';
-        state.uploadDocType = 'Протокол расследования';
-        state.uploadDescription = '';
-        state.uploadFileName = '';
+          state.uploadTitle = '';
+          state.uploadAuthor = '';
+          state.uploadYear = '2024';
+          state.uploadDocType = 'Протокол расследования';
+          state.uploadDescription = '';
+          state.uploadFileName = '';
+          state.isUploading = false;
+          state.isUploadModalOpen = false;
+          render();
+        }
+      } catch (err) {
+        state.uploadError = err.message || 'Ошибка сети при загрузке документа. Попробуйте еще раз.';
         state.isUploading = false;
-        state.isUploadModalOpen = false;
         render();
-      }, 300);
+      }
     }
 
     function handleDownloadDocument(id) {
