@@ -222,4 +222,15 @@ class DocumentControllerTest {
                 .andExpect(jsonPath("$.totalElements").exists())
                 .andExpect(jsonPath("$.currentPage", is(0)));
     }
+
+    @Test
+    @DisplayName("Given an invalid document ID, When fetching document download, Then HTTP response is exactly 404 and no body is generated")
+    void testDownloadDocument_InvalidId_Returns404WithNoBody() throws Exception {
+        Long invalidDocId = 999999L;
+
+        mockMvc.perform(get("/api/v1/documents/" + invalidDocId + "/download")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + researcherToken))
+                .andExpect(status().isNotFound())
+                .andExpect(content().bytes(new byte[0]));
+    }
 }
