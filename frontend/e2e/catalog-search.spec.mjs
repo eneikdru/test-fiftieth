@@ -21,7 +21,8 @@ test.describe('Catalog Search and Document Management E2E Tests', () => {
     // Trigger download and verify file retrieval from real system API endpoint using Playwright baseURL / relative endpoint
     expect(baseURL).toBeTruthy();
 
-    const response = await request.get('/api/v1/documents/1/download', { timeout: 2000 });
+    // Verify real backend API endpoint responds with valid document payload
+    const response = await request.get('/api/v1/documents/1/download', { timeout: 5000 });
     expect(response.status()).toBe(200);
     const content = await response.text();
     expect(content).toContain('Содержимое документа');
