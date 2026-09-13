@@ -42,6 +42,39 @@
 </head>
 <body class="bg-[#f7f9fb] min-h-screen text-[#191c1e] antialiased font-sans">
   <div id="app"></div>
+  <div id="consent-banner-mount"></div>
+
+  <script src="https://unpkg.com/svelte@3.59.2/compiler.js"></script>
+  <script type="module">
+    async function initConsentBanner() {
+      try {
+        const response = await fetch('./src/components/ConsentBanner.svelte');
+        if (!response.ok) return;
+        const source = await response.text();
+        const { js } = window.svelte.compile(source, {
+          format: 'esm',
+          name: 'ConsentBanner',
+          sveltePath: 'svelte'
+        });
+        const codeWithMjs = js.code.replace(/from "svelte\/internal"/g, 'from "https://unpkg.com/svelte@3.59.2/internal/index.mjs"');
+        const blob = new Blob([codeWithMjs], { type: 'application/javascript' });
+        const blobUrl = URL.createObjectURL(blob);
+        const module = await import(blobUrl);
+        const ConsentBanner = module.default;
+        new ConsentBanner({
+          target: document.getElementById('consent-banner-mount'),
+          props: {
+            onConsent: (status) => {
+              console.log('Consent status set:', status);
+            }
+          }
+        });
+      } catch (e) {
+        console.error('Failed to mount ConsentBanner:', e);
+      }
+    }
+    initConsentBanner();
+  </script>
 
   <script>
     const urlParams = new URLSearchParams(window.location.search);
