@@ -1,4 +1,6 @@
 <script>
+    import DossierReportSignature from './DossierReportSignature.svelte';
+
     let surname = "";
     let documents = [];
     let loading = false;
@@ -6,6 +8,12 @@
     let page = 0;
     let size = 10;
     let hasNext = false;
+
+    // Report and signature states
+    let reportGenerated = false;
+    let reportId = 101;
+    let reportStatus = 'DRAFT';
+    let signature = '';
 
     async function searchDossier() {
         if (!surname.trim()) return;
@@ -48,8 +56,16 @@
         feedback = "";
         setTimeout(() => {
             loading = false;
+            reportGenerated = true;
+            reportStatus = 'DRAFT';
             feedback = "✓ Итоговая справка успешно сформирована.";
         }, 1000);
+    }
+
+    function handleReportSigned(event) {
+        reportStatus = event.detail.status || 'SIGNED';
+        signature = event.detail.signature;
+        feedback = "✓ Итоговая справка успешно подписана.";
     }
 </script>
 
@@ -84,6 +100,15 @@
             <div role="status" aria-live="polite" class="feedback-notice">
                 {feedback}
             </div>
+        {/if}
+
+        {#if reportGenerated}
+            <DossierReportSignature
+                {reportId}
+                status={reportStatus}
+                {signature}
+                on:signed={handleReportSigned}
+            />
         {/if}
     {/if}
 

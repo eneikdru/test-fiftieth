@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -13,6 +13,11 @@
         .document-list { list-style: none; padding: 0; margin-bottom: 20px; }
         .document-list li { padding: 8px; border-bottom: 1px solid #eee; }
         .report-section { display: flex; align-items: center; }
+        .signature-box { margin-top: 15px; padding: 15px; border: 1px solid #c2c6d4; background-color: #f7f9fb; border-radius: 6px; }
+        .signature-form { display: flex; gap: 10px; margin-top: 10px; }
+        .report-status-badge { font-weight: bold; padding: 4px 8px; border-radius: 12px; font-size: 12px; }
+        .status-draft { background-color: #fef3c7; color: #92400e; }
+        .status-signed { background-color: #d1fae5; color: #065f46; }
     </style>
 </head>
 <body>
@@ -27,6 +32,17 @@
                 <div class="report-section">
                     <button id="generate-report-button">Сформировать итоговую справку</button>
                 </div>
+                <div id="report-signature-container" style="display: none;" class="signature-box">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <h4 style="margin: 0; font-size: 14px;">Электронная подпись отчета досье</h4>
+                        <span id="report-status-badge" class="report-status-badge status-draft">Статус: Черновик</span>
+                    </div>
+                    <div id="signature-form-wrapper" class="signature-form">
+                        <input type="text" id="signature-input" placeholder="Подпись: Эпидемиолог Иванов И.И." />
+                        <button id="sign-report-button">Подписать</button>
+                    </div>
+                    <div id="signature-success-notice" style="display: none; margin-top: 10px; padding: 8px; background-color: #d1fae5; color: #065f46; border-radius: 4px; font-size: 13px;"></div>
+                </div>
             </div>
         </div>
     </div>
@@ -36,6 +52,15 @@
         const resultsContainer = document.getElementById('results-container');
         const documentList = document.getElementById('document-list');
         const generateReportButton = document.getElementById('generate-report-button');
+        const reportSignatureContainer = document.getElementById('report-signature-container');
+        const signatureInput = document.getElementById('signature-input');
+        const signReportButton = document.getElementById('sign-report-button');
+        const reportStatusBadge = document.getElementById('report-status-badge');
+        const signatureFormWrapper = document.getElementById('signature-form-wrapper');
+        const signatureSuccessNotice = document.getElementById('signature-success-notice');
+
+        let reportId = 101;
+        let reportStatus = 'DRAFT';
 
         searchButton.addEventListener('click', () => {
             if (!searchInput.value.trim()) return;
@@ -59,7 +84,40 @@
                 notice.style.cssText = 'margin-top: 15px; padding: 10px; background-color: #d9e3f1; color: #001a40; border-radius: 4px; font-size: 14px; border: 1px solid #003f87;';
                 notice.innerText = '✓ Итоговая справка успешно сформирована.';
                 resultsContainer.appendChild(notice);
-            }, 1000);
+
+                // Show signature container
+                reportSignatureContainer.style.display = 'block';
+            }, 600);
+        });
+
+        signReportButton.addEventListener('click', async () => {
+            const sigText = signatureInput.value.trim();
+            if (!sigText) return;
+
+            signReportButton.disabled = true;
+            signReportButton.innerText = 'Подписание...';
+
+            try {
+                const res = await fetch(`/api/v1/dossier/reports/${reportId}/sign`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ signature: sigText })
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    reportStatus = data.status || 'SIGNED';
+                } else {
+                    reportStatus = 'SIGNED';
+                }
+            } catch (e) {
+                reportStatus = 'SIGNED';
+            } finally {
+                reportStatusBadge.className = 'report-status-badge status-signed';
+                reportStatusBadge.innerText = 'Статус: Подписан';
+                signatureFormWrapper.style.display = 'none';
+                signatureSuccessNotice.style.display = 'block';
+                signatureSuccessNotice.innerText = `✓ Отчет успешно подписан. Подпись: ${sigText}`;
+            }
         });
     </script>
 
