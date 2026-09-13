@@ -149,15 +149,17 @@ public class JwtTokenProvider {
         }
     }
 
-    private String extractJsonValue(String json, String key) {
+    public String extractJsonValue(String json, String key) {
         try {
             JsonNode tree = objectMapper.readTree(json);
-            if (tree.has(key) && !tree.get(key).isNull()) {
+            if (tree != null && tree.has(key) && !tree.get(key).isNull()) {
                 return tree.get(key).asText();
             }
-            return "";
+            throw new IllegalArgumentException("Key '" + key + "' not found in JSON payload");
+        } catch (IllegalArgumentException e) {
+            throw e;
         } catch (Exception e) {
-            return "";
+            throw new IllegalArgumentException("Malformed JSON payload: " + e.getMessage(), e);
         }
     }
 

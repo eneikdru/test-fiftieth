@@ -28,7 +28,7 @@ fi
 if [ ! -f "$REPORT_PATH" ]; then
     echo "BLOCKER: Target output path '$REPORT_PATH' missing or inaccessible."
     echo "Aborting coverage audit safely."
-    exit 0
+    exit 1
 fi
 
 # Check if the coverage audit file contains the required "requirements" and "evidence" properties
@@ -37,14 +37,14 @@ HAS_REQUIREMENTS=$(jq 'has("requirements")' "$REPORT_PATH")
 
 if [ "$HAS_REQUIREMENTS" != "true" ]; then
     echo "BLOCKER: Coverage audit at '$REPORT_PATH' is missing the 'requirements' section."
-    exit 0
+    exit 1
 fi
 
 # Check if gaps have evidence mapped
 MISSING_EVIDENCE=$(jq '[.gaps[]? | has("evidence") | not] | any' "$REPORT_PATH")
 if [ "$MISSING_EVIDENCE" == "true" ]; then
      echo "BLOCKER: Coverage audit at '$REPORT_PATH' has gaps missing the 'evidence' field."
-     exit 0
+     exit 1
 fi
 
 echo "SUCCESS: Coverage audit report at '$REPORT_PATH' successfully verified."

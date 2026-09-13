@@ -167,11 +167,21 @@ public class AuthController {
                 continue;
             }
 
-            String targetRole = mapMoodleRole(moodleId);
+            String moodleRole = moodleId;
+            try {
+                MoodleProfile profile = fetchMoodleProfile(moodleId);
+                if (profile != null && profile.moodleRole() != null) {
+                    moodleRole = profile.moodleRole();
+                }
+            } catch (Throwable e) {
+                log.warn("External Moodle role fetch failed for user {}, using local moodleId fallback", userId, e);
+            }
+
+            String targetRole = mapMoodleRole(moodleRole);
             if (targetRole != null && !targetRole.equals(currentRole)) {
                 int updated = userService.updateRoleAtomically(userId, currentRole, targetRole);
                 if (updated == 0) {
-                    jdbcTemplate.update("UPDATE users SET role = ? WHERE id = ?", targetRole, userId);
+                    throw new org.springframework.dao.OptimisticLockingFailureException("Concurrent role update detected during Moodle role sync for user ID: " + userId);
                 }
                 updatedCount++;
             }
@@ -255,7 +265,7 @@ public class AuthController {
 
             int updatedCount = userService.updateRoleAtomically(user.getId(), user.getRole(), targetRole);
             if (updatedCount == 0) {
-                jdbcTemplate.update("UPDATE users SET role = ? WHERE id = ?", targetRole, user.getId());
+                throw new org.springframework.dao.OptimisticLockingFailureException("Concurrent role update detected for user ID: " + user.getId());
             }
 
             return ResponseEntity.ok(Map.of(
