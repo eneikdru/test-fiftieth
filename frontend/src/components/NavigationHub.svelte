@@ -4,6 +4,7 @@
   import DossierSearch from './DossierSearch.svelte';
   import PrivacySettings from './PrivacySettings.svelte';
   import NavigationTelemetry from './NavigationTelemetry.svelte';
+  import ConsentBanner from './ConsentBanner.svelte';
 
   const dispatch = createEventDispatcher();
 
@@ -230,4 +231,6 @@
   <footer class="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-6 text-center text-xs text-[#727784] border-t border-[#e0e3e5]">
     <p>ФБУН «Российский научно-исследовательский институт эпидемиологии» • Единая консоль управления</p>
   </footer>
+
+  <ConsentBanner />
 </div>

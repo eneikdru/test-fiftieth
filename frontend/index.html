@@ -42,8 +42,58 @@
 </head>
 <body class="bg-[#f7f9fb] min-h-screen text-[#191c1e] antialiased font-sans">
   <div id="app"></div>
+  <div id="consent-banner-root"></div>
 
   <script>
+    function renderConsentBanner() {
+      const root = document.getElementById('consent-banner-root');
+      if (!root) return;
+      const status = localStorage.getItem('consent_status');
+      if (status === 'accepted' || status === 'rejected') {
+        root.innerHTML = '';
+        return;
+      }
+      root.innerHTML = `
+        <div
+          id="consent-banner"
+          role="dialog"
+          aria-labelledby="consent-banner-title"
+          aria-describedby="consent-banner-desc"
+          class="fixed bottom-0 left-0 w-full bg-[#f7f9fb] border-t-2 border-[#003f87] p-6 shadow-2xl z-50 flex flex-col md:flex-row items-center justify-between gap-4"
+        >
+          <div class="flex-1">
+            <h2 id="consent-banner-title" class="text-lg font-bold text-[#003f87] mb-2">Настройки конфиденциальности</h2>
+            <p id="consent-banner-desc" class="text-sm text-[#191c1e]">
+              Мы используем файлы cookie для улучшения работы сайта. Вы можете принять их или отклонить использование необязательных трекеров.
+            </p>
+          </div>
+          <div class="flex gap-3 shrink-0">
+            <button
+              id="reject-consent-btn"
+              onclick="handleConsentDecision('rejected')"
+              class="px-5 py-2.5 border-2 border-[#003f87] text-[#003f87] hover:bg-[#eceef0] focus:outline-none focus:ring-4 focus:ring-[#003f87]/50 text-sm font-semibold rounded-lg transition-colors"
+              aria-label="Отклонить файлы cookie"
+            >
+              Отклонить
+            </button>
+            <button
+              id="accept-consent-btn"
+              onclick="handleConsentDecision('accepted')"
+              class="px-5 py-2.5 bg-[#003f87] text-white hover:bg-[#002b5e] focus:outline-none focus:ring-4 focus:ring-[#003f87]/50 text-sm font-semibold rounded-lg transition-colors shadow-md"
+              aria-label="Принять файлы cookie"
+            >
+              Принять
+            </button>
+          </div>
+        </div>
+      `;
+    }
+
+    function handleConsentDecision(status) {
+      localStorage.setItem('consent_status', status);
+      renderConsentBanner();
+    }
+
     const urlParams = new URLSearchParams(window.location.search);
     const initialMode = urlParams.get('mode') || 'catalog';
     const initialTab = urlParams.get('tab') || 'catalog';
@@ -1208,6 +1258,7 @@
     }
 
     // Initial fetch and render
+    renderConsentBanner();
     if (state.mode === 'catalog') {
       fetchDocuments();
     } else {
