@@ -127,6 +127,58 @@ public class AuthController {
     public record PasswordResetConfirmationRequest(String recovery_token, String new_password) {}
     public record UpdateProfileRequest(String password, String new_password, String fallback_password) {}
 
+    @PostMapping("/moodle/sync-roles")
+    public ResponseEntity<?> syncMoodleRoles() {
+        int syncedUsersCount = performMoodleRoleSync();
+        return ResponseEntity.ok(Map.of(
+                "success", true,
+                "message", "Синхронизация ролей Moodle успешно выполнена.",
+                "synced_users_count", syncedUsersCount,
+                "timestamp", OffsetDateTime.now().toString()
+        ));
+    }
+
+    @org.springframework.scheduling.annotation.Scheduled(fixedDelayString = "${moodle.sync.interval-ms:3600000}")
+    public void scheduledMoodleRoleSync() {
+        try {
+            int synced = performMoodleRoleSync();
+            log.info("Scheduled Moodle role sync completed. Synced users: {}", synced);
+        } catch (Exception e) {
+            log.error("Scheduled Moodle role sync failed", e);
+        }
+    }
+
+    private int performMoodleRoleSync() {
+        List<Map<String, Object>> usersWithMoodle = jdbcTemplate.queryForList(
+                "SELECT id, username, role, moodle_id, department, courses FROM users WHERE moodle_id IS NOT NULL AND moodle_id != ''"
+        );
+
+        int updatedCount = 0;
+        List<Map<String, Object>> mappings = jdbcTemplate.queryForList(
+                "SELECT moodle_role_pattern, internal_role FROM moodle_role_mappings"
+        );
+
+        for (Map<String, Object> userMap : usersWithMoodle) {
+            Long userId = ((Number) userMap.get("id")).longValue();
+            String currentRole = (String) userMap.get("role");
+            String moodleId = (String) userMap.get("moodle_id");
+
+            if (moodleId == null || moodleId.trim().isEmpty()) {
+                continue;
+            }
+
+            String targetRole = mapMoodleRole(moodleId);
+            if (targetRole != null && !targetRole.equals(currentRole)) {
+                int updated = userService.updateRoleAtomically(userId, currentRole, targetRole);
+                if (updated == 0) {
+                    jdbcTemplate.update("UPDATE users SET role = ? WHERE id = ?", targetRole, userId);
+                }
+                updatedCount++;
+            }
+        }
+        return updatedCount;
+    }
+
     @GetMapping("/moodle/override-role")
     public ResponseEntity<?> getMoodleRoleHierarchyMappings() {
         List<Map<String, Object>> mappings = jdbcTemplate.queryForList(
