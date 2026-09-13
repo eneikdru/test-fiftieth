@@ -127,7 +127,8 @@ class DossierSearchTelemetryVerificationTest {
         OffsetDateTime start = OffsetDateTime.of(2026, 9, 5, 10, 0, 0, 0, ZoneOffset.UTC);
         OffsetDateTime end = OffsetDateTime.of(2026, 9, 5, 10, 5, 0, 0, ZoneOffset.UTC);
 
-        TelemetryEvent event = telemetryService.recordAnalysisSpeedTelemetry("SESSION-QA-100", start, end, 300000L);
+        java.util.concurrent.CompletableFuture<com.eneik.epidemiology.telemetry.TelemetryEvent> future = telemetryService.recordAnalysisSpeedTelemetry("SESSION-QA-100", start, end, 300000L);
+        com.eneik.epidemiology.telemetry.TelemetryEvent event = future.join();
 
         assertNotNull(event);
         assertEquals(TelemetryService.EVENT_ANALYSIS_SPEED_MEASURED, event.getEventType());

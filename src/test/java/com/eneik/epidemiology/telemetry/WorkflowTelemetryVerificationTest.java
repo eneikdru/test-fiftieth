@@ -42,7 +42,8 @@ class WorkflowTelemetryVerificationTest {
         OffsetDateTime startTime = OffsetDateTime.of(2026, 8, 28, 10, 0, 0, 0, ZoneOffset.UTC);
         OffsetDateTime endTime = OffsetDateTime.of(2026, 8, 28, 10, 2, 30, 0, ZoneOffset.UTC); // 150 seconds = 150,000 ms
 
-        TelemetryEvent event = telemetryService.recordWorkflowTelemetry("ANALYSIS_PIPELINE", startTime, endTime, null);
+        java.util.concurrent.CompletableFuture<TelemetryEvent> future = telemetryService.recordWorkflowTelemetry("ANALYSIS_PIPELINE", startTime, endTime, null);
+        TelemetryEvent event = future.join();
 
         assertNotNull(event);
         assertEquals(TelemetryService.EVENT_WORKFLOW_DURATION_MEASURED, event.getEventType());
@@ -64,7 +65,8 @@ class WorkflowTelemetryVerificationTest {
         OffsetDateTime startTime = OffsetDateTime.of(2026, 8, 28, 10, 0, 0, 0, ZoneOffset.UTC);
         OffsetDateTime endTime = OffsetDateTime.of(2026, 8, 28, 10, 1, 0, 0, ZoneOffset.UTC);
 
-        TelemetryEvent event = telemetryService.recordWorkflowTelemetry("EPIDEMIC_MODELING", startTime, endTime, 75000L);
+        java.util.concurrent.CompletableFuture<TelemetryEvent> future = telemetryService.recordWorkflowTelemetry("EPIDEMIC_MODELING", startTime, endTime, 75000L);
+        TelemetryEvent event = future.join();
 
         assertNotNull(event);
         assertEquals(TelemetryService.EVENT_WORKFLOW_DURATION_MEASURED, event.getEventType());
@@ -83,7 +85,8 @@ class WorkflowTelemetryVerificationTest {
         when(telemetryEventRepository.save(any(TelemetryEvent.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
-        TelemetryEvent event = telemetryService.recordWorkflowTelemetry("UNKNOWN_WORKFLOW", null, null, null);
+        java.util.concurrent.CompletableFuture<TelemetryEvent> future = telemetryService.recordWorkflowTelemetry("UNKNOWN_WORKFLOW", null, null, null);
+        TelemetryEvent event = future.join();
 
         assertNotNull(event);
         assertEquals(TelemetryService.EVENT_WORKFLOW_DURATION_MEASURED, event.getEventType());

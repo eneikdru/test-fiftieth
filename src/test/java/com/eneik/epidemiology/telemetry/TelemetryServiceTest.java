@@ -163,7 +163,8 @@ class TelemetryServiceTest {
         OffsetDateTime startTime = OffsetDateTime.of(2026, 8, 28, 10, 0, 0, 0, ZoneOffset.UTC);
         OffsetDateTime endTime = OffsetDateTime.of(2026, 8, 28, 10, 0, 5, 0, ZoneOffset.UTC);
 
-        TelemetryEvent event = telemetryService.recordWorkflowTelemetry("DOSSIER_ANALYSIS", startTime, endTime, null);
+        java.util.concurrent.CompletableFuture<TelemetryEvent> future = telemetryService.recordWorkflowTelemetry("DOSSIER_ANALYSIS", startTime, endTime, null);
+        TelemetryEvent event = future.join();
 
         assertNotNull(event);
         assertEquals(TelemetryService.EVENT_WORKFLOW_DURATION_MEASURED, event.getEventType());
@@ -185,7 +186,8 @@ class TelemetryServiceTest {
         OffsetDateTime startTime = OffsetDateTime.of(2026, 8, 28, 14, 0, 0, 0, ZoneOffset.UTC);
         OffsetDateTime endTime = OffsetDateTime.of(2026, 8, 28, 14, 10, 0, 0, ZoneOffset.UTC);
 
-        TelemetryEvent event = telemetryService.recordAnalysisSpeedTelemetry("SESS-99", startTime, endTime, null);
+        java.util.concurrent.CompletableFuture<TelemetryEvent> future = telemetryService.recordAnalysisSpeedTelemetry("SESS-99", startTime, endTime, null);
+        TelemetryEvent event = future.join();
 
         assertNotNull(event);
         assertEquals(TelemetryService.EVENT_ANALYSIS_SPEED_MEASURED, event.getEventType());
