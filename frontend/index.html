@@ -111,6 +111,23 @@
         email: 'ivanov@epidemiology-inst.ru'
       },
 
+      // Privacy state
+      requestedFormat: 'ZIP',
+      exportNotes: '',
+      isExporting: false,
+      exportError: '',
+      exportSuccess: '',
+      exportJob: null,
+
+      isDeleteModalOpen: false,
+      erasureReason: 'Отозвано согласие на обработку персональных данных (152-ФЗ)',
+      erasureScope: 'ALL_PERSONAL_DATA',
+      confirmationInput: '',
+      isDeleting: false,
+      deleteError: '',
+      deleteSuccess: '',
+      erasureJob: null,
+
       // Auth form state
       loginUsername: '',
       loginPassword: '',
@@ -175,6 +192,7 @@
         catalog: 'Каталог протоколов',
         dossier: 'Аналитика досье',
         foci: 'Категоризация очагов',
+        privacy: 'Конфиденциальность',
         telemetry: 'Телеметрия навигации'
       };
 
@@ -458,6 +476,19 @@
                 >
                   <span class="text-sm">🔍</span>
                   <span>Категоризация очагов</span>
+                </button>
+
+                <button
+                  id="tab-privacy"
+                  type="button"
+                  role="tab"
+                  aria-selected="${state.activeTab === 'privacy'}"
+                  aria-controls="panel-privacy"
+                  onclick="switchTab('privacy')"
+                  class="min-h-[44px] min-w-[44px] px-4 py-2.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-2 whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-white ${state.activeTab === 'privacy' ? 'bg-white text-[#003f87] shadow-sm font-bold' : 'text-white/90 hover:bg-white/10 hover:text-white'}"
+                >
+                  <span class="text-sm">🔒</span>
+                  <span>Конфиденциальность</span>
                 </button>
 
                 <button
@@ -815,8 +846,147 @@
                   </table>
                 </div>
               </section>
+            ` : state.activeTab === 'privacy' ? `
+              <!-- TAB 4: PRIVACY SETTINGS & DATA SUBJECT RIGHTS -->
+              <section id="panel-privacy" role="tabpanel" aria-labelledby="tab-privacy" class="space-y-6">
+                ${state.deleteSuccess ? `
+                  <div id="delete-success-banner" role="status" class="p-4 rounded-xl bg-[#d9e3f1] text-[#001a40] text-sm border border-[#003f87]/30 shadow-sm flex items-start gap-3">
+                    <span class="text-xl">✓</span>
+                    <div>
+                      <h3 class="font-bold">Удаление подтверждено</h3>
+                      <p class="mt-0.5">${state.deleteSuccess}</p>
+                    </div>
+                  </div>
+                ` : ''}
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <!-- EXPORT PERSONAL DATA CARD -->
+                  <section class="bg-white border border-[#e0e3e5] rounded-xl p-6 shadow-sm flex flex-col justify-between">
+                    <div>
+                      <div class="flex items-center gap-3 mb-4">
+                        <div class="p-2.5 bg-[#d3e4fe] text-[#003f87] rounded-lg">
+                          <span class="text-xl font-bold">📥</span>
+                        </div>
+                        <div>
+                          <h2 class="text-lg font-bold text-[#191c1e]">Экспорт персональных данных</h2>
+                          <p class="text-xs text-[#424752]">Запросить полную копию ваших данных в соответствии с 152-ФЗ</p>
+                        </div>
+                      </div>
+
+                      <p class="text-sm text-[#424752] mb-5 leading-relaxed">
+                        Вы имеете право получить копию всех обработанных персональных данных, включая историю активности, профиль и загруженные материалы в структурированном виде.
+                      </p>
+
+                      ${state.exportError ? `
+                        <div id="export-error-alert" role="alert" class="mb-4 p-3.5 rounded-lg bg-[#ffdad6] text-[#93000a] text-xs font-medium border border-[#ba1a1a]/30">
+                          ⚠ ${state.exportError}
+                        </div>
+                      ` : ''}
+
+                      ${state.exportSuccess ? `
+                        <div id="export-success-alert" role="status" class="mb-4 p-3.5 rounded-lg bg-[#d9e3f1] text-[#001a40] text-xs font-medium border border-[#003f87]/30">
+                          ✓ ${state.exportSuccess}
+                          ${state.exportJob?.download_url ? `
+                            <div class="mt-2">
+                              <a href="${state.exportJob.download_url}" id="download-export-link" class="underline font-bold text-[#003f87]" target="_blank">
+                                Скачать архив данных
+                              </a>
+                            </div>
+                          ` : ''}
+                        </div>
+                      ` : ''}
+
+                      <form onsubmit="handleExportData(event)" class="space-y-4">
+                        <div>
+                          <label for="export-format-select" class="block text-xs font-semibold text-[#191c1e] mb-1">
+                            Формат архива экспорта
+                          </label>
+                          <select
+                            id="export-format-select"
+                            onchange="state.requestedFormat = this.value"
+                            class="w-full h-11 px-3 bg-[#f7f9fb] border border-[#c2c6d4] rounded-lg text-sm text-[#191c1e] focus:outline-none focus:border-[#003f87]"
+                          >
+                            <option value="ZIP" ${state.requestedFormat === 'ZIP' ? 'selected' : ''}>ZIP-архив (Документы и JSON)</option>
+                            <option value="JSON" ${state.requestedFormat === 'JSON' ? 'selected' : ''}>JSON (Только структуры данных)</option>
+                          </select>
+                        </div>
+
+                        <div>
+                          <label for="export-notes-input" class="block text-xs font-semibold text-[#191c1e] mb-1">
+                            Примечание к запросу (необязательно)
+                          </label>
+                          <input
+                            id="export-notes-input"
+                            type="text"
+                            value="${state.exportNotes}"
+                            oninput="state.exportNotes = this.value"
+                            placeholder="Например: Запрос для личного архива"
+                            class="w-full h-11 px-3.5 bg-[#f7f9fb] border border-[#c2c6d4] rounded-lg text-sm text-[#191c1e] focus:outline-none focus:border-[#003f87]"
+                          />
+                        </div>
+
+                        <div class="pt-2">
+                          <button
+                            type="submit"
+                            id="export-data-btn"
+                            ${state.isExporting ? 'disabled' : ''}
+                            class="w-full h-11 bg-[#003f87] hover:bg-[#002b5e] focus:outline-none focus:ring-2 focus:ring-[#003f87] focus:ring-offset-2 text-white font-medium text-sm rounded-lg transition-colors flex items-center justify-center gap-2 shadow-sm disabled:opacity-60"
+                            aria-label="Запросить выгрузку данных"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                              <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                            </svg>
+                            <span>${state.isExporting ? 'Формирование архива...' : 'Запросить выгрузку данных'}</span>
+                          </button>
+                        </div>
+                      </form>
+                    </div>
+                  </section>
+
+                  <!-- DELETE ACCOUNT SECTION -->
+                  <section class="bg-white border border-[#ffdad6] rounded-xl p-6 shadow-sm flex flex-col justify-between">
+                    <div>
+                      <div class="flex items-center gap-3 mb-4">
+                        <div class="p-2.5 bg-[#ffdad6] text-[#ba1a1a] rounded-lg">
+                          <span class="text-xl font-bold">🗑</span>
+                        </div>
+                        <div>
+                          <h2 class="text-lg font-bold text-[#ba1a1a]">Удаление аккаунта и данных</h2>
+                          <p class="text-xs text-[#424752]">Отозвать согласие и полностью уничтожить персональные данные</p>
+                        </div>
+                      </div>
+
+                      <p class="text-sm text-[#424752] mb-5 leading-relaxed">
+                        В соответствии с Федеральным законом № 152-ФЗ «О персональных данных» вы имеете право потребовать полного удаления или обезличивания ваших данных.
+                      </p>
+
+                      <div class="p-4 bg-[#ffdad6]/40 rounded-lg border border-[#ba1a1a]/20 mb-6">
+                        <h3 class="text-xs font-bold text-[#93000a] uppercase tracking-wide mb-1">⚠️ Внимание</h3>
+                        <p class="text-xs text-[#93000a]">
+                          Удаление профиля является необратимым действием. Все ваши настройки, доступ к материалам и история будут безвозвратно уничтожены.
+                        </p>
+                      </div>
+
+                      <div>
+                        <button
+                          type="button"
+                          id="open-delete-account-btn"
+                          onclick="openDeleteModal()"
+                          class="w-full h-11 bg-[#ba1a1a] hover:bg-[#93000a] focus:outline-none focus:ring-2 focus:ring-[#ba1a1a] focus:ring-offset-2 text-white font-medium text-sm rounded-lg transition-colors flex items-center justify-center gap-2 shadow-sm"
+                          aria-label="Удалить аккаунт и данные"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                          <span>Удалить аккаунт и данные</span>
+                        </button>
+                      </div>
+                    </div>
+                  </section>
+                </div>
+              </section>
             ` : state.activeTab === 'telemetry' ? `
-              <!-- TAB 4: TELEMETRY & MEASUREMENT HARNESS -->
+              <!-- TAB 5: TELEMETRY & MEASUREMENT HARNESS -->
               <section id="panel-telemetry" role="tabpanel" aria-labelledby="tab-telemetry" class="space-y-6">
                 <!-- Telemetry Header -->
                 <div class="flex items-center justify-between border-b border-[#e0e3e5] pb-3 bg-white p-5 rounded-xl border shadow-sm">
@@ -1053,6 +1223,104 @@
             </div>
           ` : ''}
 
+          <!-- SEVERE WARNING MODAL -->
+          ${state.isDeleteModalOpen ? `
+            <div id="delete-confirmation-modal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+              <div class="bg-white rounded-xl border-2 border-[#ba1a1a] max-w-lg w-full p-6 shadow-2xl my-8">
+                <div class="flex items-start justify-between pb-3 border-b border-[#ffdad6] mb-4">
+                  <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-[#ffdad6] text-[#ba1a1a] flex items-center justify-center font-bold text-xl">
+                      🚨
+                    </div>
+                    <div>
+                      <h3 class="text-lg font-bold text-[#ba1a1a]">Подтверждение удаления аккаунта</h3>
+                      <p class="text-xs text-[#737688]">Критическое действие • 152-ФЗ</p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onclick="closeDeleteModal()"
+                    class="text-[#737688] hover:text-[#191c1e] focus:outline-none focus:ring-2 focus:ring-[#737688] text-xl font-bold p-1 rounded-full"
+                    aria-label="Закрыть окно"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                ${state.deleteError ? `
+                  <div id="delete-error-alert" role="alert" class="mb-4 p-3.5 rounded-lg bg-[#ffdad6] text-[#93000a] text-xs font-medium border border-[#ba1a1a]/30">
+                    ⚠ ${state.deleteError}
+                  </div>
+                ` : ''}
+
+                <div class="space-y-4 mb-6">
+                  <div class="p-4 bg-[#ffdad6] rounded-lg border border-[#ba1a1a]/40 text-[#93000a] space-y-2">
+                    <h4 class="font-bold text-sm uppercase tracking-wide">⚠️ ВНИМАНИЕ: НЕОБРАТИМОЕ ДЕЙСТВИЕ</h4>
+                    <p class="text-xs leading-relaxed">
+                      Вы подготавливаете полное отзыв согласия на обработку персональных данных и стирание профиля. После подтверждения:
+                    </p>
+                    <ul class="list-disc list-inside text-xs space-y-1 font-medium pl-1">
+                      <li>Ваша учетная запись <strong class="underline">${state.currentUser?.username || 'пользователь'}</strong> будет немедленно заблокирована.</li>
+                      <li>Все персональные записи будут безвозвратно удалены из системы.</li>
+                      <li>Восстановление доступа будет невозможно.</li>
+                    </ul>
+                  </div>
+
+                  <form onsubmit="handleConfirmDelete(event)" class="space-y-4" novalidate>
+                    <div>
+                      <label for="erasure-reason-input" class="block text-xs font-semibold text-[#191c1e] mb-1">
+                        Основание для удаления (152-ФЗ)
+                      </label>
+                      <input
+                        id="erasure-reason-input"
+                        type="text"
+                        value="${state.erasureReason}"
+                        oninput="state.erasureReason = this.value"
+                        required
+                        class="w-full h-10 px-3 bg-[#f7f9fb] border border-[#c2c6d4] rounded-md text-xs text-[#191c1e] focus:outline-none focus:border-[#ba1a1a]"
+                      />
+                    </div>
+
+                    <div>
+                      <label for="confirmation-input" class="block text-xs font-bold text-[#ba1a1a] mb-1">
+                        Для подтверждения введите фразовый код: <span class="bg-[#ffdad6] px-1.5 py-0.5 rounded select-all font-mono">${getExpectedConfirmationToken()}</span>
+                      </label>
+                      <input
+                        id="confirmation-input"
+                        type="text"
+                        value="${state.confirmationInput}"
+                        oninput="state.confirmationInput = this.value; render();"
+                        placeholder="${getExpectedConfirmationToken()}"
+                        required
+                        class="w-full h-11 px-3.5 bg-[#f7f9fb] border-2 border-[#ba1a1a]/50 rounded-lg text-sm text-[#191c1e] focus:outline-none focus:border-[#ba1a1a] font-mono"
+                      />
+                    </div>
+
+                    <div class="flex items-center justify-end gap-3 pt-4 border-t border-[#e0e3e5]">
+                      <button
+                        type="button"
+                        onclick="closeDeleteModal()"
+                        class="px-4 py-2.5 border border-[#c2c6d4] text-[#424752] hover:bg-[#eceef0] focus:outline-none focus:ring-2 focus:ring-[#c2c6d4] focus:ring-offset-1 text-xs font-medium rounded-lg transition-colors"
+                        aria-label="Отмена удаления"
+                      >
+                        Отмена
+                      </button>
+                      <button
+                        type="submit"
+                        id="confirm-delete-btn"
+                        ${(state.confirmationInput.trim() !== getExpectedConfirmationToken() || state.isDeleting) ? 'disabled' : ''}
+                        class="px-5 py-2.5 bg-[#ba1a1a] hover:bg-[#93000a] focus:outline-none focus:ring-2 focus:ring-[#ba1a1a] focus:ring-offset-1 text-white text-xs font-bold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-md flex items-center gap-2"
+                        aria-label="Да, удалить аккаунт навсегда"
+                      >
+                        <span>${state.isDeleting ? 'Удаление...' : 'Да, удалить аккаунт навсегда'}</span>
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+          ` : ''}
+
           <!-- Footer -->
           <footer class="w-full py-6 mt-12 text-center text-xs text-[#727784] border-t border-[#e0e3e5] flex flex-col sm:flex-row items-center justify-between max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8">
             <p>Российский научно-исследовательский институт эпидемиологии</p>
@@ -1194,6 +1462,104 @@
         defaultSampleDocuments.splice(idx, 1);
       }
       render();
+    }
+
+    function getExpectedConfirmationToken() {
+      return `УДАЛИТЬ ${state.currentUser?.username || 'АККАУНТ'}`;
+    }
+
+    async function handleExportData(event) {
+      if (event) event.preventDefault();
+      state.exportError = '';
+      state.exportSuccess = '';
+      state.isExporting = true;
+      render();
+
+      try {
+        const response = await fetch('/api/v1/privacy/export-requests', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            subject_id: state.currentUser?.username || 'usr_101',
+            requested_format: state.requestedFormat,
+            notes: state.exportNotes.trim()
+          })
+        });
+
+        if (!response.ok) {
+          let errData = {};
+          try { errData = await response.json(); } catch (e) {}
+          throw new Error(errData.message || 'Ошибка при запросе экспорта данных. Попробуйте позже.');
+        }
+
+        state.exportJob = await response.json();
+        state.exportSuccess = 'Запрос на экспорт данных успешно создан и обрабатывается.';
+      } catch (err) {
+        state.exportError = err.message || 'Произошла ошибка при формировании запроса экспорта.';
+      } finally {
+        state.isExporting = false;
+        render();
+      }
+    }
+
+    function openDeleteModal() {
+      state.deleteError = '';
+      state.deleteSuccess = '';
+      state.confirmationInput = '';
+      state.isDeleteModalOpen = true;
+      render();
+    }
+
+    function closeDeleteModal() {
+      state.isDeleteModalOpen = false;
+      state.confirmationInput = '';
+      state.deleteError = '';
+      render();
+    }
+
+    async function handleConfirmDelete(event) {
+      if (event) event.preventDefault();
+      state.deleteError = '';
+      state.deleteSuccess = '';
+
+      const expectedToken = getExpectedConfirmationToken();
+      if (state.confirmationInput.trim() !== expectedToken) {
+        state.deleteError = 'Код подтверждения введен неверно.';
+        render();
+        return;
+      }
+
+      state.isDeleting = true;
+      render();
+
+      try {
+        const subjectId = state.currentUser?.username || 'usr_101';
+        const response = await fetch('/api/v1/privacy/erasure-requests', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            subject_id: subjectId,
+            confirmation_token: `CONFIRM_ERASURE_${subjectId}`,
+            reason: state.erasureReason,
+            erasure_scope: state.erasureScope
+          })
+        });
+
+        if (!response.ok) {
+          let errData = {};
+          try { errData = await response.json(); } catch (e) {}
+          throw new Error(errData.message || 'Ошибка при обработке запроса на удаление данных.');
+        }
+
+        state.erasureJob = await response.json();
+        state.deleteSuccess = 'Запрос на удаление данных принят. Аккаунт и персональные данные будут удалены.';
+        state.isDeleteModalOpen = false;
+      } catch (err) {
+        state.deleteError = err.message || 'Не удалось выполнить запрос на удаление аккаунта.';
+      } finally {
+        state.isDeleting = false;
+        render();
+      }
     }
 
     function toggleRole() {
