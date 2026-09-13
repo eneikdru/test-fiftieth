@@ -128,12 +128,18 @@ public class JwtTokenProvider {
     }
 
     public String getUsername(String token) {
+        if (!validateToken(token)) {
+            throw new IllegalArgumentException("Invalid or unverified JWT token signature or expiration");
+        }
         String[] parts = token.split("\\.");
         String payload = new String(Base64.getUrlDecoder().decode(parts[1]), StandardCharsets.UTF_8);
         return extractJsonValue(payload, "sub");
     }
 
     public String getRole(String token) {
+        if (!validateToken(token)) {
+            throw new IllegalArgumentException("Invalid or unverified JWT token signature or expiration");
+        }
         String[] parts = token.split("\\.");
         String payload = new String(Base64.getUrlDecoder().decode(parts[1]), StandardCharsets.UTF_8);
         return extractJsonValue(payload, "role");

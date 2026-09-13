@@ -42,4 +42,27 @@ class JwtTokenProviderFalsificationFixTest {
         assertEquals("john_doe", jwtTokenProvider.extractJsonValue(json, "sub"));
         assertEquals("ADMIN", jwtTokenProvider.extractJsonValue(json, "role"));
     }
+
+    @Test
+    @DisplayName("Given unverified or forged token, When getUsername or getRole is called, Then throws IllegalArgumentException")
+    void testGetUsernameAndRoleWithUnverifiedTokenThrowsException() {
+        String validToken = jwtTokenProvider.generateToken("john_doe", "ADMIN");
+        String forgedToken = validToken.substring(0, validToken.lastIndexOf('.')) + ".invalid_signature";
+
+        assertThrows(IllegalArgumentException.class, () -> {
+            jwtTokenProvider.getUsername(forgedToken);
+        });
+
+        assertThrows(IllegalArgumentException.class, () -> {
+            jwtTokenProvider.getRole(forgedToken);
+        });
+    }
+
+    @Test
+    @DisplayName("Given valid signed token, When getUsername and getRole are called, Then returns claims successfully")
+    void testGetUsernameAndRoleWithValidToken() {
+        String validToken = jwtTokenProvider.generateToken("john_doe", "ADMIN");
+        assertEquals("john_doe", jwtTokenProvider.getUsername(validToken));
+        assertEquals("ADMIN", jwtTokenProvider.getRole(validToken));
+    }
 }
