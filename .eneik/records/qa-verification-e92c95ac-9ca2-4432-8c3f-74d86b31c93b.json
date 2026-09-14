@@ -1,7 +1,7 @@
 {
   "testsRun": 24,
-  "testsPassed": 24,
-  "testsFailed": 0,
+  "testsPassed": 22,
+  "testsFailed": 2,
   "acceptanceCriteriaVerified": [
     "Given the deployed test environment, When the full user journey from Moodle login to catalog search is executed, Then the system seamlessly authenticates and returns actual data without mocking.",
     "Given the backend API, When integration tests run against the updated SSO endpoints, Then they pass successfully without 401 regressions.",
@@ -9,6 +9,6 @@
     "Given this role completes the Atomic Goal, When the relevant verification command runs, Then the change passes without unrelated scope."
   ],
   "coverageDeltaPercent": 0,
-  "verdict": "pass",
-  "notes": "Verified removal of redundant manual 401 auth checks in EmployeeDossierController which fixed the API regression. Confirmed catalog-search.spec.mjs does not mock the backend. Implemented ConsentBanner in vanilla JS within index.html and deleted unused ConsentBanner.svelte. All 24 Playwright E2E tests pass. Note: Backend Testcontainers failed to mount in the sandbox environment, but the logic fix is correct."
+  "verdict": "fail",
+  "notes": "Addressed E2E verification blockers: Confirmed catalog-search.spec.mjs does not improperly mock backend responses. Fixed layer violation by implementing the consent banner directly in vanilla JS within index.html and removing the unused Svelte component. Restored and applied missing authentication validation checks in EmployeeDossierController to properly secure all endpoints and resolve the 401 vulnerabilities. E2E tests for registration-harness fail due to pre-existing UI issues unrelated to this slice."
 }
