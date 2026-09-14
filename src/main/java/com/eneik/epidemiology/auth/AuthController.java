@@ -330,7 +330,11 @@ public class AuthController {
                     profile = fetchProfileWithToken(accessToken);
                 } catch (LmsServerException e) {
                     isServerError = true;
-                    profile = fetchOidcProfile(accessToken);
+                    try {
+                        profile = fetchOidcProfile(accessToken);
+                    } catch (LmsServerException ex) {
+                        isServerError = true;
+                    }
                 }
             }
         } catch (LmsServerException e) {
@@ -338,8 +342,8 @@ public class AuthController {
         }
 
         if (profile == null) {
-            // LMS is unreachable or authorization code exchange failed -> Check fallback auth
-            if (request.username() != null && !request.username().trim().isEmpty() &&
+            // LMS is unreachable or returned server error -> Check fallback auth strictly during LMS outages
+            if (isServerError && request.username() != null && !request.username().trim().isEmpty() &&
                 request.fallback_password() != null && !request.fallback_password().trim().isEmpty()) {
                 User user = userService.findByUsernameOrEmail(request.username().trim()).orElse(null);
                 if (user != null && userService.verifyPassword(request.fallback_password().trim(), user.getPasswordHash())) {
@@ -356,7 +360,6 @@ public class AuthController {
                     ));
                 }
             }
-            // Removed 500 server error to gracefully handle autonomous fallback
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
                     "error_code", "INVALID_AUTHORIZATION_CODE",
                     "message", "Недействительный код авторизации Moodle или сбой внешней LMS.",
@@ -670,7 +673,7 @@ public class AuthController {
         }
 
         if (profile == null || !profile.username().trim().equalsIgnoreCase(request.username().trim())) {
-            if (request.fallback_password() != null && !request.fallback_password().trim().isEmpty()) {
+            if (isServerError && request.fallback_password() != null && !request.fallback_password().trim().isEmpty()) {
                 User user = userService.findByUsernameOrEmail(request.username().trim()).orElse(null);
                 if (user != null && userService.verifyPassword(request.fallback_password().trim(), user.getPasswordHash())) {
                     telemetryService.recordFallbackLoginTelemetry(user.getUsername());
@@ -688,7 +691,6 @@ public class AuthController {
                     return ResponseEntity.ok(response);
                 }
             }
-            // Removed 500 server error to gracefully handle autonomous fallback
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
                     "error_code", "INVALID_SSO_TOKEN",
                     "message", "Недействительный токен OIDC или имя пользователя.",
@@ -780,7 +782,7 @@ public class AuthController {
         }
 
         if (profile == null || !profile.username().trim().equalsIgnoreCase(request.username().trim())) {
-            if (request.fallback_password() != null && !request.fallback_password().trim().isEmpty()) {
+            if (isServerError && request.fallback_password() != null && !request.fallback_password().trim().isEmpty()) {
                 User user = userService.findByUsernameOrEmail(request.username().trim()).orElse(null);
                 if (user != null && userService.verifyPassword(request.fallback_password().trim(), user.getPasswordHash())) {
                     telemetryService.recordFallbackLoginTelemetry(user.getUsername());
@@ -798,7 +800,6 @@ public class AuthController {
                     return ResponseEntity.ok(response);
                 }
             }
-            // Removed 500 server error to gracefully handle autonomous fallback
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
                     "error_code", "INVALID_SSO_TOKEN",
                     "message", "Недействительный токен SSO или имя пользователя.",
@@ -1098,9 +1099,11 @@ public class AuthController {
         } catch (org.springframework.web.client.HttpServerErrorException | org.springframework.web.client.ResourceAccessException e) {
             log.error("LMS is unreachable or returned server error during token exchange", e);
             throw new LmsServerException("LMS is unreachable or returned server error", e);
+        } catch (org.springframework.web.client.HttpClientErrorException e) {
+            log.warn("LMS token endpoint returned client error (e.g. invalid code): {}", e.getMessage());
+            return null;
         } catch (Exception e) {
             log.error("Error exchanging authorization code for token", e);
-            // Return null so fallback auth handles it
         }
         return null;
     }
@@ -1139,8 +1142,11 @@ public class AuthController {
             }
         } catch (org.springframework.web.client.HttpServerErrorException | org.springframework.web.client.ResourceAccessException e) {
             throw new LmsServerException("LMS is unreachable or returned server error", e);
+        } catch (org.springframework.web.client.HttpClientErrorException e) {
+            log.warn("LMS userinfo endpoint returned client error (e.g. invalid token): {}", e.getMessage());
+            return null;
         } catch (Exception e) {
-            // Return null so fallback auth handles or returns 401 for other errors (like 4xx)
+            log.warn("Error fetching profile with token", e);
         }
         return null;
     }
@@ -1271,10 +1277,19 @@ public class AuthController {
                 return false;
             }
             return true;
+        } catch (com.auth0.jwk.NetworkException e) {
+            throw new LmsServerException("LMS JWKS endpoint is unreachable", e);
         } catch (com.auth0.jwk.JwkException | com.auth0.jwt.exceptions.JWTVerificationException e) {
             log.warn("OIDC signature validation exception: " + e.getMessage());
             return false;
+        } catch (org.springframework.web.client.HttpServerErrorException | org.springframework.web.client.ResourceAccessException e) {
+            throw new LmsServerException("LMS JWKS endpoint is unreachable", e);
         } catch (Exception e) {
+            if (e.getCause() instanceof org.springframework.web.client.ResourceAccessException ||
+                e.getCause() instanceof org.springframework.web.client.HttpServerErrorException ||
+                e.getCause() instanceof com.auth0.jwk.NetworkException) {
+                throw new LmsServerException("LMS JWKS endpoint is unreachable", e);
+            }
             log.warn("OIDC signature validation exception: " + e.getMessage());
             return false;
         }

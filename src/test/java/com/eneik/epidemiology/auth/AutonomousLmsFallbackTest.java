@@ -60,4 +60,22 @@ public class AutonomousLmsFallbackTest {
                 .andExpect(jsonPath("$.access_token", notNullValue()))
                 .andExpect(jsonPath("$.user.username", is("fallback_user")));
     }
+
+    @Test
+    @DisplayName("Given the external Moodle LMS is operational, When a user attempts to log in with an invalid SSO token but a correct fallback password, Then the system should reject the login and enforce SSO")
+    void testOperationalMoodle_InvalidSsoTokenWithFallbackPassword_RejectsAndEnforcesSso() throws Exception {
+        // Moodle LMS is operational and returns 401 Unauthorized for invalid token
+        mockServer.expect(org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo("https://moodle.epidemiology-inst.ru/oauth2/userinfo"))
+                .andRespond(org.springframework.test.web.client.response.MockRestResponseCreators.withUnauthorizedRequest());
+
+        userService.createUser("sso_bypass_attempt_user", "MySecureFallback123!", "bypass@inst.ru", "Bypass User", "USER");
+
+        String ssoBody = "{\"username\":\"sso_bypass_attempt_user\",\"moodle_token\":\"invalid_sso_token\",\"fallback_password\":\"MySecureFallback123!\"}";
+
+        mockMvc.perform(post("/api/v1/auth/sso/moodle")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(ssoBody))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.error_code", is("INVALID_SSO_TOKEN")));
+    }
 }
