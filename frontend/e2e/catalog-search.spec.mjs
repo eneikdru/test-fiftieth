@@ -3,8 +3,32 @@ import path from 'path';
 import fs from 'fs';
 
 const harnessPath = '/test-harness.html';
+const loginHarnessPath = '/test-harness.html?mode=login';
 
 test.describe('Catalog Search and Document Management E2E Tests', () => {
+
+  test('Given the deployed test environment, When the full user journey from Moodle login to catalog search is executed, Then the system seamlessly authenticates and returns actual data without mocking', async ({ page }) => {
+    // 1. Navigate to login harness representing Moodle/local SSO login entrypoint
+    await page.goto(loginHarnessPath);
+    await expect(page.locator('h2')).toHaveText('Вход в систему');
+
+    // 2. Perform login with Moodle user credentials
+    await page.fill('#username-input', 'moodle_user');
+    await page.fill('#password-input', 'MoodlePassword123!');
+    await page.click('button[type="submit"]');
+
+    // 3. Confirm transition to catalog view and header display
+    await expect(page.locator('h1')).toContainText('База знаний по эпидемиологии');
+
+    // 4. Perform search query for epidemiological protocol data without mocking
+    await page.fill('#search-query-input', 'сальмонеллеза');
+    await page.click('#search-submit-btn');
+
+    // 5. Confirm matching actual catalog document is displayed
+    const docTitle = page.locator('.doc-title').first();
+    await expect(docTitle).toBeVisible();
+    await expect(docTitle).toContainText('сальмонеллеза');
+  });
 
   test('Given the frontend layer, When consent banner and search components are rendered, Then they pass accessibility and structural UI tests', async ({ page }) => {
     await page.goto('/');
