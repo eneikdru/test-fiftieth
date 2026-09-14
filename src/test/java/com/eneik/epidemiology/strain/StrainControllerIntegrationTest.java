@@ -146,7 +146,7 @@ public class StrainControllerIntegrationTest {
                .andExpect(jsonPath("$.id").exists())
                .andExpect(jsonPath("$.name").value("Ebola Zaire"))
                .andExpect(jsonPath("$.accessDepartment").value("BIO"))
-               .andExpect(jsonPath("$.accessCourse").value("BIO102"));
+               .andExpect(jsonPath("$.accessCourse").value("BIO101,BIO102"));
     }
 
     @Test
