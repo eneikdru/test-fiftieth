@@ -15,4 +15,40 @@ test.describe('Moodle Fallback E2E Tests', () => {
     await expect(page.locator('main')).toContainText('Администратор');
   });
 
+  test('Given an unauthenticated user on the login screen, When they view login options, Then Moodle SSO button is displayed with visible feedback on click', async ({ page }) => {
+    await page.goto('/index.html?mode=login');
+
+    await expect(page.locator('h2:has-text("Вход в систему")')).toBeVisible();
+    const ssoBtn = page.locator('#moodle-sso-btn');
+    await expect(ssoBtn).toBeVisible();
+    await expect(ssoBtn).toContainText('Войти через Moodle SSO');
+
+    // Click Moodle SSO button and check feedback / error handling
+    await ssoBtn.click();
+    await expect(page.locator('#login-error-alert')).toBeVisible();
+    await expect(page.locator('#login-error-alert')).toContainText('Moodle SSO');
+  });
+
+  test('Given an administrator on the main console, When they view role hierarchy, Then Moodle role mappings are displayed and input survives on failure', async ({ page }) => {
+    await page.goto('/index.html?mode=catalog');
+
+    // Section exists for administrator
+    const section = page.locator('#moodle-role-hierarchy-section');
+    await expect(section).toBeVisible();
+
+    // Verify existing mapping table
+    await expect(page.locator('#moodle-role-mappings-list')).toContainText('администратор');
+
+    // Enable failure simulation checkbox
+    await page.check('#simulate-mapping-error-checkbox');
+
+    // Fill new role pattern
+    await page.fill('#moodle-pattern-input', 'методист');
+    await page.click('#save-role-mapping-btn');
+
+    // Error shown, but what the user typed survives on failure
+    await expect(page.locator('#moodle-role-hierarchy-section [role="alert"]')).toBeVisible();
+    await expect(page.locator('#moodle-pattern-input')).toHaveValue('методист');
+  });
+
 });
