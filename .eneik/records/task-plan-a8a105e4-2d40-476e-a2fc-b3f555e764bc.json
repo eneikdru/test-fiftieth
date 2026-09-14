@@ -1,0 +1,52 @@
+{
+  "epics": [
+    {
+      "existingEpicId": "0194cf5d-1caa-4d6b-86e8-ebbe0331442d",
+      "sourceIndex": 0,
+      "requirements": [
+        "R1: Reject fallback authentication when LMS is active but token is invalid"
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Restrict fallback authentication to LMS outages",
+          "roleTag": "BARCAN-TAG-07",
+          "jtbd": "When implementing the fallback restriction for this epic, I want the authentication filter to distinguish between LMS outages and invalid tokens, so that users cannot bypass SSO.",
+          "acceptanceCriteria": "Given the external Moodle LMS is operational, When a user attempts to log in with an invalid SSO token but a correct fallback password, Then the system should reject the login and enforce SSO.\nGiven a local fallback restriction is implemented, When tested, Then unit tests verify fallback is only allowed during upstream Moodle timeouts.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "sso-auth-filter",
+          "sixSigmaMetric": "SSO bypass incidents",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1"
+          ]
+        }
+      ]
+    },
+    {
+      "existingEpicId": "a9edeb71-3d13-4d90-af37-9fae47987214",
+      "sourceIndex": 1,
+      "requirements": [
+        "R1: Bind new strains to creator's Moodle department automatically"
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Enforce Moodle context binding in StrainController",
+          "roleTag": "BARCAN-TAG-02",
+          "jtbd": "When implementing Moodle context binding for this epic, I want the controller to extract department claims directly from the authenticated session, so that arbitrary client-provided access parameters are ignored.",
+          "acceptanceCriteria": "Given an authenticated Moodle user, When they create a new strain, Then the system should automatically assign the strain's access department based on the user's current Moodle profile.\nGiven a strain creation request with explicit access parameters, When processed, Then the system should ignore those parameters in favor of the session context.\nGiven the binding is implemented, When tested, Then backend tests verify that strains receive the correct Moodle context.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "strain-controller-authorization",
+          "sixSigmaMetric": "strain access binding accuracy",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1"
+          ]
+        }
+      ]
+    }
+  ]
+}
