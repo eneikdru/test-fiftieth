@@ -1,5 +1,4 @@
 <script>
-  import ImprintModal from './ImprintModal.svelte';
 
   // Modes: 'landing', 'registration', 'onboarding_1', 'onboarding_2'
   export let mode = 'landing';
@@ -341,10 +340,6 @@
       </div>
     {/if}
   </main>
-
-  {#if showImprint}
-    <ImprintModal on:close={() => showImprint = false} />
-  {/if}
 
   <footer class="w-full py-4 px-6 text-center text-xs text-[#737685] border-t border-[#e2e2e5] flex flex-col sm:flex-row items-center justify-between gap-2 bg-white">
     <p>Российский научно-исследовательский институт эпидемиологии</p>
