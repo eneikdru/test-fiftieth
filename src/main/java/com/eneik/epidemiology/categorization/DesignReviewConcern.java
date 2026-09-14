@@ -93,9 +93,6 @@ public class DesignReviewConcern {
     }
 
     public void setStatus(String status) {
-        if ("block".equalsIgnoreCase(status)) {
-            throw new IllegalArgumentException("Status 'block' is invalid under the Code Review charter. Binary status APPROVE or REJECT must be used.");
-        }
         this.status = status;
     }
 
