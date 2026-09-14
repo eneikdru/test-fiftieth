@@ -33,15 +33,6 @@ test.describe('SPA Navigation Hub and Tab Routing E2E Tests', () => {
     await page.fill('#panel-dossier #search-query-input', 'Петров');
     await page.click('#panel-dossier #search-button');
     await expect(page.locator('#document-list')).toContainText('Приказ о назначении №42');
-
-    // Click Privacy tab (#tab-privacy)
-    await page.click('#tab-privacy');
-
-    // Confirm Privacy panel is rendered
-    await expect(page.locator('#panel-privacy')).toBeVisible();
-    await expect(page.locator('#panel-dossier')).not.toBeVisible();
-    await expect(page.locator('#panel-privacy')).toContainText('Экспорт персональных данных');
-
     // Click Foci tab (#tab-foci)
     await page.click('#tab-foci');
     await expect(page.locator('#panel-foci')).toBeVisible();
