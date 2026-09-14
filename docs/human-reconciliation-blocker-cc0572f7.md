@@ -1,7 +1,7 @@
 # Human Reconciliation Blocker Record: Review Verdict Status Correction
 
 ## Context & Boundary Invariant
-1. **Binary Status Model Rule**: Review verdicts issued under the Integration Guardian charter strictly enforce a binary decision model (`APPROVE` or `REJECT`). Any recorded verdict using `block` violates this charter requirement.
+1. **Binary Status Model Rule**: Review verdicts issued under the integration review charter strictly enforce a binary decision model (`APPROVE` or `REJECT`). Any recorded verdict using `block` violates this charter requirement.
 2. **Storage Channel & Tarski Demarcation**: Recorded review verdict files reside in internal orchestrator storage (`.eneik/`). Modifying files under `.eneik/` or introducing internal review verdict classes into product packages (`com.eneik.epidemiology`) violates file channel invariants and Tarski demarcation.
 
 ## Root Cause & Blocker
