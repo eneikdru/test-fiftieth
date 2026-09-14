@@ -159,8 +159,8 @@ public class StrainController {
         strain.setIdentifiedDate(request.getIdentifiedDate());
         strain.setOriginCountry(request.getOriginCountry());
         strain.setSeverityLevel(request.getSeverityLevel());
-        strain.setAccessDepartment(request.getAccessDepartment());
-        strain.setAccessCourse(request.getAccessCourse());
+        strain.setAccessDepartment(user.getDepartment());
+        strain.setAccessCourse(user.getCourses());
 
         Strain savedStrain = strainRepository.save(strain);
 

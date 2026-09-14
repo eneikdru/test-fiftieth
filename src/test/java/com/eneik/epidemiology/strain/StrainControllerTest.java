@@ -145,6 +145,8 @@ class StrainControllerTest {
         User user = new User();
         user.setUsername("researcher1");
         user.setRole("RESEARCHER");
+        user.setDepartment("MOODLE_DEPT");
+        user.setCourses("MOODLE_COURSE");
 
         when(authentication.getName()).thenReturn("researcher1");
         when(userRepository.findByUsername("researcher1")).thenReturn(Optional.of(user));
@@ -167,8 +169,8 @@ class StrainControllerTest {
 
         Strain created = (Strain) response.getBody();
         assertEquals("New Strain", created.getName());
-        assertEquals("BIO", created.getAccessDepartment());
-        assertEquals("BIO101", created.getAccessCourse());
+        assertEquals("MOODLE_DEPT", created.getAccessDepartment());
+        assertEquals("MOODLE_COURSE", created.getAccessCourse());
     }
 
     @Test
