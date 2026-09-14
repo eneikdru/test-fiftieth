@@ -520,6 +520,24 @@ class AuthControllerTest {
     }
 
     @Test
+    @DisplayName("Given LMS is operational and returns 401 for invalid SSO token, When moodle sso endpoint is called with correct fallback password, Then login is rejected and SSO enforced")
+    void testSsoLogin_LmsOperationalInvalidTokenWithFallback_RejectsLoginAndEnforcesSso() throws Exception {
+        mockServer.expect(org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo("https://moodle.epidemiology-inst.ru/oauth2/userinfo"))
+                .andExpect(org.springframework.test.web.client.match.MockRestRequestMatchers.header("Authorization", "Bearer mock_invalid_token"))
+                .andRespond(org.springframework.test.web.client.response.MockRestResponseCreators.withUnauthorizedRequest());
+
+        userService.createUser("moodle_user", "MySecureFallback!", "moodle@inst.ru", "Moodle User", "USER");
+
+        String ssoBody = "{\"username\":\"moodle_user\",\"moodle_token\":\"mock_invalid_token\",\"fallback_password\":\"MySecureFallback!\"}";
+
+        mockMvc.perform(post("/api/v1/auth/sso/moodle")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(ssoBody))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.error_code", is("INVALID_SSO_TOKEN")));
+    }
+
+    @Test
     @DisplayName("Given LMS is unreachable, When moodle sso endpoint is called with fallback password, Then user is authenticated locally")
     void testSsoLogin_LmsUnreachable_FallbacksToLocalAuth() throws Exception {
         mockServer.expect(org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo("https://moodle.epidemiology-inst.ru/oauth2/userinfo"))

@@ -338,8 +338,8 @@ public class AuthController {
         }
 
         if (profile == null) {
-            // LMS is unreachable or authorization code exchange failed -> Check fallback auth
-            if (request.username() != null && !request.username().trim().isEmpty() &&
+            // LMS is unreachable or authorization code exchange failed -> Check fallback auth ONLY on upstream server errors / outages
+            if (isServerError && request.username() != null && !request.username().trim().isEmpty() &&
                 request.fallback_password() != null && !request.fallback_password().trim().isEmpty()) {
                 User user = userService.findByUsernameOrEmail(request.username().trim()).orElse(null);
                 if (user != null && userService.verifyPassword(request.fallback_password().trim(), user.getPasswordHash())) {
@@ -670,7 +670,7 @@ public class AuthController {
         }
 
         if (profile == null || !profile.username().trim().equalsIgnoreCase(request.username().trim())) {
-            if (request.fallback_password() != null && !request.fallback_password().trim().isEmpty()) {
+            if (isServerError && request.fallback_password() != null && !request.fallback_password().trim().isEmpty()) {
                 User user = userService.findByUsernameOrEmail(request.username().trim()).orElse(null);
                 if (user != null && userService.verifyPassword(request.fallback_password().trim(), user.getPasswordHash())) {
                     telemetryService.recordFallbackLoginTelemetry(user.getUsername());
@@ -780,7 +780,7 @@ public class AuthController {
         }
 
         if (profile == null || !profile.username().trim().equalsIgnoreCase(request.username().trim())) {
-            if (request.fallback_password() != null && !request.fallback_password().trim().isEmpty()) {
+            if (isServerError && request.fallback_password() != null && !request.fallback_password().trim().isEmpty()) {
                 User user = userService.findByUsernameOrEmail(request.username().trim()).orElse(null);
                 if (user != null && userService.verifyPassword(request.fallback_password().trim(), user.getPasswordHash())) {
                     telemetryService.recordFallbackLoginTelemetry(user.getUsername());
