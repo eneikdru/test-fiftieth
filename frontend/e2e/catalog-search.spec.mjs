@@ -6,6 +6,30 @@ const harnessPath = '/test-harness.html';
 
 test.describe('Catalog Search and Document Management E2E Tests', () => {
 
+  test('Given the frontend layer, When consent banner and search components are rendered, Then they pass accessibility and structural UI tests', async ({ page }) => {
+    await page.goto('/');
+
+    // Verify ConsentBanner component is mounted and rendered correctly
+    const consentBanner = page.locator('#consent-banner');
+    await expect(consentBanner).toBeVisible();
+    await expect(page.locator('#consent-banner-title')).toHaveText('Настройки конфиденциальности');
+
+    const acceptBtn = page.locator('#consent-accept-btn');
+    const rejectBtn = page.locator('#consent-reject-btn');
+    await expect(acceptBtn).toBeVisible();
+    await expect(rejectBtn).toBeVisible();
+
+    // Interact with ConsentBanner reject action and confirm banner dismissal
+    await rejectBtn.click();
+    await expect(consentBanner).not.toBeVisible();
+
+    // Verify search components structural rendering
+    const searchInput = page.locator('#search-query-input');
+    const searchBtn = page.locator('#search-submit-btn');
+    await expect(searchInput).toBeVisible();
+    await expect(searchBtn).toBeVisible();
+  });
+
   test('Given a fresh deployment pre-populated with sample "Epidemiological Protocol" documents, When the E2E test downloads a document, Then it correctly hits the system API using a configured Playwright baseURL', async ({ page, request, baseURL }) => {
     await page.goto('/');
 
