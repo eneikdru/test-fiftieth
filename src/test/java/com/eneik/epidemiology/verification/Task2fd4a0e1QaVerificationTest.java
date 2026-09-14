@@ -76,7 +76,8 @@ class Task2fd4a0e1QaVerificationTest {
                         "{\"username\":\"qa_moodle_researcher\",\"moodle_role\":\"Исследователь\",\"department\":\"BIO\",\"email\":\"qa_researcher@inst.ru\",\"full_name\":\"QA Researcher\",\"courses\":\"BIO101\"}",
                         MediaType.APPLICATION_JSON));
 
-        String ssoBody = "{\"username\":\"qa_moodle_researcher\",\"moodle_token\":\"mock_valid_qa_token\",\"fallback_password\":\"Pass123!\"}";
+        String testFallbackPassword = System.getenv().getOrDefault("TEST_USER_PASSWORD", "test-password-placeholder");
+        String ssoBody = String.format("{\"username\":\"qa_moodle_researcher\",\"moodle_token\":\"mock_valid_qa_token\",\"fallback_password\":\"%s\"}", testFallbackPassword);
 
         mockMvc.perform(post("/api/v1/auth/sso/moodle")
                         .contentType(MediaType.APPLICATION_JSON)

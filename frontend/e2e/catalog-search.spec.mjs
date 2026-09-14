@@ -4,6 +4,7 @@ import fs from 'fs';
 
 const harnessPath = '/test-harness.html';
 const loginHarnessPath = '/test-harness.html?mode=login';
+const testPassword = process.env.TEST_USER_PASSWORD || 'test-password-placeholder';
 
 test.describe('Catalog Search and Document Management E2E Tests', () => {
 
@@ -14,7 +15,7 @@ test.describe('Catalog Search and Document Management E2E Tests', () => {
 
     // 2. Perform login with Moodle user credentials
     await page.fill('#username-input', 'moodle_user');
-    await page.fill('#password-input', 'MoodlePassword123!');
+    await page.fill('#password-input', testPassword);
     await page.click('button[type="submit"]');
 
     // 3. Confirm transition to catalog view and header display
