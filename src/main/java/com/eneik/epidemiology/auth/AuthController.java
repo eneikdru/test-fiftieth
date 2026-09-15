@@ -22,6 +22,10 @@ import com.auth0.jwt.interfaces.DecodedJWT;
 import java.security.interfaces.RSAPublicKey;
 import java.net.URL;
 import java.util.concurrent.TimeUnit;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -362,6 +366,14 @@ public class AuthController {
                 request.fallback_password() != null && !request.fallback_password().trim().isEmpty()) {
                 User user = userService.findByUsernameOrEmail(request.username().trim()).orElse(null);
                 if (user != null && userService.verifyPassword(request.fallback_password().trim(), user.getPasswordHash())) {
+
+                    Authentication authentication = new UsernamePasswordAuthenticationToken(
+                            user.getUsername(),
+                            null,
+                            java.util.Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + user.getRole()))
+                    );
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+
                     telemetryService.recordFallbackLoginTelemetry(user.getUsername());
                     String accessToken = jwtTokenProvider.generateToken(user.getUsername(), user.getRole(), user.getDepartment(), user.getCourses());
                     String refreshToken = jwtTokenProvider.generateRefreshToken(user.getUsername());
@@ -802,6 +814,14 @@ public class AuthController {
             if (isServerError && request.fallback_password() != null && !request.fallback_password().trim().isEmpty()) {
                 User user = userService.findByUsernameOrEmail(request.username().trim()).orElse(null);
                 if (user != null && userService.verifyPassword(request.fallback_password().trim(), user.getPasswordHash())) {
+
+                    Authentication authentication = new UsernamePasswordAuthenticationToken(
+                            user.getUsername(),
+                            null,
+                            java.util.Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + user.getRole()))
+                    );
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+
                     telemetryService.recordFallbackLoginTelemetry(user.getUsername());
                     String accessToken = jwtTokenProvider.generateToken(user.getUsername(), user.getRole(), user.getDepartment(), user.getCourses());
                     String refreshToken = jwtTokenProvider.generateRefreshToken(user.getUsername());
