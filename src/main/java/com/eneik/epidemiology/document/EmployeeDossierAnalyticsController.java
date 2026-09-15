@@ -217,35 +217,20 @@ public class EmployeeDossierAnalyticsController {
 
         int denominator = documents.size();
         if (denominator == 0) {
-            return ResponseEntity.ok(Map.of(
-                    "employee_id", employeeId,
-                    "metric_name", "Доля научных отчетов в общем объеме документов",
-                    "value", 0.0,
-                    "denominator", 0,
-                    "lower_bound", 0.0,
-                    "upper_bound", 0.0
+            return ResponseEntity.badRequest().body(Map.of(
+                    "error_code", "ZERO_DENOMINATOR",
+                    "message", "Нет документов для расчета метрики"
             ));
         }
 
         long reportCount = documents.stream().filter(d -> "REPORT".equals(d.getDocType())).count();
         double value = (double) reportCount / denominator;
 
-        // Basic confidence interval mock logic
-        double marginOfError = 1.96 * Math.sqrt((value * (1 - value)) / denominator);
-        if(Double.isNaN(marginOfError)) {
-             marginOfError = 0.0;
-        }
-
-        double lowerBound = Math.max(0.0, value - marginOfError);
-        double upperBound = Math.min(1.0, value + marginOfError);
-
         return ResponseEntity.ok(Map.of(
                 "employee_id", employeeId,
                 "metric_name", "Доля научных отчетов в общем объеме документов",
                 "value", value,
-                "denominator", denominator,
-                "lower_bound", lowerBound,
-                "upper_bound", upperBound
+                "denominator", denominator
         ));
     }
 

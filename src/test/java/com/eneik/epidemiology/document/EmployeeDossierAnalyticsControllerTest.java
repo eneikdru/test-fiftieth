@@ -108,6 +108,16 @@ class EmployeeDossierAnalyticsControllerTest {
                 .andExpect(jsonPath("$.denominator").value(3)) // Total docs for EMP-123
                 .andExpect(jsonPath("$.value").value(org.hamcrest.Matchers.closeTo(2.0/3.0, 0.0001))); // 2 REPORTS out of 3 docs
     }
+
+    @Test
+    @WithMockUser
+    @DisplayName("Given employee with no docs, when calling /metrics, then returns bad request explicit error")
+    void testGetAnalyticsMetricsZeroDenominator() throws Exception {
+        mockMvc.perform(get("/api/v1/dossier/analytics/metrics")
+                        .param("employee_id", "NON-EXISTENT-EMP"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error_code").value("ZERO_DENOMINATOR"));
+    }
     @Test
     @WithMockUser
     @DisplayName("Given valid parameters, when calling /reports/{id}/download, then simulates PDF download")
