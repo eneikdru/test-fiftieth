@@ -166,18 +166,7 @@ public class EmployeeDossierController {
                 return transientUser;
             });
 
-            if (!"ADMIN".equals(currentUser.getRole())) {
-                List<String> userCoursesList = currentUser.getCourses() != null && !currentUser.getCourses().isEmpty()
-                        ? java.util.Arrays.asList(currentUser.getCourses().split("\\s*,\\s*"))
-                        : java.util.Collections.emptyList();
-                documents = documents.stream().filter(d -> {
-                    if (!"STRAIN_ISOLATION".equals(d.getDocType()) && !"REPORT".equals(d.getDocType())) return true;
-                    boolean isPublic = d.getAccessDepartment() == null && d.getAccessCourse() == null;
-                    boolean depMatch = d.getAccessDepartment() != null && d.getAccessDepartment().equals(currentUser.getDepartment());
-                    boolean courseMatch = d.getAccessCourse() != null && userCoursesList.contains(d.getAccessCourse());
-                    return isPublic || depMatch || courseMatch;
-                }).toList();
-            }
+            documents = filterDocumentsForUser(documents, currentUser);
 
             String summaryText = "Сводная справка по сотруднику " + employeeId + ": " + documents.size() + " документов.";
 
@@ -276,6 +265,22 @@ public class EmployeeDossierController {
 
 
 
+    private List<EmployeeDocument> filterDocumentsForUser(List<EmployeeDocument> documents, User currentUser) {
+        if (currentUser == null || "ADMIN".equals(currentUser.getRole())) {
+            return documents;
+        }
+        List<String> userCoursesList = currentUser.getCourses() != null && !currentUser.getCourses().isEmpty()
+                ? java.util.Arrays.asList(currentUser.getCourses().split("\\s*,\\s*"))
+                : java.util.Collections.emptyList();
+        return documents.stream().filter(d -> {
+            if (!"STRAIN_ISOLATION".equals(d.getDocType()) && !"REPORT".equals(d.getDocType())) return true;
+            boolean isPublic = d.getAccessDepartment() == null && d.getAccessCourse() == null;
+            boolean depMatch = d.getAccessDepartment() != null && d.getAccessDepartment().equals(currentUser.getDepartment());
+            boolean courseMatch = d.getAccessCourse() != null && userCoursesList.contains(d.getAccessCourse());
+            return isPublic || depMatch || courseMatch;
+        }).toList();
+    }
+
     private boolean isAccessDenied(User currentUser, DossierReport report) {
         if (currentUser == null || "ADMIN".equals(currentUser.getRole())) {
             return false;
@@ -320,8 +325,23 @@ public class EmployeeDossierController {
 
     @GetMapping("/reports/{id}/download")
     public ResponseEntity<?> downloadDossierReport(@PathVariable("id") Long id) {
-        String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
-        User currentUser = userRepository.findByUsername(currentUsername).orElse(null);
+        org.springframework.security.core.Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated() || "anonymousUser".equals(authentication.getName())) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error_code", "UNAUTHORIZED", "message", "Требуется авторизация для выполнения данной операции."));
+        }
+
+        String currentUsername = authentication.getName();
+        User currentUser = userRepository.findByUsername(currentUsername).orElseGet(() -> {
+            User transientUser = new User();
+            transientUser.setUsername(currentUsername);
+            String role = authentication.getAuthorities().stream()
+                    .map(a -> a.getAuthority().replace("ROLE_", ""))
+                    .findFirst().orElse("USER");
+            transientUser.setRole(role);
+            transientUser.setDepartment("");
+            transientUser.setCourses("");
+            return transientUser;
+        });
 
         return dossierReportRepository.findById(id)
                 .map(report -> {
@@ -358,6 +378,7 @@ public class EmployeeDossierController {
                         document.add(new Paragraph("Полный перечень документов досье (" + report.getEmployeeId() + "):", headerFont));
 
                         List<EmployeeDocument> documents = employeeDocumentRepository.findUnifiedEmployeeDossier(report.getEmployeeId());
+                        documents = filterDocumentsForUser(documents, currentUser);
                         if (documents.isEmpty()) {
                             document.add(new Paragraph("Документы в досье отсутствуют.", bodyFont));
                         } else {

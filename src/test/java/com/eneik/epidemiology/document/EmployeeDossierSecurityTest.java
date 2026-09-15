@@ -9,6 +9,8 @@ import com.eneik.epidemiology.user.UserRepository;
 import com.eneik.epidemiology.user.User;
 import com.eneik.epidemiology.user.UserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.itextpdf.text.pdf.PdfReader;
+import com.itextpdf.text.pdf.parser.PdfTextExtractor;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -161,5 +163,56 @@ public class EmployeeDossierSecurityTest {
         mockMvc.perform(get("/api/v1/dossier/documents")
                         .header("Authorization", "Bearer " + token))
                .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("Given user downloading dossier PDF, When PDF iterates over documents, Then closed documents of other departments/courses are excluded")
+    void testDownloadDossierReport_FiltersUnaccessibleDocumentsInPdf() throws Exception {
+        String token = "valid_dossier_user_token_filter_test";
+        configureMockToken(token, "department_user", "USER");
+
+        User deptUser = new User();
+        deptUser.setUsername("department_user");
+        deptUser.setRole("USER");
+        deptUser.setDepartment("Эпидемиология");
+        deptUser.setCourses("EPID-101");
+        Mockito.when(userRepository.findByUsername("department_user")).thenReturn(java.util.Optional.of(deptUser));
+
+        DossierReport report = new DossierReport("EMP-200", "SUMMARY_STANDARD", "COMPLETED", "Summary text", 3, "/api/v1/dossier/reports/200/download");
+        report.setId(200L);
+        Mockito.when(dossierReportRepository.findById(200L)).thenReturn(java.util.Optional.of(report));
+
+        EmployeeDocument docPublic = new EmployeeDocument("EMP-200", "ORDER", "Открытый приказ", java.time.LocalDate.of(2024, 1, 1), "Детали приказа");
+        docPublic.setDocType("ORDER");
+
+        EmployeeDocument docAllowedDep = new EmployeeDocument("EMP-200", "REPORT", "Доступный отчет эпидемиологии", java.time.LocalDate.of(2024, 2, 1), "Детали отчета");
+        docAllowedDep.setDocType("REPORT");
+        docAllowedDep.setAccessDepartment("Эпидемиология");
+
+        EmployeeDocument docBlockedDep = new EmployeeDocument("EMP-200", "REPORT", "Закрытый отчет вирусологии", java.time.LocalDate.of(2024, 3, 1), "Секретные детали");
+        docBlockedDep.setDocType("REPORT");
+        docBlockedDep.setAccessDepartment("Вирусология");
+
+        EmployeeDocument docBlockedCourse = new EmployeeDocument("EMP-200", "STRAIN_ISOLATION", "Закрытый штамм чужого курса", java.time.LocalDate.of(2024, 4, 1), "Секретный штамм");
+        docBlockedCourse.setDocType("STRAIN_ISOLATION");
+        docBlockedCourse.setAccessCourse("EPID-999");
+
+        Mockito.when(employeeDocumentRepository.findUnifiedEmployeeDossier("EMP-200"))
+                .thenReturn(java.util.List.of(docPublic, docAllowedDep, docBlockedDep, docBlockedCourse));
+
+        byte[] pdfBytes = mockMvc.perform(get("/api/v1/dossier/reports/200/download")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header().string("Content-Disposition", "attachment; filename=\"dossier_report_200.pdf\""))
+                .andReturn().getResponse().getContentAsByteArray();
+
+        PdfReader reader = new PdfReader(pdfBytes);
+        org.junit.jupiter.api.Assertions.assertTrue(reader.getNumberOfPages() >= 2);
+
+        String page2Text = PdfTextExtractor.getTextFromPage(reader, 2);
+        org.junit.jupiter.api.Assertions.assertTrue(page2Text.contains("Открытый приказ"), "Public document must be in PDF");
+        org.junit.jupiter.api.Assertions.assertTrue(page2Text.contains("Доступный отчет эпидемиологии"), "Allowed department document must be in PDF");
+        org.junit.jupiter.api.Assertions.assertFalse(page2Text.contains("Закрытый отчет вирусологии"), "Forbidden department document must be excluded from PDF");
+        org.junit.jupiter.api.Assertions.assertFalse(page2Text.contains("Закрытый штамм чужого курса"), "Forbidden course document must be excluded from PDF");
     }
 }
