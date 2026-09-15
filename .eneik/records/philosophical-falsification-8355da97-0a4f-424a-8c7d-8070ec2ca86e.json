@@ -35,6 +35,42 @@
       "confidence": "high",
       "evidence": "serve.mjs static mocks hiding actual backend API communication.",
       "screenshotFile": ""
+    },
+    {
+      "roleTag": "BARCAN-TAG-03",
+      "philosopher": "Сюзан Hurley",
+      "worldview": "Consciousness in Action - dynamic perception-action feedback",
+      "critique": "The frontend UI handles actions with disjointed, artificial responses. Clicking 'Выходные данные' blocks the UI with a native browser `alert()` rather than rendering it as part of the enactive perception space, and the dossier generation simulates a load state through hardcoded `setTimeout`, creating a disconnect between the user's action and the system's genuine internal dynamic feedback.",
+      "proposal": "Integrate the Impressum/Imprint into the visual layout naturally and tie the loading state to the actual backend lifecycle instead of arbitrary timeouts.",
+      "dislike": "Native alert popups and hardcoded wait states that shatter the perceptual illusion of interaction.",
+      "kanoClass": "Reverse",
+      "confidence": "high",
+      "evidence": "frontend/dossier-harness.html uses `alert()` for Impressum and `setTimeout` for document generation.",
+      "screenshotFile": "dossier-1440px.png"
+    },
+    {
+      "roleTag": "BARCAN-TAG-04",
+      "philosopher": "Бас ван Фраассен",
+      "worldview": "The Scientific Image - constructive empiricism",
+      "critique": "The EmployeeDossierAnalyticsController postulates confidence interval boundaries (`lowerBound`, `upperBound`) using hardcoded constants and `Math.sqrt` calculations that silently swallow `NaN` values with a `0.0` fallback. This violates constructive empiricism by presenting calculated guesswork as a factual property of the employee's document dataset, without empirical backing from the actual document composition or true statistical distribution.",
+      "proposal": "Remove the synthetic `marginOfError` calculation. Report only empirical facts (the raw counts and the strict ratio), or compute a statistically sound interval explicitly tied to actual observations.",
+      "dislike": "Presenting unobservable, mathematically suppressed uncertainty (NaN fallbacks) as if it were a factual lower/upper bound.",
+      "kanoClass": "Reverse",
+      "confidence": "high",
+      "evidence": "EmployeeDossierAnalyticsController.java calculating bounds with a hardcoded 1.96 multiplier and replacing NaN with 0.0.",
+      "screenshotFile": ""
+    },
+    {
+      "roleTag": "BARCAN-TAG-05",
+      "philosopher": "Уэсли Сэлмон",
+      "worldview": "Scientific Explanation and the Causal Structure of the World - causal processes",
+      "critique": "The system determines processing time for dossier generation (`processingTime = System.currentTimeMillis() - startTime`) using transient local clocks directly spanning an IO-heavy block. This violates the principle of causal processes by relying on an uncoordinated local state for telemetry, preventing accurate incident reconstruction if the process spans threads, nodes, or encounters temporal discontinuities.",
+      "proposal": "Use monotonically increasing causal tokens or explicit causal bounds passed through the telemetry boundaries rather than raw wall-clock subtraction.",
+      "dislike": "Using raw `System.currentTimeMillis()` differences across complex workflows.",
+      "kanoClass": "Must-Be",
+      "confidence": "high",
+      "evidence": "EmployeeDossierAnalyticsController.java `processingTime` calculation logic.",
+      "screenshotFile": ""
     }
   ]
 }
