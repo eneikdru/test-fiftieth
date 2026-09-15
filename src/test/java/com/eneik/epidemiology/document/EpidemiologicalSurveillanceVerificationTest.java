@@ -56,7 +56,7 @@ public class EpidemiologicalSurveillanceVerificationTest {
 
     @Test
     @WithMockUser
-    @DisplayName("Given the seeded database, When surveillance authority KPI flow runs, Then metrics endpoint returns denominator and confidence bounds end-to-end")
+    @DisplayName("Given the seeded database, When surveillance authority KPI flow runs, Then metrics endpoint returns denominator without synthetic bounds end-to-end")
     void testSurveillanceAuthorityKpiFlow() throws Exception {
         // Query surveillance authority KPI metrics for an employee
         mockMvc.perform(get("/api/v1/dossier/analytics/metrics")
@@ -64,9 +64,8 @@ public class EpidemiologicalSurveillanceVerificationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.employee_id").value("EMP-001"))
                 .andExpect(jsonPath("$.metric_name").value("Доля научных отчетов в общем объеме документов"))
-                .andExpect(jsonPath("$.value").isNumber())
                 .andExpect(jsonPath("$.denominator").isNumber())
-                .andExpect(jsonPath("$.lower_bound").isNumber())
-                .andExpect(jsonPath("$.upper_bound").isNumber());
+                .andExpect(jsonPath("$.lower_bound").doesNotExist())
+                .andExpect(jsonPath("$.upper_bound").doesNotExist());
     }
 }

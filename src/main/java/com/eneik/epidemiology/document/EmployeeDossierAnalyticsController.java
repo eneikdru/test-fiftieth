@@ -40,8 +40,10 @@ public class EmployeeDossierAnalyticsController {
             @RequestParam(value = "page", defaultValue = "0") int page,
             @RequestParam(value = "size", defaultValue = "20") int size) {
 
-        String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
-        User currentUser = userRepository.findByUsername(currentUsername).orElse(null);
+        String currentUsername = SecurityContextHolder.getContext().getAuthentication() != null
+                ? SecurityContextHolder.getContext().getAuthentication().getName()
+                : null;
+        User currentUser = currentUsername != null ? userRepository.findByUsername(currentUsername).orElse(null) : null;
 
         org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size);
         boolean isAdmin = currentUser != null && "ADMIN".equals(currentUser.getRole());
@@ -136,8 +138,10 @@ public class EmployeeDossierAnalyticsController {
                  documents = documents.stream().filter(d -> finalDocTypes.contains(d.getDocType())).toList();
             }
 
-            String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
-            User currentUser = userRepository.findByUsername(currentUsername).orElse(null);
+            String currentUsername = SecurityContextHolder.getContext().getAuthentication() != null
+                    ? SecurityContextHolder.getContext().getAuthentication().getName()
+                    : null;
+            User currentUser = currentUsername != null ? userRepository.findByUsername(currentUsername).orElse(null) : null;
 
             if (currentUser != null && !"ADMIN".equals(currentUser.getRole())) {
                 List<String> userCoursesList = currentUser.getCourses() != null && !currentUser.getCourses().isEmpty()
@@ -199,8 +203,10 @@ public class EmployeeDossierAnalyticsController {
         List<EmployeeDocument> documents = employeeDocumentRepository.searchEmployeeDocuments(employeeId, null, null, scientificDirection, null, null, null
         , org.springframework.data.domain.Pageable.unpaged()).getContent();
 
-        String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
-        User currentUser = userRepository.findByUsername(currentUsername).orElse(null);
+        String currentUsername = SecurityContextHolder.getContext().getAuthentication() != null
+                ? SecurityContextHolder.getContext().getAuthentication().getName()
+                : null;
+        User currentUser = currentUsername != null ? userRepository.findByUsername(currentUsername).orElse(null) : null;
 
         if (currentUser != null && !"ADMIN".equals(currentUser.getRole())) {
             List<String> userCoursesList = currentUser.getCourses() != null && !currentUser.getCourses().isEmpty()
@@ -216,43 +222,29 @@ public class EmployeeDossierAnalyticsController {
         }
 
         int denominator = documents.size();
+        Map<String, Object> response = new java.util.HashMap<>();
+        response.put("employee_id", employeeId);
+        response.put("metric_name", "Доля научных отчетов в общем объеме документов");
+        response.put("denominator", denominator);
+
         if (denominator == 0) {
-            return ResponseEntity.ok(Map.of(
-                    "employee_id", employeeId,
-                    "metric_name", "Доля научных отчетов в общем объеме документов",
-                    "value", 0.0,
-                    "denominator", 0,
-                    "lower_bound", 0.0,
-                    "upper_bound", 0.0
-            ));
+            response.put("value", null);
+            return ResponseEntity.ok(response);
         }
 
         long reportCount = documents.stream().filter(d -> "REPORT".equals(d.getDocType())).count();
         double value = (double) reportCount / denominator;
+        response.put("value", value);
 
-        // Basic confidence interval mock logic
-        double marginOfError = 1.96 * Math.sqrt((value * (1 - value)) / denominator);
-        if(Double.isNaN(marginOfError)) {
-             marginOfError = 0.0;
-        }
-
-        double lowerBound = Math.max(0.0, value - marginOfError);
-        double upperBound = Math.min(1.0, value + marginOfError);
-
-        return ResponseEntity.ok(Map.of(
-                "employee_id", employeeId,
-                "metric_name", "Доля научных отчетов в общем объеме документов",
-                "value", value,
-                "denominator", denominator,
-                "lower_bound", lowerBound,
-                "upper_bound", upperBound
-        ));
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/reports/{id}/download")
     public ResponseEntity<?> downloadAnalyticsReport(@PathVariable("id") Long id) {
-        String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
-        User currentUser = userRepository.findByUsername(currentUsername).orElse(null);
+        String currentUsername = SecurityContextHolder.getContext().getAuthentication() != null
+                ? SecurityContextHolder.getContext().getAuthentication().getName()
+                : null;
+        User currentUser = currentUsername != null ? userRepository.findByUsername(currentUsername).orElse(null) : null;
 
         return dossierReportRepository.findById(id)
                 .map(report -> {

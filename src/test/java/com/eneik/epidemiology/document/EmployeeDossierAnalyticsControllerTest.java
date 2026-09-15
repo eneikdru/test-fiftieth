@@ -98,7 +98,7 @@ class EmployeeDossierAnalyticsControllerTest {
 
     @Test
     @WithMockUser
-    @DisplayName("Given valid parameters, when calling /metrics, then returns calculated metrics")
+    @DisplayName("Given valid parameters, when calling /metrics, then returns calculated metrics without synthetic bounds")
     void testGetAnalyticsMetrics() throws Exception {
         mockMvc.perform(get("/api/v1/dossier/analytics/metrics")
                         .param("employee_id", "EMP-123"))
@@ -106,7 +106,10 @@ class EmployeeDossierAnalyticsControllerTest {
                 .andExpect(jsonPath("$.employee_id").value("EMP-123"))
                 .andExpect(jsonPath("$.metric_name").value("Доля научных отчетов в общем объеме документов"))
                 .andExpect(jsonPath("$.denominator").value(3)) // Total docs for EMP-123
-                .andExpect(jsonPath("$.value").value(org.hamcrest.Matchers.closeTo(2.0/3.0, 0.0001))); // 2 REPORTS out of 3 docs
+                .andExpect(jsonPath("$.value").value(org.hamcrest.Matchers.closeTo(2.0/3.0, 0.0001)))
+                .andExpect(jsonPath("$.marginOfError").doesNotExist())
+                .andExpect(jsonPath("$.lower_bound").doesNotExist())
+                .andExpect(jsonPath("$.upper_bound").doesNotExist());
     }
     @Test
     @WithMockUser
