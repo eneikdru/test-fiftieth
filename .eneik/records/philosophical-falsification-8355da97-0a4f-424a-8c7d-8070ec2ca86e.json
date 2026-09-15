@@ -1,0 +1,40 @@
+{
+  "critiques": [
+    {
+      "roleTag": "BARCAN-TAG-00",
+      "philosopher": "Майкл Дамит",
+      "worldview": "Verificationist Theory of Meaning",
+      "critique": "A dead end - the path simply cannot continue from here. The backend fails to start when trying to execute standard workflows or run tests (mvn test) due to failure to load ApplicationContext for many tests. The integration is broken making the system completely unusable along the main path. The backend connection/startup logic must be fixed.",
+      "proposal": "Fix the environment dependencies or database properties to allow the backend to successfully start.",
+      "dislike": "An application that fails to load its application context.",
+      "kanoClass": "Must-Be",
+      "confidence": "high",
+      "evidence": "mvn test failures showing 'IllegalState ApplicationContext failure threshold (1) exceeded'.",
+      "screenshotFile": ""
+    },
+    {
+      "roleTag": "BARCAN-TAG-02",
+      "philosopher": "Дэвид Чалмерс",
+      "worldview": "Primary and Secondary Intensions",
+      "critique": "The delivered API rejects authenticated requests with HTTP 401 on endpoints that must answer 200/201. The employee dossier search, document listing and report generation are unreachable as a result, so the product cannot be used at all. CI on main has been red since 2026-08-26. 12 tests expecting 200 receive 401, 10 tests expecting 201 receive 401.",
+      "proposal": "Fix the SecurityConfig rules so that authenticated users properly gain access to dossier and protocols endpoints, resolving the 401 errors for valid roles.",
+      "dislike": "Configurations mapping correct users to a failed (401) outcome.",
+      "kanoClass": "Must-Be",
+      "confidence": "high",
+      "evidence": "SecurityConfig.java / JwtAuthenticationFilter.java preventing valid access.",
+      "screenshotFile": ""
+    },
+    {
+      "roleTag": "BARCAN-TAG-01",
+      "philosopher": "Кит Файн",
+      "worldview": "Essence before modal description",
+      "critique": "An action with no confirmation - the product never tells you whether it worked. The system is designed with a mock UI that does not communicate properly with the backend, leaving the main integration path entirely broken and lacking real confirmations.",
+      "proposal": "Establish the real connection between frontend UI and the backend controllers instead of serving mock static answers.",
+      "dislike": "Mock responses representing real business logic.",
+      "kanoClass": "Must-Be",
+      "confidence": "high",
+      "evidence": "serve.mjs static mocks hiding actual backend API communication.",
+      "screenshotFile": ""
+    }
+  ]
+}
