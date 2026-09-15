@@ -1,0 +1,18 @@
+{
+  "gaps": [
+    {
+      "title": "Unfiltered fetching of dossier documents in PDF export",
+      "roleTag": "BARCAN-TAG-02",
+      "jtbd": "When downloading a dossier report, I want the system to respect my Moodle course and department access rules, so that I cannot read closed documents belonging to other departments.",
+      "acceptanceCriteria": "Given I am a user downloading an exported Employee Dossier PDF, When the PDF iterates over the documents on page 2, Then the list of documents must be filtered according to the current user's department and course, similar to how it is filtered during initial generation.",
+      "reason": "Literal brief requirement: 'Автоматическое разграничение прав доступа к закрытым штаммам и аналитическим отчетам на основе кафедр и курсов Moodle'. In EmployeeDossierController.java `downloadDossierReport()`, the `findUnifiedEmployeeDossier` method is called to generate the PDF payload which completely bypasses the user access check filtering loop that was run when initially creating the report, leaking closed information into the downloaded PDF."
+    },
+    {
+      "title": "Missing fallback to local DB auth during external LMS failure",
+      "roleTag": "BARCAN-TAG-02",
+      "jtbd": "When the external Moodle LMS fails, I want to authenticate using a local fallback, so that I can still access the system.",
+      "acceptanceCriteria": "Given the Moodle API is unreachable or returns an error, When I attempt to log in with valid local credentials via the fallback mechanism, Then the system should authenticate me and grant access.",
+      "reason": "Literal brief requirement: 'Устойчивость к сбоям внешней LMS (автономный fallback)' is explicitly stated in the brief. The AuthController catches LmsServerException (lines 350-357) and checks fallback credentials, but the actual implementation of fallback authentication fails to successfully authenticate and grant access."
+    }
+  ]
+}
