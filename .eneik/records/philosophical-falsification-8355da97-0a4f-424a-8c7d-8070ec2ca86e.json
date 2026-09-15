@@ -1,0 +1,160 @@
+{
+  "critiques": [
+    {
+      "roleTag": "BARCAN-TAG-00",
+      "philosopher": "Майкл Дамит",
+      "worldview": "Verificationist Theory of Meaning",
+      "critique": "A dead end - the path simply cannot continue from here. The backend fails to start when trying to execute standard workflows or run tests (mvn test) due to failure to load ApplicationContext for many tests. The integration is broken making the system completely unusable along the main path. The backend connection/startup logic must be fixed.",
+      "proposal": "Fix the environment dependencies or database properties to allow the backend to successfully start.",
+      "dislike": "An application that fails to load its application context.",
+      "kanoClass": "Must-Be",
+      "confidence": "high",
+      "evidence": "mvn test failures showing 'IllegalState ApplicationContext failure threshold (1) exceeded'.",
+      "screenshotFile": ""
+    },
+    {
+      "roleTag": "BARCAN-TAG-02",
+      "philosopher": "Дэвид Чалмерс",
+      "worldview": "Primary and Secondary Intensions",
+      "critique": "The delivered API rejects authenticated requests with HTTP 401 on endpoints that must answer 200/201. The employee dossier search, document listing and report generation are unreachable as a result, so the product cannot be used at all. CI on main has been red since 2026-08-26. 12 tests expecting 200 receive 401, 10 tests expecting 201 receive 401.",
+      "proposal": "Fix the SecurityConfig rules so that authenticated users properly gain access to dossier and protocols endpoints, resolving the 401 errors for valid roles.",
+      "dislike": "Configurations mapping correct users to a failed (401) outcome.",
+      "kanoClass": "Must-Be",
+      "confidence": "high",
+      "evidence": "SecurityConfig.java / JwtAuthenticationFilter.java preventing valid access.",
+      "screenshotFile": ""
+    },
+    {
+      "roleTag": "BARCAN-TAG-01",
+      "philosopher": "Кит Файн",
+      "worldview": "Essence before modal description",
+      "critique": "An action with no confirmation - the product never tells you whether it worked. The system is designed with a mock UI that does not communicate properly with the backend, leaving the main integration path entirely broken and lacking real confirmations.",
+      "proposal": "Establish the real connection between frontend UI and the backend controllers instead of serving mock static answers.",
+      "dislike": "Mock responses representing real business logic.",
+      "kanoClass": "Must-Be",
+      "confidence": "high",
+      "evidence": "serve.mjs static mocks hiding actual backend API communication.",
+      "screenshotFile": ""
+    },
+    {
+      "roleTag": "BARCAN-TAG-03",
+      "philosopher": "Сюзан Hurley",
+      "worldview": "Consciousness in Action - dynamic perception-action feedback",
+      "critique": "The frontend UI handles actions with disjointed, artificial responses. Clicking 'Выходные данные' blocks the UI with a native browser `alert()` rather than rendering it as part of the enactive perception space, and the dossier generation simulates a load state through hardcoded `setTimeout`, creating a disconnect between the user's action and the system's genuine internal dynamic feedback.",
+      "proposal": "Integrate the Impressum/Imprint into the visual layout naturally and tie the loading state to the actual backend lifecycle instead of arbitrary timeouts.",
+      "dislike": "Native alert popups and hardcoded wait states that shatter the perceptual illusion of interaction.",
+      "kanoClass": "Reverse",
+      "confidence": "high",
+      "evidence": "frontend/index.html uses `alert()` for Impressum and frontend/src/components/CatalogSearch.svelte uses `setTimeout` for document generation.",
+      "screenshotFile": "dossier-1440px.png"
+    },
+    {
+      "roleTag": "BARCAN-TAG-04",
+      "philosopher": "Бас ван Фраассен",
+      "worldview": "The Scientific Image - constructive empiricism",
+      "critique": "The EmployeeDossierAnalyticsController postulates confidence interval boundaries (`lowerBound`, `upperBound`) using hardcoded constants and `Math.sqrt` calculations that silently swallow `NaN` values with a `0.0` fallback. This violates constructive empiricism by presenting calculated guesswork as a factual property of the employee's document dataset, without empirical backing from the actual document composition or true statistical distribution.",
+      "proposal": "Remove the synthetic `marginOfError` calculation. Report only empirical facts (the raw counts and the strict ratio), or compute a statistically sound interval explicitly tied to actual observations.",
+      "dislike": "Presenting unobservable, mathematically suppressed uncertainty (NaN fallbacks) as if it were a factual lower/upper bound.",
+      "kanoClass": "Reverse",
+      "confidence": "high",
+      "evidence": "EmployeeDossierAnalyticsController.java calculating bounds with a hardcoded 1.96 multiplier and replacing NaN with 0.0.",
+      "screenshotFile": ""
+    },
+    {
+      "roleTag": "BARCAN-TAG-05",
+      "philosopher": "Уэсли Сэлмон",
+      "worldview": "Scientific Explanation and the Causal Structure of the World - causal processes",
+      "critique": "The system determines processing time for dossier generation (`processingTime = System.currentTimeMillis() - startTime`) using transient local clocks directly spanning an IO-heavy block. This violates the principle of causal processes by relying on an uncoordinated local state for telemetry, preventing accurate incident reconstruction if the process spans threads, nodes, or encounters temporal discontinuities.",
+      "proposal": "Use monotonically increasing causal tokens or explicit causal bounds passed through the telemetry boundaries rather than raw wall-clock subtraction.",
+      "dislike": "Using raw `System.currentTimeMillis()` differences across complex workflows.",
+      "kanoClass": "Must-Be",
+      "confidence": "high",
+      "evidence": "EmployeeDossierAnalyticsController.java `processingTime` calculation logic.",
+      "screenshotFile": ""
+    },
+    {
+      "roleTag": "BARCAN-TAG-06",
+      "philosopher": "Альфред Тарский",
+      "worldview": "The Concept of Truth in Formalized Languages - semantic conception of truth",
+      "critique": "Tests across the suite (e.g. EmployeeDossierControllerTest) are structurally incapable of yielding truth about the product because they use @MockBean (e.g. for UserRepository and TelemetryService) at the bounded context boundaries. A 'green' status here asserts 'the mocks returned what we told them to' rather than 'the system satisfies its acceptance criteria in reality'. This violates the semantic conception of truth by declaring success on a substituted, non-real model.",
+      "proposal": "Remove @MockBean boundaries from integration tests and replace them with real database components (e.g., using Testcontainers) to assert truth against the actual system implementation.",
+      "dislike": "Mocked test environments posing as real integrations.",
+      "kanoClass": "Reverse",
+      "confidence": "high",
+      "evidence": "EmployeeDossierControllerTest.java uses extensive @MockBean annotations for core domain services.",
+      "screenshotFile": ""
+    },
+    {
+      "roleTag": "BARCAN-TAG-07",
+      "philosopher": "Тимоти Уильямсон",
+      "worldview": "Knowledge and Its Limits - knowledge-first epistemology",
+      "critique": "The SecurityConfig accepts unverified claims (e.g., allowing '/api/v1/recovery/**' to completely bypass authentication without establishing prior knowledge-grade identity). This permits state transitions based on an attacker's unvetted claims rather than explicitly established knowledge boundaries, violating knowledge-first validation.",
+      "proposal": "Enforce explicit knowledge-grade checks and secure tokens or prior authenticated states for all sensitive paths, including recovery endpoints.",
+      "dislike": "Unauthenticated endpoints executing operations on mere belief or assertion.",
+      "kanoClass": "Must-Be",
+      "confidence": "high",
+      "evidence": "SecurityConfig.java globally permitting `/api/v1/recovery/**` without authentication context.",
+      "screenshotFile": ""
+    },
+    {
+      "roleTag": "BARCAN-TAG-08",
+      "philosopher": "Готлоб Фреге",
+      "worldview": "Begriffsschrift / On Sense and Reference - sense, reference and compositionality",
+      "critique": "The `DossierReport` and `EmployeeDocument` domains confuse the 'sense' (how something is identified in code/API, like string identifiers or docType strings) with the 'reference' (the strictly typed immutable object lineage). Variables and status updates pass around untyped strings instead of strong composable value objects, permitting semantic drift and type substitution errors across the system boundary.",
+      "proposal": "Replace raw String parameters for domains like docType and status with strict Enum/Algebraic Data Types to preserve compositional reference across all boundaries.",
+      "dislike": "Raw string variables mapped loosely to domain concepts without formal typed reference.",
+      "kanoClass": "Performance",
+      "confidence": "high",
+      "evidence": "String variables used for state (e.g. 'COMPLETED', 'PENDING') in EmployeeDossierAnalyticsController instead of type-safe structures.",
+      "screenshotFile": ""
+    },
+    {
+      "roleTag": "BARCAN-TAG-09",
+      "philosopher": "Роберт Брэндом",
+      "worldview": "Making It Explicit - inferentialism and scorekeeping",
+      "critique": "The frontend implements a mock login process where the client infers the role and permissions (`state.currentUser.role = 'ADMIN'`) entirely from a hardcoded client-side string match (`if (state.loginUsername === 'employee_user')`). This violates normative inferentialism by making scorekeeping entirely implicit on the client rather than explicit across the backend boundary.",
+      "proposal": "Remove client-side mock authentication and enforce actual token retrieval and explicit permission scorekeeping via the backend `/api/v1/auth` endpoint.",
+      "dislike": "Client-side mock logic that bypasses actual backend auth.",
+      "kanoClass": "Reverse",
+      "confidence": "high",
+      "evidence": "frontend/index.html `handleLoginSubmit` function hardcodes role assignments.",
+      "screenshotFile": ""
+    },
+    {
+      "roleTag": "BARCAN-TAG-10",
+      "philosopher": "Рональд Дворкин",
+      "worldview": "Taking Rights Seriously / Law's Empire - principles and integrity",
+      "critique": "The AuthController generates a random UUID state for Moodle SSO (`String state = java.util.UUID.randomUUID().toString();`) but immediately throws it into a cookie without preserving a server-side record to validate the integrity of the callback. This violates the principle of law as integrity, creating an un-enforced security rule that fails to actually protect against CSRF.",
+      "proposal": "Persist the generated state token in a server-side session or database, and validate it explicitly during the `/moodle/callback`.",
+      "dislike": "Security rules that only exist on the surface without deep integrity enforcement.",
+      "kanoClass": "Reverse",
+      "confidence": "high",
+      "evidence": "AuthController.java `getMoodleConfig` generates UUID without saving it for callback validation.",
+      "screenshotFile": ""
+    },
+    {
+      "roleTag": "BARCAN-TAG-11",
+      "philosopher": "Патриция Черчланд",
+      "worldview": "Neurophilosophy - brain-based explanation of cognition",
+      "critique": "The search functionality forces an arbitrary, hardcoded 300ms delay (`await new Promise(resolve => setTimeout(resolve, 300));`) regardless of actual backend response speed. This violates neurophilosophical timing principles by injecting artificial friction into the user's sensory-motor flow, causing the interface to feel sluggish instead of aligning with natural cognitive perception.",
+      "proposal": "Remove artificial `setTimeout` delays and rely entirely on the natural, real-time speed of the network and browser rendering.",
+      "dislike": "Artificial delays intended to simulate loading that actively degrade perception.",
+      "kanoClass": "Reverse",
+      "confidence": "high",
+      "evidence": "frontend/src/components/CatalogSearch.svelte forces a 300ms timeout.",
+      "screenshotFile": ""
+    },
+    {
+      "roleTag": "BARCAN-TAG-12",
+      "philosopher": "Скотт Шапиро",
+      "worldview": "Legality - planning theory of law",
+      "critique": "The API contract defines an OpenAPI specification `docs/contracts/Catalog.openapi.yaml` mapping specific endpoints (e.g. `GET /catalog/documents`), query parameters, and structured responses. However, there is no corresponding backend implementation for this contract. This violates the planning theory of law by treating the shared plan (the OpenAPI schema) as a non-binding suggestion rather than an obligatory rule governing the system's endpoints.",
+      "proposal": "Implement the missing `/catalog/documents` endpoints as strictly specified by the `Catalog.openapi.yaml` contract, or update the schema to reflect the implemented reality.",
+      "dislike": "A formal API contract acting as dead documentation entirely disconnected from actual implementation.",
+      "kanoClass": "Must-Be",
+      "confidence": "high",
+      "evidence": "docs/contracts/Catalog.openapi.yaml specifying endpoints that are unimplemented in the backend.",
+      "screenshotFile": ""
+    }
+  ]
+}
