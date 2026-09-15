@@ -97,7 +97,7 @@ public class EmployeeDossierAnalyticsController {
             docTypes = (List<String>) (Object) requestBody.get("doc_types");
         }
 
-        long startTime = System.currentTimeMillis();
+        long startTimeNanos = System.nanoTime();
         boolean success = false;
         DossierReport report = null;
 
@@ -176,7 +176,7 @@ public class EmployeeDossierAnalyticsController {
                 success = true;
             }
         } finally {
-            long processingTime = System.currentTimeMillis() - startTime;
+            long processingTime = Math.max(0L, java.util.concurrent.TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTimeNanos));
             telemetryService.recordDossierGenerationTelemetry(processingTime, success);
         }
 

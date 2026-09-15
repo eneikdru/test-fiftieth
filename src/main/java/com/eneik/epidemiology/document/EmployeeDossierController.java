@@ -103,7 +103,7 @@ public class EmployeeDossierController {
         String employeeId = (String) requestBody.get("employee_id");
         String templateType = (String) requestBody.get("template_type");
 
-        long startTime = System.currentTimeMillis();
+        long startTimeNanos = System.nanoTime();
         boolean success = false;
         DossierReport report = null;
 
@@ -194,7 +194,7 @@ public class EmployeeDossierController {
                 success = true;
             }
         } finally {
-            long processingTime = System.currentTimeMillis() - startTime;
+            long processingTime = Math.max(0L, java.util.concurrent.TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTimeNanos));
             telemetryService.recordDossierGenerationTelemetry(processingTime, success);
         }
 
