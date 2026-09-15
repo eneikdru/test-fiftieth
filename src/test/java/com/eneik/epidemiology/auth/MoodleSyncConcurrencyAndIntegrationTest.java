@@ -96,10 +96,72 @@ public class MoodleSyncConcurrencyAndIntegrationTest {
                         MediaType.APPLICATION_JSON
                 ));
 
-        given(userService.updateRoleAtomically(anyLong(), anyString(), anyString())).willReturn(0);
+        given(userService.updateRoleAndDepartmentAtomically(anyLong(), anyString(), anyString(), anyString(), anyString())).willReturn(0);
 
         assertThrows(OptimisticLockingFailureException.class, () -> {
             authController.syncMoodleRoles();
         });
+    }
+
+    @Test
+    @DisplayName("Given Moodle user with changed department and courses, When performMoodleRoleSync executes, Then department and courses are synchronized in addition to role")
+    void testPerformMoodleRoleSyncUpdatesDepartmentAndCourses() {
+        User user = userService.createUserWithMoodle(
+                "course_sync_user",
+                "Pass123!",
+                "coursesync@inst.ru",
+                "Course Sync User",
+                "USER",
+                "mock_moodle_token_courses",
+                "OldDepartment",
+                "OLD-101"
+        );
+
+        mockServer.expect(requestTo("https://moodle.epidemiology-inst.ru/oauth2/userinfo"))
+                .andExpect(header("Authorization", "Bearer mock_moodle_token_courses"))
+                .andRespond(withSuccess(
+                        "{\"username\":\"course_sync_user\",\"moodle_role\":\"старший научный сотрудник\",\"department\":\"NewDepartment\",\"email\":\"coursesync@inst.ru\",\"full_name\":\"Course Sync User\",\"courses\":\"NEW-201, NEW-202\"}",
+                        MediaType.APPLICATION_JSON
+                ));
+
+        authController.syncMoodleRoles();
+
+        mockServer.verify();
+
+        User updatedUser = userRepository.findById(user.getId()).orElseThrow();
+        org.junit.jupiter.api.Assertions.assertEquals("EPIDEMIOLOGIST", updatedUser.getRole());
+        org.junit.jupiter.api.Assertions.assertEquals("NewDepartment", updatedUser.getDepartment());
+        org.junit.jupiter.api.Assertions.assertEquals("NEW-201, NEW-202", updatedUser.getCourses());
+    }
+
+    @Test
+    @DisplayName("Given Moodle user with unchanged role but changed courses, When performMoodleRoleSync executes, Then courses and department are updated")
+    void testPerformMoodleRoleSyncUpdatesCoursesWhenRoleUnchanged() {
+        User user = userService.createUserWithMoodle(
+                "course_only_user",
+                "Pass123!",
+                "courseonly@inst.ru",
+                "Course Only User",
+                "USER",
+                "mock_moodle_token_course_only",
+                "Epidemiology",
+                "COURSE-A"
+        );
+
+        mockServer.expect(requestTo("https://moodle.epidemiology-inst.ru/oauth2/userinfo"))
+                .andExpect(header("Authorization", "Bearer mock_moodle_token_course_only"))
+                .andRespond(withSuccess(
+                        "{\"username\":\"course_only_user\",\"moodle_role\":\"Пользователь\",\"department\":\"Epidemiology\",\"email\":\"courseonly@inst.ru\",\"full_name\":\"Course Only User\",\"courses\":\"COURSE-B, COURSE-C\"}",
+                        MediaType.APPLICATION_JSON
+                ));
+
+        authController.syncMoodleRoles();
+
+        mockServer.verify();
+
+        User updatedUser = userRepository.findById(user.getId()).orElseThrow();
+        org.junit.jupiter.api.Assertions.assertEquals("USER", updatedUser.getRole());
+        org.junit.jupiter.api.Assertions.assertEquals("Epidemiology", updatedUser.getDepartment());
+        org.junit.jupiter.api.Assertions.assertEquals("COURSE-B, COURSE-C", updatedUser.getCourses());
     }
 }
