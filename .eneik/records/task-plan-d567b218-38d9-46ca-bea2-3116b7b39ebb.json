@@ -1,0 +1,52 @@
+{
+  "epics": [
+    {
+      "existingEpicId": "ca087fd2-45a6-4a9a-80a5-b0278aea4494",
+      "sourceIndex": 0,
+      "requirements": [
+        "R1: The system must automatically update archive access based on Moodle course enrollments and departments"
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Patch Moodle Profile Sync for Course Enrollment",
+          "roleTag": "BARCAN-TAG-02",
+          "jtbd": "When implementing the background sync update for this epic, I want to fetch and update the user's courses and department, so that the archive access automatically matches the Moodle enrollment state.",
+          "acceptanceCriteria": "Given a scheduled Moodle sync job\nWhen it fetches user profiles\nThen it must synchronize the user's courses and department in addition to their role\nAnd integration tests must verify the correct synchronization across layers",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "user access management bottleneck",
+          "sixSigmaMetric": "percent of users with perfectly synchronized enrollments",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1"
+          ]
+        }
+      ]
+    },
+    {
+      "existingEpicId": "ca087fd2-45a6-4a9a-80a5-b0278aea4494",
+      "sourceIndex": 1,
+      "requirements": [
+        "R1: The system must automatically suspend local archive accounts when the corresponding Moodle account is suspended or deleted"
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Patch Moodle Sync for Local Account Suspension",
+          "roleTag": "BARCAN-TAG-02",
+          "jtbd": "When implementing the background sync update for this epic, I want to detect suspended or deleted Moodle accounts, so that the corresponding local fallback accounts are disabled.",
+          "acceptanceCriteria": "Given a user with a local fallback password\nWhen their Moodle account is suspended or deleted\nThen the background sync detects the suspension and disables the local user account\nAnd unit tests must verify the suspension logic correctly toggles account status",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "user authentication bottleneck",
+          "sixSigmaMetric": "percent of suspended Moodle accounts with correctly disabled local accounts",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1"
+          ]
+        }
+      ]
+    }
+  ]
+}
