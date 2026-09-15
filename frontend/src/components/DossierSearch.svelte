@@ -1,4 +1,6 @@
 <script>
+    import ImprintModal from "./ImprintModal.svelte";
+    let showImprint = false;
     let surname = "";
     let documents = [];
     let loading = false;
@@ -43,13 +45,26 @@
         searchDossier();
     }
 
-    function generateReport() {
+    async function generateReport() {
         loading = true;
         feedback = "";
-        setTimeout(() => {
+        try {
+            const res = await fetch('/api/v1/dossier/reports', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ employee_id: surname || "EMP-000", template_type: "FULL" })
+            });
+            if (res.ok) {
+                feedback = "✓ Итоговая справка успешно сформирована.";
+            } else {
+                feedback = "Ошибка при формировании справки.";
+            }
+        } catch (e) {
+            console.error(e);
+            feedback = "Ошибка сети при формировании справки.";
+        } finally {
             loading = false;
-            feedback = "✓ Итоговая справка успешно сформирована.";
-        }, 1000);
+        }
     }
 </script>
 
@@ -95,10 +110,13 @@
 
     <footer class="dossier-footer">
         <span>Российский научно-исследовательский институт эпидемиологии</span>
-        <button on:click={() => alert('Выходные данные (Imprint / Impressum):\nФБУН «НИИ Эпидемиологии»\nг. Москва, ул. Новогиреевская, 3А')} class="imprint-btn" aria-label="Выходные данные">
+        <button on:click={() => showImprint = true} class="imprint-btn" aria-label="Выходные данные">
             Выходные данные (Imprint / Impressum)
         </button>
     </footer>
+    {#if showImprint}
+        <ImprintModal on:close={() => showImprint = false} />
+    {/if}
 </div>
 
 <style>

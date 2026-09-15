@@ -1,4 +1,6 @@
 <script>
+    import ImprintModal from "./ImprintModal.svelte";
+    let showImprint = false;
     import { onMount } from 'svelte';
 
     let searchQuery = '';
@@ -171,10 +173,13 @@
     <!-- Footer / Imprint -->
     <footer class="w-full py-4 px-6 text-center text-xs text-[#76777d] border-t border-[#c6c6cd] flex justify-between items-center mb-20 bg-[#f7f9fb]">
         <span>Российский научно-исследовательский институт эпидемиологии</span>
-        <button on:click={() => alert('Выходные данные (Imprint / Impressum):\nФБУН «НИИ Эпидемиологии»\nг. Москва, ул. Новогиреевская, 3А')} class="text-[#003f87] underline font-semibold hover:opacity-80">
+        <button on:click={() => showImprint = true} class="text-[#003f87] underline font-semibold hover:opacity-80">
             Imprint / Impressum
         </button>
     </footer>
+    {#if showImprint}
+        <ImprintModal on:close={() => showImprint = false} />
+    {/if}
 
     <!-- BottomNavBar -->
     <nav class="bg-[#ffffff] text-[#000000] fixed bottom-0 left-0 w-full z-50 border-t border-[#c6c6cd] flex justify-around items-center h-20 pb-safe px-4">
