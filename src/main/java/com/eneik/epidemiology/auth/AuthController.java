@@ -168,8 +168,9 @@ public class AuthController {
             }
 
             String moodleRole = moodleId;
+            MoodleProfile profile = null;
             try {
-                MoodleProfile profile = fetchMoodleProfile(moodleId);
+                profile = fetchMoodleProfile(moodleId);
                 if (profile != null && profile.moodleRole() != null) {
                     moodleRole = profile.moodleRole();
                 }
@@ -177,6 +178,15 @@ public class AuthController {
                 log.warn("External Moodle role fetch failed for user {}, using local moodleId fallback", userId, e);
             }
 
+            if (profile != null && profile.suspended()) {
+                User userToSuspend = userService.findByMoodleId(moodleId).orElse(null);
+                if (userToSuspend != null && userToSuspend.isActive()) {
+                    int suspendedStatus = userService.updateIsActiveAtomically(userToSuspend.getId(), true, false);
+                    if (suspendedStatus == 0) {
+                        throw new org.springframework.dao.OptimisticLockingFailureException("Concurrent update detected during suspension sync for user ID: " + userId);
+                    }
+                }
+            }
             String targetRole = mapMoodleRole(moodleRole);
             if (targetRole != null && !targetRole.equals(currentRole)) {
                 int updated = userService.updateRoleAtomically(userId, currentRole, targetRole);
@@ -1071,7 +1081,7 @@ public class AuthController {
         }
     }
 
-    private record MoodleProfile(String username, String moodleRole, String department, String email, String fullName, String courses) {}
+    private record MoodleProfile(String username, String moodleRole, String department, String email, String fullName, String courses, boolean suspended) {}
 
     private String exchangeCodeForToken(String code) {
         if (isBlank(code)) {
@@ -1125,6 +1135,10 @@ public class AuthController {
                 String email = (String) body.get("email");
                 String fullName = (String) body.getOrDefault("full_name", body.get("name"));
                 String courses = (String) body.get("courses");
+                boolean suspended = body.containsKey("suspended") && Boolean.TRUE.equals(body.get("suspended"));
+                if (!suspended && body.containsKey("deleted")) {
+                    suspended = Boolean.TRUE.equals(body.get("deleted"));
+                }
 
                 if (username != null && !username.isBlank()) {
                     return new MoodleProfile(
@@ -1133,7 +1147,7 @@ public class AuthController {
                             department != null ? department : "",
                             email != null ? email : "",
                             fullName != null ? fullName : username,
-                            courses != null ? courses : ""
+                            courses != null ? courses : "", suspended
                     );
                 }
             }
@@ -1240,10 +1254,14 @@ public class AuthController {
             String email = claims.has("email") ? claims.get("email").asText() : "";
             String fullName = claims.has("full_name") ? claims.get("full_name").asText() :
                             (claims.has("name") ? claims.get("name").asText() : username);
+            boolean suspended = claims.has("suspended") ? claims.get("suspended").asBoolean() : false;
+            if (!suspended && claims.has("deleted")) {
+                suspended = claims.get("deleted").asBoolean();
+            }
             String courses = claims.has("courses") ? claims.get("courses").asText() :
                            (claims.has("custom_courses") ? claims.get("custom_courses").asText() : "");
 
-            return new MoodleProfile(username, moodleRole, department, email, fullName, courses);
+            return new MoodleProfile(username, moodleRole, department, email, fullName, courses, suspended);
         } catch (Exception e) {
             log.error("Error extracting claims from OIDC ID token", e);
             return null;

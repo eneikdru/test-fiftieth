@@ -101,6 +101,11 @@ public class UserService {
         return userRepository.updateRoleAndDepartmentAtomically(id, oldRole, newRole, newDepartment, courses);
     }
 
+    @Transactional
+    public int updateIsActiveAtomically(Long id, boolean oldIsActive, boolean isActive) {
+        return userRepository.updateIsActiveAtomically(id, oldIsActive, isActive);
+    }
+
     @Transactional(readOnly = true)
     public boolean existsByUsername(String username) {
         return userRepository.existsByUsername(username);
