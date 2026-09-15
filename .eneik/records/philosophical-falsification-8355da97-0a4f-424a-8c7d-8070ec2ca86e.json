@@ -45,7 +45,7 @@
       "dislike": "Native alert popups and hardcoded wait states that shatter the perceptual illusion of interaction.",
       "kanoClass": "Reverse",
       "confidence": "high",
-      "evidence": "frontend/dossier-harness.html uses `alert()` for Impressum and `setTimeout` for document generation.",
+      "evidence": "frontend/index.html uses `alert()` for Impressum and frontend/src/components/CatalogSearch.svelte uses `setTimeout` for document generation.",
       "screenshotFile": "dossier-1440px.png"
     },
     {
@@ -106,6 +106,42 @@
       "kanoClass": "Performance",
       "confidence": "high",
       "evidence": "String variables used for state (e.g. 'COMPLETED', 'PENDING') in EmployeeDossierAnalyticsController instead of type-safe structures.",
+      "screenshotFile": ""
+    },
+    {
+      "roleTag": "BARCAN-TAG-09",
+      "philosopher": "Роберт Брэндом",
+      "worldview": "Making It Explicit - inferentialism and scorekeeping",
+      "critique": "The frontend implements a mock login process where the client infers the role and permissions (`state.currentUser.role = 'ADMIN'`) entirely from a hardcoded client-side string match (`if (state.loginUsername === 'employee_user')`). This violates normative inferentialism by making scorekeeping entirely implicit on the client rather than explicit across the backend boundary.",
+      "proposal": "Remove client-side mock authentication and enforce actual token retrieval and explicit permission scorekeeping via the backend `/api/v1/auth` endpoint.",
+      "dislike": "Client-side mock logic that bypasses actual backend auth.",
+      "kanoClass": "Reverse",
+      "confidence": "high",
+      "evidence": "frontend/index.html `handleLoginSubmit` function hardcodes role assignments.",
+      "screenshotFile": ""
+    },
+    {
+      "roleTag": "BARCAN-TAG-10",
+      "philosopher": "Рональд Дворкин",
+      "worldview": "Taking Rights Seriously / Law's Empire - principles and integrity",
+      "critique": "The AuthController generates a random UUID state for Moodle SSO (`String state = java.util.UUID.randomUUID().toString();`) but immediately throws it into a cookie without preserving a server-side record to validate the integrity of the callback. This violates the principle of law as integrity, creating an un-enforced security rule that fails to actually protect against CSRF.",
+      "proposal": "Persist the generated state token in a server-side session or database, and validate it explicitly during the `/moodle/callback`.",
+      "dislike": "Security rules that only exist on the surface without deep integrity enforcement.",
+      "kanoClass": "Reverse",
+      "confidence": "high",
+      "evidence": "AuthController.java `getMoodleConfig` generates UUID without saving it for callback validation.",
+      "screenshotFile": ""
+    },
+    {
+      "roleTag": "BARCAN-TAG-11",
+      "philosopher": "Патриция Черчланд",
+      "worldview": "Neurophilosophy - brain-based explanation of cognition",
+      "critique": "The search functionality forces an arbitrary, hardcoded 300ms delay (`await new Promise(resolve => setTimeout(resolve, 300));`) regardless of actual backend response speed. This violates neurophilosophical timing principles by injecting artificial friction into the user's sensory-motor flow, causing the interface to feel sluggish instead of aligning with natural cognitive perception.",
+      "proposal": "Remove artificial `setTimeout` delays and rely entirely on the natural, real-time speed of the network and browser rendering.",
+      "dislike": "Artificial delays intended to simulate loading that actively degrade perception.",
+      "kanoClass": "Reverse",
+      "confidence": "high",
+      "evidence": "frontend/src/components/CatalogSearch.svelte forces a 300ms timeout.",
       "screenshotFile": ""
     }
   ]
