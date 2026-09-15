@@ -133,7 +133,15 @@ public class JwtTokenProvider {
         }
         String[] parts = token.split("\\.");
         String payload = new String(Base64.getUrlDecoder().decode(parts[1]), StandardCharsets.UTF_8);
-        return extractJsonValue(payload, "sub");
+        try {
+            return extractJsonValue(payload, "sub");
+        } catch (IllegalArgumentException e1) {
+            try {
+                return extractJsonValue(payload, "username");
+            } catch (IllegalArgumentException e2) {
+                return extractJsonValue(payload, "preferred_username");
+            }
+        }
     }
 
     public String getRole(String token) {
@@ -142,7 +150,11 @@ public class JwtTokenProvider {
         }
         String[] parts = token.split("\\.");
         String payload = new String(Base64.getUrlDecoder().decode(parts[1]), StandardCharsets.UTF_8);
-        return extractJsonValue(payload, "role");
+        try {
+            return extractJsonValue(payload, "role");
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
     }
 
     private long extractExpiration(String base64Payload) {
@@ -186,6 +198,7 @@ public class JwtTokenProvider {
     }
 
     private String escapeJson(String str) {
+        if (str == null) return "";
         return str.replace("\\", "\\\\").replace("\"", "\\\"");
     }
 }
