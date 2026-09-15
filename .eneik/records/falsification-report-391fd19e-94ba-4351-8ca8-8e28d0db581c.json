@@ -1,0 +1,28 @@
+{
+  "violations": [
+    {
+      "roleTag": "BARCAN-TAG-00",
+      "type": "refusal_criteria",
+      "prNumber": 1562,
+      "reason": "The review verdict in PR #1562 approves a PR that introduced 'SixSigmaAuditService'. This violates Tarski Demarcation by inappropriately implementing factory orchestrator concepts as client domain product code, which must be given a 'REJECT' verdict according to the execution contract."
+    },
+    {
+      "roleTag": "BARCAN-TAG-09",
+      "type": "stub",
+      "prNumber": 1564,
+      "reason": "AuthController.java manually injects SecurityContextHolder.getContext().setAuthentication(...) inside moodleCallback and ssoLogin. This fakes success for the in-process mockMvc test (making it think the JWT works), but in a stateless JWT API it does not do the real work of fixing the JWT filter, effectively hiding the real 401 failures."
+    },
+    {
+      "roleTag": "BARCAN-TAG-05",
+      "type": "causal_unjustified",
+      "prNumber": 1564,
+      "reason": "PR #1564 claims to fix fallback auth, but the diff only pollutes the ThreadLocal context for the test. The actual mechanism that produces the 401 symptom (e.g. JwtAuthenticationFilter) is never changed, so the claimed cause was never traced."
+    },
+    {
+      "roleTag": "BARCAN-TAG-00",
+      "type": "specification_audit",
+      "prNumber": 1565,
+      "reason": "PR #1565 claims '{\"gaps\": []}' for Moodle LMS Integration coverage. However, the client brief requires role synchronization for Epidemiologists and access control based on Moodle courses, which are missing, and states the API is returning 401s making the product unusable."
+    }
+  ]
+}
