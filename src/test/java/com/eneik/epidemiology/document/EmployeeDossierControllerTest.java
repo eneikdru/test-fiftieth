@@ -11,18 +11,13 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import com.eneik.epidemiology.telemetry.TelemetryEventRepository;
 import com.eneik.epidemiology.telemetry.TelemetryService;
 import com.eneik.epidemiology.user.User;
 import com.eneik.epidemiology.user.UserRepository;
-import java.util.Optional;
-import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.verify;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.times;
 
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -36,6 +31,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
+@io.zonky.test.db.AutoConfigureEmbeddedDatabase
 @Transactional
 class EmployeeDossierControllerTest {
 
@@ -48,9 +44,10 @@ class EmployeeDossierControllerTest {
     @Autowired
     private DossierReportRepository dossierReportRepository;
 
-    @MockBean
-    private TelemetryService telemetryService;
-    @MockBean
+    @Autowired
+    private TelemetryEventRepository telemetryEventRepository;
+
+    @Autowired
     private UserRepository userRepository;
 
     @Autowired
@@ -58,6 +55,8 @@ class EmployeeDossierControllerTest {
 
     @BeforeEach
     void setUp() {
+        telemetryEventRepository.deleteAll();
+        userRepository.deleteAll();
         employeeDocumentRepository.deleteAll();
         dossierReportRepository.deleteAll();
 
@@ -70,18 +69,24 @@ class EmployeeDossierControllerTest {
 
         employeeDocumentRepository.saveAll(List.of(doc1, doc2, doc3, doc4));
 
-        User testUser = new User();
-        testUser.setUsername("user");
-        testUser.setRole("USER");
+        User testUser = new User("user", "hash123", "USER");
         testUser.setDepartment("Эпидемиология");
-        when(userRepository.findByUsername("user")).thenReturn(Optional.of(testUser));
+        testUser.setCourses("EPID-101, EPID-102");
+        userRepository.save(testUser);
 
-        User otherUser = new User();
-        otherUser.setUsername("other");
-        otherUser.setRole("USER");
+        User otherUser = new User("other", "hash123", "USER");
         otherUser.setDepartment("Вирусология");
-        when(userRepository.findByUsername("other")).thenReturn(Optional.of(otherUser));
+        userRepository.save(otherUser);
+
+        User epiUser = new User("epidemiologist", "hash123", "EPIDEMIOLOGIST");
+        epiUser.setDepartment("Эпидемиология");
+        userRepository.save(epiUser);
+
+        User otherUser2 = new User("other_user", "hash123", "USER");
+        otherUser2.setDepartment("Вирусология");
+        userRepository.save(otherUser2);
     }
+
     @WithMockUser(username = "user", roles = "USER")
     @Test
     @DisplayName("Given valid reports, when paginated list requested, then return correct page.")
@@ -100,9 +105,6 @@ class EmployeeDossierControllerTest {
                 .andExpect(jsonPath("$", hasSize(1)))
                 .andExpect(jsonPath("$[0].employee_id").value("EMP-777"));
     }
-
-
-
 
     @WithMockUser(username = "other", roles = "USER")
     @Test
@@ -137,7 +139,6 @@ class EmployeeDossierControllerTest {
                 .andExpect(jsonPath("$[0].title").value("Приказ о назначении"));
     }
 
-
     @WithMockUser(username = "user", roles = "USER")
     @Test
     @DisplayName("Given an employee surname, when a search request is made, then the backend returns the documents associated with that surname.")
@@ -149,18 +150,10 @@ class EmployeeDossierControllerTest {
                 .andExpect(jsonPath("$[0].title").value("Отчет по исследованию 2"));
     }
 
-
     @WithMockUser(username = "user", roles = "USER")
     @Test
     @DisplayName("Given a report generation request, when processed, then the backend successfully generates and returns the report file metadata and sets access fields.")
     void testGenerateDossierReport() throws Exception {
-        User userWithCourses = new User();
-        userWithCourses.setUsername("user");
-        userWithCourses.setRole("USER");
-        userWithCourses.setDepartment("Эпидемиология");
-        userWithCourses.setCourses("EPID-101, EPID-102");
-        when(userRepository.findByUsername("user")).thenReturn(Optional.of(userWithCourses));
-
         Map<String, Object> request = Map.of(
                 "employee_id", "EMP-999",
                 "template_type", "SUMMARY_STANDARD"
@@ -182,9 +175,11 @@ class EmployeeDossierControllerTest {
         org.junit.jupiter.api.Assertions.assertEquals("Эпидемиология", savedReport.getAccessDepartment());
         org.junit.jupiter.api.Assertions.assertEquals("EPID-101, EPID-102", savedReport.getAccessCourse());
 
-        verify(telemetryService, times(1)).recordDossierGenerationTelemetry(anyLong(), eq(true));
+        long dossierTelemetryCount = telemetryEventRepository.findAll().stream()
+                .filter(e -> TelemetryService.EVENT_DOSSIER_GENERATED.equals(e.getEventType()))
+                .count();
+        org.junit.jupiter.api.Assertions.assertEquals(1, dossierTelemetryCount);
     }
-
 
     @WithMockUser(username = "user", roles = "USER")
     @Test
@@ -234,21 +229,12 @@ class EmployeeDossierControllerTest {
                 .andExpect(jsonPath("$.error_code").value("VALIDATION_ERROR"));
     }
 
-
-
-
     @WithMockUser(username = "epidemiologist", roles = "USER")
     @Test
     @DisplayName("Given an Epidemiologist user and a completed dossier report, When they submit a signature request, Then the dossier report is marked as signed and the signature is persisted.")
     void testSignDossierReportSuccess() throws Exception {
-        User epiUser = new User();
-        epiUser.setUsername("epidemiologist");
-        epiUser.setRole("EPIDEMIOLOGIST");
-        epiUser.setDepartment("Эпидемиология");
-        when(userRepository.findByUsername("epidemiologist")).thenReturn(Optional.of(epiUser));
-
         DossierReport report = new DossierReport("EMP-777", "FULL", "COMPLETED", "Test summary", 1, "/api/v1/dossier/reports/1/download");
-        report = dossierReportRepository.saveAndFlush(report); // Try saveAndFlush instead of save
+        report = dossierReportRepository.saveAndFlush(report);
 
         Map<String, Object> request = Map.of("signature", "Dr. Epidemiologist Signature");
 
@@ -264,12 +250,6 @@ class EmployeeDossierControllerTest {
     @Test
     @DisplayName("Given an invalid signature request, When they submit it, Then the system rejects it and returns a 400 Bad Request.")
     void testSignDossierReportInvalidRequest() throws Exception {
-        User epiUser = new User();
-        epiUser.setUsername("epidemiologist");
-        epiUser.setRole("EPIDEMIOLOGIST");
-        epiUser.setDepartment("Эпидемиология");
-        when(userRepository.findByUsername("epidemiologist")).thenReturn(Optional.of(epiUser));
-
         DossierReport report = new DossierReport("EMP-777", "FULL", "COMPLETED", "Test summary", 1, "/api/v1/dossier/reports/1/download");
         report = dossierReportRepository.saveAndFlush(report);
 
@@ -286,12 +266,6 @@ class EmployeeDossierControllerTest {
     @Test
     @DisplayName("Given a user outside Epidemiology department, When they submit a signature request, Then returns 403 Forbidden.")
     void testSignDossierReportForbiddenUser() throws Exception {
-        User otherUser = new User();
-        otherUser.setUsername("other_user");
-        otherUser.setRole("USER");
-        otherUser.setDepartment("Вирусология");
-        when(userRepository.findByUsername("other_user")).thenReturn(Optional.of(otherUser));
-
         DossierReport report = new DossierReport("EMP-777", "FULL", "COMPLETED", "Test summary", 1, "/api/v1/dossier/reports/1/download");
         report = dossierReportRepository.saveAndFlush(report);
 
@@ -308,12 +282,6 @@ class EmployeeDossierControllerTest {
     @Test
     @DisplayName("Given a non-existent report ID, When signing, Then returns 404 Not Found.")
     void testSignDossierReportNotFound() throws Exception {
-        User epiUser = new User();
-        epiUser.setUsername("epidemiologist");
-        epiUser.setRole("EPIDEMIOLOGIST");
-        epiUser.setDepartment("Эпидемиология");
-        when(userRepository.findByUsername("epidemiologist")).thenReturn(Optional.of(epiUser));
-
         Map<String, Object> request = Map.of("signature", "Dr. Epidemiologist Signature");
 
         mockMvc.perform(post("/api/v1/dossier/reports/999999/sign")
@@ -327,12 +295,6 @@ class EmployeeDossierControllerTest {
     @Test
     @DisplayName("Given an uncompleted report, When signing, Then returns 409 Conflict.")
     void testSignDossierReportConflictUncompleted() throws Exception {
-        User epiUser = new User();
-        epiUser.setUsername("epidemiologist");
-        epiUser.setRole("EPIDEMIOLOGIST");
-        epiUser.setDepartment("Эпидемиология");
-        when(userRepository.findByUsername("epidemiologist")).thenReturn(Optional.of(epiUser));
-
         DossierReport report = new DossierReport("EMP-777", "FULL", "PENDING", "Test summary", 1, null);
         report = dossierReportRepository.saveAndFlush(report);
 
@@ -344,5 +306,4 @@ class EmployeeDossierControllerTest {
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.error_code").value("CONFLICT"));
     }
-
 }
