@@ -161,6 +161,8 @@ public class AuthController {
         for (Map<String, Object> userMap : usersWithMoodle) {
             Long userId = ((Number) userMap.get("id")).longValue();
             String currentRole = (String) userMap.get("role");
+            String currentDepartment = (String) userMap.get("department");
+            String currentCourses = (String) userMap.get("courses");
             String moodleId = (String) userMap.get("moodle_id");
 
             if (moodleId == null || moodleId.trim().isEmpty()) {
@@ -168,18 +170,37 @@ public class AuthController {
             }
 
             String moodleRole = moodleId;
+            String newDepartment = currentDepartment;
+            String newCourses = currentCourses;
+
             try {
                 MoodleProfile profile = fetchMoodleProfile(moodleId);
-                if (profile != null && profile.moodleRole() != null) {
-                    moodleRole = profile.moodleRole();
+                if (profile != null) {
+                    if (profile.moodleRole() != null) {
+                        moodleRole = profile.moodleRole();
+                    }
+                    if (profile.department() != null) {
+                        newDepartment = profile.department();
+                    }
+                    if (profile.courses() != null) {
+                        newCourses = profile.courses();
+                    }
                 }
             } catch (Throwable e) {
-                log.warn("External Moodle role fetch failed for user {}, using local moodleId fallback", userId, e);
+                log.warn("External Moodle profile fetch failed for user {}, using local moodleId fallback", userId, e);
             }
 
             String targetRole = mapMoodleRole(moodleRole);
-            if (targetRole != null && !targetRole.equals(currentRole)) {
-                int updated = userService.updateRoleAtomically(userId, currentRole, targetRole);
+            if (targetRole == null) {
+                targetRole = currentRole;
+            }
+
+            boolean roleChanged = !targetRole.equals(currentRole);
+            boolean departmentChanged = !java.util.Objects.equals(newDepartment, currentDepartment);
+            boolean coursesChanged = !java.util.Objects.equals(newCourses, currentCourses);
+
+            if (roleChanged || departmentChanged || coursesChanged) {
+                int updated = userService.updateRoleAndDepartmentAtomically(userId, currentRole, targetRole, newDepartment, newCourses);
                 if (updated == 0) {
                     throw new org.springframework.dao.OptimisticLockingFailureException("Concurrent role update detected during Moodle role sync for user ID: " + userId);
                 }

@@ -47,7 +47,7 @@ public class MoodleSyncConcurrencyAndIntegrationTest {
     }
 
     @Test
-    @DisplayName("Given Moodle user, When performMoodleRoleSync executes, Then queries external Moodle endpoint and updates role")
+    @DisplayName("Given Moodle user, When performMoodleRoleSync executes, Then queries external Moodle endpoint and updates role, department, and courses")
     void testPerformMoodleRoleSyncQueriesExternalEndpoint() {
         User user = userService.createUserWithMoodle(
                 "external_sync_user",
@@ -63,7 +63,7 @@ public class MoodleSyncConcurrencyAndIntegrationTest {
         mockServer.expect(requestTo("https://moodle.epidemiology-inst.ru/oauth2/userinfo"))
                 .andExpect(header("Authorization", "Bearer mock_moodle_token_123"))
                 .andRespond(withSuccess(
-                        "{\"username\":\"external_sync_user\",\"moodle_role\":\"Администратор\",\"department\":\"IT\",\"email\":\"extsync@inst.ru\",\"full_name\":\"External Sync User\",\"courses\":\"EPID-201\"}",
+                        "{\"username\":\"external_sync_user\",\"moodle_role\":\"Администратор\",\"department\":\"Virology\",\"email\":\"extsync@inst.ru\",\"full_name\":\"External Sync User\",\"courses\":\"EPID-201,EPID-301\"}",
                         MediaType.APPLICATION_JSON
                 ));
 
@@ -72,7 +72,9 @@ public class MoodleSyncConcurrencyAndIntegrationTest {
         mockServer.verify();
 
         User updatedUser = userRepository.findById(user.getId()).orElseThrow();
-        assert "ADMIN".equals(updatedUser.getRole());
+        org.junit.jupiter.api.Assertions.assertEquals("ADMIN", updatedUser.getRole());
+        org.junit.jupiter.api.Assertions.assertEquals("Virology", updatedUser.getDepartment());
+        org.junit.jupiter.api.Assertions.assertEquals("EPID-201,EPID-301", updatedUser.getCourses());
     }
 
     @Test
@@ -96,7 +98,7 @@ public class MoodleSyncConcurrencyAndIntegrationTest {
                         MediaType.APPLICATION_JSON
                 ));
 
-        given(userService.updateRoleAtomically(anyLong(), anyString(), anyString())).willReturn(0);
+        given(userService.updateRoleAndDepartmentAtomically(anyLong(), anyString(), anyString(), anyString(), anyString())).willReturn(0);
 
         assertThrows(OptimisticLockingFailureException.class, () -> {
             authController.syncMoodleRoles();
