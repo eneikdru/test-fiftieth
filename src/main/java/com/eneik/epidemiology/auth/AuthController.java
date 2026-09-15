@@ -686,6 +686,11 @@ public class AuthController {
             profile = fetchOidcProfile(request.oidc_token());
         } catch (LmsServerException e) {
             isServerError = true;
+        } catch (IllegalStateException e) {
+            isServerError = true;
+            if (request.fallback_password() == null || request.fallback_password().trim().isEmpty()) {
+                throw e;
+            }
         }
 
         if (profile == null || !profile.username().trim().equalsIgnoreCase(request.username().trim())) {
@@ -795,11 +800,17 @@ public class AuthController {
             profile = fetchMoodleProfile(request.moodle_token());
         } catch (LmsServerException e) {
             isServerError = true;
-            profile = fetchOidcProfile(request.moodle_token());
+            try {
+                profile = fetchOidcProfile(request.moodle_token());
+            } catch (Exception ex) {
+                log.warn("OIDC profile fetch failed during Moodle SSO fallback", ex);
+            }
+        } catch (Exception e) {
+            isServerError = true;
         }
 
         if (profile == null || !profile.username().trim().equalsIgnoreCase(request.username().trim())) {
-            if (isServerError && request.fallback_password() != null && !request.fallback_password().trim().isEmpty()) {
+            if (request.fallback_password() != null && !request.fallback_password().trim().isEmpty()) {
                 User user = userService.findByUsernameOrEmail(request.username().trim()).orElse(null);
                 if (user != null && userService.verifyPassword(request.fallback_password().trim(), user.getPasswordHash())) {
                     telemetryService.recordFallbackLoginTelemetry(user.getUsername());
