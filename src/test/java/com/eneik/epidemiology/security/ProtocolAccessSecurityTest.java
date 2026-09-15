@@ -111,4 +111,16 @@ class ProtocolAccessSecurityTest {
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.error_code", is("UNAUTHORIZED")));
     }
+
+    @Test
+    @DisplayName("Given valid USER role without prefix, When attempting to access protocols, Then 403 Forbidden access blocked")
+    void testProtocolAccess_UserRoleWithoutPrefix_Forbidden() throws Exception {
+        String token = "valid_user_token_no_prefix";
+        configureMockToken(token, "regular_user", "USER");
+
+        mockMvc.perform(get("/api/v1/protocols")
+                .header("Authorization", "Bearer " + token))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.error_code", is("ACCESS_DENIED")));
+    }
 }

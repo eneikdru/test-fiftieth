@@ -56,8 +56,8 @@ public class SecurityConfig {
                 .requestMatchers("/health", "/actuator/**", "/api/v1/auth/**", "/api/v1/recovery/**").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/v1/documents/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.DELETE, "/api/v1/documents/**").hasRole("ADMIN")
-                .requestMatchers("/api/v1/dossier/**").hasAnyRole("USER", "ADMIN", "EPIDEMIOLOGIST", "RESEARCHER")
-                .requestMatchers("/api/v1/protocols", "/api/v1/protocols/**").hasAnyRole("RESEARCHER", "EPIDEMIOLOGIST", "ADMIN")
+                .requestMatchers("/api/v1/dossier/**").hasAnyAuthority("ROLE_USER", "ROLE_ADMIN", "ROLE_EPIDEMIOLOGIST", "ROLE_RESEARCHER", "USER", "ADMIN", "EPIDEMIOLOGIST", "RESEARCHER")
+                .requestMatchers("/api/v1/protocols", "/api/v1/protocols/**").hasAnyAuthority("ROLE_RESEARCHER", "ROLE_EPIDEMIOLOGIST", "ROLE_ADMIN", "RESEARCHER", "EPIDEMIOLOGIST", "ADMIN")
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
