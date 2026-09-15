@@ -872,4 +872,38 @@ class AuthControllerTest {
                 .andExpect(jsonPath("$.user.username", is("auto_sso_user")));
     }
 
+    @Test
+    @DisplayName("Given valid fallback password but no server error, When sso endpoint called, Then returns 401 Unauthorized")
+    void testSsoLogin_InvalidTokenNoServerError_FallbackPassword_ReturnsUnauthorized() throws Exception {
+        mockServer.expect(org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo("https://moodle.epidemiology-inst.ru/oauth2/userinfo"))
+                .andExpect(org.springframework.test.web.client.match.MockRestRequestMatchers.header("Authorization", "Bearer bad_token"))
+                .andRespond(org.springframework.test.web.client.response.MockRestResponseCreators.withUnauthorizedRequest());
+
+        String ssoBody = "{\"username\":\"unknown_user\",\"moodle_token\":\"bad_token\",\"fallback_password\":\"MySecureFallback!\"}";
+
+        mockMvc.perform(post("/api/v1/auth/sso/moodle")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(ssoBody))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.error_code", is("INVALID_SSO_TOKEN")));
+    }
+
+    @Test
+    @DisplayName("Given valid fallback password and server timeout, When sso endpoint called, Then returns 200 OK and allows fallback")
+    void testSsoLogin_ServerTimeout_FallbackPassword_ReturnsOk() throws Exception {
+        mockServer.expect(org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo("https://moodle.epidemiology-inst.ru/oauth2/userinfo"))
+                .andExpect(org.springframework.test.web.client.match.MockRestRequestMatchers.header("Authorization", "Bearer timeout_token"))
+                .andRespond(org.springframework.test.web.client.response.MockRestResponseCreators.withException(new java.net.SocketTimeoutException("Read timed out")));
+
+        userService.createUser("timeout_user", "MySecureFallback!", "USER");
+
+        String ssoBody = "{\"username\":\"timeout_user\",\"moodle_token\":\"timeout_token\",\"fallback_password\":\"MySecureFallback!\"}";
+
+        mockMvc.perform(post("/api/v1/auth/sso/moodle")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(ssoBody))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.access_token", notNullValue()))
+                .andExpect(jsonPath("$.user.username", is("timeout_user")));
+    }
 }
