@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -63,6 +64,7 @@ class TaskRecoveryControllerTest {
     }
 
     @Test
+    @WithMockUser
     @DisplayName("Given valid task ID and REVIVE_FAILED_TASK action, When POST /api/v1/recovery/tasks/{taskId}/resume, Then 200 OK and task status IN_PROGRESS returned")
     void testResumeTask_Success() throws Exception {
         Map<String, String> body = Map.of("action", "REVIVE_FAILED_TASK");
@@ -76,6 +78,7 @@ class TaskRecoveryControllerTest {
     }
 
     @Test
+    @WithMockUser
     @DisplayName("Given invalid operational action, When POST /api/v1/recovery/tasks/{taskId}/resume, Then 400 Bad Request returned")
     void testResumeTask_InvalidAction() throws Exception {
         Map<String, String> body = Map.of("action", "INVALID_ACTION");
@@ -90,6 +93,7 @@ class TaskRecoveryControllerTest {
     }
 
     @Test
+    @WithMockUser
     @DisplayName("Given non-eligible task, When POST /api/v1/recovery/tasks/{taskId}/resume, Then 409 Conflict returned")
     void testResumeTask_ConflictIneligible() throws Exception {
         Map<String, String> body = Map.of("action", "REVIVE_FAILED_TASK");
@@ -104,6 +108,7 @@ class TaskRecoveryControllerTest {
     }
 
     @Test
+    @WithMockUser
     @DisplayName("Given unknown task UUID, When POST /api/v1/recovery/tasks/{taskId}/resume, Then 404 Not Found returned")
     void testResumeTask_NotFound() throws Exception {
         UUID unknownId = UUID.randomUUID();
@@ -116,5 +121,15 @@ class TaskRecoveryControllerTest {
             .andExpect(jsonPath("$.error_code").value("TASK_NOT_FOUND"))
             .andExpect(jsonPath("$.message").exists())
             .andExpect(jsonPath("$.timestamp").exists());
+    }
+    @Test
+    @DisplayName("Given unauthenticated request, When POST /api/v1/recovery/tasks/{taskId}/resume, Then 401 Unauthorized returned")
+    void testResumeTask_Unauthenticated() throws Exception {
+        Map<String, String> body = Map.of("action", "REVIVE_FAILED_TASK");
+
+        mockMvc.perform(post("/api/v1/recovery/tasks/{taskId}/resume", eligibleTaskId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(body)))
+            .andExpect(status().isUnauthorized());
     }
 }
