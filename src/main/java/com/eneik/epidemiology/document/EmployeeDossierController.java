@@ -277,7 +277,10 @@ public class EmployeeDossierController {
 
 
     private boolean isAccessDenied(User currentUser, DossierReport report) {
-        if (currentUser == null || "ADMIN".equals(currentUser.getRole())) {
+        if (currentUser == null) {
+            return true;
+        }
+        if ("ADMIN".equals(currentUser.getRole())) {
             return false;
         }
         if (report.getAccessDepartment() == null && report.getAccessCourse() == null) {
@@ -293,8 +296,17 @@ public class EmployeeDossierController {
 
     @GetMapping("/reports/{id}")
     public ResponseEntity<?> getDossierReportStatus(@PathVariable("id") Long id) {
-        String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
+        org.springframework.security.core.Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated() || "anonymousUser".equals(authentication.getName())) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error_code", "UNAUTHORIZED", "message", "Требуется авторизация для выполнения данной операции."));
+        }
+
+        String currentUsername = authentication.getName();
         User currentUser = userRepository.findByUsername(currentUsername).orElse(null);
+
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error_code", "UNAUTHORIZED", "message", "Пользователь не найден."));
+        }
 
         return dossierReportRepository.findById(id)
                 .map(report -> {
@@ -320,8 +332,17 @@ public class EmployeeDossierController {
 
     @GetMapping("/reports/{id}/download")
     public ResponseEntity<?> downloadDossierReport(@PathVariable("id") Long id) {
-        String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
+        org.springframework.security.core.Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated() || "anonymousUser".equals(authentication.getName())) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error_code", "UNAUTHORIZED", "message", "Требуется авторизация для выполнения данной операции."));
+        }
+
+        String currentUsername = authentication.getName();
         User currentUser = userRepository.findByUsername(currentUsername).orElse(null);
+
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error_code", "UNAUTHORIZED", "message", "Пользователь не найден."));
+        }
 
         return dossierReportRepository.findById(id)
                 .map(report -> {
@@ -358,6 +379,19 @@ public class EmployeeDossierController {
                         document.add(new Paragraph("Полный перечень документов досье (" + report.getEmployeeId() + "):", headerFont));
 
                         List<EmployeeDocument> documents = employeeDocumentRepository.findUnifiedEmployeeDossier(report.getEmployeeId());
+                        if (!"ADMIN".equals(currentUser.getRole())) {
+                            List<String> userCoursesList = currentUser.getCourses() != null && !currentUser.getCourses().isEmpty()
+                                    ? java.util.Arrays.asList(currentUser.getCourses().split("\\s*,\\s*"))
+                                    : java.util.Collections.emptyList();
+                            documents = documents.stream().filter(d -> {
+                                if (!"STRAIN_ISOLATION".equals(d.getDocType()) && !"REPORT".equals(d.getDocType())) return true;
+                                boolean isPublic = d.getAccessDepartment() == null && d.getAccessCourse() == null;
+                                boolean depMatch = d.getAccessDepartment() != null && d.getAccessDepartment().equals(currentUser.getDepartment());
+                                boolean courseMatch = d.getAccessCourse() != null && userCoursesList.contains(d.getAccessCourse());
+                                return isPublic || depMatch || courseMatch;
+                            }).toList();
+                        }
+
                         if (documents.isEmpty()) {
                             document.add(new Paragraph("Документы в досье отсутствуют.", bodyFont));
                         } else {
