@@ -162,6 +162,8 @@ public class AuthController {
             Long userId = ((Number) userMap.get("id")).longValue();
             String currentRole = (String) userMap.get("role");
             String moodleId = (String) userMap.get("moodle_id");
+            String currentDepartment = (String) userMap.get("department");
+            String currentCourses = (String) userMap.get("courses");
 
             if (moodleId == null || moodleId.trim().isEmpty()) {
                 continue;
@@ -188,8 +190,15 @@ public class AuthController {
                 }
             }
             String targetRole = mapMoodleRole(moodleRole);
-            if (targetRole != null && !targetRole.equals(currentRole)) {
-                int updated = userService.updateRoleAtomically(userId, currentRole, targetRole);
+            String targetDepartment = (profile != null && profile.department() != null) ? profile.department() : currentDepartment;
+            String targetCourses = (profile != null && profile.courses() != null) ? profile.courses() : currentCourses;
+
+            boolean roleChanged = targetRole != null && !targetRole.equals(currentRole);
+            boolean deptChanged = (targetDepartment != null) ? !targetDepartment.equals(currentDepartment) : (currentDepartment != null);
+            boolean coursesChanged = (targetCourses != null) ? !targetCourses.equals(currentCourses) : (currentCourses != null);
+
+            if (roleChanged || deptChanged || coursesChanged) {
+                int updated = userService.updateRoleAndDepartmentAtomically(userId, currentRole, targetRole != null ? targetRole : currentRole, targetDepartment, targetCourses);
                 if (updated == 0) {
                     throw new org.springframework.dao.OptimisticLockingFailureException("Concurrent role update detected during Moodle role sync for user ID: " + userId);
                 }
