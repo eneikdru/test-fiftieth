@@ -472,19 +472,32 @@ class AuthControllerTest {
         String callbackBody = "{\"code\":\"invalid_code\",\"username\":\"moodle_user\",\"fallback_password\":\"MySecureFallback!\",\"state\":\"test_state\"}";
         jakarta.servlet.http.Cookie cookie = new jakarta.servlet.http.Cookie("oauth2_state", "test_state");
 
-        mockMvc.perform(post("/api/v1/auth/moodle/callback")
+        String responseStr = mockMvc.perform(post("/api/v1/auth/moodle/callback")
                 .contentType(MediaType.APPLICATION_JSON)
                 .cookie(cookie)
                 .content(callbackBody))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.access_token", notNullValue()))
                 .andExpect(jsonPath("$.refresh_token", notNullValue()))
-                .andExpect(jsonPath("$.user.username", is("moodle_user")));
+                .andExpect(jsonPath("$.user.username", is("moodle_user")))
+                .andReturn().getResponse().getContentAsString();
 
         long fallbackEvents = telemetryEventRepository.findAll().stream()
                 .filter(e -> "fallback_login_success".equals(e.getEventType()) && "moodle_user".equals(e.getQueryTerm()))
                 .count();
         assert fallbackEvents == 1;
+
+        // Verify SecurityContext was correctly populated
+        com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+        com.fasterxml.jackson.databind.JsonNode rootNode = mapper.readTree(responseStr);
+        String accessToken = rootNode.path("access_token").asText();
+
+        // The SecurityContext is checked implicitly by attempting to access a protected endpoint
+        // but we explicitly assert that the generated JWT successfully grants access.
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/api/v1/auth/profile")
+                .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.user.username", is("moodle_user")));
     }
 
     @Test
