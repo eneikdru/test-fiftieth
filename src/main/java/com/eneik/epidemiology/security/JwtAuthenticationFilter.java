@@ -40,49 +40,28 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
-        try {
-            String token = resolveToken(request);
+        String token = resolveToken(request);
 
-            if (token != null && !token.isEmpty()) {
-                boolean isRevoked = false;
-                try {
-                    isRevoked = tokenRevocationService.isTokenRevoked(token);
-                } catch (Exception e) {
-                    logger.debug("Error checking token revocation status: " + e.getMessage(), e);
-                }
+        if (token != null && !token.isEmpty()) {
+            boolean isRevoked = tokenRevocationService.isTokenRevoked(token);
 
-                if (!isRevoked && jwtTokenProvider.validateToken(token)) {
-                    String username = null;
-                    try {
-                        username = jwtTokenProvider.getUsername(token);
-                    } catch (Exception e) {
-                        logger.debug("Error extracting username from token: " + e.getMessage(), e);
+            if (!isRevoked && jwtTokenProvider.validateToken(token)) {
+                String username = jwtTokenProvider.getUsername(token);
+
+                if (username != null && !username.trim().isEmpty()) {
+                    String role = null;
+                    if (userService != null) {
+                        Optional<String> persistentRole = userService.resolveRoleByUsername(username);
+                        if (persistentRole.isPresent() && !persistentRole.get().trim().isEmpty()) {
+                            role = persistentRole.get();
+                        }
                     }
 
-                    if (username != null && !username.trim().isEmpty()) {
-                        String role = null;
-                        if (userService != null) {
-                            try {
-                                Optional<String> persistentRole = userService.resolveRoleByUsername(username);
-                                if (persistentRole.isPresent() && !persistentRole.get().trim().isEmpty()) {
-                                    role = persistentRole.get();
-                                }
-                            } catch (Exception e) {
-                                logger.debug("Could not resolve persistent role for user during JWT filter processing: " + username, e);
-                            }
-                        }
+                    if (role == null || role.trim().isEmpty()) {
+                        role = jwtTokenProvider.getRole(token);
+                    }
 
-                        if (role == null || role.trim().isEmpty()) {
-                            try {
-                                role = jwtTokenProvider.getRole(token);
-                            } catch (Exception e) {
-                                logger.debug("Could not extract role from JWT token: " + e.getMessage(), e);
-                            }
-                        }
-
-                        if (role == null || role.trim().isEmpty()) {
-                            role = "USER";
-                        }
+                    if (role != null && !role.trim().isEmpty()) {
                         role = role.trim().toUpperCase();
 
                         String authorityRole = role.startsWith("ROLE_") ? role : "ROLE_" + role;
@@ -96,8 +75,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     }
                 }
             }
-        } catch (Exception e) {
-            logger.warn("Unexpected exception encountered during JWT authentication processing: " + e.getMessage(), e);
         }
 
         filterChain.doFilter(request, response);
