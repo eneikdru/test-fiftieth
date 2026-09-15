@@ -37,6 +37,8 @@ public class User {
 
     @Column(name = "created_at", nullable = false)
     private OffsetDateTime createdAt;
+    @Column(name = "is_active", nullable = false)
+    private boolean isActive = true;
 
     public User() {
     }
@@ -147,6 +149,14 @@ public class User {
 
     public void setCourses(String courses) {
         this.courses = courses;
+    }
+
+    public boolean isActive() {
+        return isActive;
+    }
+
+    public void setActive(boolean active) {
+        isActive = active;
     }
 
     public OffsetDateTime getCreatedAt() {

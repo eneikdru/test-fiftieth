@@ -30,6 +30,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Modifying(clearAutomatically = true)
     @Query("UPDATE User u SET u.role = :newRole, u.department = :newDepartment, u.courses = :courses WHERE u.id = :id AND u.role = :oldRole")
     int updateRoleAndDepartmentAtomically(@Param("id") Long id, @Param("oldRole") String oldRole, @Param("newRole") String newRole, @Param("newDepartment") String newDepartment, @Param("courses") String courses);
+    @Modifying(clearAutomatically = true)
+    @Query("UPDATE User u SET u.isActive = :isActive WHERE u.id = :id AND u.isActive = :oldIsActive")
+    int updateIsActiveAtomically(@Param("id") Long id, @Param("oldIsActive") boolean oldIsActive, @Param("isActive") boolean isActive);
 
     @Query("SELECT u.role FROM User u WHERE u.username = :username")
     Optional<String> findRoleByUsername(@Param("username") String username);

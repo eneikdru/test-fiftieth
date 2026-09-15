@@ -102,4 +102,29 @@ public class MoodleSsoRoleSyncTest {
                 .header("Authorization", "Bearer " + researcherToken))
                 .andExpect(status().isForbidden());
     }
+
+    @Test
+    @DisplayName("Given valid OIDC payload with suspended state, When syncing roles, Then local user is disabled via background sync")
+    void testSuspendedRoleSync() throws Exception {
+        mockServer.expect(org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo("https://moodle.epidemiology-inst.ru/oauth2/userinfo"))
+                .andExpect(org.springframework.test.web.client.match.MockRestRequestMatchers.header("Authorization", "Bearer suspended_moodle_id"))
+                .andRespond(org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess(
+                        "{\"username\":\"suspended_user\",\"moodle_role\":\"Пользователь\",\"department\":\"IT\",\"email\":\"susp@inst.ru\",\"full_name\":\"Suspended User\",\"courses\":\"\",\"suspended\":true}",
+                        MediaType.APPLICATION_JSON));
+
+        User user = userService.createUserWithMoodle("suspended_user", "Pass123!", "susp@inst.ru", "Suspended User", "USER", "suspended_moodle_id", "IT", "");
+        userRepository.save(user);
+
+        // The endpoint is protected. For background sync, we must either disable security or provide an ADMIN token.
+        com.eneik.epidemiology.security.JwtTokenProvider jwtProvider = new com.eneik.epidemiology.security.JwtTokenProvider("default-secret-key-for-jwt-signing-2026-epidemiology-portal", 3600);
+        String adminToken = jwtProvider.generateToken("admin_user", "ADMIN");
+
+        mockMvc.perform(post("/api/v1/auth/moodle/sync-roles")
+                .header("Authorization", "Bearer " + adminToken)
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+
+        User updatedUser = userRepository.findByUsername("suspended_user").orElseThrow();
+        assert !updatedUser.isActive();
+    }
 }
