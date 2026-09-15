@@ -47,7 +47,7 @@ public class MoodleSyncConcurrencyAndIntegrationTest {
     }
 
     @Test
-    @DisplayName("Given Moodle user, When performMoodleRoleSync executes, Then queries external Moodle endpoint and updates role")
+    @DisplayName("Given Moodle user, When performMoodleRoleSync executes, Then queries external Moodle endpoint and updates role, department, and courses")
     void testPerformMoodleRoleSyncQueriesExternalEndpoint() {
         User user = userService.createUserWithMoodle(
                 "external_sync_user",
@@ -56,14 +56,14 @@ public class MoodleSyncConcurrencyAndIntegrationTest {
                 "External Sync User",
                 "USER",
                 "mock_moodle_token_123",
-                "IT",
-                "EPID-201"
+                "Old Dept",
+                "EPID-101"
         );
 
         mockServer.expect(requestTo("https://moodle.epidemiology-inst.ru/oauth2/userinfo"))
                 .andExpect(header("Authorization", "Bearer mock_moodle_token_123"))
                 .andRespond(withSuccess(
-                        "{\"username\":\"external_sync_user\",\"moodle_role\":\"Администратор\",\"department\":\"IT\",\"email\":\"extsync@inst.ru\",\"full_name\":\"External Sync User\",\"courses\":\"EPID-201\"}",
+                        "{\"username\":\"external_sync_user\",\"moodle_role\":\"Администратор\",\"department\":\"Epidemiology Dept\",\"email\":\"extsync@inst.ru\",\"full_name\":\"External Sync User\",\"courses\":\"EPID-201,EPID-301\"}",
                         MediaType.APPLICATION_JSON
                 ));
 
@@ -73,6 +73,8 @@ public class MoodleSyncConcurrencyAndIntegrationTest {
 
         User updatedUser = userRepository.findById(user.getId()).orElseThrow();
         assert "ADMIN".equals(updatedUser.getRole());
+        assert "Epidemiology Dept".equals(updatedUser.getDepartment());
+        assert "EPID-201,EPID-301".equals(updatedUser.getCourses());
     }
 
     @Test
@@ -92,11 +94,11 @@ public class MoodleSyncConcurrencyAndIntegrationTest {
         mockServer.expect(requestTo("https://moodle.epidemiology-inst.ru/oauth2/userinfo"))
                 .andExpect(header("Authorization", "Bearer mock_moodle_token_concurrent"))
                 .andRespond(withSuccess(
-                        "{\"username\":\"concurrent_user\",\"moodle_role\":\"Администратор\",\"department\":\"IT\",\"email\":\"concurrent@inst.ru\",\"full_name\":\"Concurrent User\",\"courses\":\"EPID-202\"}",
+                        "{\"username\":\"concurrent_user\",\"moodle_role\":\"Администратор\",\"department\":\"Updated Dept\",\"email\":\"concurrent@inst.ru\",\"full_name\":\"Concurrent User\",\"courses\":\"EPID-202\"}",
                         MediaType.APPLICATION_JSON
                 ));
 
-        given(userService.updateRoleAtomically(anyLong(), anyString(), anyString())).willReturn(0);
+        given(userService.updateRoleAndDepartmentAtomically(anyLong(), anyString(), anyString(), anyString(), anyString())).willReturn(0);
 
         assertThrows(OptimisticLockingFailureException.class, () -> {
             authController.syncMoodleRoles();
