@@ -127,7 +127,7 @@ public class EmployeeDossierController {
                     sessionDurationMs = ((Number) requestBody.get("session_duration_ms")).longValue();
                 }
 
-                telemetryService.recordAnalysisSpeedTelemetry(sessionId, sessionStart, sessionEnd, sessionDurationMs);
+                telemetryService.recordAnalysisSpeedTelemetry(sessionId, sessionStart, sessionEnd, sessionDurationMs).join();
             }
 
             List<EmployeeDocument> documents;

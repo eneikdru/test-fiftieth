@@ -123,7 +123,7 @@ public class EmployeeDossierAnalyticsController {
                     sessionDurationMs = ((Number) requestBody.get("session_duration_ms")).longValue();
                 }
 
-                telemetryService.recordAnalysisSpeedTelemetry(sessionId, sessionStart, sessionEnd, sessionDurationMs);
+                telemetryService.recordAnalysisSpeedTelemetry(sessionId, sessionStart, sessionEnd, sessionDurationMs).join();
             }
 
             // we use first doc_type if list provided for simpler query (the repository only supports a single docType)
