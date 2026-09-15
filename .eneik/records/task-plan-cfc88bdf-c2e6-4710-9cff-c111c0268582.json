@@ -1,0 +1,64 @@
+{
+  "epics": [
+    {
+      "existingEpicId": "7f362c64-6df8-42cb-b83f-bacbd933f9b7",
+      "title": "Dossier Report Access Control",
+      "jtbd": "When an analytical report is generated, I want its access restricted based on the user's department and courses, so that closed reports are not globally accessible.",
+      "kanoClass": "Must-Be",
+      "cynefinDomain": "complicated",
+      "sixSigmaMetric": "Defect rate in closed document access",
+      "tocConstraintRef": "Access control verification bottleneck",
+      "sourceIndex": 0,
+      "requirements": [
+        "R1: The dossier document list generated for the PDF export must filter out documents that the user does not have department and course access to."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Fix Unfiltered fetching of dossier documents in PDF export",
+          "roleTag": "BARCAN-TAG-02",
+          "jtbd": "When implementing the dossier PDF export for this epic, I want the document list to be filtered by user access, so that closed information is not leaked.",
+          "acceptanceCriteria": "Given I am a user downloading an exported Employee Dossier PDF\nWhen the PDF iterates over the documents on page 2\nThen the list of documents must be filtered according to the current user's department and course, similar to how it is filtered during initial generation.\nGiven I write an integration test for PDF generation\nWhen a user without access requests the PDF\nThen the generated document list should exclude the closed documents.",
+          "leanValue": "essential",
+          "cynefinDomain": "complicated",
+          "tocConstraintRef": "Access control logic in controller",
+          "sixSigmaMetric": "Zero unfiltered documents in PDF export",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1"
+          ]
+        }
+      ]
+    },
+    {
+      "existingEpicId": "0194cf5d-1caa-4d6b-86e8-ebbe0331442d",
+      "title": "Fallback Password Configuration",
+      "jtbd": "When the external LMS fails, I want to use my autonomous fallback account with a known password, so that I can continue accessing the archive.",
+      "kanoClass": "Must-Be",
+      "cynefinDomain": "complicated",
+      "sixSigmaMetric": "Successful local DB authentications during LMS failure",
+      "tocConstraintRef": "Fallback authentication process failure",
+      "sourceIndex": 1,
+      "requirements": [
+        "R1: The system must successfully authenticate and grant access using local fallback credentials when the external Moodle LMS fails."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Fix fallback to local DB auth during external LMS failure",
+          "roleTag": "BARCAN-TAG-02",
+          "jtbd": "When implementing fallback authentication for this epic, I want the local auth flow to successfully grant access, so that users can log in when the LMS is down.",
+          "acceptanceCriteria": "Given the Moodle API is unreachable or returns an error\nWhen I attempt to log in with valid local credentials via the fallback mechanism\nThen the system should authenticate me and grant access.\nGiven I write an integration test for fallback login\nWhen the LMS throws LmsServerException\nThen the local credentials successfully authenticate the user.",
+          "leanValue": "essential",
+          "cynefinDomain": "complicated",
+          "tocConstraintRef": "AuthController fallback logic execution",
+          "sixSigmaMetric": "Zero failed valid fallback authentications",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1"
+          ]
+        }
+      ]
+    }
+  ]
+}
