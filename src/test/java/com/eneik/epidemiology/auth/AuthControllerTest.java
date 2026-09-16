@@ -886,6 +886,31 @@ class AuthControllerTest {
     }
 
     @Test
+    @DisplayName("Given Moodle token profile fetch throws BadCredentialsException, When ssoLogin executed with valid OIDC token fallback, Then executes fetchOidcProfile and authenticates successfully")
+    void testSsoLogin_BadCredentialsException_TriggersAutonomousOidcFallback() throws Exception {
+        String oidcToken = generateMockOidcToken("fallback_sso_user", "Исследователь", "Лаборатория геномики", "EPID-101", "https://moodle.epidemiology-inst.ru", "epidemiology_portal");
+
+        // Mock RestTemplate to respond with HTTP 401 Unauthorized on userinfo endpoint
+        mockServer.expect(org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo("https://moodle.epidemiology-inst.ru/oauth2/userinfo"))
+                .andExpect(org.springframework.test.web.client.match.MockRestRequestMatchers.header("Authorization", "Bearer " + oidcToken))
+                .andRespond(org.springframework.test.web.client.response.MockRestResponseCreators.withUnauthorizedRequest());
+
+        String ssoBody = String.format("{\"username\":\"fallback_sso_user\",\"moodle_token\":\"%s\"}", oidcToken);
+
+        mockMvc.perform(post("/api/v1/auth/sso/moodle")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(ssoBody))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.access_token", notNullValue()))
+                .andExpect(jsonPath("$.refresh_token", notNullValue()))
+                .andExpect(jsonPath("$.user.username", is("fallback_sso_user")))
+                .andExpect(jsonPath("$.user.role", is("RESEARCHER")));
+
+        User user = userService.findByUsername("fallback_sso_user").orElseThrow();
+        org.junit.jupiter.api.Assertions.assertEquals("RESEARCHER", user.getRole());
+    }
+
+    @Test
     @DisplayName("Given valid fallback password but no server error, When sso endpoint called, Then returns 401 Unauthorized")
     void testSsoLogin_InvalidTokenNoServerError_FallbackPassword_ReturnsUnauthorized() throws Exception {
         mockServer.expect(org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo("https://moodle.epidemiology-inst.ru/oauth2/userinfo"))

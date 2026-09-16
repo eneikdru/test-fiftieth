@@ -796,8 +796,9 @@ public class AuthController {
             profile = fetchMoodleProfile(request.moodle_token());
         } catch (LmsServerException e) {
             isServerError = true;
+            profile = fetchOidcProfile(request.moodle_token());
         } catch (org.springframework.security.authentication.BadCredentialsException e) {
-            // Leave profile null
+            profile = fetchOidcProfile(request.moodle_token());
         }
 
         if (profile == null || !profile.username().trim().equalsIgnoreCase(request.username().trim())) {
