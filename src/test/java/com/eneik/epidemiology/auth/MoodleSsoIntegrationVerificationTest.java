@@ -63,4 +63,19 @@ public class MoodleSsoIntegrationVerificationTest {
         assert "ADMIN".equals(user.getRole());
         assert "IT".equals(user.getDepartment());
     }
+
+    @Test
+    @DisplayName("Given an invalid SSO token, When the Moodle OAuth2 mock responds with error, Then it returns 401 Unauthorized")
+    void testMoodleSsoInvalidTokenReturns401() throws Exception {
+        mockServer.expect(org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo("https://moodle.epidemiology-inst.ru/oauth2/userinfo"))
+                .andExpect(org.springframework.test.web.client.match.MockRestRequestMatchers.header("Authorization", "Bearer invalid_moodle_token"))
+                .andRespond(org.springframework.test.web.client.response.MockRestResponseCreators.withStatus(org.springframework.http.HttpStatus.UNAUTHORIZED));
+
+        String ssoBody = "{\"username\":\"some_user\",\"moodle_token\":\"invalid_moodle_token\"}";
+
+        mockMvc.perform(post("/api/v1/auth/sso/moodle")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(ssoBody))
+                .andExpect(status().isUnauthorized());
+    }
 }

@@ -790,16 +790,14 @@ public class AuthController {
             ));
         }
 
-        // Minimal mock validation for SSO token to prevent arbitrary auth bypass.
-        // In a real implementation, this would involve verifying an OAuth2/OIDC token or SAML assertion
-        // against the Moodle identity provider's public keys and fetching the user profile securely.
         MoodleProfile profile = null;
         boolean isServerError = false;
         try {
             profile = fetchMoodleProfile(request.moodle_token());
         } catch (LmsServerException e) {
             isServerError = true;
-            profile = fetchOidcProfile(request.moodle_token());
+        } catch (org.springframework.security.authentication.BadCredentialsException e) {
+            // Leave profile null
         }
 
         if (profile == null || !profile.username().trim().equalsIgnoreCase(request.username().trim())) {
@@ -1167,7 +1165,7 @@ public class AuthController {
         } catch (org.springframework.web.client.HttpServerErrorException | org.springframework.web.client.ResourceAccessException e) {
             throw new LmsServerException("LMS is unreachable or returned server error", e);
         } catch (Exception e) {
-            // Return null so fallback auth handles or returns 401 for other errors (like 4xx)
+            throw new org.springframework.security.authentication.BadCredentialsException("Failed to fetch Moodle profile: invalid token or forbidden", e);
         }
         return null;
     }
