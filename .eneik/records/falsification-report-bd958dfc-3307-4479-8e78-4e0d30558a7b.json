@@ -1,0 +1,40 @@
+{
+  "violations": [
+    {
+      "roleTag": "BARCAN-TAG-07",
+      "type": "refusal_criteria",
+      "prNumber": 1590,
+      "reason": "The acceptance criteria must define behavior for error states for BARCAN-TAG-07 tasks. The client spec specifically demands 'invalid ones still get 401'. However, JwtAuthenticationFilter.authenticateToken returns early on validation failure, bypassing the Exception catch block and failing to return the expected 401 response."
+    },
+    {
+      "roleTag": "BARCAN-TAG-09",
+      "type": "stub",
+      "prNumber": 1589,
+      "reason": "The Coverage Audit Report falsely claimed zero gaps in PR 1589, missing that PR 1590 dropped the 'fetchOidcProfile' invocation entirely, which leaves the client specification requirement 'Устойчивость к сбоям внешней LMS (автономный fallback)' unmet."
+    },
+    {
+      "roleTag": "BARCAN-TAG-02",
+      "type": "stub",
+      "prNumber": 1590,
+      "reason": "JwtAuthenticationFilter.authenticateToken silently fakes success on validation failure by returning early without throwing an exception. This turns the outer try/catch in doFilterInternal into a stub that never executes its exception handler for invalid tokens."
+    },
+    {
+      "roleTag": "BARCAN-TAG-02",
+      "type": "stub",
+      "prNumber": 1590,
+      "reason": "AuthController.ssoLogin contains a try/catch block that silently swallows a BadCredentialsException with a comment '// Leave profile null', faking a plausible-looking continuation rather than executing real error handling."
+    },
+    {
+      "roleTag": "BARCAN-TAG-11",
+      "type": "layer_violation",
+      "prNumber": 1590,
+      "reason": "The described autonomous fallback data flow (fetchOidcProfile) was silently unwired and dropped from the ssoLogin exception handler, breaking the integration with the external LMS fallback layer."
+    },
+    {
+      "roleTag": "BARCAN-TAG-05",
+      "type": "causal_unjustified",
+      "prNumber": 1590,
+      "reason": "PR 1590 claimed to resolve Moodle Integration blockers, but the diff only changed fetchProfileWithToken to throw BadCredentialsException and swallowed it in ssoLogin, which merely correlates with suppressing the error symptom rather than tracing or fixing the actual mechanism causing the profile fetch failure."
+    }
+  ]
+}
