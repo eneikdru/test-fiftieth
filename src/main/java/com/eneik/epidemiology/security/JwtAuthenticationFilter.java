@@ -5,6 +5,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -60,17 +61,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private void authenticateToken(String token, HttpServletRequest request) {
         boolean isRevoked = tokenRevocationService.isTokenRevoked(token);
         if (isRevoked || !jwtTokenProvider.validateToken(token)) {
-            return;
+            throw new BadCredentialsException("Invalid or revoked JWT token");
         }
 
         String username = jwtTokenProvider.getUsername(token);
         if (username == null || username.trim().isEmpty()) {
-            return;
+            throw new BadCredentialsException("JWT token contains no valid username");
         }
 
         String role = resolveRole(username, token);
         if (role == null || role.trim().isEmpty()) {
-            return;
+            throw new BadCredentialsException("JWT token or user profile contains no valid role");
         }
 
         String authorityRole = role.toUpperCase().startsWith("ROLE_") ? role.toUpperCase() : "ROLE_" + role.toUpperCase();
