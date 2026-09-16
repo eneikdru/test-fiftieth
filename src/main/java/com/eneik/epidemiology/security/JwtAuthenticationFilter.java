@@ -108,6 +108,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (paramToken != null && !paramToken.trim().isEmpty()) {
             return paramToken.trim();
         }
+        if (request.getCookies() != null) {
+            for (jakarta.servlet.http.Cookie cookie : request.getCookies()) {
+                if ("access_token".equals(cookie.getName()) && cookie.getValue() != null && !cookie.getValue().trim().isEmpty()) {
+                    return cookie.getValue().trim();
+                }
+            }
+        }
         return null;
     }
 }

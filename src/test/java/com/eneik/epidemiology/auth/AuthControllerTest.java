@@ -225,7 +225,7 @@ class AuthControllerTest {
     }
 
     @Test
-    @DisplayName("Given valid LTI launch request via JSON body, When POST /api/v1/auth/lti/launch called, Then authenticates user and returns session tokens")
+    @DisplayName("Given valid LTI launch request via JSON body, When POST /api/v1/auth/lti/launch called, Then authenticates user and returns session tokens securely via Set-Cookie headers")
     void testLtiLaunch_JsonPayload_Success() throws Exception {
         String ltiJson = "{" +
                 "\"username\":\"json_lti_user\"," +
@@ -240,7 +240,9 @@ class AuthControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(ltiJson))
                 .andExpect(status().isFound())
-                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header().string("Location", org.hamcrest.Matchers.containsString("access_token=")));
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header().string("Location", org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString("access_token="))))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header().stringValues("Set-Cookie", org.hamcrest.Matchers.hasItem(org.hamcrest.Matchers.containsString("access_token="))))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header().stringValues("Set-Cookie", org.hamcrest.Matchers.hasItem(org.hamcrest.Matchers.containsString("refresh_token="))));
 
         User user = userService.findByUsername("json_lti_user").orElseThrow();
         assert "RESEARCHER".equals(user.getRole());
@@ -307,7 +309,9 @@ class AuthControllerTest {
                 .cookie(cookie)
                 .content(callbackBody))
                 .andExpect(status().isFound())
-                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header().string("Location", org.hamcrest.Matchers.containsString("access_token=")));
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header().string("Location", org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString("access_token="))))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header().stringValues("Set-Cookie", org.hamcrest.Matchers.hasItem(org.hamcrest.Matchers.containsString("access_token="))))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header().stringValues("Set-Cookie", org.hamcrest.Matchers.hasItem(org.hamcrest.Matchers.containsString("refresh_token="))));
 
         User user = userService.findByUsername("moodle_aspirant").orElseThrow();
         assert "RESEARCHER".equals(user.getRole());
@@ -454,7 +458,9 @@ class AuthControllerTest {
                 .cookie(cookie)
                 .content(callbackBody))
                 .andExpect(status().isFound())
-                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header().string("Location", org.hamcrest.Matchers.containsString("access_token=")));
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header().string("Location", org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString("access_token="))))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header().stringValues("Set-Cookie", org.hamcrest.Matchers.hasItem(org.hamcrest.Matchers.containsString("access_token="))))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header().stringValues("Set-Cookie", org.hamcrest.Matchers.hasItem(org.hamcrest.Matchers.containsString("refresh_token="))));
 
         User user = userService.findByUsername("moodle_user").orElseThrow();
         assert "EPIDEMIOLOGIST".equals(user.getRole());
@@ -823,7 +829,9 @@ class AuthControllerTest {
                 .param("department", "Паразитология")
                 .param("oauth_signature", "valid_lti_signature"))
                 .andExpect(status().isFound())
-                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header().string("Location", org.hamcrest.Matchers.containsString("access_token=")));
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header().string("Location", org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString("access_token="))))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header().stringValues("Set-Cookie", org.hamcrest.Matchers.hasItem(org.hamcrest.Matchers.containsString("access_token="))))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header().stringValues("Set-Cookie", org.hamcrest.Matchers.hasItem(org.hamcrest.Matchers.containsString("refresh_token="))));
     }
 
     @Test
