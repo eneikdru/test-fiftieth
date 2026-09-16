@@ -167,12 +167,12 @@ public class EmployeeDossierAnalyticsController {
             }
             report = dossierReportRepository.save(report);
 
-            int updatedCount = dossierReportRepository.updateStatus(report.getId(), "PENDING", "COMPLETED");
+            String downloadUrl = "/api/v1/dossier/reports/" + report.getId() + "/download";
+            int updatedCount = dossierReportRepository.completeReport(report.getId(), "PENDING", "COMPLETED", summaryText, downloadUrl);
             if (updatedCount > 0) {
                 report.setStatus("COMPLETED");
                 report.setSummaryText(summaryText);
-                report.setDownloadUrl("/api/v1/dossier/reports/" + report.getId() + "/download");
-                report = dossierReportRepository.save(report);
+                report.setDownloadUrl(downloadUrl);
                 success = true;
             }
         } finally {
@@ -187,7 +187,7 @@ public class EmployeeDossierAnalyticsController {
         return ResponseEntity.status(HttpStatus.CREATED).body(Map.of(
                 "export_id", report.getId(),
                 "status", report.getStatus(),
-                "download_url", report.getDownloadUrl()
+                "download_url", report.getDownloadUrl() != null ? report.getDownloadUrl() : ""
         ));
     }
 
