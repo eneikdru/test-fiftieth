@@ -102,7 +102,7 @@ public class EmployeeDossierSecurityTest {
                     report.setId(100L);
                     return report;
                 });
-        Mockito.when(dossierReportRepository.completeReport(any(), Mockito.eq("PENDING"), Mockito.eq("COMPLETED"), any(), any())).thenReturn(1);
+        Mockito.when(dossierReportRepository.updateStatus(any(), Mockito.eq("PENDING"), Mockito.eq("COMPLETED"))).thenReturn(1);
 
         // 1. GET /api/v1/dossier/documents
         mockMvc.perform(get("/api/v1/dossier/documents")

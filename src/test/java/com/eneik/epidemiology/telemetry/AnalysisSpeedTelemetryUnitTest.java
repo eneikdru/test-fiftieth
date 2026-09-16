@@ -98,7 +98,7 @@ class AnalysisSpeedTelemetryUnitTest {
         savedReport.setCreatedAt(OffsetDateTime.of(2026, 8, 28, 12, 0, 0, 0, ZoneOffset.UTC));
 
         when(dossierReportRepository.save(any(DossierReport.class))).thenReturn(savedReport);
-        when(dossierReportRepository.completeReport(any(), eq("PENDING"), eq("COMPLETED"), any(), any())).thenReturn(1);
+        when(dossierReportRepository.updateStatus(any(), eq("PENDING"), eq("COMPLETED"))).thenReturn(1);
         when(telemetryEventRepository.save(any(TelemetryEvent.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
