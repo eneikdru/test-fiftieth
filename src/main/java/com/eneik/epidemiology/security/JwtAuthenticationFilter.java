@@ -40,44 +40,56 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
-        String token = resolveToken(request);
-
-        if (token != null && !token.isEmpty()) {
-            boolean isRevoked = tokenRevocationService.isTokenRevoked(token);
-
-            if (!isRevoked && jwtTokenProvider.validateToken(token)) {
-                String username = jwtTokenProvider.getUsername(token);
-
-                if (username != null && !username.trim().isEmpty()) {
-                    String role = null;
-                    if (userService != null) {
-                        Optional<String> persistentRole = userService.resolveRoleByUsername(username);
-                        if (persistentRole.isPresent() && !persistentRole.get().trim().isEmpty()) {
-                            role = persistentRole.get();
-                        }
-                    }
-
-                    if (role == null || role.trim().isEmpty()) {
-                        role = jwtTokenProvider.getRole(token);
-                    }
-
-                    if (role != null && !role.trim().isEmpty()) {
-                        role = role.trim().toUpperCase();
-
-                        String authorityRole = role.startsWith("ROLE_") ? role : "ROLE_" + role;
-                        SimpleGrantedAuthority authority = new SimpleGrantedAuthority(authorityRole);
-
-                        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                                username, null, Collections.singletonList(authority));
-                        authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-
-                        SecurityContextHolder.getContext().setAuthentication(authentication);
-                    }
-                }
+        try {
+            String token = resolveToken(request);
+            if (token != null && !token.isEmpty()) {
+                authenticateToken(token, request);
             }
+        } catch (Exception e) {
+            SecurityContextHolder.clearContext();
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType("application/json");
+            response.setCharacterEncoding("UTF-8");
+            response.getWriter().write(String.format("{\"error_code\":\"UNAUTHORIZED\",\"message\":\"Authentication failed: %s\",\"timestamp\":\"%s\"}", e.getMessage(), java.time.OffsetDateTime.now()));
+            return;
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    private void authenticateToken(String token, HttpServletRequest request) {
+        boolean isRevoked = tokenRevocationService.isTokenRevoked(token);
+        if (isRevoked || !jwtTokenProvider.validateToken(token)) {
+            return;
+        }
+
+        String username = jwtTokenProvider.getUsername(token);
+        if (username == null || username.trim().isEmpty()) {
+            return;
+        }
+
+        String role = resolveRole(username, token);
+        if (role == null || role.trim().isEmpty()) {
+            return;
+        }
+
+        String authorityRole = role.toUpperCase().startsWith("ROLE_") ? role.toUpperCase() : "ROLE_" + role.toUpperCase();
+        SimpleGrantedAuthority authority = new SimpleGrantedAuthority(authorityRole);
+        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                username, null, Collections.singletonList(authority));
+        authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+    }
+
+    private String resolveRole(String username, String token) {
+        if (userService != null) {
+            Optional<String> persistentRole = userService.resolveRoleByUsername(username);
+            if (persistentRole.isPresent() && !persistentRole.get().trim().isEmpty()) {
+                return persistentRole.get();
+            }
+        }
+        return jwtTokenProvider.getRole(token);
     }
 
     private String resolveToken(HttpServletRequest request) {
