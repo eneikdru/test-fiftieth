@@ -1,0 +1,10 @@
+{
+  "verdicts": [
+    {
+      "sourceIndex": 0,
+      "verdict": "block",
+      "criticalReason": "A terminal status field (COMPLETED) is being set via a plain read-then-save instead of a guarded conditional update. In DossierBuilderService.java, it calls dossierReportRepository.updateStatus('PENDING', 'COMPLETED') but immediately follows it with report.setStatus('COMPLETED'); dossierReportRepository.save(report), which overwrites the guarded update with a plain save of the terminal status field. This violates the strict requirement to never use a plain read-then-save for terminal states.",
+      "concerns": []
+    }
+  ]
+}
