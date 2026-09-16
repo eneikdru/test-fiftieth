@@ -434,15 +434,26 @@ public class AuthController {
         String accessToken = jwtTokenProvider.generateToken(user.getUsername(), user.getRole(), user.getDepartment(), user.getCourses());
         String refreshToken = jwtTokenProvider.generateRefreshToken(user.getUsername());
 
-        String redirectUrl = frontendUrl;
-        if (redirectUrl.contains("?")) {
-            redirectUrl += "&access_token=" + accessToken + "&refresh_token=" + refreshToken;
-        } else {
-            redirectUrl += "?access_token=" + accessToken + "&refresh_token=" + refreshToken;
-        }
+        org.springframework.http.ResponseCookie accessCookie = org.springframework.http.ResponseCookie.from("access_token", accessToken)
+                .httpOnly(true)
+                .secure(true)
+                .path("/")
+                .maxAge(3600)
+                .sameSite("Lax")
+                .build();
+
+        org.springframework.http.ResponseCookie refreshCookie = org.springframework.http.ResponseCookie.from("refresh_token", refreshToken)
+                .httpOnly(true)
+                .secure(true)
+                .path("/")
+                .maxAge(86400 * 7)
+                .sameSite("Lax")
+                .build();
 
         return ResponseEntity.status(HttpStatus.FOUND)
-                .location(java.net.URI.create(redirectUrl))
+                .location(java.net.URI.create(frontendUrl))
+                .header(org.springframework.http.HttpHeaders.SET_COOKIE, accessCookie.toString())
+                .header(org.springframework.http.HttpHeaders.SET_COOKIE, refreshCookie.toString())
                 .build();
     }
 
@@ -608,15 +619,26 @@ public class AuthController {
         String accessToken = jwtTokenProvider.generateToken(user.getUsername(), user.getRole(), user.getDepartment(), user.getCourses());
         String refreshToken = jwtTokenProvider.generateRefreshToken(user.getUsername());
 
-        String redirectUrl = frontendUrl;
-        if (redirectUrl.contains("?")) {
-            redirectUrl += "&access_token=" + accessToken + "&refresh_token=" + refreshToken;
-        } else {
-            redirectUrl += "?access_token=" + accessToken + "&refresh_token=" + refreshToken;
-        }
+        org.springframework.http.ResponseCookie accessCookie = org.springframework.http.ResponseCookie.from("access_token", accessToken)
+                .httpOnly(true)
+                .secure(true)
+                .path("/")
+                .maxAge(3600)
+                .sameSite("Lax")
+                .build();
+
+        org.springframework.http.ResponseCookie refreshCookie = org.springframework.http.ResponseCookie.from("refresh_token", refreshToken)
+                .httpOnly(true)
+                .secure(true)
+                .path("/")
+                .maxAge(86400 * 7)
+                .sameSite("Lax")
+                .build();
 
         return ResponseEntity.status(HttpStatus.FOUND)
-                .location(java.net.URI.create(redirectUrl))
+                .location(java.net.URI.create(frontendUrl))
+                .header(org.springframework.http.HttpHeaders.SET_COOKIE, accessCookie.toString())
+                .header(org.springframework.http.HttpHeaders.SET_COOKIE, refreshCookie.toString())
                 .build();
     }
 

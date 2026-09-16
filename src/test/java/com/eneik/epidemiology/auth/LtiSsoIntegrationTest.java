@@ -45,7 +45,7 @@ public class LtiSsoIntegrationTest {
     }
 
     @Test
-    @DisplayName("Given valid LTI launch request from Moodle with valid signature, When POST /api/v1/auth/lti/launch received, Then user is authenticated, synced with role and department, and token returned")
+    @DisplayName("Given valid LTI launch request from Moodle with valid signature, When POST /api/v1/auth/lti/launch received, Then user is authenticated, synced with role and department, and token returned via secure cookies without query params")
     void testLtiLaunch_ValidParametersAndSignature_AuthenticatesAndSyncs() throws Exception {
         mockMvc.perform(post("/api/v1/auth/lti/launch")
                 .param("user_id", "moodle_lti_100")
@@ -59,8 +59,9 @@ public class LtiSsoIntegrationTest {
                 .param("oauth_signature", "valid_lti_signature")
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED))
                 .andExpect(status().isFound())
-                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header().string("Location", org.hamcrest.Matchers.containsString("access_token=")))
-                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header().string("Location", org.hamcrest.Matchers.containsString("refresh_token=")));
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header().string("Location", org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString("access_token="))))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header().stringValues("Set-Cookie", org.hamcrest.Matchers.hasItem(org.hamcrest.Matchers.containsString("access_token="))))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header().stringValues("Set-Cookie", org.hamcrest.Matchers.hasItem(org.hamcrest.Matchers.containsString("refresh_token="))));
 
         User user = userRepository.findByUsername("lti_epidemiologist").orElseThrow();
         assert "EPIDEMIOLOGIST".equals(user.getRole());
@@ -111,7 +112,9 @@ public class LtiSsoIntegrationTest {
                 .param("oauth_signature", computedSignature)
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED))
                 .andExpect(status().isFound())
-                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header().string("Location", org.hamcrest.Matchers.containsString("access_token=")));
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header().string("Location", org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString("access_token="))))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header().stringValues("Set-Cookie", org.hamcrest.Matchers.hasItem(org.hamcrest.Matchers.containsString("access_token="))))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header().stringValues("Set-Cookie", org.hamcrest.Matchers.hasItem(org.hamcrest.Matchers.containsString("refresh_token="))));
     }
 
     @Test
@@ -151,7 +154,9 @@ public class LtiSsoIntegrationTest {
                 .param("oauth_signature", "valid_lti_signature")
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED))
                 .andExpect(status().isFound())
-                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header().string("Location", org.hamcrest.Matchers.containsString("access_token=")));
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header().string("Location", org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString("access_token="))))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header().stringValues("Set-Cookie", org.hamcrest.Matchers.hasItem(org.hamcrest.Matchers.containsString("access_token="))))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header().stringValues("Set-Cookie", org.hamcrest.Matchers.hasItem(org.hamcrest.Matchers.containsString("refresh_token="))));
 
         User updatedUser = userRepository.findByUsername("lti_existing_user").orElseThrow();
         assert "ADMIN".equals(updatedUser.getRole());
