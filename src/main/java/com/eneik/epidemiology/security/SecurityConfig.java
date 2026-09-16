@@ -29,16 +29,7 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .exceptionHandling(exceptions -> exceptions
-                .authenticationEntryPoint((request, response, authException) -> {
-                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                    response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-                    response.setCharacterEncoding("UTF-8");
-                    String json = String.format(
-                        "{\"error_code\":\"UNAUTHORIZED\",\"message\":\"Требуется авторизация для выполнения данной операции.\",\"timestamp\":\"%s\"}",
-                        OffsetDateTime.now()
-                    );
-                    response.getWriter().write(json);
-                })
+                .authenticationEntryPoint(authenticationEntryPoint())
                 .accessDeniedHandler((request, response, accessDeniedException) -> {
                     response.setStatus(HttpServletResponse.SC_FORBIDDEN);
                     response.setContentType(MediaType.APPLICATION_JSON_VALUE);
@@ -63,5 +54,19 @@ public class SecurityConfig {
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
+    }
+
+    @Bean
+    public org.springframework.security.web.AuthenticationEntryPoint authenticationEntryPoint() {
+        return (request, response, authException) -> {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+            response.setCharacterEncoding("UTF-8");
+            String json = String.format(
+                "{\"error_code\":\"UNAUTHORIZED\",\"message\":\"Требуется авторизация для выполнения данной операции.\",\"timestamp\":\"%s\"}",
+                OffsetDateTime.now()
+            );
+            response.getWriter().write(json);
+        };
     }
 }

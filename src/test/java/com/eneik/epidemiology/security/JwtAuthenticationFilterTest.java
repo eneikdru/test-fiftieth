@@ -167,44 +167,44 @@ public class JwtAuthenticationFilterTest {
     }
 
     @Test
-    @DisplayName("Given failure in revocation check, When JwtAuthenticationFilter processes request, Then exception is thrown and not swallowed")
-    void testTokenRevocationFailure_PropagatesException() {
+    @DisplayName("Given failure in revocation check, When JwtAuthenticationFilter processes request, Then exception is translated to 401 Unauthorized")
+    void testTokenRevocationFailure_TranslatedTo401() throws Exception {
         String token = "revocation_check_fail_token";
         Mockito.when(tokenRevocationService.isTokenRevoked(token)).thenThrow(new RuntimeException("Revocation DB error"));
 
-        assertThrows(Exception.class, () -> {
-            mockMvc.perform(get("/api/v1/protocols")
-                    .header("Authorization", "Bearer " + token));
-        });
+        mockMvc.perform(get("/api/v1/protocols")
+                .header("Authorization", "Bearer " + token))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.error_code", is("UNAUTHORIZED")));
     }
 
     @Test
-    @DisplayName("Given failure in username extraction, When JwtAuthenticationFilter processes request, Then exception is thrown and not swallowed")
-    void testGetUsernameFailure_PropagatesException() {
+    @DisplayName("Given failure in username extraction, When JwtAuthenticationFilter processes request, Then exception is translated to 401 Unauthorized")
+    void testGetUsernameFailure_TranslatedTo401() throws Exception {
         String token = "username_fail_token";
         Mockito.when(tokenRevocationService.isTokenRevoked(token)).thenReturn(false);
         Mockito.when(jwtTokenProvider.validateToken(token)).thenReturn(true);
         Mockito.when(jwtTokenProvider.getUsername(token)).thenThrow(new RuntimeException("JWT claim parsing error"));
 
-        assertThrows(Exception.class, () -> {
-            mockMvc.perform(get("/api/v1/protocols")
-                    .header("Authorization", "Bearer " + token));
-        });
+        mockMvc.perform(get("/api/v1/protocols")
+                .header("Authorization", "Bearer " + token))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.error_code", is("UNAUTHORIZED")));
     }
 
     @Test
-    @DisplayName("Given failure in persistent role resolution, When JwtAuthenticationFilter processes request, Then exception is thrown and not swallowed")
-    void testUserServiceRoleResolutionFailure_PropagatesException() {
+    @DisplayName("Given failure in persistent role resolution, When JwtAuthenticationFilter processes request, Then exception is translated to 401 Unauthorized")
+    void testUserServiceRoleResolutionFailure_TranslatedTo401() throws Exception {
         String token = "user_service_fail_token";
         Mockito.when(tokenRevocationService.isTokenRevoked(token)).thenReturn(false);
         Mockito.when(jwtTokenProvider.validateToken(token)).thenReturn(true);
         Mockito.when(jwtTokenProvider.getUsername(token)).thenReturn("some_user");
         Mockito.when(userService.resolveRoleByUsername("some_user")).thenThrow(new RuntimeException("User DB connection timeout"));
 
-        assertThrows(Exception.class, () -> {
-            mockMvc.perform(get("/api/v1/protocols")
-                    .header("Authorization", "Bearer " + token));
-        });
+        mockMvc.perform(get("/api/v1/protocols")
+                .header("Authorization", "Bearer " + token))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.error_code", is("UNAUTHORIZED")));
     }
 
     @Test
