@@ -228,6 +228,7 @@ class DocumentControllerTest {
     void testDownloadDocument_NotFound_Returns404() throws Exception {
         mockMvc.perform(get("/api/v1/documents/999999/download")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + researcherToken))
-                .andExpect(status().isNotFound());
+                .andExpect(status().isNotFound())
+                .andExpect(content().string(""));
     }
 }
