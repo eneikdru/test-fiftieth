@@ -35,6 +35,42 @@
       "confidence": "high",
       "evidence": "frontend/serve.mjs: Mock API endpoints intercept `/api/v1/documents/*/download` and uniformly return 200 OK with hardcoded PDF content.",
       "screenshotFile": ""
+    },
+    {
+      "roleTag": "BARCAN-TAG-03",
+      "philosopher": "Энди Кларк",
+      "worldview": "Extended Mind / Cognition extended into artifacts: tools and environment are part of the cognitive process, reducing internal cognitive load.",
+      "critique": "The frontend search interface (in `frontend/index.html` and mock backend `/api/v1/documents/search`) places an unnecessary cognitive burden on the user by not supporting structured or faceted search natively. Users must construct their own mental models of the query terms instead of relying on the system as an extended cognitive artifact (e.g., offering explicit filters for 'docType', 'year'). The artifact fails to actively offload the cognitive work of filtering and categorizing, making the user's mind do the heavy lifting of parsing unstructured results.",
+      "proposal": "Extend the user's cognition into the interface by providing explicit, interactive faceted filters (e.g., dropdowns for Document Type and Publication Year) that automatically guide and refine the search context.",
+      "dislike": "An interface that demands the user hold the entire search context and filter logic in their head rather than offloading it to the tool.",
+      "kanoClass": "Attractive",
+      "confidence": "high",
+      "evidence": "frontend/serve.mjs: The search endpoint accepts a single unstructured 'query' or 'q' parameter and performs a basic string inclusion check without offering structured faceting support in the mocked response.",
+      "screenshotFile": "index-1440px.png"
+    },
+    {
+      "roleTag": "BARCAN-TAG-04",
+      "philosopher": "Фрэнк Рамсей",
+      "worldview": "Degrees of belief and betting interpretation: probabilities are subjective degrees of belief that should be explicitly calibrated.",
+      "critique": "In the backend `DocumentController.java`, the full-text search explicitly hardcodes a `relevance_score` of `1.0` for every single returned document, regardless of the actual match quality, term frequency, or document length. It falsely asserts absolute certainty (1.0) in the relevance of every result. A rational agent betting on the true relevance of these documents would lose, as the system provides no calibrated epistemic gradation of its 'belief' in the match.",
+      "proposal": "Integrate a real full-text scoring mechanism (like BM25 or Postgres ts_rank) that returns a calibrated relevance score, reflecting the system's actual degree of belief that the document matches the query.",
+      "dislike": "Assigning absolute, uniform certainty to outcomes that are inherently variable in their truth or relevance.",
+      "kanoClass": "Must-Be",
+      "confidence": "high",
+      "evidence": "src/main/java/com/eneik/epidemiology/document/DocumentController.java: Full-text search result mapping explicitly sets `item.put(\"relevance_score\", 1.0);` for all items.",
+      "screenshotFile": ""
+    },
+    {
+      "roleTag": "BARCAN-TAG-05",
+      "philosopher": "Уэсли Сэлмон",
+      "worldview": "Causal processes and mark transmission: genuine causal processes transmit marks (identities/traces) continuously through spacetime.",
+      "critique": "The telemetry logging mechanism in `DocumentController.java` (`telemetryService.recordSearchTelemetry(q != null ? q : \"\", filteredContent.size())`) initiates a causal process (recording an event) but fails to transmit a continuous mark of identity. Specifically, it logs the query string and result count but completely drops the identity of the user initiating the search, the session ID, or the request correlation ID. This breaks the causal chain: an incident investigator cannot trace the telemetry event back to its originating cause (the specific user request) because the mark was not transmitted across the boundary.",
+      "proposal": "Ensure that telemetry recording explicitly captures and transmits the current context's identity marks (e.g., User ID, Request/Trace ID, Session ID) so the causal process remains traceable.",
+      "dislike": "A causal process that fails to transmit its identifying marks, severing the ability to trace the history and origin of an event.",
+      "kanoClass": "Performance",
+      "confidence": "high",
+      "evidence": "src/main/java/com/eneik/epidemiology/document/DocumentController.java: `telemetryService.recordSearchTelemetry(telemetryQuery, filteredContent.size());` does not pass any correlation or identity context.",
+      "screenshotFile": ""
     }
   ]
 }
