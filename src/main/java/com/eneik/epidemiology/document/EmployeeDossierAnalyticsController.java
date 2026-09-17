@@ -40,8 +40,22 @@ public class EmployeeDossierAnalyticsController {
             @RequestParam(value = "page", defaultValue = "0") int page,
             @RequestParam(value = "size", defaultValue = "20") int size) {
 
-        String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
-        User currentUser = userRepository.findByUsername(currentUsername).orElse(null);
+        org.springframework.security.core.Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated() || "anonymousUser".equals(authentication.getName())) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error_code", "UNAUTHORIZED", "message", "Требуется авторизация для выполнения данной операции."));
+        }
+        String currentUsername = authentication.getName();
+        User currentUser = userRepository.findByUsername(currentUsername).or(() -> userRepository.findByEmail(currentUsername)).orElseGet(() -> {
+            User transientUser = new User();
+            transientUser.setUsername(currentUsername);
+            String role = authentication.getAuthorities().stream()
+                    .map(a -> a.getAuthority().replace("ROLE_", ""))
+                    .findFirst().orElse("USER");
+            transientUser.setRole(role);
+            transientUser.setDepartment("");
+            transientUser.setCourses("");
+            return transientUser;
+        });
 
         org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size);
         boolean isAdmin = currentUser != null && "ADMIN".equals(currentUser.getRole());
@@ -136,8 +150,22 @@ public class EmployeeDossierAnalyticsController {
                  documents = documents.stream().filter(d -> finalDocTypes.contains(d.getDocType())).toList();
             }
 
-            String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
-            User currentUser = userRepository.findByUsername(currentUsername).orElse(null);
+            org.springframework.security.core.Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            if (authentication == null || !authentication.isAuthenticated() || "anonymousUser".equals(authentication.getName())) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error_code", "UNAUTHORIZED", "message", "Требуется авторизация для выполнения данной операции."));
+            }
+            String currentUsername = authentication.getName();
+            User currentUser = userRepository.findByUsername(currentUsername).or(() -> userRepository.findByEmail(currentUsername)).orElseGet(() -> {
+                User transientUser = new User();
+                transientUser.setUsername(currentUsername);
+                String role = authentication.getAuthorities().stream()
+                        .map(a -> a.getAuthority().replace("ROLE_", ""))
+                        .findFirst().orElse("USER");
+                transientUser.setRole(role);
+                transientUser.setDepartment("");
+                transientUser.setCourses("");
+                return transientUser;
+            });
 
             if (currentUser != null && !"ADMIN".equals(currentUser.getRole())) {
                 List<String> userCoursesList = currentUser.getCourses() != null && !currentUser.getCourses().isEmpty()
@@ -199,8 +227,22 @@ public class EmployeeDossierAnalyticsController {
         List<EmployeeDocument> documents = employeeDocumentRepository.searchEmployeeDocuments(employeeId, null, null, scientificDirection, null, null, null
         , org.springframework.data.domain.Pageable.unpaged()).getContent();
 
-        String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
-        User currentUser = userRepository.findByUsername(currentUsername).orElse(null);
+        org.springframework.security.core.Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated() || "anonymousUser".equals(authentication.getName())) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error_code", "UNAUTHORIZED", "message", "Требуется авторизация для выполнения данной операции."));
+        }
+        String currentUsername = authentication.getName();
+        User currentUser = userRepository.findByUsername(currentUsername).or(() -> userRepository.findByEmail(currentUsername)).orElseGet(() -> {
+            User transientUser = new User();
+            transientUser.setUsername(currentUsername);
+            String role = authentication.getAuthorities().stream()
+                    .map(a -> a.getAuthority().replace("ROLE_", ""))
+                    .findFirst().orElse("USER");
+            transientUser.setRole(role);
+            transientUser.setDepartment("");
+            transientUser.setCourses("");
+            return transientUser;
+        });
 
         if (currentUser != null && !"ADMIN".equals(currentUser.getRole())) {
             List<String> userCoursesList = currentUser.getCourses() != null && !currentUser.getCourses().isEmpty()
@@ -251,8 +293,22 @@ public class EmployeeDossierAnalyticsController {
 
     @GetMapping("/reports/{id}/download")
     public ResponseEntity<?> downloadAnalyticsReport(@PathVariable("id") Long id) {
-        String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
-        User currentUser = userRepository.findByUsername(currentUsername).orElse(null);
+        org.springframework.security.core.Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated() || "anonymousUser".equals(authentication.getName())) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error_code", "UNAUTHORIZED", "message", "Требуется авторизация для выполнения данной операции."));
+        }
+        String currentUsername = authentication.getName();
+        User currentUser = userRepository.findByUsername(currentUsername).or(() -> userRepository.findByEmail(currentUsername)).orElseGet(() -> {
+            User transientUser = new User();
+            transientUser.setUsername(currentUsername);
+            String role = authentication.getAuthorities().stream()
+                    .map(a -> a.getAuthority().replace("ROLE_", ""))
+                    .findFirst().orElse("USER");
+            transientUser.setRole(role);
+            transientUser.setDepartment("");
+            transientUser.setCourses("");
+            return transientUser;
+        });
 
         return dossierReportRepository.findById(id)
                 .map(report -> {

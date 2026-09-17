@@ -320,4 +320,20 @@ class DocumentControllerTest {
                 .andExpect(jsonPath("$.items[1].relevance_score", is(0.65)));
     }
 
+    @Test
+    @DisplayName("Given document search request with page boundaries in text content, When executed, Then matched_pages returns actual page numbers")
+    void testDynamicMatchedPagesCalculation() throws Exception {
+        Document multiPageDoc = new Document("Многостраничный документ", "НИИ Эпидемиологии", 2024, "/data/docs/uploads/multipage.pdf");
+        multiPageDoc.setDocType("REPORT");
+        multiPageDoc.setTextContent("Вводная часть отчета на первой странице.\fСтраница 2 содержит результаты исследования вакцин.\fСтраница 3 не содержит искаемого слова.");
+        documentRepository.save(multiPageDoc);
+
+        mockMvc.perform(get("/api/v1/documents/search")
+                        .param("q", "результаты")
+                        .param("docType", "REPORT")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + researcherToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items[0].matched_pages", contains(2)));
+    }
+
 }
