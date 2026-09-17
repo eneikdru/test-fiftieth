@@ -35,6 +35,8 @@ const server = http.createServer((req, res) => {
 
   if (pathname.startsWith('/api/v1/documents/search')) {
     const query = parsedUrl.searchParams.get('query') || parsedUrl.searchParams.get('q') || '';
+    const docType = parsedUrl.searchParams.get('docType') || '';
+    const year = parsedUrl.searchParams.get('year') || '';
     const docs = [
       {
         id: '1',
@@ -62,9 +64,16 @@ const server = http.createServer((req, res) => {
       }
     ];
 
-    const filtered = query
+    let filtered = query
       ? docs.filter(d => d.title.toLowerCase().includes(query.toLowerCase()) || d.description.toLowerCase().includes(query.toLowerCase()))
       : docs;
+
+    if (docType) {
+      filtered = filtered.filter(d => (d.docType || '').toLowerCase() === docType.toLowerCase());
+    }
+    if (year) {
+      filtered = filtered.filter(d => d.year === parseInt(year, 10) || d.publicationYear === parseInt(year, 10));
+    }
 
     res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
     res.end(JSON.stringify(filtered));
