@@ -136,6 +136,7 @@
       searchQuery: '',
       selectedAuthor: '',
       selectedYear: '',
+      selectedDocType: '',
 
       // API Data View States
       documents: [...defaultSampleDocuments],
@@ -227,6 +228,7 @@
         if (state.searchQuery.trim()) params.append('query', state.searchQuery.trim());
         if (state.selectedAuthor.trim()) params.append('author', state.selectedAuthor.trim());
         if (state.selectedYear.trim()) params.append('year', state.selectedYear.trim());
+        if (state.selectedDocType.trim()) params.append('docType', state.selectedDocType.trim());
 
         const response = await fetch('/api/v1/documents/search?' + params.toString());
         if (!response.ok) {
@@ -260,6 +262,10 @@
         if (state.selectedYear.trim()) {
           const y = parseInt(state.selectedYear.trim(), 10);
           filtered = filtered.filter(d => d.year === y || d.publicationYear === y || d.publication_year === y);
+        }
+        if (state.selectedDocType.trim()) {
+          const dt = state.selectedDocType.trim().toLowerCase();
+          filtered = filtered.filter(d => d.docType && d.docType.toLowerCase().includes(dt));
         }
         state.documents = filtered;
       } finally {
@@ -701,6 +707,23 @@
                       </select>
                     </div>
 
+                    <div class="md:col-span-2">
+                      <label for="search-doctype-input" class="block text-xs font-semibold text-[#191c1e] mb-1">
+                        Тип документа
+                      </label>
+                      <select
+                        id="search-doctype-input"
+                        onchange="state.selectedDocType = this.value"
+                        class="w-full h-11 px-3 bg-[#f7f9fb] border border-[#c2c6d4] rounded-lg text-sm text-[#191c1e] focus:outline-none focus:ring-2 focus:ring-[#003f87]/50 focus:border-[#003f87]"
+                      >
+                        <option value="" ${state.selectedDocType === '' ? 'selected' : ''}>Все типы</option>
+                        <option value="Протокол расследования" ${state.selectedDocType === 'Протокол расследования' ? 'selected' : ''}>Протокол расследования</option>
+                        <option value="Отчёт эпиднадзора" ${state.selectedDocType === 'Отчёт эпиднадзора' ? 'selected' : ''}>Отчёт эпиднадзора</option>
+                        <option value="Набор данных" ${state.selectedDocType === 'Набор данных' ? 'selected' : ''}>Набор данных</option>
+                        <option value="Методическое руководство" ${state.selectedDocType === 'Методическое руководство' ? 'selected' : ''}>Методическое руководство</option>
+                      </select>
+                    </div>
+
                     <div class="md:col-span-2 flex items-end gap-2">
                       <button
                         type="submit"
@@ -709,7 +732,7 @@
                       >
                         Найти
                       </button>
-                      ${(state.searchQuery || state.selectedAuthor || state.selectedYear) ? `
+                      ${(state.searchQuery || state.selectedAuthor || state.selectedYear || state.selectedDocType) ? `
                         <button
                           type="button"
                           id="search-reset-btn"
@@ -1375,6 +1398,7 @@
       state.searchQuery = '';
       state.selectedAuthor = '';
       state.selectedYear = '';
+      state.selectedDocType = '';
       fetchDocuments();
     }
 
