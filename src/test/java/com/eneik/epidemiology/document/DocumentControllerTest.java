@@ -1,6 +1,8 @@
 package com.eneik.epidemiology.document;
 
 import com.eneik.epidemiology.security.JwtTokenProvider;
+import com.eneik.epidemiology.telemetry.TelemetryEvent;
+import com.eneik.epidemiology.telemetry.TelemetryEventRepository;
 import com.eneik.epidemiology.user.User;
 import com.eneik.epidemiology.user.UserRepository;
 import com.eneik.epidemiology.user.UserService;
@@ -16,8 +18,10 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 import static org.hamcrest.Matchers.*;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -42,15 +46,19 @@ class DocumentControllerTest {
     @Autowired
     private DocumentRepository documentRepository;
 
+    @Autowired
+    private TelemetryEventRepository telemetryEventRepository;
+
     private String researcherToken;
     private String adminToken;
+    private User researcherUser;
 
     @BeforeEach
     void setUp() {
         userRepository.deleteAll();
 
-        User researcher = userService.createUser("researcher_doc_test", "ResPass123!", "RESEARCHER");
-        researcherToken = jwtTokenProvider.generateToken(researcher.getUsername(), researcher.getRole());
+        researcherUser = userService.createUser("researcher_doc_test", "ResPass123!", "RESEARCHER");
+        researcherToken = jwtTokenProvider.generateToken(researcherUser.getUsername(), researcherUser.getRole());
 
         User admin = userService.createUser("admin_doc_test", "AdminPass123!", "ADMIN");
         adminToken = jwtTokenProvider.generateToken(admin.getUsername(), admin.getRole());
@@ -229,5 +237,24 @@ class DocumentControllerTest {
         mockMvc.perform(get("/api/v1/documents/999999/download")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + researcherToken))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("Given request headers and authenticated user, When searching with zero results, Then telemetry event is saved with user_id, trace_id, and session_id")
+    void testSearchZeroResults_RecordsIdentityMarks() throws Exception {
+        mockMvc.perform(get("/api/v1/documents/search")
+                        .param("q", "nonexistent_query_xyz")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + researcherToken)
+                        .header("X-Trace-Id", "trace-abc-123")
+                        .header("X-Session-Id", "sess-xyz-789"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.total_elements", is(0)));
+
+        List<TelemetryEvent> events = telemetryEventRepository.findByEventType("ZERO_RESULTS");
+        assertFalse(events.isEmpty(), "Telemetry event should be stored for zero results");
+        TelemetryEvent event = events.get(events.size() - 1);
+        assertEquals(researcherUser.getId(), event.getUserId());
+        assertEquals("trace-abc-123", event.getTraceId());
+        assertEquals("sess-xyz-789", event.getSessionId());
     }
 }

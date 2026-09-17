@@ -1,6 +1,9 @@
 package com.eneik.epidemiology.document;
 
 import com.eneik.epidemiology.telemetry.TelemetryService;
+import com.eneik.epidemiology.user.User;
+import com.eneik.epidemiology.user.UserRepository;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.security.core.Authentication;
@@ -36,10 +39,17 @@ public class DocumentController {
 
     private final DocumentRepository documentRepository;
     private final TelemetryService telemetryService;
+    private final UserRepository userRepository;
 
-    public DocumentController(DocumentRepository documentRepository, TelemetryService telemetryService) {
+    @org.springframework.beans.factory.annotation.Autowired
+    public DocumentController(DocumentRepository documentRepository, TelemetryService telemetryService, UserRepository userRepository) {
         this.documentRepository = documentRepository;
         this.telemetryService = telemetryService;
+        this.userRepository = userRepository;
+    }
+
+    public DocumentController(DocumentRepository documentRepository, TelemetryService telemetryService) {
+        this(documentRepository, telemetryService, null);
     }
 
     private boolean isValidExtension(String originalFilename) {
@@ -156,7 +166,8 @@ public class DocumentController {
             @RequestParam(name = "from_date", required = false) String fromDateStr,
             @RequestParam(name = "to_date", required = false) String toDateStr,
             @RequestParam(name = "page", defaultValue = "0") int page,
-            @RequestParam(name = "size", defaultValue = "20") int size) {
+            @RequestParam(name = "size", defaultValue = "20") int size,
+            HttpServletRequest request) {
 
         boolean isFullTextSearchRequest = (q != null || docType != null || fromDateStr != null || toDateStr != null);
 
@@ -188,7 +199,10 @@ public class DocumentController {
                         .collect(Collectors.toList());
             }
 
-            telemetryService.recordSearchTelemetry(q != null ? q : "", filteredContent.size());
+            Long currentUserId = extractCurrentUserId();
+            String traceId = extractTraceId(request);
+            String sessionId = extractSessionId(request);
+            telemetryService.recordSearchTelemetry(q != null ? q : "", filteredContent.size(), currentUserId, traceId, sessionId);
 
             List<Map<String, Object>> items = filteredContent.stream().map(doc -> {
                 Map<String, Object> item = new LinkedHashMap<>();
@@ -235,7 +249,10 @@ public class DocumentController {
         }
 
         String telemetryQuery = query != null ? query : (author != null ? author : "");
-        telemetryService.recordSearchTelemetry(telemetryQuery, filteredContent.size());
+        Long currentUserId = extractCurrentUserId();
+        String traceId = extractTraceId(request);
+        String sessionId = extractSessionId(request);
+        telemetryService.recordSearchTelemetry(telemetryQuery, filteredContent.size(), currentUserId, traceId, sessionId);
 
         return ResponseEntity.ok(Map.of(
                 "query", telemetryQuery,
@@ -256,6 +273,41 @@ public class DocumentController {
         } catch (DateTimeParseException e) {
             return null;
         }
+    }
+
+    private Long extractCurrentUserId() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getName())) {
+            return null;
+        }
+        String username = auth.getName();
+        if (userRepository != null) {
+            Optional<User> userOpt = userRepository.findByUsername(username);
+            if (userOpt.isPresent()) {
+                return userOpt.get().getId();
+            }
+        }
+        return null;
+    }
+
+    private String extractTraceId(HttpServletRequest request) {
+        if (request == null) return null;
+        String traceId = request.getHeader("X-Trace-Id");
+        if (traceId == null || traceId.isBlank()) {
+            traceId = request.getHeader("X-Request-Id");
+        }
+        return (traceId != null && !traceId.isBlank()) ? traceId.trim() : null;
+    }
+
+    private String extractSessionId(HttpServletRequest request) {
+        if (request == null) return null;
+        String sessionId = request.getHeader("X-Session-Id");
+        if (sessionId == null || sessionId.isBlank()) {
+            if (request.getSession(false) != null) {
+                sessionId = request.getSession(false).getId();
+            }
+        }
+        return (sessionId != null && !sessionId.isBlank()) ? sessionId.trim() : null;
     }
 
     private List<String> buildHighlights(Document doc, String q) {
@@ -291,8 +343,11 @@ public class DocumentController {
     }
 
     @GetMapping("/{id}/view")
-    public ResponseEntity<?> viewDocument(@PathVariable("id") Long id) {
-        telemetryService.recordDownloadTelemetry(id);
+    public ResponseEntity<?> viewDocument(@PathVariable("id") Long id, HttpServletRequest request) {
+        Long currentUserId = extractCurrentUserId();
+        String traceId = extractTraceId(request);
+        String sessionId = extractSessionId(request);
+        telemetryService.recordDownloadTelemetry(id, currentUserId, traceId, sessionId);
 
         return documentRepository.findById(id)
                 .map(doc -> {
@@ -343,8 +398,11 @@ public class DocumentController {
     }
 
     @GetMapping("/{id}/download")
-    public ResponseEntity<?> downloadDocument(@PathVariable("id") Long id) {
-        telemetryService.recordDownloadTelemetry(id);
+    public ResponseEntity<?> downloadDocument(@PathVariable("id") Long id, HttpServletRequest request) {
+        Long currentUserId = extractCurrentUserId();
+        String traceId = extractTraceId(request);
+        String sessionId = extractSessionId(request);
+        telemetryService.recordDownloadTelemetry(id, currentUserId, traceId, sessionId);
 
         return documentRepository.findById(id)
                 .map(doc -> {

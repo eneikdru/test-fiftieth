@@ -41,6 +41,11 @@ public class TelemetryService {
 
     @Transactional
     public TelemetryEvent recordSearchTelemetry(String queryTerm, int resultsCount) {
+        return recordSearchTelemetry(queryTerm, resultsCount, null, null, null);
+    }
+
+    @Transactional
+    public TelemetryEvent recordSearchTelemetry(String queryTerm, int resultsCount, Long userId, String traceId, String sessionId) {
         if (resultsCount == 0) {
             TelemetryEvent event = new TelemetryEvent(
                     EVENT_ZERO_RESULTS,
@@ -49,6 +54,9 @@ public class TelemetryService {
                     resultsCount,
                     OffsetDateTime.now(clock)
             );
+            event.setUserId(userId);
+            event.setTraceId(traceId);
+            event.setSessionId(sessionId);
             return telemetryEventRepository.save(event);
         }
         return null;
@@ -56,6 +64,11 @@ public class TelemetryService {
 
     @Transactional
     public TelemetryEvent recordDownloadTelemetry(Long documentId) {
+        return recordDownloadTelemetry(documentId, null, null, null);
+    }
+
+    @Transactional
+    public TelemetryEvent recordDownloadTelemetry(Long documentId, Long userId, String traceId, String sessionId) {
         TelemetryEvent event = new TelemetryEvent(
                 EVENT_DOWNLOAD_SUCCESS,
                 null,
@@ -63,6 +76,9 @@ public class TelemetryService {
                 null,
                 OffsetDateTime.now(clock)
         );
+        event.setUserId(userId);
+        event.setTraceId(traceId);
+        event.setSessionId(sessionId);
         return telemetryEventRepository.save(event);
     }
 
