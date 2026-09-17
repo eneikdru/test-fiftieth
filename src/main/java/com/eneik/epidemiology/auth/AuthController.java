@@ -1311,7 +1311,7 @@ public class AuthController {
         } catch (OidcValidationException e) {
             throw e;
         } catch (Exception e) {
-            throw new OidcValidationException("Error extracting claims from OIDC ID token", e);
+            throw new OidcValidationException.OidcMalformedTokenException("Error extracting claims from OIDC ID token", e);
         }
     }
 
