@@ -143,6 +143,18 @@
       "confidence": "high",
       "evidence": "frontend/index.html: Inspection of the button elements reveals missing `aria-label` attributes for icon-centric controls and missing distinct focus states in the inline utility classes.",
       "screenshotFile": "index-1440px.png"
+    },
+    {
+      "roleTag": "BARCAN-TAG-12",
+      "philosopher": "Маргарет Гилберт",
+      "worldview": "Joint Commitment / Plural Subject: a contract or plan requires a joint commitment where parties are mutually bound to a shared structure, creating a plural subject ('we'). Unilateral deviation breaks the joint commitment.",
+      "critique": "The frontend mock API (`frontend/serve.mjs`) returns search results as an array (`[ { id: '1', title: '...' } ]`), but the actual backend API (`DocumentController.java`) wraps search results in a paginated envelope object (`{ \"items\": [...], \"total_elements\": 12, \"page\": 0, ... }`). This represents a fundamental rupture of joint commitment: the frontend and backend are not operating as a 'plural subject' under a shared API contract. They have unilaterally adopted disjoint schemas, meaning integration will inevitably fail because the 'we' of the system's contract does not actually exist.",
+      "proposal": "Establish and enforce a shared, binding API contract (e.g., OpenAPI specification). Update the frontend mock to strictly return the exact paginated envelope structure that the backend produces, honoring the joint commitment.",
+      "dislike": "A system where collaborating components (frontend/backend) unilaterally invent differing schemas for the same domain boundary, breaking the joint commitment required for integration.",
+      "kanoClass": "Must-Be",
+      "confidence": "high",
+      "evidence": "frontend/serve.mjs: The `/api/v1/documents/search` endpoint returns a flat JSON array `res.end(JSON.stringify(filtered));`. vs src/main/java/com/eneik/epidemiology/document/DocumentController.java: The search endpoint returns a map `response.put(\"items\", items); response.put(\"total_elements\", ...); return ResponseEntity.ok(response);`",
+      "screenshotFile": ""
     }
   ]
 }
