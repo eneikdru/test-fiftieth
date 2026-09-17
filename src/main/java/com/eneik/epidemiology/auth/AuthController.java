@@ -1308,10 +1308,12 @@ public class AuthController {
                            (claims.has("custom_courses") ? claims.get("custom_courses").asText() : "");
 
             return new MoodleProfile(username, moodleRole, department, email, fullName, courses, suspended);
-        } catch (OidcValidationException e) {
+        } catch (com.eneik.epidemiology.auth.exceptions.OidcValidationException e) {
+            throw e;
+        } catch (com.eneik.epidemiology.auth.OidcValidationException e) {
             throw e;
         } catch (Exception e) {
-            throw new OidcValidationException("Error extracting claims from OIDC ID token", e);
+            throw new com.eneik.epidemiology.auth.exceptions.OidcValidationException("Error extracting claims from OIDC ID token", e);
         }
     }
 
