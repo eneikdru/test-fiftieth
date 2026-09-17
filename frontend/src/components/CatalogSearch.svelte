@@ -62,6 +62,14 @@
   let showImprint = false;
   let feedbackNotice = null; // { type: 'success' | 'error', message: string }
 
+  function isTelemetryAllowed() {
+    try {
+      return localStorage.getItem('telemetry_consent') === 'granted';
+    } catch (e) {
+      return false;
+    }
+  }
+
   // Fetch documents from real backend endpoint /api/v1/documents/search
   async function fetchDocuments(pageIndex = 0, isPageChange = false) {
     if (isPageChange) {
@@ -172,6 +180,9 @@
 
   function handleSearchSubmit(event) {
     if (event) event.preventDefault();
+    if (isTelemetryAllowed()) {
+      dispatch('searchTelemetry', { query: searchQuery, author: selectedAuthor, year: selectedYear });
+    }
     fetchDocuments();
   }
 
