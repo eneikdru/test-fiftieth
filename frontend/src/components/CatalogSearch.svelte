@@ -23,6 +23,7 @@
   let searchQuery = '';
   let selectedAuthor = '';
   let selectedYear = '';
+  let selectedDocType = '';
 
 
   // API Data view states: empty, loading, error, present
@@ -86,6 +87,7 @@
       if (searchQuery.trim()) params.append('query', searchQuery.trim());
       if (selectedAuthor.trim()) params.append('author', selectedAuthor.trim());
       if (selectedYear.toString().trim()) params.append('year', selectedYear.toString().trim());
+      if (selectedDocType.trim()) params.append('docType', selectedDocType.trim());
 
       params.append('page', pageIndex);
       params.append('size', pageSize);
@@ -190,6 +192,7 @@
     searchQuery = '';
     selectedAuthor = '';
     selectedYear = '';
+    selectedDocType = '';
     fetchDocuments();
   }
 
@@ -432,6 +435,24 @@
         </select>
       </div>
 
+      <!-- Doc Type Filter -->
+      <div class="md:col-span-2">
+        <label for="search-doctype-input" class="block text-xs font-semibold text-[#191c1e] mb-1">
+          Тип документа
+        </label>
+        <select
+          id="search-doctype-input"
+          bind:value={selectedDocType}
+          class="w-full h-11 px-3 bg-[#f7f9fb] border border-[#c2c6d4] rounded-lg text-sm text-[#191c1e] focus:outline-none focus:ring-2 focus:ring-[#003f87]/50 focus:border-[#003f87]"
+        >
+          <option value="">Все типы</option>
+          <option value="Протокол расследования">Протокол расследования</option>
+          <option value="Отчёт эпиднадзора">Отчёт эпиднадзора</option>
+          <option value="Набор данных">Набор данных</option>
+          <option value="Методическое руководство">Методическое руководство</option>
+        </select>
+      </div>
+
       <!-- Action Buttons -->
       <div class="md:col-span-2 flex items-end gap-2">
         <button
@@ -441,7 +462,7 @@
         >
           Найти
         </button>
-        {#if searchQuery || selectedAuthor || selectedYear}
+        {#if searchQuery || selectedAuthor || selectedYear || selectedDocType}
           <button
             type="button"
             id="search-reset-btn"
