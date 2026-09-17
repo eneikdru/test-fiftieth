@@ -3,7 +3,6 @@ version: '3.8'
 services:
   db:
     image: postgres:15-alpine
-    container_name: epidemiology_db
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-epidemiology_db}
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
@@ -20,7 +19,6 @@ services:
 
   backup:
     image: postgres:15-alpine
-    container_name: epidemiology_backup
     depends_on:
       db:
         condition: service_healthy
@@ -53,7 +51,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: epidemiology_backend
     depends_on:
       db:
         condition: service_healthy
