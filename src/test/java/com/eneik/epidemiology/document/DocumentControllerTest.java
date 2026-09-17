@@ -115,8 +115,8 @@ class DocumentControllerTest {
                         .param("author", "НИИ")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + researcherToken))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.count", greaterThanOrEqualTo(1)))
-                .andExpect(jsonPath("$.results[0].authorOrganization", containsString("НИИ")));
+                .andExpect(jsonPath("$.total_elements", greaterThanOrEqualTo(1)))
+                .andExpect(jsonPath("$.items[0].author_organization", containsString("НИИ")));
 
         long durationMs = System.currentTimeMillis() - startTime;
         assertTrue(durationMs < 200, "Search query for author must execute within 200ms (took " + durationMs + "ms)");
@@ -210,12 +210,12 @@ class DocumentControllerTest {
     @DisplayName("Given search parameters query and year, When search executes, Then filters matching documents")
     void testSearchByTitleAndYear_ReturnsMatchingDocuments() throws Exception {
         mockMvc.perform(get("/api/v1/documents/search")
-                        .param("query", "сальмонеллеза")
+                        .param("q", "сальмонеллеза")
                         .param("year", "2023")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + researcherToken))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.count", is(1)))
-                .andExpect(jsonPath("$.results[0].publicationYear", is(2023)));
+                .andExpect(jsonPath("$.total_elements", is(1)))
+                .andExpect(jsonPath("$.items[0].title", containsString("сальмонеллеза")));
     }
 
     @Test
@@ -256,5 +256,58 @@ class DocumentControllerTest {
         assertEquals(researcherUser.getId(), event.getUserId());
         assertEquals("trace-abc-123", event.getTraceId());
         assertEquals("sess-xyz-789", event.getSessionId());
+    }
+
+    @Test
+    @DisplayName("Given an empty search query but selected facets (docType, year), When processed, Then the results are filtered strictly by facets")
+    void testSearchWithEmptyQueryAndFacets_ReturnsFilteredResults() throws Exception {
+        Document doc1 = new Document("Уникальный отчет 2025", "НИИ Эпидемиологии", 2025, "/data/docs/uploads/doc1.pdf");
+        doc1.setDocType("UNIQUE_TEST_REPORT");
+        documentRepository.save(doc1);
+
+        Document doc2 = new Document("Уникальный протокол 2025", "НИИ Эпидемиологии", 2025, "/data/docs/uploads/doc2.pdf");
+        doc2.setDocType("UNIQUE_TEST_PROTOCOL");
+        documentRepository.save(doc2);
+
+        mockMvc.perform(get("/api/v1/documents/search")
+                        .param("q", "")
+                        .param("docType", "UNIQUE_TEST_REPORT")
+                        .param("year", "2025")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + researcherToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.total_elements", is(1)))
+                .andExpect(jsonPath("$.items[0].doc_type", is("UNIQUE_TEST_REPORT")))
+                .andExpect(jsonPath("$.items[0].title", containsString("Уникальный отчет 2025")));
+    }
+
+    @Test
+    @DisplayName("Given structured facet parameters docType (camelCase) and year, When provided without query, Then filters matching documents strictly")
+    void testFacetedSearchByCamelCaseDocTypeAndYear() throws Exception {
+        Document doc = new Document("Аналитический обзор 2022", "Центр Эпидемиологии", 2022, "/data/docs/uploads/doc3.pdf");
+        doc.setDocType("ANALYTICS");
+        documentRepository.save(doc);
+
+        mockMvc.perform(get("/api/v1/documents/search")
+                        .param("docType", "ANALYTICS")
+                        .param("year", "2022")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + researcherToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.total_elements", is(1)))
+                .andExpect(jsonPath("$.items[0].doc_type", is("ANALYTICS")));
+    }
+
+    @Test
+    @DisplayName("Given only year facet parameter, When requested without query or docType, Then filters matching documents by year")
+    void testFacetedSearchByYearOnly() throws Exception {
+        Document doc = new Document("Специальный отчет 2030", "НИИ Эпидемиологии", 2030, "/data/docs/uploads/doc4.pdf");
+        doc.setDocType("SPECIAL_REPORT");
+        documentRepository.save(doc);
+
+        mockMvc.perform(get("/api/v1/documents/search")
+                        .param("year", "2030")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + researcherToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.total_elements", is(1)))
+                .andExpect(jsonPath("$.items[0].doc_type", is("SPECIAL_REPORT")));
     }
 }
