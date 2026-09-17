@@ -436,6 +436,19 @@ class AuthControllerTest {
     }
 
     @Test
+    @DisplayName("Given an OIDC token with invalid format, When OIDC login occurs, Then InvalidSignatureException is thrown and caught correctly")
+    void testOidcLogin_InvalidSignatureException_ThrownAndHandled() throws Exception {
+        String invalidTokenFormat = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.invalid"; // Only 2 parts instead of 3
+        String ssoBody = String.format("{\"username\":\"oidc_user\",\"oidc_token\":\"%s\"}", invalidTokenFormat);
+
+        mockMvc.perform(post("/api/v1/auth/sso/oidc")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(ssoBody))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.error_code", is("INVALID_SSO_TOKEN")));
+    }
+
+    @Test
     @DisplayName("Given Moodle SSO callback with valid auth code, When callback endpoint called, Then exchanges code for profile and authenticates user")
     void testMoodleCallback_ValidCode_AuthenticatesAndSyncsRole() throws Exception {
         mockServer.expect(org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo("https://moodle.epidemiology-inst.ru/oauth2/token"))
