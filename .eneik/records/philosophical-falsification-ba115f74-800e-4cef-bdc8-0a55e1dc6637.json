@@ -1,18 +1,6 @@
 {
   "critiques": [
     {
-      "roleTag": "BARCAN-TAG-01",
-      "philosopher": "Кит Файн",
-      "worldview": "Essence before modal description; strict demarcation between core properties and contingent states.",
-      "critique": "The DocumentController generates an artificial payload when a document ID is not found during a download request. Instead of honoring the essential non-existence of the requested entity by returning a 404/410, the system proceeds to manufacture fallback byte content ('Содержимое документа X'). This violates the metaphysical principle of entities by confounding a core property (existence in the repository) with a contingent error-recovery state, effectively simulating an object that does not materially exist in the system's database.",
-      "proposal": "Remove the fallback byte content generation in `DocumentController.downloadDocument()`. If `findById` returns empty, strictly return a 404 NOT FOUND status.",
-      "dislike": "Generating false content to mask a non-existent domain object.",
-      "kanoClass": "Must-Be",
-      "confidence": "high",
-      "evidence": "src/main/java/com/eneik/epidemiology/document/DocumentController.java: downloadDocument() uses .orElseGet(() -> { byte[] fallbackContent = ... return ResponseEntity.ok()... })",
-      "screenshotFile": ""
-    },
-    {
       "roleTag": "BARCAN-TAG-00",
       "philosopher": "Майкл Дамит",
       "worldview": "Verificationist Theory of Meaning: truths are grounded in recognizable evidence; explicit status handling without conflation.",
@@ -22,6 +10,18 @@
       "kanoClass": "Performance",
       "confidence": "high",
       "evidence": "src/main/java/com/eneik/epidemiology/auth/AuthController.java: fetchOidcProfile() handles claim validation failures by returning null.",
+      "screenshotFile": ""
+    },
+    {
+      "roleTag": "BARCAN-TAG-01",
+      "philosopher": "Кит Файн",
+      "worldview": "Essence before modal description; strict demarcation between core properties and contingent states.",
+      "critique": "The DocumentController generates an artificial payload when a document ID is not found during a download request. Instead of honoring the essential non-existence of the requested entity by returning a 404/410, the system proceeds to manufacture fallback byte content ('Содержимое документа X'). This violates the metaphysical principle of entities by confounding a core property (existence in the repository) with a contingent error-recovery state, effectively simulating an object that does not materially exist in the system's database.",
+      "proposal": "Remove the fallback byte content generation in `DocumentController.downloadDocument()`. If `findById` returns empty, strictly return a 404 NOT FOUND status.",
+      "dislike": "Generating false content to mask a non-existent domain object.",
+      "kanoClass": "Must-Be",
+      "confidence": "high",
+      "evidence": "src/main/java/com/eneik/epidemiology/document/DocumentController.java: downloadDocument() uses .orElseGet(() -> { byte[] fallbackContent = ... return ResponseEntity.ok()... })",
       "screenshotFile": ""
     },
     {
@@ -70,6 +70,42 @@
       "kanoClass": "Performance",
       "confidence": "high",
       "evidence": "src/main/java/com/eneik/epidemiology/document/DocumentController.java: `telemetryService.recordSearchTelemetry(telemetryQuery, filteredContent.size());` does not pass any correlation or identity context.",
+      "screenshotFile": ""
+    },
+    {
+      "roleTag": "BARCAN-TAG-06",
+      "philosopher": "Альфред Тарский",
+      "worldview": "Semantic Conception of Truth (T-schema): 'P' is true if and only if P is actually the case; tests must measure the real world, not a simulated proxy.",
+      "critique": "The frontend tests in `playwright.config.mjs` are configured to execute against the mock server (`node serve.mjs`) rather than the actual Spring Boot backend. The tests will claim 'The document search works' is TRUE, but semantically, it only proves 'The document search works against a statically coded mock that ignores backend authorization'. This violates the T-schema because the test assertion 'P' does not correspond to the actual system state 'P', but rather to a simulated proxy 'P*'.",
+      "proposal": "Reconfigure the E2E testing framework to run against an instance of the real backend with a seeded test database, ensuring that when a test passes, it semantically guarantees the actual system works.",
+      "dislike": "A testing framework that claims to verify the system but actually verifies a simplified, unconstrained simulation.",
+      "kanoClass": "Must-Be",
+      "confidence": "high",
+      "evidence": "frontend/playwright.config.mjs: The webServer configuration points directly to the static mock `node serve.mjs` on port 18080.",
+      "screenshotFile": ""
+    },
+    {
+      "roleTag": "BARCAN-TAG-07",
+      "philosopher": "Тимоти Уильямсон",
+      "worldview": "Knowledge-first epistemology: knowledge is the primary state, not merely justified true belief. Action must be grounded in actual knowledge, not unverified claims.",
+      "critique": "In `AuthController.java`, the system falls back to generating a secure random password if a user requires a local account creation after Moodle OIDC login (`generateSecureFallbackPassword()`). However, this fallback password is never transmitted back to the user or recorded securely in a way the user can access. The system creates a state where the user 'has' an account but structurally prevents them from ever knowing the credentials to access it directly, severing the epistemic link between the user and their own identity.",
+      "proposal": "If a fallback local password must be generated, it should be part of a verifiable flow where the knowledge of that credential is securely transmitted to the user (e.g., a one-time link or email), or the system should rely entirely on the federated identity without requiring a local password.",
+      "dislike": "Generating authorization credentials that are structurally impossible for the authorized entity to know or use.",
+      "kanoClass": "Reverse",
+      "confidence": "high",
+      "evidence": "src/main/java/com/eneik/epidemiology/auth/AuthController.java: `generateSecureFallbackPassword()` generates a random Base64 string that is not logged or transmitted to the user.",
+      "screenshotFile": ""
+    },
+    {
+      "roleTag": "BARCAN-TAG-08",
+      "philosopher": "Готлоб Фреге",
+      "worldview": "Distinction between Sense (Sinn) and Reference (Bedeutung); names and types must clearly distinguish how they present an object from what the object actually is.",
+      "critique": "The database schema for `documents` in `V20260822225105263__create_documents_table.sql` uses a generic `VARCHAR(255)` for the `title` and `author_organization`. This conflates the 'sense' (how the title is presented) with its typed 'reference' (what it means in the domain). There is no strong typing or domain constraint (like an ENUM or specialized domain table) for organizations, allowing semantic drift where 'НИИ Эпидемиологии', 'NII Epidemiologii', and 'Inst. of Epidemiology' refer to the same entity but are treated as distinct strings. This destroys compositionality.",
+      "proposal": "Extract `author_organization` into a strictly typed, normalized domain entity (e.g., `organizations` table) and reference it via a foreign key, ensuring that the reference remains stable even if the sense (display name) changes.",
+      "dislike": "Using unstructured primitive strings (VARCHAR) to represent what should be concrete, strictly typed domain entities with stable references.",
+      "kanoClass": "Performance",
+      "confidence": "high",
+      "evidence": "src/main/resources/db/migration/V20260822225105263__create_documents_table.sql: `author_organization` is defined as `VARCHAR(255)` instead of a normalized foreign key.",
       "screenshotFile": ""
     }
   ]
