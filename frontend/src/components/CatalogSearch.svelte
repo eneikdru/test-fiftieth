@@ -119,6 +119,22 @@
 
       currentPage = pageIndex;
 
+      // Only record search telemetry if explicit consent is granted
+      if (typeof localStorage !== 'undefined' && localStorage.getItem('telemetry_consent') === 'granted') {
+        try {
+          fetch(`${getApiBaseUrl()}/telemetry/events`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              eventType: 'SEARCH',
+              query: searchQuery,
+              resultsCount: documents.length,
+              timestamp: new Date().toISOString()
+            })
+          }).catch(() => {});
+        } catch (e) {}
+      }
+
       if (isPageChange) {
         setTimeout(() => {
           const heading = document.getElementById('search-results-heading');

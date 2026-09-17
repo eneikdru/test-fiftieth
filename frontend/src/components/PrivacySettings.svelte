@@ -3,10 +3,29 @@
    * Data Subject Rights Management Component (152-FZ Compliance)
    * UI Slice for self-serve privacy rights, data export, and destructive erasure.
    */
-  import { createEventDispatcher } from 'svelte';
+  import { createEventDispatcher, onMount } from 'svelte';
   import ImprintModal from './ImprintModal.svelte';
 
   const dispatch = createEventDispatcher();
+
+  let telemetryConsentState = 'unconfirmed';
+
+  onMount(() => {
+    try {
+      telemetryConsentState = localStorage.getItem('telemetry_consent') || 'unconfirmed';
+    } catch (e) {}
+  });
+
+  function updateTelemetryConsent(newState) {
+    telemetryConsentState = newState;
+    try {
+      if (newState === 'unconfirmed') {
+        localStorage.removeItem('telemetry_consent');
+      } else {
+        localStorage.setItem('telemetry_consent', newState);
+      }
+    } catch (e) {}
+  }
 
   export function getApiBaseUrl() {
     return '/api/v1';
@@ -172,6 +191,57 @@
       </div>
     </div>
   {/if}
+
+  <!-- Telemetry Consent Settings Card -->
+  <section class="mb-6 bg-white border border-[#e0e3e5] rounded-xl p-6 shadow-sm">
+    <div class="flex items-center justify-between mb-4">
+      <div class="flex items-center gap-3">
+        <div class="p-2.5 bg-[#d3e4fe] text-[#003f87] rounded-lg">
+          <span class="text-xl font-bold">📊</span>
+        </div>
+        <div>
+          <h2 class="text-lg font-bold text-[#191c1e]">Согласие на сбор телеметрии</h2>
+          <p class="text-xs text-[#424752]">Управление сбором технической статистики навигации и использования (152-ФЗ)</p>
+        </div>
+      </div>
+      <span class="px-3 py-1 rounded-full text-xs font-bold {telemetryConsentState === 'granted' ? 'bg-emerald-100 text-emerald-800' : telemetryConsentState === 'denied' ? 'bg-[#ffdad6] text-[#93000a]' : 'bg-[#eceef0] text-[#424752]'}">
+        {telemetryConsentState === 'granted' ? 'Согласие дано' : telemetryConsentState === 'denied' ? 'Согласие отозвано' : 'Не подтверждено'}
+      </span>
+    </div>
+
+    <p class="text-sm text-[#424752] mb-4">
+      Вы можете в любой момент изменить или отозвать согласие на запись обезличенных метрик навигации и точности поиска.
+    </p>
+
+    <div class="flex items-center gap-3">
+      <button
+        type="button"
+        id="privacy-consent-grant-btn"
+        on:click={() => updateTelemetryConsent('granted')}
+        class="px-4 py-2 bg-[#003f87] hover:bg-[#002b5e] text-white text-xs font-bold rounded-lg transition-colors focus:ring-2 focus:ring-[#003f87]"
+      >
+        Разрешить телеметрию
+      </button>
+
+      <button
+        type="button"
+        id="privacy-consent-revoke-btn"
+        on:click={() => updateTelemetryConsent('denied')}
+        class="px-4 py-2 bg-[#eceef0] hover:bg-[#e0e3e5] text-[#191c1e] text-xs font-semibold rounded-lg border border-[#c2c6d4] transition-colors focus:ring-2 focus:ring-[#003f87]"
+      >
+        Отозвать согласие
+      </button>
+
+      <button
+        type="button"
+        id="privacy-consent-reset-btn"
+        on:click={() => updateTelemetryConsent('unconfirmed')}
+        class="px-4 py-2 text-[#424752] hover:text-[#191c1e] text-xs underline font-medium transition-colors"
+      >
+        Сбросить выбор
+      </button>
+    </div>
+  </section>
 
   <main class="grid grid-cols-1 lg:grid-cols-2 gap-6">
     <!-- EXPORT PERSONAL DATA CARD -->
