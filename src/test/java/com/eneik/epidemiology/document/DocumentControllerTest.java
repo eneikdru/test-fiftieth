@@ -77,6 +77,7 @@ class DocumentControllerTest {
                 .andExpect(jsonPath("$.items[0].document_id").exists())
                 .andExpect(jsonPath("$.items[0].title").exists())
                 .andExpect(jsonPath("$.items[0].doc_type").exists())
+                .andExpect(jsonPath("$.items[0].relevance_score").exists())
                 .andExpect(jsonPath("$.items[0].highlights[0]", containsString("<em>Иванов</em>")));
 
         long durationMs = System.currentTimeMillis() - startTime;
@@ -295,6 +296,28 @@ class DocumentControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.total_elements", is(1)))
                 .andExpect(jsonPath("$.items[0].doc_type", is("ANALYTICS")));
+    }
+
+    @Test
+    @DisplayName("Given documents with exact title match versus text content match, When searched, Then returns dynamic computed relevance scores reflecting belief degree")
+    void testCalibratedRelevanceScoreMapping() throws Exception {
+        Document titleMatch = new Document("Калибровка эпидемиологии", "НИИ Эпидемиологии", 2024, "/data/docs/uploads/score1.pdf");
+        titleMatch.setDocType("REPORT");
+        documentRepository.save(titleMatch);
+
+        Document textMatch = new Document("Другой документ", "НИИ Эпидемиологии", 2024, "/data/docs/uploads/score2.pdf");
+        textMatch.setDocType("REPORT");
+        textMatch.setTextContent("В тексте присутствует калибровка системного уровня.");
+        documentRepository.save(textMatch);
+
+        mockMvc.perform(get("/api/v1/documents/search")
+                        .param("q", "Калибровка")
+                        .param("docType", "REPORT")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + researcherToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.total_elements", greaterThanOrEqualTo(2)))
+                .andExpect(jsonPath("$.items[0].relevance_score", is(0.85)))
+                .andExpect(jsonPath("$.items[1].relevance_score", is(0.65)));
     }
 
 }

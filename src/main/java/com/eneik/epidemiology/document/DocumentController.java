@@ -196,7 +196,7 @@ public class DocumentController {
             Pageable pageable = PageRequest.of(page, size);
             String cleanedQuery = (q != null && !q.trim().isEmpty()) ? q.trim() : null;
 
-            Page<Document> resultPage = documentRepository.fullTextSearch(
+            Page<DocumentSearchResult> resultPage = documentRepository.fullTextSearchWithScore(
                     cleanedQuery,
                     effectiveDocType,
                     (author != null && !author.trim().isEmpty()) ? author.trim() : null,
@@ -206,10 +206,10 @@ public class DocumentController {
                     pageable
             );
 
-            List<Document> filteredContent = resultPage.getContent();
+            List<DocumentSearchResult> filteredContent = resultPage.getContent();
             if (!isProtocolAccessAuthorized()) {
                 filteredContent = filteredContent.stream()
-                        .filter(doc -> doc.getDocType() == null || !"PROTOCOL".equalsIgnoreCase(doc.getDocType()))
+                        .filter(res -> res.getDocument() == null || res.getDocument().getDocType() == null || !"PROTOCOL".equalsIgnoreCase(res.getDocument().getDocType()))
                         .collect(Collectors.toList());
             }
 
@@ -218,7 +218,8 @@ public class DocumentController {
             String sessionId = extractSessionId(request);
             telemetryService.recordSearchTelemetry(q != null ? q : "", filteredContent.size(), currentUserId, traceId, sessionId);
 
-            List<Map<String, Object>> items = filteredContent.stream().map(doc -> {
+            List<Map<String, Object>> items = filteredContent.stream().map(res -> {
+                Document doc = res.getDocument();
                 Map<String, Object> item = new LinkedHashMap<>();
                 item.put("document_id", doc.getId());
                 item.put("title", doc.getTitle());
@@ -235,7 +236,7 @@ public class DocumentController {
 
                 item.put("highlights", buildHighlights(doc, q));
                 item.put("matched_pages", List.of(1));
-                item.put("relevance_score", 1.0);
+                item.put("relevance_score", res.getRelevanceScore() != null ? res.getRelevanceScore() : 1.0);
                 return item;
             }).collect(Collectors.toList());
 
