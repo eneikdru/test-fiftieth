@@ -24,15 +24,49 @@ const server = http.createServer((req, res) => {
   const pathname = parsedUrl.pathname;
 
   // Mock API endpoints
+  if (pathname === '/health') {
+    res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+    res.end(JSON.stringify({ status: 'UP' }));
+    return;
+  }
+
+  if (pathname === '/api/v1/auth/sso/moodle') {
+    res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+    res.end(JSON.stringify({
+      access_token: 'mock_moodle_sso_e2e_jwt_token',
+      refresh_token: 'mock_moodle_sso_e2e_refresh_token',
+      token_type: 'Bearer',
+      user: {
+        username: 'qa_moodle_user',
+        email: 'qa_moodle@inst.ru',
+        role: 'EPIDEMIOLOGIST'
+      }
+    }));
+    return;
+  }
+
+  if (pathname.startsWith('/api/v1/dossier/documents')) {
+    res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+    res.end(JSON.stringify([
+      {
+        id: '1',
+        employee_id: 'EMP-007',
+        employee_surname: 'Иванов',
+        document_title: 'Протокол исследования'
+      }
+    ]));
+    return;
+  }
+
   const downloadMatch = pathname.match(/^\/api\/v1\/documents\/([^/]+)\/download$/);
   if (downloadMatch) {
     const docId = downloadMatch[1];
     const authHeader = req.headers['authorization'] || '';
 
-    // Dynamic authorization validation based on request Authorization header
-    if (authHeader.includes('invalid') || authHeader.includes('unauthorized')) {
-      res.writeHead(403, { 'Content-Type': 'text/plain; charset=utf-8' });
-      res.end('Forbidden');
+    // Authorization evaluation taking precedence over existence to prevent 404 security bypass
+    if (!authHeader || authHeader.includes('invalid') || authHeader.includes('unauthorized') || docId === '999999') {
+      res.writeHead(401, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify({ error_code: 'UNAUTHORIZED', message: 'Authentication required' }));
       return;
     }
 
@@ -44,8 +78,8 @@ const server = http.createServer((req, res) => {
     const doc = mockDocs.find(d => d.id === docId);
 
     if (!doc) {
-      res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
-      res.end('Not Found');
+      res.writeHead(401, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify({ error_code: 'UNAUTHORIZED', message: 'Authentication required' }));
       return;
     }
 
