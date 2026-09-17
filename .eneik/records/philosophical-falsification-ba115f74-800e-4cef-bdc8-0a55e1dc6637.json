@@ -1,0 +1,40 @@
+{
+  "critiques": [
+    {
+      "roleTag": "BARCAN-TAG-01",
+      "philosopher": "Кит Файн",
+      "worldview": "Essence before modal description; strict demarcation between core properties and contingent states.",
+      "critique": "The DocumentController generates an artificial payload when a document ID is not found during a download request. Instead of honoring the essential non-existence of the requested entity by returning a 404/410, the system proceeds to manufacture fallback byte content ('Содержимое документа X'). This violates the metaphysical principle of entities by confounding a core property (existence in the repository) with a contingent error-recovery state, effectively simulating an object that does not materially exist in the system's database.",
+      "proposal": "Remove the fallback byte content generation in `DocumentController.downloadDocument()`. If `findById` returns empty, strictly return a 404 NOT FOUND status.",
+      "dislike": "Generating false content to mask a non-existent domain object.",
+      "kanoClass": "Must-Be",
+      "confidence": "high",
+      "evidence": "src/main/java/com/eneik/epidemiology/document/DocumentController.java: downloadDocument() uses .orElseGet(() -> { byte[] fallbackContent = ... return ResponseEntity.ok()... })",
+      "screenshotFile": ""
+    },
+    {
+      "roleTag": "BARCAN-TAG-00",
+      "philosopher": "Майкл Дамит",
+      "worldview": "Verificationist Theory of Meaning: truths are grounded in recognizable evidence; explicit status handling without conflation.",
+      "critique": "In `AuthController.fetchOidcProfile()`, multiple distinct failure modes (missing 'iss' claim, missing 'aud' claim, invalid signature, or network exceptions during fetching) all collapse into returning `null`. This generic `null` is then treated uniformly as an authentication failure by the caller. This destroys the explicit state and causal evidence of the failure, preventing the system (or operator) from knowing *why* the verification failed, thus violating the principle that truths/states must be explicitly verifiable.",
+      "proposal": "The OIDC token verification methods should return a constructive proof object (a typed Result) or throw specific exceptions (e.g., MissingClaimException, InvalidSignatureException) so the exact failure reason is preserved and explicitly handled.",
+      "dislike": "The destruction of specific causal evidence by compressing distinct failure modes into a single 'null' return value.",
+      "kanoClass": "Performance",
+      "confidence": "high",
+      "evidence": "src/main/java/com/eneik/epidemiology/auth/AuthController.java: fetchOidcProfile() handles claim validation failures by returning null.",
+      "screenshotFile": ""
+    },
+    {
+      "roleTag": "BARCAN-TAG-02",
+      "philosopher": "Дэвид Чалмерс",
+      "worldview": "Two-Dimensional Semantics: primary and secondary intensions; semantic stability and boundary topology.",
+      "critique": "The frontend mock server (`frontend/serve.mjs`) blindly intercepts download API calls and statically serves hardcoded success responses, entirely bypassing the backend's semantic reality (e.g., `isProtocolAccessAuthorized`). The UI simulates a world where all downloads succeed, severing the link between the frontend's representation (secondary intension) and the system's actual constraints (primary intension). This mock systematically lies about the system's boundary topology, making frontend test harnesses fundamentally disconnected from the backend's domain logic.",
+      "proposal": "The frontend mock server must incorporate the semantic boundaries of the backend by simulating realistic constraints, such as responding with 403 Forbidden or 404 Not Found when appropriate, rather than providing unconditional success.",
+      "dislike": "A mock that systematically lies about the system's boundary constraints, severing the link between the UI's representation and the backend's reality.",
+      "kanoClass": "Reverse",
+      "confidence": "high",
+      "evidence": "frontend/serve.mjs: Mock API endpoints intercept `/api/v1/documents/*/download` and uniformly return 200 OK with hardcoded PDF content.",
+      "screenshotFile": ""
+    }
+  ]
+}
