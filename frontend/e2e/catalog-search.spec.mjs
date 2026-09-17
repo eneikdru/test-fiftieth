@@ -125,6 +125,53 @@ test.describe('Catalog Search and Document Management E2E Tests', () => {
     await expect(page.locator('#upload-description-input')).toHaveValue(testDesc);
   });
 
+  test('Given a selected Document Type facet in the UI, When a search is executed E2E, Then the returned results must strictly belong to that document type', async ({ page }) => {
+    await page.goto('/');
+
+    // Select Document Type facet: 'Протокол расследования'
+    await page.selectOption('#search-doctype-input', 'Протокол расследования');
+    await page.click('#search-submit-btn');
+
+    // Confirm that returned document cards exist and strictly belong to selected type
+    const cards = page.locator('#document-grid .document-card');
+    await expect(cards.first()).toBeVisible();
+    const count = await cards.count();
+    expect(count).toBeGreaterThan(0);
+
+    for (let i = 0; i < count; i++) {
+      const cardText = await cards.nth(i).innerText();
+      expect(cardText).toContain('Протокол расследования');
+      expect(cardText).not.toContain('Отчёт эпиднадзора');
+      expect(cardText).not.toContain('Методическое руководство');
+    }
+  });
+
+  test('Given multiple selected facets, When a search is executed, Then the results must represent the intersection of the facets', async ({ page }) => {
+    await page.goto(harnessPath);
+
+    // Select multiple facets: Document Type = 'Протокол расследования', Year = '2023', Author = 'НИИ Эпидемиологии'
+    await page.selectOption('#search-doctype-input', 'Протокол расследования');
+    await page.selectOption('#search-year-input', '2023');
+    await page.fill('#search-author-input', 'НИИ Эпидемиологии');
+    await page.click('#search-submit-btn');
+
+    // Confirm returned card represents the strict intersection of all selected facets
+    const cards = page.locator('#document-grid .document-card');
+    await expect(cards).toHaveCount(1);
+    const cardContent = await cards.first().innerText();
+    expect(cardContent).toContain('Протокол эпидемиологического расследования вспышки сальмонеллеза');
+    expect(cardContent).toContain('2023');
+    expect(cardContent).toContain('НИИ Эпидемиологии');
+
+    // Verify non-intersecting multi-facet search yields empty state
+    await page.selectOption('#search-year-input', '2021');
+    await page.click('#search-submit-btn');
+
+    const emptyMessage = page.locator('#empty-catalog-message h3');
+    await expect(emptyMessage).toBeVisible();
+    await expect(emptyMessage).toHaveText('нет материалов');
+  });
+
   test('Given a user accesses the site on desktop and mobile devices, When the UI renders, Then screenshots are saved for design verification', async ({ page }) => {
     const recordDir = path.resolve(process.cwd(), '.eneik/records/design-check-72f86240-fcf6-4d30-9ff6-02ae1b8fb711');
     if (!fs.existsSync(recordDir)) {
