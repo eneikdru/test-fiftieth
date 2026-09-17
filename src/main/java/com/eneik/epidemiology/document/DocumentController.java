@@ -416,6 +416,7 @@ public class DocumentController {
                             .contentType(MediaType.APPLICATION_OCTET_STREAM)
                             .body(content);
                 })
+                /* Explicitly returning 404 for non-existent documents */
                 .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());
     }
 }
