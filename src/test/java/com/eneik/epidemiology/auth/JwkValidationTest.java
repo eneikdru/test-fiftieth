@@ -110,7 +110,7 @@ public class JwkValidationTest {
     @Test
     @DisplayName("Given an uninitialized or broken JWK Provider URL, When JWK Provider initialization fails, Then getJwkProvider throws IllegalStateException")
     void testJwkProvider_InitializationFailure_ThrowsSystemError() {
-        AuthController brokenController = new AuthController(userService, jwtTokenProvider, null, null, null, null);
+        AuthController brokenController = new AuthController(userService, jwtTokenProvider, null, null, null, null, null);
         brokenController.setMoodleServerUrl("ht!!ps://invalid-url-format-causes-exception");
 
         IllegalStateException exception = assertThrows(IllegalStateException.class, () -> {

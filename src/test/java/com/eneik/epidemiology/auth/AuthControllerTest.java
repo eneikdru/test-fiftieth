@@ -69,6 +69,9 @@ class AuthControllerTest {
     private AuthController authController;
 
     @Autowired
+    private CredentialTransmissionService credentialTransmissionService;
+
+    @Autowired
     private ObjectMapper objectMapper;
 
     private org.springframework.test.web.client.MockRestServiceServer mockServer;
@@ -84,6 +87,9 @@ class AuthControllerTest {
         telemetryEventRepository.deleteAll();
         recoveryTokenRepository.deleteAll();
         userRepository.deleteAll();
+        if (credentialTransmissionService != null) {
+            credentialTransmissionService.clearTransmissionHistory();
+        }
 
         KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
         kpg.initialize(2048);
@@ -604,8 +610,9 @@ class AuthControllerTest {
         AuthController customAuthController = new AuthController(
                 userService,
                 jwtTokenProvider,
-                authController.getRestTemplate() != null ? null : null, // Not needed for this method directly
+                null,
                 new com.eneik.epidemiology.telemetry.TelemetryService(telemetryEventRepository),
+                null,
                 null,
                 null,
                 authController.getRestTemplate(),
@@ -951,5 +958,34 @@ class AuthControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.access_token", notNullValue()))
                 .andExpect(jsonPath("$.user.username", is("timeout_user")));
+    }
+
+    @Test
+    @DisplayName("Given fallback password generated during SSO user creation, When user creation completes, Then password is transmitted via CredentialTransmissionService and raw password is not stored in plain text in DB")
+    void testVerifiableFallbackCredentialTransmission_ExecutesTransmission_NoPlainTextStorage() throws Exception {
+        mockServer.expect(org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo("https://moodle.epidemiology-inst.ru/oauth2/userinfo"))
+                .andExpect(org.springframework.test.web.client.match.MockRestRequestMatchers.header("Authorization", "Bearer transmit_token"))
+                .andRespond(org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess(
+                        "{\"username\":\"transmitted_sso_user\",\"moodle_role\":\"Пользователь\",\"department\":\"Эпидемиология\",\"email\":\"transmitted@inst.ru\",\"full_name\":\"Transmitted User\"}",
+                        MediaType.APPLICATION_JSON));
+
+        String ssoBody = "{\"username\":\"transmitted_sso_user\",\"moodle_token\":\"transmit_token\"}";
+
+        mockMvc.perform(post("/api/v1/auth/sso/moodle")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(ssoBody))
+                .andExpect(status().isOk());
+
+        User user = userService.findByUsername("transmitted_sso_user").orElseThrow();
+
+        // 1. Verify transmission record was logged/captured
+        org.junit.jupiter.api.Assertions.assertFalse(credentialTransmissionService.getTransmissionHistory().isEmpty(), "Credential transmission record must be present");
+        CredentialTransmissionService.TransmissionRecord record = credentialTransmissionService.getTransmissionHistory().get(0);
+        org.junit.jupiter.api.Assertions.assertEquals("transmitted_sso_user", record.username());
+        org.junit.jupiter.api.Assertions.assertEquals("transmitted@inst.ru", record.recipient());
+
+        // 2. Verify raw password is NOT stored in plain text anywhere in DB
+        org.junit.jupiter.api.Assertions.assertNotEquals(user.getPasswordHash(), record.transmittedPasswordMasked());
+        org.junit.jupiter.api.Assertions.assertTrue(user.getPasswordHash().startsWith("$2a$") || user.getPasswordHash().startsWith("$2b$") || user.getPasswordHash().startsWith("$2y$"), "Stored password hash must be a BCrypt hash, not plain text");
     }
 }

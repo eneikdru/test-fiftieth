@@ -60,24 +60,26 @@ public class AuthController {
     private final com.eneik.epidemiology.telemetry.TelemetryService telemetryService;
     private final JdbcTemplate jdbcTemplate;
     private final TokenRevocationService tokenRevocationService;
+    private final CredentialTransmissionService credentialTransmissionService;
     private final java.util.Random random;
 
     @org.springframework.beans.factory.annotation.Autowired
-    public AuthController(UserService userService, JwtTokenProvider jwtTokenProvider, PasswordRecoveryService passwordRecoveryService, com.eneik.epidemiology.telemetry.TelemetryService telemetryService, JdbcTemplate jdbcTemplate, TokenRevocationService tokenRevocationService) {
-        this(userService, jwtTokenProvider, passwordRecoveryService, telemetryService, jdbcTemplate, tokenRevocationService, new org.springframework.web.client.RestTemplate(), new java.security.SecureRandom());
+    public AuthController(UserService userService, JwtTokenProvider jwtTokenProvider, PasswordRecoveryService passwordRecoveryService, com.eneik.epidemiology.telemetry.TelemetryService telemetryService, JdbcTemplate jdbcTemplate, TokenRevocationService tokenRevocationService, CredentialTransmissionService credentialTransmissionService) {
+        this(userService, jwtTokenProvider, passwordRecoveryService, telemetryService, jdbcTemplate, tokenRevocationService, credentialTransmissionService, new org.springframework.web.client.RestTemplate(), new java.security.SecureRandom());
     }
 
-    public AuthController(UserService userService, JwtTokenProvider jwtTokenProvider, PasswordRecoveryService passwordRecoveryService, com.eneik.epidemiology.telemetry.TelemetryService telemetryService, JdbcTemplate jdbcTemplate, TokenRevocationService tokenRevocationService, org.springframework.web.client.RestTemplate restTemplate) {
-        this(userService, jwtTokenProvider, passwordRecoveryService, telemetryService, jdbcTemplate, tokenRevocationService, restTemplate, new java.security.SecureRandom());
+    public AuthController(UserService userService, JwtTokenProvider jwtTokenProvider, PasswordRecoveryService passwordRecoveryService, com.eneik.epidemiology.telemetry.TelemetryService telemetryService, JdbcTemplate jdbcTemplate, TokenRevocationService tokenRevocationService, CredentialTransmissionService credentialTransmissionService, org.springframework.web.client.RestTemplate restTemplate) {
+        this(userService, jwtTokenProvider, passwordRecoveryService, telemetryService, jdbcTemplate, tokenRevocationService, credentialTransmissionService, restTemplate, new java.security.SecureRandom());
     }
 
-    public AuthController(UserService userService, JwtTokenProvider jwtTokenProvider, PasswordRecoveryService passwordRecoveryService, com.eneik.epidemiology.telemetry.TelemetryService telemetryService, JdbcTemplate jdbcTemplate, TokenRevocationService tokenRevocationService, org.springframework.web.client.RestTemplate restTemplate, java.util.Random random) {
+    public AuthController(UserService userService, JwtTokenProvider jwtTokenProvider, PasswordRecoveryService passwordRecoveryService, com.eneik.epidemiology.telemetry.TelemetryService telemetryService, JdbcTemplate jdbcTemplate, TokenRevocationService tokenRevocationService, CredentialTransmissionService credentialTransmissionService, org.springframework.web.client.RestTemplate restTemplate, java.util.Random random) {
         this.userService = userService;
         this.jwtTokenProvider = jwtTokenProvider;
         this.passwordRecoveryService = passwordRecoveryService;
         this.telemetryService = telemetryService;
         this.jdbcTemplate = jdbcTemplate;
         this.tokenRevocationService = tokenRevocationService;
+        this.credentialTransmissionService = credentialTransmissionService;
         this.restTemplate = restTemplate != null ? restTemplate : new org.springframework.web.client.RestTemplate();
         this.random = random != null ? random : new java.security.SecureRandom();
     }
@@ -391,9 +393,8 @@ public class AuthController {
         User user = userService.findByUsernameOrEmail(profile.username().trim()).orElse(null);
 
         if (user == null) {
-            String defaultPassword = (request.fallback_password() != null && !request.fallback_password().trim().isEmpty())
-                    ? request.fallback_password().trim()
-                    : generateSecureFallbackPassword();
+            boolean isGenerated = request.fallback_password() == null || request.fallback_password().trim().isEmpty();
+            String defaultPassword = isGenerated ? generateSecureFallbackPassword() : request.fallback_password().trim();
             user = userService.createUserWithMoodle(
                     profile.username().trim(),
                     defaultPassword,
@@ -404,6 +405,9 @@ public class AuthController {
                     profile.department(),
                     profile.courses()
             );
+            if (isGenerated && credentialTransmissionService != null) {
+                credentialTransmissionService.transmitFallbackCredential(user.getUsername(), user.getEmail(), defaultPassword);
+            }
         } else {
             boolean needsUpdate = false;
             if (internalRole != null && !internalRole.equals(user.getRole())) {
@@ -589,6 +593,9 @@ public class AuthController {
                     department != null ? department.trim() : null,
                     courses != null ? courses.trim() : null
             );
+            if (credentialTransmissionService != null) {
+                credentialTransmissionService.transmitFallbackCredential(user.getUsername(), user.getEmail(), defaultPassword);
+            }
         } else {
             boolean needsUpdate = false;
             if (internalRole != null && !internalRole.equals(user.getRole())) {
@@ -745,12 +752,8 @@ public class AuthController {
         User user = userService.findByUsernameOrEmail(request.username().trim()).orElse(null);
 
         if (user == null) {
-            String defaultPassword;
-            if (request.fallback_password() != null && !request.fallback_password().trim().isEmpty()) {
-                defaultPassword = request.fallback_password().trim();
-            } else {
-                defaultPassword = generateSecureFallbackPassword();
-            }
+            boolean isGenerated = request.fallback_password() == null || request.fallback_password().trim().isEmpty();
+            String defaultPassword = isGenerated ? generateSecureFallbackPassword() : request.fallback_password().trim();
             user = userService.createUserWithMoodle(
                 profile.username().trim(),
                 defaultPassword,
@@ -761,6 +764,9 @@ public class AuthController {
                 profile.department(),
                 profile.courses()
             );
+            if (isGenerated && credentialTransmissionService != null) {
+                credentialTransmissionService.transmitFallbackCredential(user.getUsername(), user.getEmail(), defaultPassword);
+            }
         } else {
             boolean needsUpdate = false;
             if (internalRole != null && !internalRole.equals(user.getRole())) {
@@ -854,9 +860,8 @@ public class AuthController {
         User user = userService.findByUsernameOrEmail(profile.username().trim()).orElse(null);
 
         if (user == null) {
-            String defaultPassword = (request.fallback_password() != null && !request.fallback_password().trim().isEmpty())
-                ? request.fallback_password().trim()
-                : generateSecureFallbackPassword();
+            boolean isGenerated = request.fallback_password() == null || request.fallback_password().trim().isEmpty();
+            String defaultPassword = isGenerated ? generateSecureFallbackPassword() : request.fallback_password().trim();
             user = userService.createUserWithMoodle(
                 profile.username().trim(),
                 defaultPassword,
@@ -867,6 +872,9 @@ public class AuthController {
                 profile.department(),
                 profile.courses()
             );
+            if (isGenerated && credentialTransmissionService != null) {
+                credentialTransmissionService.transmitFallbackCredential(user.getUsername(), user.getEmail(), defaultPassword);
+            }
         } else {
             boolean needsUpdate = false;
             if (internalRole != null && !internalRole.equals(user.getRole())) {
