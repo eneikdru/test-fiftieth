@@ -336,7 +336,7 @@ public class EmployeeDossierController {
         }
 
         String currentUsername = authentication.getName();
-        User currentUser = userRepository.findByUsernameOrEmail(currentUsername, currentUsername).orElseGet(() -> {
+        User currentUser = userRepository.findByUsername(currentUsername).or(() -> userRepository.findByEmail(currentUsername)).orElseGet(() -> {
             User transientUser = new User();
             transientUser.setUsername(currentUsername);
             String role = authentication.getAuthorities().stream()
