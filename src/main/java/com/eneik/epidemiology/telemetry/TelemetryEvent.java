@@ -50,6 +50,15 @@ public class TelemetryEvent {
     @Column(name = "gqm_metric", length = 128)
     private String gqmMetric;
 
+    @Column(name = "user_id")
+    private Long userId;
+
+    @Column(name = "trace_id", length = 128)
+    private String traceId;
+
+    @Column(name = "session_id", length = 128)
+    private String sessionId;
+
     public TelemetryEvent() {
     }
 
@@ -191,5 +200,29 @@ public class TelemetryEvent {
 
     public void setGqmMetric(String gqmMetric) {
         this.gqmMetric = gqmMetric;
+    }
+
+    public Long getUserId() {
+        return userId;
+    }
+
+    public void setUserId(Long userId) {
+        this.userId = userId;
+    }
+
+    public String getTraceId() {
+        return traceId;
+    }
+
+    public void setTraceId(String traceId) {
+        this.traceId = traceId;
+    }
+
+    public String getSessionId() {
+        return sessionId;
+    }
+
+    public void setSessionId(String sessionId) {
+        this.sessionId = sessionId;
     }
 }

@@ -54,6 +54,43 @@ class TelemetryServiceTest {
     }
 
     @Test
+    @DisplayName("Given identity marks, When search telemetry with zero results is recorded, Then event includes user_id, trace_id, and session_id")
+    void testRecordZeroResultsSearchTelemetryWithIdentityMarks() {
+        when(telemetryEventRepository.save(any(TelemetryEvent.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        TelemetryEvent event = telemetryService.recordSearchTelemetry("холера", 0, 42L, "trace-123", "session-abc");
+
+        assertNotNull(event);
+        assertEquals(TelemetryService.EVENT_ZERO_RESULTS, event.getEventType());
+        assertEquals("холера", event.getQueryTerm());
+        assertEquals(0, event.getResultsCount());
+        assertEquals(42L, event.getUserId());
+        assertEquals("trace-123", event.getTraceId());
+        assertEquals("session-abc", event.getSessionId());
+
+        verify(telemetryEventRepository, times(1)).save(any(TelemetryEvent.class));
+    }
+
+    @Test
+    @DisplayName("Given identity marks, When download telemetry is recorded, Then event includes user_id, trace_id, and session_id")
+    void testRecordDownloadSuccessTelemetryWithIdentityMarks() {
+        when(telemetryEventRepository.save(any(TelemetryEvent.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        TelemetryEvent event = telemetryService.recordDownloadTelemetry(101L, 99L, "trace-xyz", "session-789");
+
+        assertNotNull(event);
+        assertEquals(TelemetryService.EVENT_DOWNLOAD_SUCCESS, event.getEventType());
+        assertEquals(101L, event.getDocumentId());
+        assertEquals(99L, event.getUserId());
+        assertEquals("trace-xyz", event.getTraceId());
+        assertEquals("session-789", event.getSessionId());
+
+        verify(telemetryEventRepository, times(1)).save(any(TelemetryEvent.class));
+    }
+
+    @Test
     @DisplayName("Given a search with results, When search telemetry is recorded, Then no ZERO_RESULTS event is stored")
     void testRecordSearchWithResultsNoTelemetry() {
         TelemetryEvent event = telemetryService.recordSearchTelemetry("грипп", 5);

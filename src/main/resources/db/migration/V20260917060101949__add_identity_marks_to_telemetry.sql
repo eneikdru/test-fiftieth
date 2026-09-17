@@ -1,0 +1,3 @@
+ALTER TABLE telemetry_events ADD COLUMN IF NOT EXISTS user_id BIGINT;
+ALTER TABLE telemetry_events ADD COLUMN IF NOT EXISTS trace_id VARCHAR(128);
+ALTER TABLE telemetry_events ADD COLUMN IF NOT EXISTS session_id VARCHAR(128);
