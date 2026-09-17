@@ -59,7 +59,7 @@ public class EmployeeDossierController {
         }
 
         String currentUsername = authentication.getName();
-        User currentUser = userRepository.findByUsername(currentUsername).orElseGet(() -> {
+        User currentUser = userRepository.findByUsername(currentUsername).or(() -> userRepository.findByEmail(currentUsername)).orElseGet(() -> {
             User transientUser = new User();
             transientUser.setUsername(currentUsername);
             String role = authentication.getAuthorities().stream()
@@ -154,7 +154,7 @@ public class EmployeeDossierController {
             }
 
             String currentUsername = authentication.getName();
-            User currentUser = userRepository.findByUsername(currentUsername).orElseGet(() -> {
+            User currentUser = userRepository.findByUsername(currentUsername).or(() -> userRepository.findByEmail(currentUsername)).orElseGet(() -> {
                 User transientUser = new User();
                 transientUser.setUsername(currentUsername);
                 String role = authentication.getAuthorities().stream()
@@ -221,7 +221,7 @@ public class EmployeeDossierController {
         }
 
         String currentUsername = authentication.getName();
-        User currentUser = userRepository.findByUsername(currentUsername).orElseGet(() -> {
+        User currentUser = userRepository.findByUsername(currentUsername).or(() -> userRepository.findByEmail(currentUsername)).orElseGet(() -> {
             User transientUser = new User();
             transientUser.setUsername(currentUsername);
             String role = authentication.getAuthorities().stream()
@@ -304,7 +304,7 @@ public class EmployeeDossierController {
         }
 
         String currentUsername = authentication.getName();
-        User currentUser = userRepository.findByUsername(currentUsername).orElse(null);
+        User currentUser = userRepository.findByUsername(currentUsername).or(() -> userRepository.findByEmail(currentUsername)).orElse(null);
 
         return dossierReportRepository.findById(id)
                 .map(report -> {
@@ -336,7 +336,7 @@ public class EmployeeDossierController {
         }
 
         String currentUsername = authentication.getName();
-        User currentUser = userRepository.findByUsername(currentUsername).orElseGet(() -> {
+        User currentUser = userRepository.findByUsernameOrEmail(currentUsername, currentUsername).orElseGet(() -> {
             User transientUser = new User();
             transientUser.setUsername(currentUsername);
             String role = authentication.getAuthorities().stream()
@@ -428,7 +428,7 @@ public class EmployeeDossierController {
         }
         String currentUsername = authentication.getName();
 
-        User currentUser = userRepository.findByUsername(currentUsername).orElse(null);
+        User currentUser = userRepository.findByUsername(currentUsername).or(() -> userRepository.findByEmail(currentUsername)).orElse(null);
 
         if (currentUser == null || (!"EPIDEMIOLOGIST".equals(currentUser.getRole()) && !"ADMIN".equals(currentUser.getRole()))) {
              return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error_code", "FORBIDDEN", "message", "Access denied"));

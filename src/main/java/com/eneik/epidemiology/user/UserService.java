@@ -64,7 +64,10 @@ public class UserService {
 
     @Transactional(readOnly = true)
     public Optional<String> resolveRoleByUsername(String username) {
-        return userRepository.findRoleByUsername(username);
+        if (username == null || username.trim().isEmpty()) {
+            return Optional.empty();
+        }
+        return userRepository.findRoleByUsernameOrEmail(username.trim());
     }
 
     @Transactional(readOnly = true)
