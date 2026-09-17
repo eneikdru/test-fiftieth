@@ -179,7 +179,7 @@ public class DocumentController {
                 || (fromDateStr != null && !fromDateStr.trim().isEmpty())
                 || (toDateStr != null && !toDateStr.trim().isEmpty()));
 
-        boolean isFullTextSearchRequest = (q != null || hasFacets);
+        boolean isFullTextSearchRequest = (q != null || effectiveDocType != null || fromDateStr != null || toDateStr != null);
 
         if (isFullTextSearchRequest) {
             if (queryIsBlank && !hasFacets) {

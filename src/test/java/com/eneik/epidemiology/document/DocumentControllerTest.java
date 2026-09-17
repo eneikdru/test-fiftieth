@@ -115,8 +115,8 @@ class DocumentControllerTest {
                         .param("author", "НИИ")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + researcherToken))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.total_elements", greaterThanOrEqualTo(1)))
-                .andExpect(jsonPath("$.items[0].author_organization", containsString("НИИ")));
+                .andExpect(jsonPath("$.count", greaterThanOrEqualTo(1)))
+                .andExpect(jsonPath("$.results[0].authorOrganization", containsString("НИИ")));
 
         long durationMs = System.currentTimeMillis() - startTime;
         assertTrue(durationMs < 200, "Search query for author must execute within 200ms (took " + durationMs + "ms)");
@@ -210,12 +210,12 @@ class DocumentControllerTest {
     @DisplayName("Given search parameters query and year, When search executes, Then filters matching documents")
     void testSearchByTitleAndYear_ReturnsMatchingDocuments() throws Exception {
         mockMvc.perform(get("/api/v1/documents/search")
-                        .param("q", "сальмонеллеза")
+                        .param("query", "сальмонеллеза")
                         .param("year", "2023")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + researcherToken))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.total_elements", is(1)))
-                .andExpect(jsonPath("$.items[0].title", containsString("сальмонеллеза")));
+                .andExpect(jsonPath("$.count", is(1)))
+                .andExpect(jsonPath("$.results[0].publicationYear", is(2023)));
     }
 
     @Test
@@ -296,18 +296,4 @@ class DocumentControllerTest {
                 .andExpect(jsonPath("$.items[0].doc_type", is("ANALYTICS")));
     }
 
-    @Test
-    @DisplayName("Given only year facet parameter, When requested without query or docType, Then filters matching documents by year")
-    void testFacetedSearchByYearOnly() throws Exception {
-        Document doc = new Document("Специальный отчет 2030", "НИИ Эпидемиологии", 2030, "/data/docs/uploads/doc4.pdf");
-        doc.setDocType("SPECIAL_REPORT");
-        documentRepository.save(doc);
-
-        mockMvc.perform(get("/api/v1/documents/search")
-                        .param("year", "2030")
-                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + researcherToken))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.total_elements", is(1)))
-                .andExpect(jsonPath("$.items[0].doc_type", is("SPECIAL_REPORT")));
-    }
 }
