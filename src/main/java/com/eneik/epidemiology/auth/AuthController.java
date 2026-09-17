@@ -353,7 +353,11 @@ public class AuthController {
                     profile = fetchProfileWithToken(accessToken);
                 } catch (LmsServerException e) {
                     isServerError = true;
-                    profile = fetchOidcProfile(accessToken);
+                    try {
+                        profile = fetchOidcProfile(accessToken);
+                    } catch (MissingClaimException | InvalidSignatureException ex) {
+                        log.warn("OIDC validation fallback failed: " + ex.getMessage());
+                    }
                 }
             }
         } catch (LmsServerException e) {
@@ -710,6 +714,8 @@ public class AuthController {
         boolean isServerError = false;
         try {
             profile = fetchOidcProfile(request.oidc_token());
+        } catch (MissingClaimException | InvalidSignatureException e) {
+            log.warn("OIDC validation failed: " + e.getMessage());
         } catch (LmsServerException e) {
             isServerError = true;
         }
@@ -818,9 +824,17 @@ public class AuthController {
             profile = fetchMoodleProfile(request.moodle_token());
         } catch (LmsServerException e) {
             isServerError = true;
-            profile = fetchOidcProfile(request.moodle_token());
+            try {
+                profile = fetchOidcProfile(request.moodle_token());
+            } catch (MissingClaimException | InvalidSignatureException ex) {
+                log.warn("OIDC validation fallback failed: " + ex.getMessage());
+            }
         } catch (org.springframework.security.authentication.BadCredentialsException e) {
-            profile = fetchOidcProfile(request.moodle_token());
+            try {
+                profile = fetchOidcProfile(request.moodle_token());
+            } catch (MissingClaimException | InvalidSignatureException ex) {
+                log.warn("OIDC validation fallback failed: " + ex.getMessage());
+            }
         }
 
         if (profile == null || !profile.username().trim().equalsIgnoreCase(request.username().trim())) {
@@ -1220,18 +1234,15 @@ public class AuthController {
 
     private MoodleProfile fetchOidcProfile(String token) {
         if (token == null || token.trim().isEmpty()) {
-            return null;
+            throw new MissingClaimException("Token is empty or null");
         }
 
-        if (!validateOidcTokenSignature(token)) {
-            log.warn("OIDC ID token signature validation failed");
-            return null;
-        }
+        validateOidcTokenSignature(token);
 
         try {
             String[] parts = token.split("\\.");
             if (parts.length != 3) {
-                return null;
+                throw new InvalidSignatureException("Invalid token format");
             }
             String payloadJson = new String(java.util.Base64.getUrlDecoder().decode(parts[1]), java.nio.charset.StandardCharsets.UTF_8);
             com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
@@ -1240,18 +1251,18 @@ public class AuthController {
             // Validate 'iss' (Issuer) claim
             if (!claims.has("iss") || claims.get("iss").isNull()) {
                 log.warn("OIDC token missing 'iss' claim");
-                return null;
+                throw new MissingClaimException("OIDC token missing 'iss' claim");
             }
             String tokenIssuer = claims.get("iss").asText().trim();
             if (!tokenIssuer.equalsIgnoreCase(moodleServerUrl.trim())) {
                 log.warn("OIDC token issuer '{}' does not match trusted Moodle provider '{}'", tokenIssuer, moodleServerUrl);
-                return null;
+                throw new MissingClaimException("OIDC token issuer does not match trusted provider");
             }
 
             // Validate 'aud' (Audience) claim
             if (!claims.has("aud") || claims.get("aud").isNull()) {
                 log.warn("OIDC token missing 'aud' claim");
-                return null;
+                throw new MissingClaimException("OIDC token missing 'aud' claim");
             }
             boolean audienceValid = false;
             com.fasterxml.jackson.databind.JsonNode audNode = claims.get("aud");
@@ -1269,7 +1280,7 @@ public class AuthController {
             }
             if (!audienceValid) {
                 log.warn("OIDC token audience does not match application client ID '{}'", moodleClientId);
-                return null;
+                throw new MissingClaimException("OIDC token audience does not match application client ID");
             }
 
             String username = claims.has("username") ? claims.get("username").asText() :
@@ -1277,7 +1288,7 @@ public class AuthController {
                              (claims.has("sub") ? claims.get("sub").asText() : null));
 
             if (username == null || username.trim().isEmpty()) {
-                return null;
+                throw new MissingClaimException("OIDC token missing username/sub claim");
             }
 
             String moodleRole = claims.has("moodle_role") ? claims.get("moodle_role").asText() :
@@ -1296,23 +1307,25 @@ public class AuthController {
                            (claims.has("custom_courses") ? claims.get("custom_courses").asText() : "");
 
             return new MoodleProfile(username, moodleRole, department, email, fullName, courses, suspended);
+        } catch (MissingClaimException | InvalidSignatureException e) {
+            throw e;
         } catch (Exception e) {
             log.error("Error extracting claims from OIDC ID token", e);
-            return null;
+            throw new InvalidSignatureException("Error parsing token payload", e);
         }
     }
 
-    private boolean validateOidcTokenSignature(String token) {
+    private void validateOidcTokenSignature(String token) {
         JwkProvider provider = getJwkProvider();
         try {
             String[] parts = token.split("\\.");
             if (parts.length != 3) {
-                return false;
+                throw new InvalidSignatureException("Invalid token format");
             }
             String headerJson = new String(java.util.Base64.getUrlDecoder().decode(parts[0]), java.nio.charset.StandardCharsets.UTF_8);
             com.fasterxml.jackson.databind.JsonNode headerNode = new com.fasterxml.jackson.databind.ObjectMapper().readTree(headerJson);
             if (!headerNode.has("kid")) {
-                return false;
+                throw new InvalidSignatureException("Token missing 'kid' in header");
             }
             String keyId = headerNode.get("kid").asText();
             Jwk jwk = provider.get(keyId);
@@ -1320,15 +1333,16 @@ public class AuthController {
             DecodedJWT jwt = JWT.require(algorithm).build().verify(token);
 
             if (jwt.getExpiresAt() != null && jwt.getExpiresAt().before(new java.util.Date())) {
-                return false;
+                throw new InvalidSignatureException("Token expired");
             }
-            return true;
         } catch (com.auth0.jwk.JwkException | com.auth0.jwt.exceptions.JWTVerificationException e) {
             log.warn("OIDC signature validation exception: " + e.getMessage());
-            return false;
+            throw new InvalidSignatureException("OIDC signature validation exception: " + e.getMessage(), e);
+        } catch (InvalidSignatureException e) {
+            throw e;
         } catch (Exception e) {
             log.warn("OIDC signature validation exception: " + e.getMessage());
-            return false;
+            throw new InvalidSignatureException("OIDC signature validation exception: " + e.getMessage(), e);
         }
     }
 
