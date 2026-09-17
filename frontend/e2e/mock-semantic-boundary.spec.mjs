@@ -21,33 +21,23 @@ test.describe('Semantic Boundary Real Backend Integration QA', () => {
     expect([401, 403]).toContain(response.status());
   });
 
-  test('Given the real backend API, When a missing document is requested, Then the real backend returns 404 or authorization boundary status', async ({ request }) => {
+  test('Given the real backend API, When a missing document is requested, Then the real backend returns authorization boundary status', async ({ request }) => {
     const response = await request.get(`${BACKEND_URL}/api/v1/documents/999999/download`);
-    expect([401, 403, 404]).toContain(response.status());
+    expect([401, 403]).toContain(response.status());
   });
 
   test('Given the seeded test database, When querying authenticated dossier endpoint, Then the real backend returns seeded state', async ({ request }) => {
-    // 1. Register a test user
+    // 1. Authenticate via Moodle SSO integration layer
     const username = `qa_e2e_user_${Date.now()}`;
-    const registerResponse = await request.post(`${BACKEND_URL}/api/v1/auth/register`, {
+    const ssoResponse = await request.post(`${BACKEND_URL}/api/v1/auth/sso/moodle`, {
       data: {
         username,
-        password: 'Password123!',
-        email: `${username}@test.com`,
-        full_name: 'QA E2E User'
+        moodle_token: 'mock_valid_new_moodle_token',
+        fallback_password: 'MySecureFallback!'
       }
     });
-    expect(registerResponse.status()).toBe(201);
-
-    // 2. Login to receive JWT token
-    const loginResponse = await request.post(`${BACKEND_URL}/api/v1/auth/login`, {
-      data: {
-        username,
-        password: 'Password123!'
-      }
-    });
-    expect(loginResponse.status()).toBe(200);
-    const loginBody = await loginResponse.json();
+    expect(ssoResponse.status()).toBe(200);
+    const loginBody = await ssoResponse.json();
     const token = loginBody.access_token;
     expect(token).toBeTruthy();
 
