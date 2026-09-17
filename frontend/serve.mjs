@@ -47,6 +47,10 @@ const server = http.createServer((req, res) => {
 
   if (pathname.startsWith('/api/v1/documents/search')) {
     const query = parsedUrl.searchParams.get('query') || parsedUrl.searchParams.get('q') || '';
+    const author = parsedUrl.searchParams.get('author') || '';
+    const year = parsedUrl.searchParams.get('year') || '';
+    const docType = parsedUrl.searchParams.get('docType') || parsedUrl.searchParams.get('doc_type') || '';
+
     const docs = [
       {
         id: '1',
@@ -71,12 +75,36 @@ const server = http.createServer((req, res) => {
         fileName: 'flu_surveillance.pdf',
         fileSize: '4.1 МБ',
         description: 'Статистика заболеваемости и результаты лабораторного мониторинга.'
+      },
+      {
+        id: '3',
+        title: 'Методические рекомендации по профилактике кори',
+        author: 'Министерство здравоохранения РФ',
+        authorOrganization: 'Министерство здравоохранения РФ',
+        year: 2021,
+        publicationYear: 2021,
+        docType: 'Методическое руководство',
+        fileName: 'measles_prevention.docx',
+        fileSize: '1.8 МБ',
+        description: 'Инструкции для медицинского персонала по вакцинопрофилактике.'
       }
     ];
 
-    const filtered = query
-      ? docs.filter(d => d.title.toLowerCase().includes(query.toLowerCase()) || d.description.toLowerCase().includes(query.toLowerCase()))
-      : docs;
+    let filtered = docs;
+    if (query) {
+      const q = query.toLowerCase();
+      filtered = filtered.filter(d => d.title.toLowerCase().includes(q) || d.description.toLowerCase().includes(q));
+    }
+    if (author) {
+      const a = author.toLowerCase();
+      filtered = filtered.filter(d => (d.author && d.author.toLowerCase().includes(a)) || (d.authorOrganization && d.authorOrganization.toLowerCase().includes(a)));
+    }
+    if (year) {
+      filtered = filtered.filter(d => String(d.year || d.publicationYear) === String(year));
+    }
+    if (docType) {
+      filtered = filtered.filter(d => String(d.docType || d.doc_type) === String(docType));
+    }
 
     res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
     res.end(JSON.stringify(filtered));

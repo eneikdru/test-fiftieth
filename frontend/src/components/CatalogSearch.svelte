@@ -21,8 +21,11 @@
 
   // Search filter states
   let searchQuery = '';
+  let selectedDocType = '';
   let selectedAuthor = '';
   let selectedYear = '';
+
+  $: hasActiveFacets = Boolean(searchQuery.trim() || selectedDocType.trim() || selectedAuthor.trim() || selectedYear.toString().trim());
 
 
   // API Data view states: empty, loading, error, present
@@ -76,6 +79,7 @@
     try {
       const params = new URLSearchParams();
       if (searchQuery.trim()) params.append('query', searchQuery.trim());
+      if (selectedDocType.trim()) params.append('docType', selectedDocType.trim());
       if (selectedAuthor.trim()) params.append('author', selectedAuthor.trim());
       if (selectedYear.toString().trim()) params.append('year', selectedYear.toString().trim());
 
@@ -177,8 +181,17 @@
 
   function handleResetSearch() {
     searchQuery = '';
+    selectedDocType = '';
     selectedAuthor = '';
     selectedYear = '';
+    fetchDocuments();
+  }
+
+  function clearFacet(facetKey) {
+    if (facetKey === 'query') searchQuery = '';
+    if (facetKey === 'docType') selectedDocType = '';
+    if (facetKey === 'author') selectedAuthor = '';
+    if (facetKey === 'year') selectedYear = '';
     fetchDocuments();
   }
 
@@ -375,7 +388,7 @@
 
     <form on:submit={handleSearchSubmit} class="grid grid-cols-1 md:grid-cols-12 gap-4">
       <!-- Query Input -->
-      <div class="md:col-span-5">
+      <div class="md:col-span-4">
         <label for="search-query-input" class="block text-xs font-semibold text-[#191c1e] mb-1">
           Название или ключевое слово
         </label>
@@ -386,6 +399,24 @@
           placeholder="Например: грипп, протокол, генотипирование..."
           class="w-full h-11 px-3.5 bg-[#f7f9fb] border border-[#c2c6d4] rounded-lg text-sm text-[#191c1e] focus:outline-none focus:ring-2 focus:ring-[#003f87]/50 focus:border-[#003f87]"
         />
+      </div>
+
+      <!-- Document Type Faceted Filter -->
+      <div class="md:col-span-3">
+        <label for="search-doctype-select" class="block text-xs font-semibold text-[#191c1e] mb-1">
+          Тип документа
+        </label>
+        <select
+          id="search-doctype-select"
+          bind:value={selectedDocType}
+          class="w-full h-11 px-3 bg-[#f7f9fb] border border-[#c2c6d4] rounded-lg text-sm text-[#191c1e] focus:outline-none focus:ring-2 focus:ring-[#003f87]/50 focus:border-[#003f87]"
+        >
+          <option value="">Все типы документов</option>
+          <option value="Протокол расследования">Протокол расследования</option>
+          <option value="Отчёт эпиднадзора">Отчёт эпиднадзора</option>
+          <option value="Набор данных">Набор данных</option>
+          <option value="Методическое руководство">Методическое руководство</option>
+        </select>
       </div>
 
       <!-- Author / Organization Filter -->
@@ -422,27 +453,70 @@
       </div>
 
       <!-- Action Buttons -->
-      <div class="md:col-span-2 flex items-end gap-2">
+      <div class="md:col-span-12 lg:col-span-12 flex items-center justify-end gap-2 pt-2 border-t border-[#f2f4f6]">
         <button
           type="submit"
           id="search-submit-btn"
-          class="flex-1 h-11 bg-[#003f87] hover:bg-[#002b5e] focus:ring-2 focus:ring-[#003f87]/50 focus:outline-none text-white font-medium text-sm rounded-lg transition-colors flex items-center justify-center shadow-sm"
+          class="px-6 h-11 bg-[#003f87] hover:bg-[#002b5e] focus:ring-2 focus:ring-[#003f87]/50 focus:outline-none text-white font-medium text-sm rounded-lg transition-colors flex items-center justify-center shadow-sm"
         >
           Найти
         </button>
-        {#if searchQuery || selectedAuthor || selectedYear}
+        {#if hasActiveFacets}
           <button
             type="button"
             id="search-reset-btn"
             on:click={handleResetSearch}
-            class="h-11 px-3 border border-[#c2c6d4] text-[#424752] hover:bg-[#eceef0] focus:ring-2 focus:ring-[#003f87]/50 focus:outline-none text-xs font-medium rounded-lg transition-colors"
-            title="Сбросить фильтры"
+            class="h-11 px-4 border border-[#c2c6d4] text-[#424752] hover:bg-[#eceef0] focus:ring-2 focus:ring-[#003f87]/50 focus:outline-none text-xs font-medium rounded-lg transition-colors"
+            title="Сбросить все фильтры"
           >
             Сброс
           </button>
         {/if}
       </div>
     </form>
+
+    <!-- Active Facets Indicators Bar -->
+    {#if hasActiveFacets}
+      <div id="active-facets-bar" class="mt-4 pt-3 border-t border-[#e0e3e5] flex flex-wrap items-center gap-2" aria-label="Активные фильтры поиска">
+        <span class="text-xs font-semibold text-[#424752]">Активные фасеты:</span>
+
+        {#if searchQuery.trim()}
+          <span class="facet-chip inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#d9e3f1] text-[#003f87] text-xs font-medium border border-[#003f87]/20">
+            <span>Запрос: "{searchQuery}"</span>
+            <button type="button" on:click={() => clearFacet('query')} aria-label="Удалить фильтр по запросу" class="hover:bg-[#003f87]/20 rounded-full p-0.5 focus:outline-none focus:ring-1 focus:ring-[#003f87]">✕</button>
+          </span>
+        {/if}
+
+        {#if selectedDocType.trim()}
+          <span class="facet-chip inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#d9e3f1] text-[#003f87] text-xs font-medium border border-[#003f87]/20">
+            <span>Тип: {selectedDocType}</span>
+            <button type="button" on:click={() => clearFacet('docType')} aria-label="Удалить фильтр по типу документа" class="hover:bg-[#003f87]/20 rounded-full p-0.5 focus:outline-none focus:ring-1 focus:ring-[#003f87]">✕</button>
+          </span>
+        {/if}
+
+        {#if selectedAuthor.trim()}
+          <span class="facet-chip inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#d9e3f1] text-[#003f87] text-xs font-medium border border-[#003f87]/20">
+            <span>Автор: {selectedAuthor}</span>
+            <button type="button" on:click={() => clearFacet('author')} aria-label="Удалить фильтр по автору" class="hover:bg-[#003f87]/20 rounded-full p-0.5 focus:outline-none focus:ring-1 focus:ring-[#003f87]">✕</button>
+          </span>
+        {/if}
+
+        {#if selectedYear.toString().trim()}
+          <span class="facet-chip inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#d9e3f1] text-[#003f87] text-xs font-medium border border-[#003f87]/20">
+            <span>Год: {selectedYear}</span>
+            <button type="button" on:click={() => clearFacet('year')} aria-label="Удалить фильтр по году" class="hover:bg-[#003f87]/20 rounded-full p-0.5 focus:outline-none focus:ring-1 focus:ring-[#003f87]">✕</button>
+          </span>
+        {/if}
+
+        <button
+          type="button"
+          on:click={handleResetSearch}
+          class="text-xs text-[#ba1a1a] hover:underline font-semibold ml-2 focus:outline-none focus:ring-1 focus:ring-[#ba1a1a]"
+        >
+          Очистить все
+        </button>
+      </div>
+    {/if}
   </section>
 
   <!-- Document List Section -->
