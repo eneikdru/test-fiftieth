@@ -54,4 +54,37 @@ public interface DocumentRepository extends JpaRepository<Document, Long> {
                                  @Param("fromDate") LocalDate fromDate,
                                  @Param("toDate") LocalDate toDate,
                                  Pageable pageable);
+
+    @Query("SELECT d AS document, " +
+           "CASE " +
+           "  WHEN :q IS NULL OR TRIM(CAST(:q AS java.lang.String)) = '' THEN 1.0 " +
+           "  WHEN LOWER(CAST(d.title AS java.lang.String)) = LOWER(CAST(:q AS java.lang.String)) THEN 1.0 " +
+           "  WHEN LOWER(CAST(d.title AS java.lang.String)) LIKE LOWER(CONCAT('%', CAST(:q AS java.lang.String), '%')) THEN 0.85 " +
+           "  WHEN d.textContent IS NOT NULL AND LOWER(CAST(d.textContent AS java.lang.String)) LIKE LOWER(CONCAT('%', CAST(:q AS java.lang.String), '%')) THEN 0.65 " +
+           "  ELSE 0.40 " +
+           "END AS relevanceScore " +
+           "FROM Document d WHERE " +
+           "(:q IS NULL OR LOWER(CAST(d.title AS java.lang.String)) LIKE LOWER(CONCAT('%', CAST(:q AS java.lang.String), '%')) OR " +
+           " LOWER(CAST(d.authorOrganization AS java.lang.String)) LIKE LOWER(CONCAT('%', CAST(:q AS java.lang.String), '%')) OR " +
+           " (d.textContent IS NOT NULL AND LOWER(CAST(d.textContent AS java.lang.String)) LIKE LOWER(CONCAT('%', CAST(:q AS java.lang.String), '%')))) AND " +
+           "(:docType IS NULL OR d.docType = :docType) AND " +
+           "(:author IS NULL OR LOWER(CAST(d.authorOrganization AS java.lang.String)) LIKE LOWER(CONCAT('%', CAST(:author AS java.lang.String), '%'))) AND " +
+           "(:year IS NULL OR d.publicationYear = :year) AND " +
+           "(CAST(:fromDate AS java.time.LocalDate) IS NULL OR d.publicationDate >= :fromDate) AND " +
+           "(CAST(:toDate AS java.time.LocalDate) IS NULL OR d.publicationDate <= :toDate) " +
+           "ORDER BY " +
+           "CASE " +
+           "  WHEN :q IS NULL OR TRIM(CAST(:q AS java.lang.String)) = '' THEN 1.0 " +
+           "  WHEN LOWER(CAST(d.title AS java.lang.String)) = LOWER(CAST(:q AS java.lang.String)) THEN 1.0 " +
+           "  WHEN LOWER(CAST(d.title AS java.lang.String)) LIKE LOWER(CONCAT('%', CAST(:q AS java.lang.String), '%')) THEN 0.85 " +
+           "  WHEN d.textContent IS NOT NULL AND LOWER(CAST(d.textContent AS java.lang.String)) LIKE LOWER(CONCAT('%', CAST(:q AS java.lang.String), '%')) THEN 0.65 " +
+           "  ELSE 0.40 " +
+           "END DESC, d.id ASC")
+    Page<DocumentSearchResult> fullTextSearchWithScore(@Param("q") String q,
+                                                       @Param("docType") String docType,
+                                                       @Param("author") String author,
+                                                       @Param("year") Integer year,
+                                                       @Param("fromDate") LocalDate fromDate,
+                                                       @Param("toDate") LocalDate toDate,
+                                                       Pageable pageable);
 }
