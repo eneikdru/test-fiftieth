@@ -107,6 +107,42 @@
       "confidence": "high",
       "evidence": "src/main/resources/db/migration/V20260822225105263__create_documents_table.sql: `author_organization` is defined as `VARCHAR(255)` instead of a normalized foreign key.",
       "screenshotFile": ""
+    },
+    {
+      "roleTag": "BARCAN-TAG-09",
+      "philosopher": "Роберт Брэндом",
+      "worldview": "Normative Inferentialism and Scorekeeping: meanings are determined by their role in material inferences and the commitments they entail; concepts do not exist in isolation but in a web of inferential permissions and obligations.",
+      "critique": "In `src/main/resources/db/migration/V20260822225105263__create_documents_table.sql`, the `documents` table stores `publication_year` as a standalone `INT` but the system also refers to `publicationDate` (e.g., in `DocumentController.java`) and conditionally falls back to computing a date (`pubDateStr = doc.getPublicationYear() + \"-01-01\"`). This violates normative inferentialism: the 'year' field is making an implicit semantic commitment (that it represents a precise temporal boundary) but failing to back it up structurally, leading to arbitrary downstream inferences (like assuming January 1st) that were never authorized by the original data.",
+      "proposal": "Unify the temporal representation of documents. If a precise date is inferentially required by the domain logic, store a proper `DATE` or `TIMESTAMP` field instead of an `INT` year, removing the need for arbitrary, unauthorized downstream inferences.",
+      "dislike": "Data models that force downstream consumers to invent unauthorized inferences (like assuming Jan 1st) because the model's own semantic commitments are underspecified.",
+      "kanoClass": "Must-Be",
+      "confidence": "high",
+      "evidence": "src/main/java/com/eneik/epidemiology/document/DocumentController.java: `pubDateStr = doc.getPublicationYear() + \"-01-01\";` arbitrary inference.",
+      "screenshotFile": ""
+    },
+    {
+      "roleTag": "BARCAN-TAG-10",
+      "philosopher": "Уэсли Хохфельд",
+      "worldview": "Jural Relations (Rights and Duties): a right/privilege held by one party strictly entails a corresponding duty/no-right on the part of another; privileges cannot exist without a system enforcing the correlative constraint.",
+      "critique": "The frontend mock server (`frontend/serve.mjs`) blindly serves documents via `/api/v1/documents/*/download` to any caller, regardless of authentication. While the backend implements `isProtocolAccessAuthorized()`, the frontend development environment explicitly simulates a system where the user has a universal privilege to download, but the mock system has no corresponding duty to verify authorization. This breaks the Hohfeldian correlativity in the frontend test environment: it trains and tests the UI against a world without duties.",
+      "proposal": "Update the frontend mock server to enforce the Hohfeldian correlative duty: it must verify a mock authorization token and explicitly return a 403 Forbidden for restricted documents if the token is absent or lacks the required role.",
+      "dislike": "Simulating a system of privileges without implementing the correlative duties (authorization checks) that give those privileges meaning.",
+      "kanoClass": "Must-Be",
+      "confidence": "high",
+      "evidence": "frontend/serve.mjs: The download endpoint unconditionally returns a 200 OK and PDF payload for any request matching the path, simulating a privilege without a duty.",
+      "screenshotFile": ""
+    },
+    {
+      "roleTag": "BARCAN-TAG-11",
+      "philosopher": "Марта Нуссбаум",
+      "worldview": "Capabilities Approach / Inclusive Interface: systems should be designed to foster human flourishing by actively removing barriers to capability, including emotional and accessibility barriers.",
+      "critique": "The frontend HTML documents (e.g., `frontend/index.html` and harness files) lack fundamental accessibility landmarks. While they use standard HTML tags, crucial elements like interactive buttons, modals, or search inputs often miss ARIA roles, `aria-labels` for icon-only buttons, or distinct `focus-visible` states. This violates the principle of inclusive interface design, as it artificially restricts the capability of users relying on screen readers or keyboard navigation, preventing them from flourishing within the system.",
+      "proposal": "Conduct a comprehensive accessibility audit (e.g., using axe-core which is present in package.json) and implement necessary `aria-labels`, semantic roles, and high-contrast focus indicators across all interactive elements.",
+      "dislike": "Interfaces that passively exclude users by failing to provide the semantic and sensory hooks required for alternative navigation strategies.",
+      "kanoClass": "Must-Be",
+      "confidence": "high",
+      "evidence": "frontend/index.html: Inspection of the button elements reveals missing `aria-label` attributes for icon-centric controls and missing distinct focus states in the inline utility classes.",
+      "screenshotFile": "index-1440px.png"
     }
   ]
 }
