@@ -33,7 +33,7 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  if (pathname.startsWith('/api/v1/documents/search')) {
+  if (pathname.startsWith('/api/v1/documents/search') || pathname.startsWith('/api/v1/documents/search/faceted')) {
     const query = parsedUrl.searchParams.get('query') || parsedUrl.searchParams.get('q') || '';
     const docType = parsedUrl.searchParams.get('docType') || '';
     const year = parsedUrl.searchParams.get('year') || '';
@@ -76,7 +76,9 @@ const server = http.createServer((req, res) => {
     }
 
     res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+
     res.end(JSON.stringify(filtered));
+
     return;
   }
 
