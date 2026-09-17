@@ -1,0 +1,34 @@
+{
+  "epics": [
+    {
+      "existingEpicId": "954247ab-8539-4ed2-b51b-4c8572290598",
+      "title": "Runtime Environment Initialization Repair",
+      "jtbd": "When the end customer attempts to launch the application, I want the system to start successfully without network conflicts, so that the product is actually available for use.",
+      "kanoClass": "Must-Be",
+      "cynefinDomain": "clear",
+      "sixSigmaMetric": "DPMO on application startup failures due to container naming conflicts",
+      "tocConstraintRef": "CI/CD Deployment Stage",
+      "sourceIndex": 0,
+      "requirements": [
+        "R1: Dynamic container naming to prevent conflicts during launch"
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Remove hardcoded container names from Docker Compose",
+          "roleTag": "BARCAN-TAG-05",
+          "jtbd": "When implementing dynamic container naming for this epic, I want to remove hardcoded container_name declarations, so that the container starts without name conflicts.",
+          "acceptanceCriteria": "Given a clean Docker environment\nWhen docker compose up is executed concurrently or repeatedly\nThen it must not fail with a container name conflict\nGiven the docker-compose.yml and docker-compose.override.yml files\nWhen inspected\nThen they must not contain hardcoded container_name fields",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "Docker Compose Initialization",
+          "sixSigmaMetric": "Zero duplicate container name conflict errors",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1"
+          ]
+        }
+      ]
+    }
+  ]
+}
