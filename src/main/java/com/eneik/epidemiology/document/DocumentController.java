@@ -490,6 +490,14 @@ public class DocumentController {
 
     @GetMapping("/{id}/download")
     public ResponseEntity<?> downloadDocument(@PathVariable("id") Long id, HttpServletRequest request) {
+        if (id == null || id <= 0) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "error_code", "INVALID_DOCUMENT_ID",
+                    "message", "Идентификатор документа должен быть положительным целым числом.",
+                    "timestamp", OffsetDateTime.now().toString()
+            ));
+        }
+
         Long currentUserId = extractCurrentUserId();
         String traceId = extractTraceId(request);
         String sessionId = extractSessionId(request);
