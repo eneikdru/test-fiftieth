@@ -47,6 +47,9 @@ public class TelemetryEvent {
     @Column(name = "success")
     private Boolean success;
 
+    @Column(name = "gqm_metric", length = 128)
+    private String gqmMetric;
+
     public TelemetryEvent() {
     }
 
@@ -180,5 +183,13 @@ public class TelemetryEvent {
 
     public void setSuccess(Boolean success) {
         this.success = success;
+    }
+
+    public String getGqmMetric() {
+        return gqmMetric;
+    }
+
+    public void setGqmMetric(String gqmMetric) {
+        this.gqmMetric = gqmMetric;
     }
 }

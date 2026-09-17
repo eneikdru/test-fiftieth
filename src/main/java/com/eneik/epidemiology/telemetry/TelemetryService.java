@@ -80,6 +80,7 @@ public class TelemetryService {
                 computedDuration,
                 OffsetDateTime.now(clock)
         );
+        event.setGqmMetric("GQM_DOSSIER_ANALYSIS_DURATION");
         return CompletableFuture.completedFuture(telemetryEventRepository.save(event));
     }
 
