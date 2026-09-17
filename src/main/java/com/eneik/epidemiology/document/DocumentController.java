@@ -235,7 +235,7 @@ public class DocumentController {
                 item.put("publication_date", pubDateStr);
 
                 item.put("highlights", buildHighlights(doc, q));
-                item.put("matched_pages", List.of(1));
+                item.put("matched_pages", determineMatchedPages(doc, q));
                 item.put("relevance_score", res.getRelevanceScore() != null ? res.getRelevanceScore() : 1.0);
                 return item;
             }).collect(Collectors.toList());
@@ -323,6 +323,82 @@ public class DocumentController {
             }
         }
         return (sessionId != null && !sessionId.isBlank()) ? sessionId.trim() : null;
+    }
+
+    private List<Integer> determineMatchedPages(Document doc, String q) {
+        if (q == null || q.isBlank()) {
+            return Collections.emptyList();
+        }
+        String text = doc.getTextContent();
+        String lowerQ = q.toLowerCase();
+
+        if (text == null || text.isBlank()) {
+            if (doc.getTitle() != null && doc.getTitle().toLowerCase().contains(lowerQ)) {
+                return List.of(1);
+            }
+            return Collections.emptyList();
+        }
+
+        // 1. Check for form feed character \f page delimiters
+        if (text.contains("\f")) {
+            String[] pages = text.split("\f");
+            List<Integer> matched = new ArrayList<>();
+            for (int i = 0; i < pages.length; i++) {
+                if (pages[i].toLowerCase().contains(lowerQ)) {
+                    matched.add(i + 1);
+                }
+            }
+            if (!matched.isEmpty()) {
+                return matched;
+            }
+        }
+
+        // 2. Check for explicit page markers in text lines (e.g. "Page X" / "Страница X")
+        if (text.toLowerCase().contains("page ") || text.toLowerCase().contains("страница ")) {
+            String[] lines = text.split("\r?\n");
+            int currentPage = 1;
+            Set<Integer> matched = new LinkedHashSet<>();
+            for (String line : lines) {
+                String lowerLine = line.toLowerCase();
+                if (lowerLine.contains("page ") || lowerLine.contains("страница ")) {
+                    java.util.regex.Matcher m = java.util.regex.Pattern.compile("(?:page|страница)\\s*(\\d+)", java.util.regex.Pattern.CASE_INSENSITIVE).matcher(line);
+                    if (m.find()) {
+                        try {
+                            currentPage = Integer.parseInt(m.group(1));
+                        } catch (NumberFormatException ignored) {}
+                    }
+                }
+                if (lowerLine.contains(lowerQ)) {
+                    matched.add(currentPage);
+                }
+            }
+            if (!matched.isEmpty()) {
+                return new ArrayList<>(matched);
+            }
+        }
+
+        // 3. Fallback character chunk length mapping (~1000 chars per page)
+        String lowerText = text.toLowerCase();
+        if (lowerText.contains(lowerQ)) {
+            Set<Integer> matched = new LinkedHashSet<>();
+            int pageSize = 1000;
+            int idx = 0;
+            while ((idx = lowerText.indexOf(lowerQ, idx)) != -1) {
+                int pageNum = (idx / pageSize) + 1;
+                matched.add(pageNum);
+                idx += lowerQ.length();
+            }
+            if (!matched.isEmpty()) {
+                return new ArrayList<>(matched);
+            }
+            return List.of(1);
+        }
+
+        if (doc.getTitle() != null && doc.getTitle().toLowerCase().contains(lowerQ)) {
+            return List.of(1);
+        }
+
+        return Collections.emptyList();
     }
 
     private List<String> buildHighlights(Document doc, String q) {
