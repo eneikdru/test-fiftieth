@@ -1,9 +1,10 @@
 <script>
-  import { createEventDispatcher } from 'svelte';
+  import { createEventDispatcher, onMount } from 'svelte';
   import CatalogSearch from './CatalogSearch.svelte';
   import DossierSearch from './DossierSearch.svelte';
   import PrivacySettings from './PrivacySettings.svelte';
   import NavigationTelemetry from './NavigationTelemetry.svelte';
+  import TelemetryConsentBanner from './TelemetryConsentBanner.svelte';
 
   const dispatch = createEventDispatcher();
 
@@ -35,29 +36,45 @@
     { id: 'tab-privacy', key: 'privacy', title: 'Безопасность & GDPR', icon: '🛡️' }
   ];
 
+  let consentState = null;
+
+  function isTelemetryAllowed() {
+    try {
+      return localStorage.getItem('telemetry_consent') === 'granted';
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function handleConsentChange(event) {
+    consentState = event.detail.consent;
+  }
+
   function switchTab(tabKey) {
     const startTime = performance.now();
     activeTab = tabKey;
 
-    // Telemetry tracking update
-    telemetryState.totalClicks += 1;
-    telemetryState.tabNavigations += 1;
-    telemetryState.successfulLoads += 1;
+    // Only update telemetry if consent is granted
+    if (isTelemetryAllowed()) {
+      telemetryState.totalClicks += 1;
+      telemetryState.tabNavigations += 1;
+      telemetryState.successfulLoads += 1;
 
-    const latency = Math.max(12, Math.round(performance.now() - startTime));
-    const tabObject = tabs.find(t => t.key === tabKey);
+      const latency = Math.max(12, Math.round(performance.now() - startTime));
+      const tabObject = tabs.find(t => t.key === tabKey);
 
-    telemetryState.activities = [
-      {
-        id: Date.now(),
-        title: `Переход на ${tabObject ? tabObject.title : tabKey}`,
-        module: `${tabKey.toUpperCase()} Module`,
-        latencyMs: latency,
-        timestamp: 'Только что',
-        success: true
-      },
-      ...telemetryState.activities
-    ].slice(0, 10);
+      telemetryState.activities = [
+        {
+          id: Date.now(),
+          title: `Переход на ${tabObject ? tabObject.title : tabKey}`,
+          module: `${tabKey.toUpperCase()} Module`,
+          latencyMs: latency,
+          timestamp: 'Только что',
+          success: true
+        },
+        ...telemetryState.activities
+      ].slice(0, 10);
+    }
 
     dispatch('tabChange', { tab: tabKey, telemetry: telemetryState });
   }
@@ -230,4 +247,6 @@
   <footer class="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-6 text-center text-xs text-[#727784] border-t border-[#e0e3e5]">
     <p>ФБУН «Российский научно-исследовательский институт эпидемиологии» • Единая консоль управления</p>
   </footer>
+
+  <TelemetryConsentBanner bind:consentState on:consentChange={handleConsentChange} />
 </div>
