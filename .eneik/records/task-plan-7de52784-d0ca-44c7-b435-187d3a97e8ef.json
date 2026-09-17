@@ -1,0 +1,636 @@
+{
+  "epics": [
+    {
+      "existingEpicId": null,
+      "title": "Constructive Proof Verificationist OIDC Validation",
+      "jtbd": "When an epidemiologist authenticates via OIDC, I want the system to preserve and explicitly handle the exact failure reason (missing claims, invalid signature, network error), so that truths/states are explicitly verifiable and the specific causal evidence of failure is not destroyed.",
+      "kanoClass": "Performance",
+      "cynefinDomain": "complex",
+      "sixSigmaMetric": "Percentage of authentication failures with explicitly preserved specific causal evidence vs generic null.",
+      "tocConstraintRef": "OIDC Token Validation Error Handling",
+      "sourceIndex": 0,
+      "requirements": [
+        "R1: OIDC token validation methods must return a constructive proof object (typed Result) or throw specific exceptions (e.g., MissingClaimException, InvalidSignatureException) instead of returning null on failure.",
+        "R2: The explicit failure reason (missing 'iss', missing 'aud', invalid signature, network error) must be explicitly handled by the caller and preserved/logged, not compressed into a generic authentication failure."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "OIDC Token Result Type Definition",
+          "roleTag": "BARCAN-TAG-01",
+          "jtbd": "When implementing the OIDC failure handling for this epic, I want to define the specific failure types and constructive proof objects (Result/Exceptions), so that the system can explicitly represent the different validation failures.",
+          "acceptanceCriteria": "Given an OIDC validation process, When a failure occurs, Then it must be modeled as a specific typed result or exception.\nGiven a missing 'iss' claim, When the token is validated, Then a specific missing claim error type must be represented.",
+          "leanValue": "essential",
+          "cynefinDomain": "complicated",
+          "tocConstraintRef": "Validation Result Model Definition",
+          "sixSigmaMetric": "Number of distinct failure states explicitly modeled.",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1"
+          ]
+        },
+        {
+          "title": "Constructive Proof OIDC Validation Implementation",
+          "roleTag": "BARCAN-TAG-02",
+          "jtbd": "When implementing the OIDC token validation for this epic, I want to refactor `AuthController.fetchOidcProfile()` and underlying methods to return or throw specific error representations instead of null, so that the caller receives the exact failure reason.",
+          "acceptanceCriteria": "Given a token with a missing 'aud' claim, When `fetchOidcProfile()` is called, Then it must throw a specific MissingClaimException or return an explicit failure Result, not null.\nGiven a network error during OIDC fetch, When `fetchOidcProfile()` is called, Then the network exception must be propagated or wrapped in a specific explicit error type, not null.",
+          "leanValue": "essential",
+          "cynefinDomain": "complex",
+          "tocConstraintRef": "AuthController OIDC Refactoring",
+          "sixSigmaMetric": "Zero instances of null returned for OIDC validation failures.",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1",
+            "R2"
+          ]
+        },
+        {
+          "title": "OIDC Failure Preserving Caller Handling",
+          "roleTag": "BARCAN-TAG-07",
+          "jtbd": "When implementing the caller logic for this epic, I want the system to handle the specific OIDC validation exceptions/results and preserve the exact causal evidence in logs or responses, so that the specific failure is not compressed into a generic error.",
+          "acceptanceCriteria": "Given a specific OIDC validation exception thrown by the validation method, When the caller catches it, Then the exact failure reason must be preserved and explicitly logged.\nGiven a specific OIDC validation failure, When an authentication response is generated, Then the generic authentication failure must still securely reject access but the system (and operator) must be able to trace the explicit reason.",
+          "leanValue": "essential",
+          "cynefinDomain": "complicated",
+          "tocConstraintRef": "Caller Error Handling",
+          "sixSigmaMetric": "100% of explicit OIDC failures preserved in server logs.",
+          "hasUi": false,
+          "requirementRefs": [
+            "R2"
+          ]
+        },
+        {
+          "title": "Constructive Proof OIDC Validation QA",
+          "roleTag": "BARCAN-TAG-06",
+          "jtbd": "When implementing tests for this epic, I want to verify that every distinct OIDC failure mode returns its specific constructive proof and is preserved, so that the verificationist theory of meaning is enforced across the authentication boundary.",
+          "acceptanceCriteria": "Given a simulated OIDC token with missing claims, When authentication is attempted, Then the integration test must assert that the specific missing claim exception is thrown and handled.\nGiven a simulated invalid OIDC signature, When authentication is attempted, Then the test must assert the specific invalid signature failure is preserved.",
+          "leanValue": "essential",
+          "cynefinDomain": "complicated",
+          "tocConstraintRef": "OIDC Failure Integration Testing",
+          "sixSigmaMetric": "100% test coverage of all defined OIDC specific failure modes.",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1",
+            "R2"
+          ]
+        }
+      ]
+    },
+    {
+      "existingEpicId": "0194cf5d-1caa-4d6b-86e8-ebbe0331442d",
+      "title": null,
+      "jtbd": null,
+      "kanoClass": null,
+      "cynefinDomain": null,
+      "sixSigmaMetric": null,
+      "tocConstraintRef": null,
+      "sourceIndex": 0,
+      "requirements": [
+        "R1: When `AuthController.generateSecureFallbackPassword()` generates a fallback password, the system must securely transmit the knowledge of that credential to the user (e.g., via a one-time link or secure email)."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Knowledge-First Password Transmission Definition",
+          "roleTag": "BARCAN-TAG-09",
+          "jtbd": "When implementing the credential transmission for this epic, I want to decide the exact secure channel (e.g., one-time link vs email) for transmitting the fallback password, so that the user gains epistemic knowledge of their credential securely.",
+          "acceptanceCriteria": "Given the need to transmit a generated fallback password, When the decision is made, Then a written decision record must explicitly choose the secure transmission mechanism.\nGiven the chosen mechanism, When documented, Then it must satisfy the knowledge-first constraint that the user can know the credential.",
+          "leanValue": "essential",
+          "cynefinDomain": "complicated",
+          "tocConstraintRef": "Transmission Mechanism Decision",
+          "sixSigmaMetric": "One explicit decision record created.",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1"
+          ]
+        },
+        {
+          "title": "Verifiable Fallback Credential Transmission Implementation",
+          "roleTag": "BARCAN-TAG-02",
+          "jtbd": "When implementing the transmission for this epic, I want to modify the backend fallback account creation to actually execute the chosen secure transmission of the generated password, so that the credential is known to the user.",
+          "acceptanceCriteria": "Given a newly generated fallback password for a user, When the account creation flow completes, Then the password must be transmitted to the user via the chosen secure method.\nGiven the transmission process, When it executes, Then the raw password must not be permanently stored in plain text anywhere but the secure one-time transmission payload.",
+          "leanValue": "essential",
+          "cynefinDomain": "complex",
+          "tocConstraintRef": "Password Transmission Logic",
+          "sixSigmaMetric": "100% of generated fallback passwords transmitted via the secure channel.",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1"
+          ]
+        },
+        {
+          "title": "Knowledge-First Credential Transmission QA",
+          "roleTag": "BARCAN-TAG-06",
+          "jtbd": "When implementing tests for this epic, I want to verify that the generated fallback password is structurally transmitted to the user, so that the epistemic link between user and identity is proven.",
+          "acceptanceCriteria": "Given a fallback account creation event, When the test executes, Then the integration test must assert that the chosen transmission service (e.g., email service mock or one-time link generator) is invoked with the credential.\nGiven a successful transmission, When verified, Then the test must confirm the user has access to the knowledge.",
+          "leanValue": "essential",
+          "cynefinDomain": "complicated",
+          "tocConstraintRef": "Credential Transmission Testing",
+          "sixSigmaMetric": "100% integration test coverage of the fallback password transmission flow.",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1"
+          ]
+        }
+      ]
+    },
+    {
+      "existingEpicId": "6bb8f480-52f3-4562-810d-9b37c64a6f6e",
+      "title": null,
+      "jtbd": null,
+      "kanoClass": null,
+      "cynefinDomain": null,
+      "sixSigmaMetric": null,
+      "tocConstraintRef": null,
+      "sourceIndex": 1,
+      "requirements": [
+        "R1: In `DocumentController.downloadDocument()`, remove the fallback byte content generation when a document ID is not found.",
+        "R2: If `findById` returns empty for a document download request, strictly return a 404 NOT FOUND status."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Strict Essential Non-Existence Implementation",
+          "roleTag": "BARCAN-TAG-02",
+          "jtbd": "When implementing the document download for this epic, I want to remove the artificial payload generation and return a strict 404, so that the system correctly represents the non-existence of the document.",
+          "acceptanceCriteria": "Given a document download request for a non-existent ID, When `downloadDocument()` executes, Then it must return a 404 NOT FOUND status.\nGiven a missing document, When handled, Then no fallback byte content (e.g., '\u0421\u043e\u0434\u0435\u0440\u0436\u0438\u043c\u043e\u0435 \u0434\u043e\u043a\u0443\u043c\u0435\u043d\u0442\u0430 X') must be generated or returned.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "DocumentController Refactoring",
+          "sixSigmaMetric": "Zero fallback payloads generated for missing documents.",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1",
+            "R2"
+          ]
+        },
+        {
+          "title": "Strict Essential Non-Existence QA",
+          "roleTag": "BARCAN-TAG-06",
+          "jtbd": "When implementing tests for this epic, I want to verify that non-existent documents yield 404 responses instead of generated byte content, so that the strict non-existence constraint is proven.",
+          "acceptanceCriteria": "Given a download request for a non-existent document ID, When executed, Then the integration test must assert the backend returns a 404 status.\nGiven the 404 response, When evaluated, Then the test must assert the response body is empty or standard error, not generated byte content.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "Document Download Integration Testing",
+          "sixSigmaMetric": "100% test coverage of missing document download requests.",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1",
+            "R2"
+          ]
+        }
+      ]
+    },
+    {
+      "existingEpicId": null,
+      "title": "Two-Dimensional Semantic Frontend Mock Constraints",
+      "jtbd": "When a frontend developer or test suite uses the frontend mock server, I want the mock to incorporate the semantic boundaries of the backend (e.g., returning 403 or 404), so that the frontend's representation does not systematically lie about the system's actual constraints.",
+      "kanoClass": "Reverse",
+      "cynefinDomain": "complex",
+      "sixSigmaMetric": "Percentage of realistic backend constraints simulated by the frontend mock server.",
+      "tocConstraintRef": "Frontend Mock Constraints",
+      "sourceIndex": 2,
+      "requirements": [
+        "R1: The frontend mock server (`frontend/serve.mjs`) must simulate realistic backend constraints for document downloads.",
+        "R2: The mock API endpoints must respond with appropriate errors (e.g., 403 Forbidden for unauthorized access, 404 Not Found for missing documents) based on defined request patterns or states, rather than unconditionally returning 200 OK with hardcoded PDF content."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Semantic Boundary Frontend Mock Implementation",
+          "roleTag": "BARCAN-TAG-11",
+          "jtbd": "When implementing the mock server logic for this epic, I want to introduce constraint conditions (403, 404) into `frontend/serve.mjs`, so that the mock accurately reflects the backend's primary intension.",
+          "acceptanceCriteria": "Given a download request in the mock server matching an unauthorized pattern, When processed, Then the mock must return a 403 Forbidden status.\nGiven a download request for a known non-existent pattern, When processed, Then the mock must return a 404 Not Found status.\nGiven a valid authorized request, When processed, Then the mock must return the 200 OK with PDF content.",
+          "leanValue": "essential",
+          "cynefinDomain": "complicated",
+          "tocConstraintRef": "Mock Server Logic",
+          "sixSigmaMetric": "100% of defined semantic constraint scenarios successfully simulated in the mock.",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1",
+            "R2"
+          ]
+        },
+        {
+          "title": "Semantic Boundary Mock QA",
+          "roleTag": "BARCAN-TAG-06",
+          "jtbd": "When implementing tests for this epic, I want to verify that the frontend mock correctly enforces the semantic boundaries, so that the mock does not systematically lie to the UI.",
+          "acceptanceCriteria": "Given the updated mock server, When a simulated unauthorized request is made, Then the test must assert the mock returns 403.\nGiven the updated mock server, When a missing document is requested, Then the test must assert the mock returns 404.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "Mock Server Verification",
+          "sixSigmaMetric": "100% verification of mock failure paths.",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1",
+            "R2"
+          ]
+        }
+      ]
+    },
+    {
+      "existingEpicId": null,
+      "title": "Semantic Truth in E2E Testing against Real Backend",
+      "jtbd": "When a developer executes the E2E testing framework, I want the tests to run against an instance of the real backend with a seeded test database, so that a passing test semantically guarantees the actual system works, satisfying the T-schema.",
+      "kanoClass": "Must-Be",
+      "cynefinDomain": "complex",
+      "sixSigmaMetric": "Percentage of E2E tests executed against the real Spring Boot backend instead of the static mock.",
+      "tocConstraintRef": "E2E Test Backend Integration",
+      "sourceIndex": 2,
+      "requirements": [
+        "R1: Reconfigure the Playwright E2E testing framework (`frontend/playwright.config.mjs`) to point to the actual Spring Boot backend (or an integrated test environment) instead of the static mock `node serve.mjs`.",
+        "R2: The test environment must include a seeded test database so that tests assert against real system states."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Semantic Truth E2E Configuration",
+          "roleTag": "BARCAN-TAG-05",
+          "jtbd": "When implementing the test configuration for this epic, I want to update the Playwright config and test runner to start and point to the real backend and test database, so that E2E tests measure the real world.",
+          "acceptanceCriteria": "Given the Playwright configuration, When updated, Then the `webServer` or target URL must point to the real Spring Boot application port, not the mock.\nGiven the E2E test execution, When started, Then a real seeded database must be available and connected to the backend.",
+          "leanValue": "essential",
+          "cynefinDomain": "complicated",
+          "tocConstraintRef": "Playwright Configuration",
+          "sixSigmaMetric": "100% of E2E tests executing against the real backend.",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1",
+            "R2"
+          ]
+        },
+        {
+          "title": "Semantic Truth E2E QA Configuration",
+          "roleTag": "BARCAN-TAG-06",
+          "jtbd": "When implementing tests for this epic, I want to verify that the E2E tests are correctly executing against the real backend, so that the semantic truth constraint is upheld.",
+          "acceptanceCriteria": "Given the executed E2E test suite, When it completes, Then it must be verifiable that it communicated with the real Spring Boot instance.\nGiven the seeded test database, When tests run, Then the tests must successfully assert against the seeded state.",
+          "leanValue": "essential",
+          "cynefinDomain": "complicated",
+          "tocConstraintRef": "E2E Test Execution Verification",
+          "sixSigmaMetric": "100% verification of test execution environment.",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1",
+            "R2"
+          ]
+        }
+      ]
+    },
+    {
+      "existingEpicId": null,
+      "title": "Extended Mind Faceted Search UI",
+      "jtbd": "When a researcher searches for documents, I want the interface to provide explicit, interactive faceted filters (e.g., Document Type, Publication Year), so that the cognitive burden of structuring the query is offloaded to the system.",
+      "kanoClass": "Attractive",
+      "cynefinDomain": "complex",
+      "sixSigmaMetric": "Percentage of searches utilizing faceted filters vs plain unstructured text.",
+      "tocConstraintRef": "Frontend Search Filters",
+      "sourceIndex": 3,
+      "requirements": [
+        "R1: The frontend search interface (`frontend/index.html`) must be extended to include explicit, interactive faceted filters (e.g., Document Type, Publication Year).",
+        "R2: The search UI must automatically guide and refine the search context using these explicit filters.",
+        "R3: The frontend logic must structure the search request to include these facet parameters when communicating with the search endpoint."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Extended Mind Faceted Search API Contract",
+          "roleTag": "BARCAN-TAG-12",
+          "jtbd": "When defining the search for this epic, I want to establish the shared API contract for faceted parameters, so that the frontend and backend can be implemented in parallel.",
+          "acceptanceCriteria": "Given the search endpoint contract, When defined, Then it must explicitly specify the request schema for facet parameters (e.g., docType, year).\nGiven the search response, When defined, Then it must include the structured data required by the UI to render selected facets.",
+          "leanValue": "essential",
+          "cynefinDomain": "complicated",
+          "tocConstraintRef": "Facet API Contract Definition",
+          "sixSigmaMetric": "One explicit shared API contract defined for faceted search.",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1",
+            "R2",
+            "R3"
+          ]
+        },
+        {
+          "title": "Extended Mind Faceted Search Backend API",
+          "roleTag": "BARCAN-TAG-02",
+          "jtbd": "When implementing the search backend for this epic, I want to support structured facet parameters (docType, year), so that the backend can process the cognitively offloaded queries.",
+          "acceptanceCriteria": "Given a search request, When explicit facet parameters (e.g., docType, year) are provided, Then the backend must filter the document results accordingly.\nGiven an empty search query but selected facets, When processed, Then the results must be filtered strictly by the facets.",
+          "leanValue": "essential",
+          "cynefinDomain": "complicated",
+          "tocConstraintRef": "Search API Facet Support",
+          "sixSigmaMetric": "100% of facet parameters correctly applied to database queries.",
+          "hasUi": false,
+          "requirementRefs": [
+            "R3"
+          ]
+        },
+        {
+          "title": "Extended Mind Faceted Search UI Implementation",
+          "roleTag": "BARCAN-TAG-11",
+          "jtbd": "When implementing the search UI for this epic, I want to add interactive dropdowns for facets and update the search submission logic, so that the user's cognition is extended into the interface.",
+          "acceptanceCriteria": "Given the search interface, When rendered, Then interactive faceted filters (Document Type, Publication Year) must be visible and selectable.\nGiven selected facets, When a search is initiated, Then the UI must serialize the selected facets into the API request.\nGiven search results, When returned, Then the UI must visually indicate the active facets.\nGiven the faceted filters, When navigating via keyboard, Then all controls must be focusable and operable, meeting WCAG 2.1 level AA contrast.",
+          "leanValue": "essential",
+          "cynefinDomain": "complicated",
+          "tocConstraintRef": "Frontend Facet UI",
+          "sixSigmaMetric": "Zero instances of user-typed structured queries required for basic faceting.",
+          "hasUi": true,
+          "requirementRefs": [
+            "R1",
+            "R2",
+            "R3"
+          ]
+        },
+        {
+          "title": "Extended Mind Faceted Search QA",
+          "roleTag": "BARCAN-TAG-06",
+          "jtbd": "When implementing tests for this epic, I want to verify that the UI facets correctly filter backend results, so that the cognitive offloading functions correctly end-to-end.",
+          "acceptanceCriteria": "Given a selected 'Document Type' facet in the UI, When a search is executed E2E, Then the returned results must strictly belong to that document type.\nGiven multiple selected facets, When a search is executed, Then the results must represent the intersection of the facets.",
+          "leanValue": "essential",
+          "cynefinDomain": "complicated",
+          "tocConstraintRef": "Faceted Search E2E Validation",
+          "sixSigmaMetric": "100% test coverage of facet combinations.",
+          "hasUi": true,
+          "requirementRefs": [
+            "R1",
+            "R2",
+            "R3"
+          ]
+        }
+      ]
+    },
+    {
+      "existingEpicId": null,
+      "title": "Calibrated Epistemic Relevance Scoring",
+      "jtbd": "When a researcher searches for documents, I want the full-text search to return a calibrated relevance score reflecting the system's actual degree of belief that the document matches the query, so that I can rationally evaluate the quality of the matches.",
+      "kanoClass": "Must-Be",
+      "cynefinDomain": "complex",
+      "sixSigmaMetric": "Variance in relevance scores across distinct search results for complex queries.",
+      "tocConstraintRef": "Full-text Search Relevance",
+      "sourceIndex": 4,
+      "requirements": [
+        "R1: In `DocumentController.java`, remove the hardcoded `relevance_score` of `1.0`.",
+        "R2: Integrate a real full-text scoring mechanism (like BM25 or Postgres ts_rank) that calculates and returns a calibrated relevance score based on match quality, term frequency, or document length."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Calibrated Scoring Database Integration",
+          "roleTag": "BARCAN-TAG-08",
+          "jtbd": "When implementing the scoring engine for this epic, I want to configure the database query to compute real relevance scores (e.g., using ts_rank), so that the underlying data layer provides calibrated epistemic gradation.",
+          "acceptanceCriteria": "Given a full-text search query, When executed against the database, Then the SQL query must include a relevance scoring function (like ts_rank) based on the search vector.\nGiven the query results, When mapped, Then the computed score must be extracted alongside the document row.",
+          "leanValue": "essential",
+          "cynefinDomain": "complex",
+          "tocConstraintRef": "Postgres ts_rank query implementation",
+          "sixSigmaMetric": "Successful execution of scoring functions without performance regression.",
+          "hasUi": false,
+          "requirementRefs": [
+            "R2"
+          ]
+        },
+        {
+          "title": "Calibrated Scoring Controller Implementation",
+          "roleTag": "BARCAN-TAG-02",
+          "jtbd": "When implementing the backend mapping for this epic, I want to map the database-computed score to the API response instead of a hardcoded 1.0, so that the client receives the calibrated degree of belief.",
+          "acceptanceCriteria": "Given a document retrieved via search, When mapped in `DocumentController.java`, Then the `relevance_score` field must contain the actual computed score from the database.\nGiven the search results, When returned, Then no result should have a hardcoded 1.0 score unless genuinely calculated as such.",
+          "leanValue": "essential",
+          "cynefinDomain": "complicated",
+          "tocConstraintRef": "Controller Relevance Mapping",
+          "sixSigmaMetric": "Zero hardcoded 1.0 relevance scores assigned.",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1",
+            "R2"
+          ]
+        },
+        {
+          "title": "Calibrated Scoring QA",
+          "roleTag": "BARCAN-TAG-06",
+          "jtbd": "When implementing tests for this epic, I want to verify that relevance scores vary logically based on the query and document content, so that the epistemic gradation is functionally proven.",
+          "acceptanceCriteria": "Given a search query matching one document strongly and another weakly, When executed, Then the relevance score of the strong match must be strictly greater than the weak match.\nGiven a search query, When executed, Then the integration test must assert the `relevance_score` is not uniformly 1.0.",
+          "leanValue": "essential",
+          "cynefinDomain": "complicated",
+          "tocConstraintRef": "Scoring Engine Testing",
+          "sixSigmaMetric": "100% test coverage of relevance score variance.",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1",
+            "R2"
+          ]
+        }
+      ]
+    },
+    {
+      "existingEpicId": null,
+      "title": "Causal Process Continuous Identity Transmission in Telemetry",
+      "jtbd": "When the system records search telemetry, I want the event to explicitly capture and transmit the current context's identity marks (e.g., User ID, Request ID), so that the causal process remains traceable and an incident investigator can trace the event back to its originating cause.",
+      "kanoClass": "Performance",
+      "cynefinDomain": "complex",
+      "sixSigmaMetric": "Percentage of telemetry events successfully linked to their originating user/request identity marks.",
+      "tocConstraintRef": "Telemetry Identity Transmission",
+      "sourceIndex": 5,
+      "requirements": [
+        "R1: The telemetry recording mechanism in `DocumentController.java` (`telemetryService.recordSearchTelemetry`) must explicitly capture and transmit identity marks (User ID, Request/Trace ID, or Session ID).",
+        "R2: The `TelemetryService` and underlying storage must be updated to accept, store, and preserve these transmitted identity marks alongside the search query and result count."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Continuous Identity Mark Context Extraction",
+          "roleTag": "BARCAN-TAG-02",
+          "jtbd": "When implementing the telemetry recording for this epic, I want to extract the current User ID and Request/Trace ID from the security context or request and pass them to the TelemetryService, so that the causal mark is transmitted.",
+          "acceptanceCriteria": "Given an authenticated search request, When telemetry is recorded, Then the `DocumentController` must extract the authenticated User ID and pass it to `telemetryService.recordSearchTelemetry`.\nGiven any search request, When telemetry is recorded, Then a Request/Trace ID must be captured and passed.",
+          "leanValue": "essential",
+          "cynefinDomain": "complicated",
+          "tocConstraintRef": "Controller Context Extraction",
+          "sixSigmaMetric": "100% of telemetry calls include available identity marks.",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1"
+          ]
+        },
+        {
+          "title": "Causal Telemetry Storage Update",
+          "roleTag": "BARCAN-TAG-08",
+          "jtbd": "When implementing the telemetry storage for this epic, I want to update the `TelemetryService` schema and save logic to persist the transmitted identity marks, so that the causal chain is preserved.",
+          "acceptanceCriteria": "Given telemetry data with identity marks, When processed by `TelemetryService`, Then the schema must support persisting User ID and Trace ID.\nGiven a telemetry save operation, When executed, Then the identity marks must be successfully written to the datastore alongside query details.",
+          "leanValue": "essential",
+          "cynefinDomain": "complicated",
+          "tocConstraintRef": "Telemetry Database Schema Update",
+          "sixSigmaMetric": "Zero dropped identity marks during telemetry persistence.",
+          "hasUi": false,
+          "requirementRefs": [
+            "R2"
+          ]
+        },
+        {
+          "title": "Causal Telemetry Transmission QA",
+          "roleTag": "BARCAN-TAG-06",
+          "jtbd": "When implementing tests for this epic, I want to verify that an authenticated request's telemetry contains the exact causal identity marks, so that the mark transmission is proven.",
+          "acceptanceCriteria": "Given a search request from User X, When executed, Then the integration test must assert the resulting telemetry record explicitly contains User X's ID.\nGiven a request with a specific Trace ID, When executed, Then the telemetry record must contain that identical Trace ID.",
+          "leanValue": "essential",
+          "cynefinDomain": "complicated",
+          "tocConstraintRef": "Telemetry Integration Testing",
+          "sixSigmaMetric": "100% verification of causal mark transmission in tests.",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1",
+            "R2"
+          ]
+        }
+      ]
+    },
+    {
+      "existingEpicId": "e1d42df5-7452-4487-87af-8721dcff70c3",
+      "title": null,
+      "jtbd": null,
+      "kanoClass": null,
+      "cynefinDomain": null,
+      "sixSigmaMetric": null,
+      "tocConstraintRef": null,
+      "sourceIndex": 0,
+      "requirements": [
+        "R1: Goal: Prove the system delivers its core value of speed for epidemiological analysis.",
+        "R2: Question: How long does it take an epidemiologist to complete a full analytical dossier from login to PDF export?",
+        "R3: Metric: End-to-end duration from initial login or search to the successful generation and export of the signed PDF dossier."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Measurement Engine Configuration",
+          "roleTag": "BARCAN-TAG-08",
+          "jtbd": "When implementing the measurement epic, I want to configure the system to track end-to-end dossier analysis duration, so that the Goal-Question-Metric requirement is fulfilled.",
+          "acceptanceCriteria": "Given an epidemiologist session, When they login and begin analysis, Then a telemetry timer must initiate.\nGiven the session concludes with a PDF export, When recorded, Then the total duration must be logged as the specific GQM metric.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "Metrics Instrumentation",
+          "sixSigmaMetric": "100% of defined GQM metrics are actively recorded.",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1",
+            "R2",
+            "R3"
+          ]
+        },
+        {
+          "title": "Measurement QA",
+          "roleTag": "BARCAN-TAG-06",
+          "jtbd": "When testing the measurement epic, I want to verify the GQM metrics are logged correctly, so that we have confidence in our speed analysis.",
+          "acceptanceCriteria": "Given a full dossier generation workflow execution, When completed, Then the integration test must assert the end-to-end duration metric is recorded.\nGiven the recorded metric, When verified, Then it must be accessible for querying.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "Metrics Verification",
+          "sixSigmaMetric": "100% test coverage of GQM metric logging.",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1",
+            "R2",
+            "R3"
+          ]
+        }
+      ]
+    },
+    {
+      "existingEpicId": "fa1a3417-70d7-4a64-a16a-40cc8807b877",
+      "title": null,
+      "jtbd": null,
+      "kanoClass": null,
+      "cynefinDomain": null,
+      "sixSigmaMetric": null,
+      "tocConstraintRef": null,
+      "sourceIndex": 0,
+      "requirements": [
+        "R1: The deployed instance must be populated with initial epidemiological domain content (strains, documents, faceted metadata) sufficient to exercise faceted search and calibrated relevance scoring.",
+        "R2: The system must contain realistic simulated OIDC configurations to demonstrate constructive proof failure modes during authentication evaluation."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Domain Content Seed Implementation",
+          "roleTag": "BARCAN-TAG-08",
+          "jtbd": "When implementing the acceptance epic, I want to write database seed scripts with real epidemiological metadata, so that the faceted search and relevance scoring can be demonstrated.",
+          "acceptanceCriteria": "Given a fresh install, When the database migrations run, Then the system must be populated with at least 10 realistic epidemiological documents with varied facet metadata (docType, year).\nGiven the seeded documents, When a search is executed, Then the content must be varied enough to demonstrate varied relevance scores.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "Database Seeding",
+          "sixSigmaMetric": "100% of required domain entities successfully seeded on startup.",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1",
+            "R2"
+          ]
+        },
+        {
+          "title": "Domain Content Seed QA",
+          "roleTag": "BARCAN-TAG-06",
+          "jtbd": "When implementing tests for this epic, I want to verify that the seed scripts execute correctly on startup, so that the acceptance criteria of a fresh install are met.",
+          "acceptanceCriteria": "Given a fresh application startup, When initialization completes, Then the integration test must assert the presence of the seeded epidemiological documents.\nGiven the simulated OIDC configuration, When verified, Then it must be present and correctly formatted.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "Seed Script Verification",
+          "sixSigmaMetric": "100% verification of seeded entities.",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1",
+            "R2"
+          ]
+        }
+      ]
+    },
+    {
+      "existingEpicId": "6c15b169-3f41-414d-bf68-4280f5a56be6",
+      "title": null,
+      "jtbd": null,
+      "kanoClass": null,
+      "cynefinDomain": null,
+      "sixSigmaMetric": null,
+      "tocConstraintRef": null,
+      "sourceIndex": 5,
+      "requirements": [
+        "R1: Opt-in consent must be captured before telemetry tracking loads."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Telemetry Consent Implementation",
+          "roleTag": "BARCAN-TAG-11",
+          "jtbd": "When implementing the UI for this epic, I want to ensure telemetry only fires after consent is captured, so that privacy compliance is maintained.",
+          "acceptanceCriteria": "Given a new user session, When telemetry scripts attempt to load, Then they must be blocked until explicit consent is given.\nGiven given consent, When a search occurs, Then telemetry is recorded.\nGiven the consent banner, When navigating via keyboard, Then all controls must be focusable and operable, meeting WCAG 2.1 level AA contrast.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "Consent Execution",
+          "sixSigmaMetric": "100% of telemetry events require prior consent.",
+          "hasUi": true,
+          "requirementRefs": [
+            "R1"
+          ]
+        }
+      ]
+    },
+    {
+      "existingEpicId": "3158d90a-fb4f-46bd-bc93-2bf2298c2ee9",
+      "title": null,
+      "jtbd": null,
+      "kanoClass": null,
+      "cynefinDomain": null,
+      "sixSigmaMetric": null,
+      "tocConstraintRef": null,
+      "sourceIndex": 5,
+      "requirements": [
+        "R1: Data subjects must be able to request export or erasure of their telemetry data."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Telemetry Data Subject Rights API",
+          "roleTag": "BARCAN-TAG-02",
+          "jtbd": "When implementing the backend for this epic, I want to provide endpoints to export and erase a user's telemetry records, so that statutory deadlines can be met.",
+          "acceptanceCriteria": "Given an authenticated user, When they request data export, Then all their telemetry records must be returned.\nGiven an authenticated user, When they request erasure, Then their telemetry records must be hard-deleted.",
+          "leanValue": "essential",
+          "cynefinDomain": "clear",
+          "tocConstraintRef": "Data Rights Processing",
+          "sixSigmaMetric": "100% compliance with data erasure requests.",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1"
+          ]
+        }
+      ]
+    }
+  ]
+}
