@@ -25,15 +25,15 @@ const server = http.createServer((req, res) => {
 
   // Mock API endpoints
   if (pathname === '/api/v1/documents/1/download' || (pathname.startsWith('/api/v1/documents/') && pathname.endsWith('/download'))) {
-    if (pathname.includes('unauthorized')) {
-      res.writeHead(403, { 'Content-Type': 'text/plain; charset=utf-8' });
-      res.end('Forbidden');
-      return;
-    }
-
     if (pathname.includes('non-existent')) {
       res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
       res.end('Not Found');
+      return;
+    }
+
+    if (pathname.includes('unauthorized')) {
+      res.writeHead(403, { 'Content-Type': 'text/plain; charset=utf-8' });
+      res.end('Forbidden');
       return;
     }
 
