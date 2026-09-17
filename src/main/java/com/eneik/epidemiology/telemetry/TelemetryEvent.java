@@ -47,6 +47,15 @@ public class TelemetryEvent {
     @Column(name = "success")
     private Boolean success;
 
+    @Column(name = "user_id", length = 255)
+    private String userId;
+
+    @Column(name = "trace_id", length = 255)
+    private String traceId;
+
+    @Column(name = "session_id", length = 255)
+    private String sessionId;
+
     public TelemetryEvent() {
     }
 
@@ -180,5 +189,29 @@ public class TelemetryEvent {
 
     public void setSuccess(Boolean success) {
         this.success = success;
+    }
+
+    public String getUserId() {
+        return userId;
+    }
+
+    public void setUserId(String userId) {
+        this.userId = userId;
+    }
+
+    public String getTraceId() {
+        return traceId;
+    }
+
+    public void setTraceId(String traceId) {
+        this.traceId = traceId;
+    }
+
+    public String getSessionId() {
+        return sessionId;
+    }
+
+    public void setSessionId(String sessionId) {
+        this.sessionId = sessionId;
     }
 }

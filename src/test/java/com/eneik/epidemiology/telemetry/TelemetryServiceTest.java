@@ -54,6 +54,27 @@ class TelemetryServiceTest {
     }
 
     @Test
+    @DisplayName("Given a search with zero results and identity marks, When search telemetry is recorded, Then a ZERO_RESULTS event is stored with the identity marks")
+    void testRecordZeroResultsSearchTelemetryWithIdentityMarks() {
+        when(telemetryEventRepository.save(any(TelemetryEvent.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        TelemetryEvent event = telemetryService.recordSearchTelemetry("эпидемия", 0, "user-123", "trace-456", "session-789");
+
+        assertNotNull(event);
+        assertEquals(TelemetryService.EVENT_ZERO_RESULTS, event.getEventType());
+        assertEquals("эпидемия", event.getQueryTerm());
+        assertEquals(0, event.getResultsCount());
+        assertNull(event.getDocumentId());
+        assertEquals("user-123", event.getUserId());
+        assertEquals("trace-456", event.getTraceId());
+        assertEquals("session-789", event.getSessionId());
+        assertEquals(Instant.parse("2026-08-22T15:00:00Z"), event.getCreatedAt().toInstant());
+
+        verify(telemetryEventRepository, times(1)).save(any(TelemetryEvent.class));
+    }
+
+    @Test
     @DisplayName("Given a search with results, When search telemetry is recorded, Then no ZERO_RESULTS event is stored")
     void testRecordSearchWithResultsNoTelemetry() {
         TelemetryEvent event = telemetryService.recordSearchTelemetry("грипп", 5);

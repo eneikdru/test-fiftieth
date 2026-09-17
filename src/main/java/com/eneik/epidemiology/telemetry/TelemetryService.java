@@ -41,6 +41,11 @@ public class TelemetryService {
 
     @Transactional
     public TelemetryEvent recordSearchTelemetry(String queryTerm, int resultsCount) {
+        return recordSearchTelemetry(queryTerm, resultsCount, null, null, null);
+    }
+
+    @Transactional
+    public TelemetryEvent recordSearchTelemetry(String queryTerm, int resultsCount, String userId, String traceId, String sessionId) {
         if (resultsCount == 0) {
             TelemetryEvent event = new TelemetryEvent(
                     EVENT_ZERO_RESULTS,
@@ -49,6 +54,9 @@ public class TelemetryService {
                     resultsCount,
                     OffsetDateTime.now(clock)
             );
+            event.setUserId(userId);
+            event.setTraceId(traceId);
+            event.setSessionId(sessionId);
             return telemetryEventRepository.save(event);
         }
         return null;
