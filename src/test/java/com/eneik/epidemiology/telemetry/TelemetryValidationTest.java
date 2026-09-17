@@ -13,6 +13,8 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
+import com.eneik.epidemiology.document.Document;
+import com.eneik.epidemiology.document.DocumentRepository;
 
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -32,6 +34,8 @@ class TelemetryValidationTest {
 
     @Autowired
     private TelemetryEventRepository telemetryEventRepository;
+    @Autowired
+    private DocumentRepository documentRepository;
 
     @Autowired
     private UserRepository userRepository;
@@ -74,7 +78,13 @@ class TelemetryValidationTest {
     @Test
     @DisplayName("Given a test download, When the action completes, Then exactly one successful download metric is recorded")
     void givenTestDownload_whenActionCompletes_thenExactlyOneDownloadMetricIsRecorded() throws Exception {
-        Long docId = 999L;
+        Document doc = new Document();
+        doc.setTitle("Test Doc");
+        doc.setFilePath("data/docs/uploads/test_doc.pdf");
+        doc.setAuthorOrganization("Test Org");
+        doc.setPublicationYear(2023);
+        doc = documentRepository.save(doc);
+        Long docId = doc.getId();
 
         mockMvc.perform(get("/api/v1/documents/" + docId + "/download")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + authToken))

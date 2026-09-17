@@ -358,12 +358,6 @@ public class DocumentController {
                             .contentType(MediaType.APPLICATION_OCTET_STREAM)
                             .body(content);
                 })
-                .orElseGet(() -> {
-                    byte[] fallbackContent = ("Содержимое документа " + id).getBytes(StandardCharsets.UTF_8);
-                    return ResponseEntity.ok()
-                            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"document_" + id + ".pdf\"")
-                            .contentType(MediaType.APPLICATION_PDF)
-                            .body(fallbackContent);
-                });
+                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());
     }
 }
