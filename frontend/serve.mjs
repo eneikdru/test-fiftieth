@@ -61,6 +61,7 @@ const server = http.createServer((req, res) => {
     const query = parsedUrl.searchParams.get('query') || parsedUrl.searchParams.get('q') || '';
     const yearParam = parsedUrl.searchParams.get('year') || '';
     const docTypeParam = parsedUrl.searchParams.get('docType') || '';
+    const authorParam = parsedUrl.searchParams.get('author') || '';
     const docs = [
       {
         id: '1',
@@ -85,12 +86,31 @@ const server = http.createServer((req, res) => {
         fileName: 'flu_surveillance.pdf',
         fileSize: '4.1 МБ',
         description: 'Статистика заболеваемости и результаты лабораторного мониторинга.'
+      },
+      {
+        id: '3',
+        title: 'Методические рекомендации по профилактике кори',
+        author: 'Министерство здравоохранения РФ',
+        authorOrganization: 'Министерство здравоохранения РФ',
+        year: 2021,
+        publicationYear: 2021,
+        docType: 'Методическое руководство',
+        fileName: 'measles_prevention.docx',
+        fileSize: '1.8 МБ',
+        description: 'Инструкции для медицинского персонала по вакцинопрофилактике.'
       }
     ];
 
     let filtered = query
       ? docs.filter(d => d.title.toLowerCase().includes(query.toLowerCase()) || d.description.toLowerCase().includes(query.toLowerCase()))
       : [...docs];
+
+    if (authorParam) {
+      filtered = filtered.filter(d =>
+        (d.author && d.author.toLowerCase().includes(authorParam.toLowerCase())) ||
+        (d.authorOrganization && d.authorOrganization.toLowerCase().includes(authorParam.toLowerCase()))
+      );
+    }
 
     if (yearParam) {
       const yearInt = parseInt(yearParam, 10);
