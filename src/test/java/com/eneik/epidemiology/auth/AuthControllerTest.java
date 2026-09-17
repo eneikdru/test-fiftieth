@@ -35,6 +35,10 @@ import java.util.Random;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.not;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.cookie;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -225,7 +229,7 @@ class AuthControllerTest {
     }
 
     @Test
-    @DisplayName("Given valid LTI launch request via JSON body, When POST /api/v1/auth/lti/launch called, Then authenticates user and returns session tokens securely via Set-Cookie headers")
+    @DisplayName("Given valid LTI launch request via JSON body, When POST /api/v1/auth/lti/launch called, Then authenticates user and returns session tokens securely via Set-Cookie headers instead of URL redirect tokens")
     void testLtiLaunch_JsonPayload_Success() throws Exception {
         String ltiJson = "{" +
                 "\"username\":\"json_lti_user\"," +
@@ -240,9 +244,12 @@ class AuthControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(ltiJson))
                 .andExpect(status().isFound())
-                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header().string("Location", org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString("access_token="))))
-                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header().stringValues("Set-Cookie", org.hamcrest.Matchers.hasItem(org.hamcrest.Matchers.containsString("access_token="))))
-                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header().stringValues("Set-Cookie", org.hamcrest.Matchers.hasItem(org.hamcrest.Matchers.containsString("refresh_token="))));
+                .andExpect(header().string("Location", not(containsString("access_token="))))
+                .andExpect(header().string("Location", not(containsString("refresh_token="))))
+                .andExpect(cookie().exists("access_token"))
+                .andExpect(cookie().exists("refresh_token"))
+                .andExpect(cookie().httpOnly("access_token", true))
+                .andExpect(cookie().httpOnly("refresh_token", true));
 
         User user = userService.findByUsername("json_lti_user").orElseThrow();
         assert "RESEARCHER".equals(user.getRole());
