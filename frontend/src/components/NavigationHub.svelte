@@ -4,8 +4,15 @@
   import DossierSearch from './DossierSearch.svelte';
   import PrivacySettings from './PrivacySettings.svelte';
   import NavigationTelemetry from './NavigationTelemetry.svelte';
+  import ConsentBanner from './ConsentBanner.svelte';
 
   const dispatch = createEventDispatcher();
+
+  let telemetryConsent = false;
+
+  function handleConsent(event) {
+    telemetryConsent = event.detail.granted;
+  }
 
   export let activeTab = 'catalog'; // 'catalog' | 'dossier' | 'foci' | 'telemetry' | 'privacy'
   export let currentUser = {
@@ -40,26 +47,30 @@
     activeTab = tabKey;
 
     // Telemetry tracking update
-    telemetryState.totalClicks += 1;
-    telemetryState.tabNavigations += 1;
-    telemetryState.successfulLoads += 1;
+    if (telemetryConsent) {
+      telemetryState.totalClicks += 1;
+      telemetryState.tabNavigations += 1;
+      telemetryState.successfulLoads += 1;
 
-    const latency = Math.max(12, Math.round(performance.now() - startTime));
-    const tabObject = tabs.find(t => t.key === tabKey);
+      const latency = Math.max(12, Math.round(performance.now() - startTime));
+      const tabObject = tabs.find(t => t.key === tabKey);
 
-    telemetryState.activities = [
-      {
-        id: Date.now(),
-        title: `Переход на ${tabObject ? tabObject.title : tabKey}`,
-        module: `${tabKey.toUpperCase()} Module`,
-        latencyMs: latency,
-        timestamp: 'Только что',
-        success: true
-      },
-      ...telemetryState.activities
-    ].slice(0, 10);
+      telemetryState.activities = [
+        {
+          id: Date.now(),
+          title: `Переход на ${tabObject ? tabObject.title : tabKey}`,
+          module: `${tabKey.toUpperCase()} Module`,
+          latencyMs: latency,
+          timestamp: 'Только что',
+          success: true
+        },
+        ...telemetryState.activities
+      ].slice(0, 10);
 
-    dispatch('tabChange', { tab: tabKey, telemetry: telemetryState });
+      dispatch('tabChange', { tab: tabKey, telemetry: telemetryState });
+    } else {
+      dispatch('tabChange', { tab: tabKey });
+    }
   }
 
   // RootCause / Outbreaks categorisation state
@@ -230,4 +241,6 @@
   <footer class="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-6 text-center text-xs text-[#727784] border-t border-[#e0e3e5]">
     <p>ФБУН «Российский научно-исследовательский институт эпидемиологии» • Единая консоль управления</p>
   </footer>
+
+  <ConsentBanner on:consent={handleConsent} />
 </div>

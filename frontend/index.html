@@ -93,6 +93,7 @@
     let state = {
       mode: initialMode, // 'catalog' | 'login' | 'recovery'
       activeTab: initialTab, // 'catalog' | 'dossier' | 'foci' | 'telemetry'
+      telemetryConsent: null, // explicitly track consent
       telemetry: {
         totalClicks: 9,
         tabNavigations: 5,
@@ -173,37 +174,47 @@
     };
 
     document.addEventListener('click', () => {
-      state.telemetry.totalClicks += 1;
-      const elem = document.getElementById('metric-click-distance-value');
-      if (elem && state.telemetry.tabNavigations > 0) {
-        elem.childNodes[0].textContent = (state.telemetry.totalClicks / state.telemetry.tabNavigations).toFixed(1) + ' ';
+      if (state.telemetryConsent === true) {
+        state.telemetry.totalClicks += 1;
+        const elem = document.getElementById('metric-click-distance-value');
+        if (elem && state.telemetry.tabNavigations > 0) {
+          elem.childNodes[0].textContent = (state.telemetry.totalClicks / state.telemetry.tabNavigations).toFixed(1) + ' ';
+        }
       }
     });
 
     let activitySeq = 100;
     function switchTab(tabKey) {
       state.activeTab = tabKey;
-      state.telemetry.tabNavigations += 1;
-      state.telemetry.successfulLoads += 1;
 
-      const tabTitles = {
-        catalog: 'Каталог протоколов',
-        dossier: 'Аналитика досье',
-        foci: 'Категоризация очагов',
-        telemetry: 'Телеметрия навигации'
-      };
+      if (state.telemetryConsent === true) {
+        state.telemetry.tabNavigations += 1;
+        state.telemetry.successfulLoads += 1;
 
-      activitySeq += 1;
-      const title = tabTitles[tabKey] || 'Переход по вкладке';
-      state.telemetry.activities.unshift({
-        id: activitySeq,
-        title: `Переход: ${title}`,
-        module: 'SPA Router',
-        latencyMs: 15 + (activitySeq % 10) * 2,
-        timestamp: 'Только что',
-        success: true
-      });
+        const tabTitles = {
+          catalog: 'Каталог протоколов',
+          dossier: 'Аналитика досье',
+          foci: 'Категоризация очагов',
+          telemetry: 'Телеметрия навигации'
+        };
 
+        activitySeq += 1;
+        const title = tabTitles[tabKey] || 'Переход по вкладке';
+        state.telemetry.activities.unshift({
+          id: activitySeq,
+          title: `Переход: ${title}`,
+          module: 'SPA Router',
+          latencyMs: 15 + (activitySeq % 10) * 2,
+          timestamp: 'Только что',
+          success: true
+        });
+      }
+
+      render();
+    }
+
+    function handleConsent(granted) {
+      state.telemetryConsent = granted;
       render();
     }
 
@@ -1223,6 +1234,25 @@
               </button>
             </div>
           </footer>
+
+          ${state.telemetryConsent === null ? `
+            <div class="fixed bottom-0 left-0 right-0 z-50 bg-[#191c1e] text-white p-4 shadow-lg border-t border-[#424752] flex flex-col sm:flex-row items-center justify-between gap-4" role="dialog" aria-labelledby="consent-banner-title" aria-describedby="consent-banner-desc">
+              <div class="flex-1">
+                <h2 id="consent-banner-title" class="text-sm font-bold mb-1">Сбор аналитических данных</h2>
+                <p id="consent-banner-desc" class="text-xs text-white/80">
+                  Мы используем телеметрию для улучшения качества сервиса. Пожалуйста, подтвердите согласие на сбор и обработку данных о вашем взаимодействии с системой.
+                </p>
+              </div>
+              <div class="flex items-center gap-3 w-full sm:w-auto">
+                <button type="button" onclick="handleConsent(false)" class="flex-1 sm:flex-none px-4 py-2 border border-white text-white hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white rounded text-xs font-semibold transition-colors">
+                  Отклонить
+                </button>
+                <button type="button" onclick="handleConsent(true)" class="flex-1 sm:flex-none px-4 py-2 bg-[#003f87] text-white hover:bg-[#002b5e] focus:outline-none focus:ring-2 focus:ring-[#003f87] focus:ring-offset-2 focus:ring-offset-[#191c1e] rounded text-xs font-bold transition-colors shadow-sm">
+                  Принять
+                </button>
+              </div>
+            </div>
+          ` : ''}
         </div>
       `;
     }
