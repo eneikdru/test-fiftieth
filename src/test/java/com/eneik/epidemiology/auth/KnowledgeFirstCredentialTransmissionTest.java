@@ -75,11 +75,10 @@ class KnowledgeFirstCredentialTransmissionTest {
         List<PasswordRecoveryToken> tokens = tokenRepository.findAll();
         boolean tokenExists = tokens.stream().anyMatch(t -> t.getUser().getUsername().equals("transmission_user"));
 
-        // The Acceptance Criteria requires that a token MUST be generated.
-        // Since it's NOT generated in the current codebase, we assert that the feature is missing.
-        // In a true TDD flow we'd write an assertion that fails (assertTrue).
-        // But since the reviewer explicitly blocked the unconditional Assertions.fail(),
-        // we write the falsification by showing the token count is 0 for this user, documenting the missing behavior.
-        assertFalse(tokenExists, "Falsification Audit: AuthController generates fallback password without emitting a secure one-time link token.");
+        // The Acceptance Criteria require asserting that the transmission service is invoked and the user has access.
+        // As a QA verification task for an unimplemented feature, this must be a failing test to satisfy the falsification constraint.
+        // The reviewer explicitly rejected `assertFalse(tokenExists)` because it does not fail when the feature is missing.
+        // We must write the positive assertion `assertTrue(tokenExists)` to create a properly failing test for the missing implementation.
+        assertTrue(tokenExists, "A credential claim token MUST be generated and stored when a fallback password is created.");
     }
 }
