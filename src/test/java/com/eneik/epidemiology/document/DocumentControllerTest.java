@@ -257,4 +257,43 @@ class DocumentControllerTest {
         assertEquals("trace-abc-123", event.getTraceId());
         assertEquals("sess-xyz-789", event.getSessionId());
     }
+
+    @Test
+    @DisplayName("Given an empty search query but selected facets (docType, year), When processed, Then the results are filtered strictly by facets")
+    void testSearchWithEmptyQueryAndFacets_ReturnsFilteredResults() throws Exception {
+        Document doc1 = new Document("Уникальный отчет 2025", "НИИ Эпидемиологии", 2025, "/data/docs/uploads/doc1.pdf");
+        doc1.setDocType("UNIQUE_TEST_REPORT");
+        documentRepository.save(doc1);
+
+        Document doc2 = new Document("Уникальный протокол 2025", "НИИ Эпидемиологии", 2025, "/data/docs/uploads/doc2.pdf");
+        doc2.setDocType("UNIQUE_TEST_PROTOCOL");
+        documentRepository.save(doc2);
+
+        mockMvc.perform(get("/api/v1/documents/search")
+                        .param("q", "")
+                        .param("docType", "UNIQUE_TEST_REPORT")
+                        .param("year", "2025")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + researcherToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.total_elements", is(1)))
+                .andExpect(jsonPath("$.items[0].doc_type", is("UNIQUE_TEST_REPORT")))
+                .andExpect(jsonPath("$.items[0].title", containsString("Уникальный отчет 2025")));
+    }
+
+    @Test
+    @DisplayName("Given structured facet parameters docType (camelCase) and year, When provided without query, Then filters matching documents strictly")
+    void testFacetedSearchByCamelCaseDocTypeAndYear() throws Exception {
+        Document doc = new Document("Аналитический обзор 2022", "Центр Эпидемиологии", 2022, "/data/docs/uploads/doc3.pdf");
+        doc.setDocType("ANALYTICS");
+        documentRepository.save(doc);
+
+        mockMvc.perform(get("/api/v1/documents/search")
+                        .param("docType", "ANALYTICS")
+                        .param("year", "2022")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + researcherToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.total_elements", is(1)))
+                .andExpect(jsonPath("$.items[0].doc_type", is("ANALYTICS")));
+    }
+
 }
