@@ -24,24 +24,36 @@ const server = http.createServer((req, res) => {
   const pathname = parsedUrl.pathname;
 
   // Mock API endpoints
-  if (pathname === '/api/v1/documents/1/download' || (pathname.startsWith('/api/v1/documents/') && pathname.endsWith('/download'))) {
-    if (pathname.includes('non-existent')) {
-      res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
-      res.end('Not Found');
-      return;
-    }
+  const downloadMatch = pathname.match(/^\/api\/v1\/documents\/([^/]+)\/download$/);
+  if (downloadMatch) {
+    const docId = downloadMatch[1];
+    const authHeader = req.headers['authorization'] || '';
 
-    if (pathname.includes('unauthorized')) {
+    // Dynamic authorization validation based on request Authorization header
+    if (authHeader.includes('invalid') || authHeader.includes('unauthorized')) {
       res.writeHead(403, { 'Content-Type': 'text/plain; charset=utf-8' });
       res.end('Forbidden');
       return;
     }
 
+    // Dynamic document existence validation against dataset
+    const mockDocs = [
+      { id: '1', title: 'Протокол эпидемиологического расследования вспышки сальмонеллеза', fileName: 'salmonella_outbreak.pdf' },
+      { id: '2', title: 'Отчет эпиднадзора по гриппу и ОРВИ за сезон 2022-2023', fileName: 'flu_surveillance.pdf' }
+    ];
+    const doc = mockDocs.find(d => d.id === docId);
+
+    if (!doc) {
+      res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
+      res.end('Not Found');
+      return;
+    }
+
     res.writeHead(200, {
       'Content-Type': 'application/pdf',
-      'Content-Disposition': 'attachment; filename="salmonella_outbreak.pdf"',
+      'Content-Disposition': `attachment; filename="${doc.fileName}"`,
     });
-    res.end('Содержимое документа: Протокол эпидемиологического расследования вспышки сальмонеллеза');
+    res.end('Содержимое документа: ' + doc.title);
     return;
   }
 
