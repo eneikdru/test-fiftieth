@@ -5,6 +5,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 
@@ -12,7 +15,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.ANY)
-@io.zonky.test.db.AutoConfigureEmbeddedDatabase
+@io.zonky.test.db.AutoConfigureEmbeddedDatabase(type = io.zonky.test.db.AutoConfigureEmbeddedDatabase.DatabaseType.POSTGRES)
 class DocumentRepositoryTest {
 
     @Autowired
@@ -69,5 +72,30 @@ class DocumentRepositoryTest {
 
         long totalCount = documentRepository.count();
         assertThat(totalCount).isGreaterThanOrEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Given full-text search query, When executed against datastore, Then SQL query computes calibrated ts_rank relevance score.")
+    void testFullTextSearch_ComputesCalibratedTsRankScore() {
+        // Given
+        Document doc1 = new Document("Исследование сальмонеллеза и сибирской язвы", "НИИ Эпидемиологии", 2024, "/path/doc1.pdf");
+        doc1.setTextContent("Полный текст про сальмонеллез сальмонеллез сальмонеллез в эпидемиологии.");
+        documentRepository.saveAndFlush(doc1);
+
+        Document doc2 = new Document("Справочник эпидемиологический", "НИИ Эпидемиологии", 2024, "/path/doc2.pdf");
+        doc2.setTextContent("Упоминание словосочетания сальмонеллез один раз.");
+        documentRepository.saveAndFlush(doc2);
+
+        Pageable pageable = PageRequest.of(0, 10);
+
+        // When
+        Page<DocumentSearchResultProjection> results =
+                documentRepository.fullTextSearch("сальмонеллез", null, null, null, pageable);
+
+        // Then
+        assertThat(results.getContent()).isNotEmpty();
+        DocumentSearchResultProjection topResult = results.getContent().get(0);
+        assertThat(topResult.getRelevanceScore()).isNotNull();
+        assertThat(topResult.getRelevanceScore()).isGreaterThan(0.0);
     }
 }

@@ -25,7 +25,7 @@ public class ProtocolController {
             @RequestParam(name = "size", defaultValue = "20") int size) {
 
         Pageable pageable = PageRequest.of(page, size);
-        Page<Document> protocolPage = documentRepository.fullTextSearch(
+        Page<DocumentSearchResultProjection> protocolPage = documentRepository.fullTextSearch(
                 (q != null && !q.trim().isEmpty()) ? q.trim() : null,
                 "PROTOCOL",
                 null,

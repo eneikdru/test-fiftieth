@@ -9,6 +9,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
+import java.time.LocalDate;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -24,6 +26,29 @@ class ProtocolControllerTest {
     private DocumentRepository documentRepository;
     private MockMvc mockMvc;
 
+    static class TestDocumentSearchResult implements DocumentSearchResultProjection {
+        private final Long id;
+        private final String title;
+        private final String docType;
+
+        public TestDocumentSearchResult(Long id, String title, String docType) {
+            this.id = id;
+            this.title = title;
+            this.docType = docType;
+        }
+
+        @Override public Long getId() { return id; }
+        @Override public String getTitle() { return title; }
+        @Override public String getDocType() { return docType; }
+        @Override public String getAuthorOrganization() { return "НИИ Эпидемиологии"; }
+        @Override public Integer getPublicationYear() { return 2024; }
+        @Override public LocalDate getPublicationDate() { return LocalDate.of(2024, 1, 1); }
+        @Override public String getFilePath() { return "/docs/p1.pdf"; }
+        @Override public String getTextContent() { return null; }
+        @Override public OffsetDateTime getCreatedAt() { return OffsetDateTime.now(); }
+        @Override public Double getRelevanceScore() { return 1.0; }
+    }
+
     @BeforeEach
     void setUp() {
         documentRepository = Mockito.mock(DocumentRepository.class);
@@ -34,12 +59,10 @@ class ProtocolControllerTest {
     @Test
     @DisplayName("Given protocol search request, When controller handles request, Then returns list of protocol documents")
     void testGetProtocols() throws Exception {
-        Document protocolDoc = new Document("Epidemiological Protocol Salmonella", "Epidemiology Inst", 2024, "/docs/p1.pdf");
-        protocolDoc.setId(101L);
-        protocolDoc.setDocType("PROTOCOL");
+        TestDocumentSearchResult testResult = new TestDocumentSearchResult(101L, "Epidemiological Protocol Salmonella", "PROTOCOL");
 
         Mockito.when(documentRepository.fullTextSearch(eq("Salmonella"), eq("PROTOCOL"), isNull(), isNull(), any(Pageable.class)))
-                .thenReturn(new PageImpl<>(List.of(protocolDoc)));
+                .thenReturn(new PageImpl<>(List.of(testResult)));
 
         mockMvc.perform(get("/api/v1/protocols?q=Salmonella"))
                 .andExpect(status().isOk())

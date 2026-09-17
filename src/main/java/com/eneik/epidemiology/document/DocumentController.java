@@ -2,7 +2,6 @@ package com.eneik.epidemiology.document;
 
 import com.eneik.epidemiology.telemetry.TelemetryService;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -173,7 +172,7 @@ public class DocumentController {
             LocalDate toDate = parseDate(toDateStr);
 
             Pageable pageable = PageRequest.of(page, size);
-            Page<Document> resultPage = documentRepository.fullTextSearch(
+            Page<DocumentSearchResultProjection> resultPage = documentRepository.fullTextSearch(
                     (q != null && !q.trim().isEmpty()) ? q.trim() : null,
                     (docType != null && !docType.trim().isEmpty()) ? docType.trim() : null,
                     fromDate,
@@ -181,7 +180,7 @@ public class DocumentController {
                     pageable
             );
 
-            List<Document> filteredContent = resultPage.getContent();
+            List<DocumentSearchResultProjection> filteredContent = resultPage.getContent();
             if (!isProtocolAccessAuthorized()) {
                 filteredContent = filteredContent.stream()
                         .filter(doc -> doc.getDocType() == null || !"PROTOCOL".equalsIgnoreCase(doc.getDocType()))
@@ -205,9 +204,9 @@ public class DocumentController {
                 }
                 item.put("publication_date", pubDateStr);
 
-                item.put("highlights", buildHighlights(doc, q));
+                item.put("highlights", buildHighlights(doc.getTextContent(), doc.getTitle(), q));
                 item.put("matched_pages", List.of(1));
-                item.put("relevance_score", 1.0);
+                item.put("relevance_score", doc.getRelevanceScore() != null ? doc.getRelevanceScore() : 1.0);
                 return item;
             }).collect(Collectors.toList());
 
@@ -258,13 +257,13 @@ public class DocumentController {
         }
     }
 
-    private List<String> buildHighlights(Document doc, String q) {
+    private List<String> buildHighlights(String textContent, String title, String q) {
         if (q == null || q.isBlank()) {
             return Collections.emptyList();
         }
-        String text = doc.getTextContent();
+        String text = textContent;
         if (text == null || text.isBlank()) {
-            text = doc.getTitle();
+            text = title;
         }
         if (text == null || text.isBlank()) {
             return Collections.emptyList();

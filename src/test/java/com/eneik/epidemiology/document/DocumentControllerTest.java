@@ -76,6 +76,18 @@ class DocumentControllerTest {
     }
 
     @Test
+    @DisplayName("Given a full-text search query, When executed, Then returns calibrated relevance scores extracted alongside document rows")
+    void testFullTextSearch_ReturnsCalibratedRelevanceScore() throws Exception {
+        mockMvc.perform(get("/api/v1/documents/search")
+                        .param("q", "сальмонеллеза")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + researcherToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items", hasSize(greaterThanOrEqualTo(1))))
+                .andExpect(jsonPath("$.items[0].relevance_score").exists())
+                .andExpect(jsonPath("$.items[0].relevance_score", is(notNullValue())));
+    }
+
+    @Test
     @DisplayName("Given a full-text search with doc_type filter, When requested, Then returns filtered documents")
     void testFullTextSearchWithDocType_ReturnsFilteredDocuments() throws Exception {
         mockMvc.perform(get("/api/v1/documents/search")
