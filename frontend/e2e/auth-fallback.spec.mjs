@@ -23,6 +23,15 @@ test.describe('Moodle Fallback E2E Tests', () => {
     await expect(ssoBtn).toBeVisible();
     await expect(ssoBtn).toContainText('Войти через Moodle SSO');
 
+    // Mock Moodle SSO endpoint failure to verify error feedback UI
+    await page.route('**/api/v1/auth/moodle/config', route => {
+      route.fulfill({
+        status: 500,
+        contentType: 'application/json',
+        body: JSON.stringify({ error_code: 'SSO_UNAVAILABLE', message: 'Moodle SSO сервис недоступен' })
+      });
+    });
+
     // Click Moodle SSO button and check feedback / error handling
     await ssoBtn.click();
     await expect(page.locator('#login-error-alert')).toBeVisible();

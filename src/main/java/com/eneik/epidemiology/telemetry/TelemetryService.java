@@ -82,7 +82,6 @@ public class TelemetryService {
         return telemetryEventRepository.save(event);
     }
 
-    @Async
     @Transactional
     public CompletableFuture<TelemetryEvent> recordAnalysisSpeedTelemetry(String sessionId, OffsetDateTime startTime, OffsetDateTime endTime, Long durationMs) {
         long computedDuration = (durationMs != null) ? durationMs :

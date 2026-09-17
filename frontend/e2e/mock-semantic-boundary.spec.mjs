@@ -12,22 +12,49 @@ test.describe('Semantic Boundary Real Backend Integration QA', () => {
     expect(body.status).toBe('UP');
   });
 
-  test('Given the real backend API, When an unauthorized request is made, Then the real backend returns 401 or 403', async ({ request }) => {
+  test('Given the real backend API, When an unauthorized request is made with invalid token, Then the real backend returns 401 or 403 and rejects 404', async ({ request }) => {
     const response = await request.get(`${BACKEND_URL}/api/v1/documents/1/download`, {
       headers: {
         'Authorization': 'Bearer invalid_token'
       }
     });
     expect([401, 403]).toContain(response.status());
+    expect(response.status()).not.toBe(404);
   });
 
-  test('Given the real backend API, When a missing document is requested, Then the real backend returns 404 or authorization boundary status', async ({ request }) => {
-    const response = await request.get(`${BACKEND_URL}/api/v1/documents/999999/download`);
-    expect([401, 403, 404]).toContain(response.status());
+  test('Given the real backend API, When a missing document is requested by an authenticated user, Then the real backend returns 404 Not Found', async ({ request }) => {
+    // 1. Register user
+    const username = `qa_e2e_user_${Date.now()}`;
+    await request.post(`${BACKEND_URL}/api/v1/auth/register`, {
+      data: {
+        username,
+        password: 'Password123!',
+        email: `${username}@test.com`,
+        full_name: 'QA E2E User'
+      }
+    });
+
+    // 2. Obtain token via Moodle SSO endpoint
+    const ssoResponse = await request.post(`${BACKEND_URL}/api/v1/auth/sso/moodle`, {
+      data: {
+        username,
+        moodle_token: `moodle_token_${Date.now()}`,
+        fallback_password: 'Password123!'
+      }
+    });
+    const token = (await ssoResponse.json()).access_token;
+
+    // 3. Request non-existent document ID with valid auth token -> expect 404 Not Found
+    const response = await request.get(`${BACKEND_URL}/api/v1/documents/999999/download`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    expect(response.status()).toBe(404);
   });
 
-  test('Given the seeded test database, When querying authenticated dossier endpoint, Then the real backend returns seeded state', async ({ request }) => {
-    // 1. Register a test user
+  test('Given the seeded test database, When authenticating via Moodle SSO and querying dossier endpoint, Then Moodle SSO issues token and backend returns seeded state', async ({ request }) => {
+    // 1. Register a test user for Moodle SSO fallback mapping
     const username = `qa_e2e_user_${Date.now()}`;
     const registerResponse = await request.post(`${BACKEND_URL}/api/v1/auth/register`, {
       data: {
@@ -39,15 +66,16 @@ test.describe('Semantic Boundary Real Backend Integration QA', () => {
     });
     expect(registerResponse.status()).toBe(201);
 
-    // 2. Login to receive JWT token
-    const loginResponse = await request.post(`${BACKEND_URL}/api/v1/auth/login`, {
+    // 2. Authenticate via Moodle SSO endpoint (POST /api/v1/auth/sso/moodle)
+    const ssoResponse = await request.post(`${BACKEND_URL}/api/v1/auth/sso/moodle`, {
       data: {
         username,
-        password: 'Password123!'
+        moodle_token: `moodle_token_${Date.now()}`,
+        fallback_password: 'Password123!'
       }
     });
-    expect(loginResponse.status()).toBe(200);
-    const loginBody = await loginResponse.json();
+    expect(ssoResponse.status()).toBe(200);
+    const loginBody = await ssoResponse.json();
     const token = loginBody.access_token;
     expect(token).toBeTruthy();
 
