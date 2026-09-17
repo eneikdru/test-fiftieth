@@ -2,11 +2,9 @@ version: '3.8'
 
 services:
   db:
-    container_name: "${COMPOSE_PROJECT_NAME:-epidemiology}_db"
 
   backend:
     # Backend service definition with Dockerfile build context and actuator health check
-    container_name: "${COMPOSE_PROJECT_NAME:-epidemiology}_backend"
     build:
       context: .
       dockerfile: Dockerfile
@@ -28,7 +26,6 @@ services:
       - app_uploads:/app/data/docs/uploads
 
   backup:
-    container_name: "${COMPOSE_PROJECT_NAME:-epidemiology}_backup"
     environment:
       UPLOADS_DIR: /app/data/docs/uploads
     volumes:
