@@ -185,12 +185,12 @@ public class EmployeeDossierController {
             report = dossierReportRepository.save(report);
 
             // Simulating immediate generation as a single atomic operation for now (satisfies complicated cynefin probe)
-            int updatedCount = dossierReportRepository.updateStatus(report.getId(), "PENDING", "COMPLETED");
+            String downloadUrl = "/api/v1/dossier/reports/" + report.getId() + "/download";
+            int updatedCount = dossierReportRepository.updateStatusAndDetails(report.getId(), "PENDING", "COMPLETED", summaryText, downloadUrl);
             if (updatedCount > 0) {
                 report.setStatus("COMPLETED");
                 report.setSummaryText(summaryText);
-                report.setDownloadUrl("/api/v1/dossier/reports/" + report.getId() + "/download");
-                report = dossierReportRepository.save(report); // update remaining fields
+                report.setDownloadUrl(downloadUrl);
                 success = true;
             }
         } finally {
