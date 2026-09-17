@@ -84,7 +84,7 @@ class EmployeeDossierControllerTest {
     }
     @WithMockUser(username = "user", roles = "USER")
     @Test
-    @DisplayName("Given valid reports, when paginated list requested, then return correct page.")
+    @DisplayName("Given authenticated user, when paginated dossier reports requested, then returns 200 OK instead of 401 Unauthorized.")
     void testListDossierReports() throws Exception {
         DossierReport report1 = new DossierReport("EMP-777", "FULL", "COMPLETED", "Test summary", 1, "/api/v1/dossier/reports/1/download");
         report1.setAccessDepartment("Эпидемиология");
@@ -99,6 +99,16 @@ class EmployeeDossierControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)))
                 .andExpect(jsonPath("$[0].employee_id").value("EMP-777"));
+    }
+
+    @WithMockUser(username = "user", roles = "USER")
+    @Test
+    @DisplayName("Given authenticated user, when searching dossier documents, then returns 200 OK instead of 401 Unauthorized.")
+    void testSearchEmployeeDocumentsSuccess_Returns200() throws Exception {
+        mockMvc.perform(get("/api/v1/dossier/documents")
+                        .param("employee_id", "EMP-999"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(2)));
     }
 
 
