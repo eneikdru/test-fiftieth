@@ -4,6 +4,8 @@ import com.eneik.epidemiology.document.DossierReport;
 import com.eneik.epidemiology.document.DossierReportRepository;
 import com.eneik.epidemiology.document.EmployeeDocument;
 import com.eneik.epidemiology.document.EmployeeDocumentRepository;
+import com.eneik.epidemiology.telemetry.TelemetryEvent;
+import com.eneik.epidemiology.telemetry.TelemetryEventRepository;
 import com.eneik.epidemiology.user.User;
 import com.eneik.epidemiology.user.UserRepository;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -27,6 +29,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 @Transactional
+@io.zonky.test.db.AutoConfigureEmbeddedDatabase
 class PrivacyServiceTest {
 
     @Autowired
@@ -45,6 +48,9 @@ class PrivacyServiceTest {
     private DossierReportRepository dossierReportRepository;
 
     @Autowired
+    private TelemetryEventRepository telemetryEventRepository;
+
+    @Autowired
     private ObjectMapper objectMapper;
 
     private PrivacyService privacyService;
@@ -58,6 +64,7 @@ class PrivacyServiceTest {
             userRepository,
             employeeDocumentRepository,
             dossierReportRepository,
+            telemetryEventRepository,
             objectMapper,
             fixedClock
         );
@@ -177,5 +184,51 @@ class PrivacyServiceTest {
         assertThrows(PrivacyService.PrivacyBadRequestException.class, () ->
             privacyService.initiateDataErasure("erasure_invalid_token", "WRONG_TOKEN", "Reason", "ALL_PERSONAL_DATA")
         );
+    }
+
+    @Test
+    @DisplayName("Given a user with telemetry records, When data export is initiated, Then telemetry records are included in export payload")
+    void testDataExportIncludesTelemetryRecords() throws Exception {
+        User user = new User("telemetry_export_user", "hash123", "RESEARCHER");
+        userRepository.save(user);
+
+        TelemetryEvent event1 = new TelemetryEvent("sso_login_success", "telemetry_export_user", null, null, java.time.OffsetDateTime.now(fixedClock));
+        TelemetryEvent event2 = new TelemetryEvent("fallback_login_success", "telemetry_export_user", null, null, java.time.OffsetDateTime.now(fixedClock));
+        telemetryEventRepository.save(event1);
+        telemetryEventRepository.save(event2);
+
+        DataExportJob job = privacyService.initiateDataExport("telemetry_export_user", "JSON", "Export with telemetry");
+        assertEquals("COMPLETED", job.getStatus());
+
+        PrivacyService.DownloadData downloadData = privacyService.getExportDownloadData(job.getRequestId());
+        String payload = new String(downloadData.bytes(), java.nio.charset.StandardCharsets.UTF_8);
+        Map<String, Object> map = objectMapper.readValue(payload, new TypeReference<>() {});
+
+        assertTrue(map.containsKey("telemetry_records"));
+        List<Map<String, Object>> telemetryRecords = (List<Map<String, Object>>) map.get("telemetry_records");
+        assertEquals(2, telemetryRecords.size());
+        assertEquals("sso_login_success", telemetryRecords.get(0).get("event_type"));
+        assertEquals("telemetry_export_user", telemetryRecords.get(0).get("query_term"));
+    }
+
+    @Test
+    @DisplayName("Given an erasure request for user with telemetry records, When executed, Then telemetry records are hard-deleted")
+    void testDataErasureHardDeletesTelemetryRecords() {
+        User user = new User("telemetry_erasure_user", "hash456", "RESEARCHER");
+        userRepository.save(user);
+
+        TelemetryEvent event1 = new TelemetryEvent("sso_login_success", "telemetry_erasure_user", null, null, java.time.OffsetDateTime.now(fixedClock));
+        TelemetryEvent event2 = new TelemetryEvent("fallback_login_success", "telemetry_erasure_user", null, null, java.time.OffsetDateTime.now(fixedClock));
+        telemetryEventRepository.save(event1);
+        telemetryEventRepository.save(event2);
+
+        String token = "CONFIRM_ERASURE_telemetry_erasure_user";
+        DataErasureJob job = privacyService.initiateDataErasure("telemetry_erasure_user", token, "152-FZ", "ALL_PERSONAL_DATA");
+
+        assertEquals("COMPLETED", job.getStatus());
+        assertEquals(3, job.getRecordsErasedCount()); // 1 user + 2 telemetry records
+
+        List<TelemetryEvent> remainingTelemetry = telemetryEventRepository.findByQueryTerm("telemetry_erasure_user");
+        assertTrue(remainingTelemetry.isEmpty(), "All telemetry records for subject must be hard-deleted from database");
     }
 }

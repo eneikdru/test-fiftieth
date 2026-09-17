@@ -3,6 +3,7 @@ package com.eneik.epidemiology.privacy;
 import com.eneik.epidemiology.document.DossierReportRepository;
 import com.eneik.epidemiology.document.EmployeeDocument;
 import com.eneik.epidemiology.document.EmployeeDocumentRepository;
+import com.eneik.epidemiology.telemetry.TelemetryEventRepository;
 import com.eneik.epidemiology.user.User;
 import com.eneik.epidemiology.user.UserRepository;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -56,6 +57,9 @@ class DataSubjectRightsVerificationTest {
     private DossierReportRepository dossierReportRepository;
 
     @Autowired
+    private TelemetryEventRepository telemetryEventRepository;
+
+    @Autowired
     private ObjectMapper objectMapper;
 
     @Autowired
@@ -75,6 +79,7 @@ class DataSubjectRightsVerificationTest {
             userRepository,
             employeeDocumentRepository,
             dossierReportRepository,
+            telemetryEventRepository,
             objectMapper,
             fixedClock
         );
