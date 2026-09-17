@@ -224,10 +224,12 @@ class DocumentControllerTest {
     }
 
     @Test
-    @DisplayName("Given a document download request for a non-existent ID, When downloadDocument() executes, Then it must return a 404 NOT FOUND status")
+    @DisplayName("Given a document download request for a non-existent ID, When downloadDocument() executes, Then it must return a 404 NOT FOUND status and empty response body")
     void testDownloadDocument_NotFound_Returns404() throws Exception {
         mockMvc.perform(get("/api/v1/documents/999999/download")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + researcherToken))
-                .andExpect(status().isNotFound());
+                .andExpect(status().isNotFound())
+                .andExpect(content().string(isEmptyString()))
+                .andExpect(content().string(not(containsString("Содержимое документа"))));
     }
 }
