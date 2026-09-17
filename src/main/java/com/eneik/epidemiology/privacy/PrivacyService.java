@@ -4,6 +4,8 @@ import com.eneik.epidemiology.document.DossierReport;
 import com.eneik.epidemiology.document.DossierReportRepository;
 import com.eneik.epidemiology.document.EmployeeDocument;
 import com.eneik.epidemiology.document.EmployeeDocumentRepository;
+import com.eneik.epidemiology.telemetry.TelemetryEvent;
+import com.eneik.epidemiology.telemetry.TelemetryEventRepository;
 import com.eneik.epidemiology.user.User;
 import com.eneik.epidemiology.user.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -27,6 +29,7 @@ public class PrivacyService {
     private final UserRepository userRepository;
     private final EmployeeDocumentRepository employeeDocumentRepository;
     private final DossierReportRepository dossierReportRepository;
+    private final TelemetryEventRepository telemetryEventRepository;
     private final ObjectMapper objectMapper;
     private final Clock clock;
 
@@ -37,9 +40,10 @@ public class PrivacyService {
         UserRepository userRepository,
         EmployeeDocumentRepository employeeDocumentRepository,
         DossierReportRepository dossierReportRepository,
+        TelemetryEventRepository telemetryEventRepository,
         ObjectMapper objectMapper
     ) {
-        this(exportJobRepository, erasureJobRepository, userRepository, employeeDocumentRepository, dossierReportRepository, objectMapper, Clock.systemUTC());
+        this(exportJobRepository, erasureJobRepository, userRepository, employeeDocumentRepository, dossierReportRepository, telemetryEventRepository, objectMapper, Clock.systemUTC());
     }
 
     public PrivacyService(
@@ -49,7 +53,7 @@ public class PrivacyService {
         ObjectMapper objectMapper,
         Clock clock
     ) {
-        this(exportJobRepository, erasureJobRepository, userRepository, null, null, objectMapper, clock);
+        this(exportJobRepository, erasureJobRepository, userRepository, null, null, null, objectMapper, clock);
     }
 
     public PrivacyService(
@@ -58,6 +62,7 @@ public class PrivacyService {
         UserRepository userRepository,
         EmployeeDocumentRepository employeeDocumentRepository,
         DossierReportRepository dossierReportRepository,
+        TelemetryEventRepository telemetryEventRepository,
         ObjectMapper objectMapper,
         Clock clock
     ) {
@@ -66,6 +71,7 @@ public class PrivacyService {
         this.userRepository = userRepository;
         this.employeeDocumentRepository = employeeDocumentRepository;
         this.dossierReportRepository = dossierReportRepository;
+        this.telemetryEventRepository = telemetryEventRepository;
         this.objectMapper = objectMapper;
         this.clock = clock;
     }
@@ -151,6 +157,23 @@ public class PrivacyService {
                     reportList.add(rMap);
                 }
                 userDataMap.put("dossier_reports", reportList);
+            }
+
+            if (telemetryEventRepository != null) {
+                List<TelemetryEvent> telemetryEvents = telemetryEventRepository.findByQueryTerm(user.getUsername());
+                List<Map<String, Object>> telemetryList = new ArrayList<>();
+                for (TelemetryEvent te : telemetryEvents) {
+                    Map<String, Object> teMap = new LinkedHashMap<>();
+                    teMap.put("id", te.getId());
+                    teMap.put("event_type", te.getEventType());
+                    teMap.put("query_term", te.getQueryTerm());
+                    teMap.put("document_id", te.getDocumentId());
+                    teMap.put("results_count", te.getResultsCount());
+                    teMap.put("processing_time_ms", te.getProcessingTimeMs());
+                    teMap.put("created_at", te.getCreatedAt() != null ? te.getCreatedAt().toString() : null);
+                    telemetryList.add(teMap);
+                }
+                userDataMap.put("telemetry_records", telemetryList);
             }
 
             String payloadJson = objectMapper.writeValueAsString(userDataMap);
@@ -284,6 +307,11 @@ public class PrivacyService {
                 dossierReportRepository.deleteAll(reports);
                 dossierReportRepository.flush();
             }
+        }
+
+        if (telemetryEventRepository != null) {
+            int erasedTelemetry = telemetryEventRepository.deleteByQueryTerm(user.getUsername());
+            totalErased += erasedTelemetry;
         }
 
         // Execute permanent removal of identifiable user data from database
