@@ -162,17 +162,27 @@ public class DocumentController {
             @RequestParam(name = "query", required = false) String query,
             @RequestParam(name = "author", required = false) String author,
             @RequestParam(name = "year", required = false) Integer year,
-            @RequestParam(name = "doc_type", required = false) String docType,
+            @RequestParam(name = "doc_type", required = false) String docTypeSnake,
+            @RequestParam(name = "docType", required = false) String docTypeCamel,
             @RequestParam(name = "from_date", required = false) String fromDateStr,
             @RequestParam(name = "to_date", required = false) String toDateStr,
             @RequestParam(name = "page", defaultValue = "0") int page,
             @RequestParam(name = "size", defaultValue = "20") int size,
             HttpServletRequest request) {
 
-        boolean isFullTextSearchRequest = (q != null || docType != null || fromDateStr != null || toDateStr != null);
+        String effectiveDocType = (docTypeCamel != null && !docTypeCamel.trim().isEmpty()) ? docTypeCamel.trim()
+                : ((docTypeSnake != null && !docTypeSnake.trim().isEmpty()) ? docTypeSnake.trim() : null);
+
+        boolean queryIsBlank = (q != null && q.trim().isEmpty());
+
+        boolean hasFacets = (effectiveDocType != null || year != null || (author != null && !author.trim().isEmpty())
+                || (fromDateStr != null && !fromDateStr.trim().isEmpty())
+                || (toDateStr != null && !toDateStr.trim().isEmpty()));
+
+        boolean isFullTextSearchRequest = (q != null || effectiveDocType != null || fromDateStr != null || toDateStr != null);
 
         if (isFullTextSearchRequest) {
-            if (q != null && q.trim().isEmpty()) {
+            if (queryIsBlank && !hasFacets) {
                 return ResponseEntity.badRequest().body(Map.of(
                         "error_code", "INVALID_SEARCH_QUERY",
                         "message", "Поисковый запрос не должен быть пустым.",
@@ -184,9 +194,13 @@ public class DocumentController {
             LocalDate toDate = parseDate(toDateStr);
 
             Pageable pageable = PageRequest.of(page, size);
+            String cleanedQuery = (q != null && !q.trim().isEmpty()) ? q.trim() : null;
+
             Page<Document> resultPage = documentRepository.fullTextSearch(
-                    (q != null && !q.trim().isEmpty()) ? q.trim() : null,
-                    (docType != null && !docType.trim().isEmpty()) ? docType.trim() : null,
+                    cleanedQuery,
+                    effectiveDocType,
+                    (author != null && !author.trim().isEmpty()) ? author.trim() : null,
+                    year,
                     fromDate,
                     toDate,
                     pageable

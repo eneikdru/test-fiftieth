@@ -37,4 +37,21 @@ public interface DocumentRepository extends JpaRepository<Document, Long> {
                                  @Param("fromDate") LocalDate fromDate,
                                  @Param("toDate") LocalDate toDate,
                                  Pageable pageable);
+
+    @Query("SELECT d FROM Document d WHERE " +
+           "(:q IS NULL OR LOWER(CAST(d.title AS java.lang.String)) LIKE LOWER(CONCAT('%', CAST(:q AS java.lang.String), '%')) OR " +
+           " LOWER(CAST(d.authorOrganization AS java.lang.String)) LIKE LOWER(CONCAT('%', CAST(:q AS java.lang.String), '%')) OR " +
+           " (d.textContent IS NOT NULL AND LOWER(CAST(d.textContent AS java.lang.String)) LIKE LOWER(CONCAT('%', CAST(:q AS java.lang.String), '%')))) AND " +
+           "(:docType IS NULL OR d.docType = :docType) AND " +
+           "(:author IS NULL OR LOWER(CAST(d.authorOrganization AS java.lang.String)) LIKE LOWER(CONCAT('%', CAST(:author AS java.lang.String), '%'))) AND " +
+           "(:year IS NULL OR d.publicationYear = :year) AND " +
+           "(CAST(:fromDate AS java.time.LocalDate) IS NULL OR d.publicationDate >= :fromDate) AND " +
+           "(CAST(:toDate AS java.time.LocalDate) IS NULL OR d.publicationDate <= :toDate)")
+    Page<Document> fullTextSearch(@Param("q") String q,
+                                 @Param("docType") String docType,
+                                 @Param("author") String author,
+                                 @Param("year") Integer year,
+                                 @Param("fromDate") LocalDate fromDate,
+                                 @Param("toDate") LocalDate toDate,
+                                 Pageable pageable);
 }
