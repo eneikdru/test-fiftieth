@@ -10,9 +10,10 @@ export default defineConfig({
     baseURL: process.env.PLAYWRIGHT_TEST_BASE_URL || 'http://127.0.0.1:18080',
   },
   webServer: {
-    command: 'node serve.mjs',
+    command: 'mvn spring-boot:run',
     url: 'http://127.0.0.1:18080',
-    reuseExistingServer: !process.env.CI,
-    cwd: '.',
+    reuseExistingServer: true,
+    cwd: '..',
+    timeout: 120000,
   },
 });
