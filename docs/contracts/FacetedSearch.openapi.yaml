@@ -1,0 +1,167 @@
+openapi: 3.0.3
+info:
+  title: API Фасетного поиска (Extended Mind)
+  description: Контракт API для поиска с поддержкой структурированных фасетов (docType, year), позволяющих выгрузить когнитивную нагрузку фильтрации из разума пользователя в интерфейс системы.
+  version: 1.0.0
+servers:
+  - url: /api/v1
+    description: Основной сервер API
+paths:
+  /documents/search/faceted:
+    get:
+      summary: Фасетный поиск документов
+      description: Выполняет поиск по документам с возвратом как самих результатов, так и доступных фасетов для дальнейшей фильтрации.
+      operationId: facetedSearchDocuments
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: query
+          in: query
+          description: Текстовый запрос для полнотекстового поиска
+          required: false
+          schema:
+            type: string
+        - name: docType
+          in: query
+          description: Фасетный фильтр по типу документа (например, Протокол расследования)
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+          style: form
+          explode: true
+        - name: year
+          in: query
+          description: Фасетный фильтр по году публикации
+          required: false
+          schema:
+            type: array
+            items:
+              type: integer
+          style: form
+          explode: true
+      responses:
+        '200':
+          description: Успешный поиск со структурированными фасетами
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FacetedSearchResponse'
+        '400':
+          description: Ошибка валидации параметров запроса
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Пользователь не авторизован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    FacetedSearchResponse:
+      type: object
+      required:
+        - items
+        - facets
+      properties:
+        items:
+          type: array
+          description: Найденные документы, соответствующие запросу и выбранным фильтрам
+          items:
+            $ref: '#/components/schemas/DocumentItem'
+        facets:
+          type: object
+          description: Доступные фасеты на основе текущих результатов поиска
+          required:
+            - docType
+            - year
+          properties:
+            docType:
+              type: array
+              description: Фасеты по типам документов
+              items:
+                $ref: '#/components/schemas/FacetCount'
+            year:
+              type: array
+              description: Фасеты по годам публикации
+              items:
+                $ref: '#/components/schemas/FacetCount'
+
+    DocumentItem:
+      type: object
+      required:
+        - id
+        - title
+      properties:
+        id:
+          type: string
+          description: Уникальный идентификатор документа
+          example: "1"
+        title:
+          type: string
+          description: Название документа
+          example: "Протокол эпидемиологического расследования вспышки сальмонеллеза"
+        authorOrganization:
+          type: string
+          description: Организация-автор документа
+          example: "НИИ Эпидемиологии"
+        docType:
+          type: string
+          description: Тип документа
+          example: "Протокол расследования"
+        year:
+          type: integer
+          description: Год публикации
+          example: 2023
+
+    FacetCount:
+      type: object
+      required:
+        - value
+        - count
+      properties:
+        value:
+          type: string
+          description: Значение фасета
+          example: "Протокол расследования"
+        count:
+          type: integer
+          description: Количество документов с данным значением фасета
+          example: 42
+
+    ErrorResponse:
+      type: object
+      required:
+        - error_code
+        - message
+        - timestamp
+      properties:
+        error_code:
+          type: string
+          description: Машинно-читаемый код ошибки
+          example: "VALIDATION_ERROR"
+        message:
+          type: string
+          description: Человекочитаемое сообщение об ошибке на русском языке
+          example: "Неверный формат года."
+        timestamp:
+          type: string
+          format: date-time
+          description: Временная метка ошибки
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
