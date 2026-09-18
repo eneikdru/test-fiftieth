@@ -21,9 +21,9 @@ test.describe('Semantic Boundary Real Backend Integration QA', () => {
     expect([401, 403]).toContain(response.status());
   });
 
-  test('Given the real backend API, When a missing document is requested, Then the real backend returns 404 or authorization boundary status', async ({ request }) => {
+  test('Given the real backend API, When a missing document is requested, Then the real backend returns 401 or 403 authorization boundary status', async ({ request }) => {
     const response = await request.get(`${BACKEND_URL}/api/v1/documents/999999/download`);
-    expect([401, 403, 404]).toContain(response.status());
+    expect([401, 403]).toContain(response.status());
   });
 
   test('Given the seeded test database, When querying authenticated dossier endpoint, Then the real backend returns seeded state', async ({ request }) => {
