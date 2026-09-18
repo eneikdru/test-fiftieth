@@ -368,7 +368,7 @@ public class AuthController {
 
         if (profile == null) {
             // LMS is unreachable or authorization code exchange failed -> Check fallback auth
-            if (request.username() != null && !request.username().trim().isEmpty() &&
+            if (isServerError && request.username() != null && !request.username().trim().isEmpty() &&
                 request.fallback_password() != null && !request.fallback_password().trim().isEmpty()) {
                 User user = userService.findByUsernameOrEmail(request.username().trim()).orElse(null);
                 if (user != null && userService.verifyPassword(request.fallback_password().trim(), user.getPasswordHash())) {
@@ -724,7 +724,7 @@ public class AuthController {
         }
 
         if (profile == null || !profile.username().trim().equalsIgnoreCase(request.username().trim())) {
-            if (request.fallback_password() != null && !request.fallback_password().trim().isEmpty()) {
+            if (isServerError && request.fallback_password() != null && !request.fallback_password().trim().isEmpty()) {
                 User user = userService.findByUsernameOrEmail(request.username().trim()).orElse(null);
                 if (user != null && userService.verifyPassword(request.fallback_password().trim(), user.getPasswordHash())) {
                     telemetryService.recordFallbackLoginTelemetry(user.getUsername());
@@ -755,7 +755,7 @@ public class AuthController {
 
         if (user == null) {
             String defaultPassword;
-            if (request.fallback_password() != null && !request.fallback_password().trim().isEmpty()) {
+            if (isServerError && request.fallback_password() != null && !request.fallback_password().trim().isEmpty()) {
                 defaultPassword = request.fallback_password().trim();
             } else {
                 defaultPassword = generateSecureFallbackPassword();
@@ -842,7 +842,9 @@ public class AuthController {
             }
         } catch (Exception e) {
             log.warn("Moodle token fetch failed for user {}: {}", request.username(), e.getMessage());
-            isServerError = true;
+            if (e instanceof LmsServerException || e.getCause() instanceof LmsServerException) {
+                isServerError = true;
+            }
             try {
                 profile = fetchOidcProfile(request.moodle_token());
             } catch (Exception validationException) {
@@ -852,7 +854,7 @@ public class AuthController {
         }
 
         if (profile == null || !profile.username().trim().equalsIgnoreCase(request.username().trim())) {
-            if (request.fallback_password() != null && !request.fallback_password().trim().isEmpty()) {
+            if (isServerError && request.fallback_password() != null && !request.fallback_password().trim().isEmpty()) {
                 User user = userService.findByUsernameOrEmail(request.username().trim()).orElse(null);
                 if (user != null && userService.verifyPassword(request.fallback_password().trim(), user.getPasswordHash())) {
                     telemetryService.recordFallbackLoginTelemetry(user.getUsername());
