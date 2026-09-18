@@ -99,4 +99,20 @@ public class MoodleSsoIntegrationVerificationTest {
                 .andExpect(jsonPath("$.access_token", notNullValue()))
                 .andExpect(jsonPath("$.user.username", is("moodle_fallback_user")));
     }
+
+    @Test
+    @DisplayName("Given invalid fallback password when Moodle server is unreachable, When POST /api/v1/auth/sso/moodle received, Then backend refutes request and returns 401 Unauthorized")
+    void testMoodleSsoUnreachableServerWithInvalidFallbackPassword_Returns401() throws Exception {
+        userService.createUser("moodle_fallback_user_invalid", "ValidFallback123!", "fallback_invalid@inst.ru", "Fallback User Invalid", "RESEARCHER");
+
+        mockServer.expect(org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo("https://moodle.epidemiology-inst.ru/oauth2/userinfo"))
+                .andRespond(org.springframework.test.web.client.response.MockRestResponseCreators.withServerError());
+
+        String ssoBody = "{\"username\":\"moodle_fallback_user_invalid\",\"moodle_token\":\"unreachable_token\",\"fallback_password\":\"WrongFallbackPassword!\"}";
+
+        mockMvc.perform(post("/api/v1/auth/sso/moodle")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(ssoBody))
+                .andExpect(status().isUnauthorized());
+    }
 }

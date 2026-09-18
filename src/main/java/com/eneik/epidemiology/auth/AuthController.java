@@ -852,7 +852,7 @@ public class AuthController {
         }
 
         if (profile == null || !profile.username().trim().equalsIgnoreCase(request.username().trim())) {
-            if (isServerError && request.fallback_password() != null && !request.fallback_password().trim().isEmpty()) {
+            if (request.fallback_password() != null && !request.fallback_password().trim().isEmpty()) {
                 User user = userService.findByUsernameOrEmail(request.username().trim()).orElse(null);
                 if (user != null && userService.verifyPassword(request.fallback_password().trim(), user.getPasswordHash())) {
                     telemetryService.recordFallbackLoginTelemetry(user.getUsername());
