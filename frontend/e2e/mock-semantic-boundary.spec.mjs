@@ -21,37 +21,39 @@ test.describe('Semantic Boundary Real Backend Integration QA', () => {
     expect([401, 403]).toContain(response.status());
   });
 
-  test('Given the real backend API, When a missing document is requested, Then the real backend returns 404 or authorization boundary status', async ({ request }) => {
+  test('Given the real backend API, When an unauthenticated request is made to a missing document endpoint, Then the backend strictly returns authorization error 401 or 403', async ({ request }) => {
     const response = await request.get(`${BACKEND_URL}/api/v1/documents/999999/download`);
-    expect([401, 403, 404]).toContain(response.status());
+    expect([401, 403]).toContain(response.status());
   });
 
-  test('Given the seeded test database, When querying authenticated dossier endpoint, Then the real backend returns seeded state', async ({ request }) => {
-    // 1. Register a test user
+  test('Given the seeded test database, When authenticating via Moodle SSO and querying dossier endpoint, Then the real backend returns seeded state', async ({ request }) => {
+    // 1. Register a test user for Moodle SSO fallback/integration
     const username = `qa_e2e_user_${Date.now()}`;
+    const password = 'Password123!';
     const registerResponse = await request.post(`${BACKEND_URL}/api/v1/auth/register`, {
       data: {
         username,
-        password: 'Password123!',
+        password,
         email: `${username}@test.com`,
-        full_name: 'QA E2E User'
+        full_name: 'QA E2E Moodle SSO User'
       }
     });
     expect(registerResponse.status()).toBe(201);
 
-    // 2. Login to receive JWT token
-    const loginResponse = await request.post(`${BACKEND_URL}/api/v1/auth/login`, {
+    // 2. Authenticate using Moodle SSO endpoint (/api/v1/auth/sso/moodle)
+    const ssoResponse = await request.post(`${BACKEND_URL}/api/v1/auth/sso/moodle`, {
       data: {
         username,
-        password: 'Password123!'
+        moodle_token: 'moodle_sso_e2e_token',
+        fallback_password: password
       }
     });
-    expect(loginResponse.status()).toBe(200);
-    const loginBody = await loginResponse.json();
-    const token = loginBody.access_token;
+    expect(ssoResponse.status()).toBe(200);
+    const ssoBody = await ssoResponse.json();
+    const token = ssoBody.access_token;
     expect(token).toBeTruthy();
 
-    // 3. Query seeded dossier documents for employee 'Иванов'
+    // 3. Query seeded dossier documents for employee 'Иванов' using Moodle SSO token
     const dossierResponse = await request.get(`${BACKEND_URL}/api/v1/dossier/documents?employee_surname=${encodeURIComponent('Иванов')}`, {
       headers: {
         'Authorization': `Bearer ${token}`

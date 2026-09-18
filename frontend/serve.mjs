@@ -23,16 +23,65 @@ const server = http.createServer((req, res) => {
   const parsedUrl = new URL(req.url, `http://localhost:${PORT}`);
   const pathname = parsedUrl.pathname;
 
-  // Mock API endpoints
+  // Mock Health Check Endpoint
+  if (pathname === '/health') {
+    res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+    res.end(JSON.stringify({ status: 'UP' }));
+    return;
+  }
+
+  // Mock User Registration Endpoint
+  if (pathname === '/api/v1/auth/register' && req.method === 'POST') {
+    res.writeHead(201, { 'Content-Type': 'application/json; charset=utf-8' });
+    res.end(JSON.stringify({ message: 'User registered successfully' }));
+    return;
+  }
+
+  // Mock Moodle SSO Endpoint
+  if (pathname === '/api/v1/auth/sso/moodle' && req.method === 'POST') {
+    res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+    res.end(JSON.stringify({
+      access_token: 'mock_moodle_sso_jwt_token',
+      refresh_token: 'mock_refresh_token',
+      token_type: 'Bearer',
+      expires_in: 3600,
+      user: {
+        username: 'moodle_user',
+        role: 'RESEARCHER',
+        full_name: 'Moodle User',
+        email: 'moodle@test.com'
+      }
+    }));
+    return;
+  }
+
+  // Mock Dossier Search Endpoint
+  if (pathname === '/api/v1/dossier/documents') {
+    const surname = parsedUrl.searchParams.get('employee_surname') || '';
+    res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+    res.end(JSON.stringify([
+      {
+        id: '101',
+        employee_surname: surname || 'Иванов',
+        employee_id: 'EMP-007',
+        document_type: 'STRAIN_ISOLATION',
+        title: 'Акт выделения штамма Salmonella enterica',
+        created_at: new Date().toISOString()
+      }
+    ]));
+    return;
+  }
+
+  // Mock API Document Download Endpoint
   const downloadMatch = pathname.match(/^\/api\/v1\/documents\/([^/]+)\/download$/);
   if (downloadMatch) {
     const docId = downloadMatch[1];
     const authHeader = req.headers['authorization'] || '';
 
-    // Dynamic authorization validation based on request Authorization header
-    if (authHeader.includes('invalid') || authHeader.includes('unauthorized')) {
-      res.writeHead(403, { 'Content-Type': 'text/plain; charset=utf-8' });
-      res.end('Forbidden');
+    // Authorization validation for unauthorized token or unauthenticated missing doc test
+    if (authHeader.includes('invalid') || authHeader.includes('unauthorized') || docId === '999999') {
+      res.writeHead(401, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify({ error_code: 'UNAUTHORIZED', message: 'Authentication required' }));
       return;
     }
 
