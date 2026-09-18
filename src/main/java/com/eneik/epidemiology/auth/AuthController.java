@@ -840,6 +840,15 @@ public class AuthController {
                 log.warn("OIDC Validation Failure during SSO login bad credentials fallback: {}", validationException.getMessage());
                 profile = null;
             }
+        } catch (Exception e) {
+            log.warn("Moodle token fetch failed for user {}: {}", request.username(), e.getMessage());
+            isServerError = true;
+            try {
+                profile = fetchOidcProfile(request.moodle_token());
+            } catch (Exception validationException) {
+                log.warn("OIDC Validation Failure during SSO login fallback: {}", validationException.getMessage());
+                profile = null;
+            }
         }
 
         if (profile == null || !profile.username().trim().equalsIgnoreCase(request.username().trim())) {
