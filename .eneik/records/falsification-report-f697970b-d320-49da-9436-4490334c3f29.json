@@ -1,0 +1,38 @@
+{
+  "violations": [
+    {
+      "roleTag": "BARCAN-TAG-11",
+      "type": "stub",
+      "prNumber": 1718,
+      "reason": "The PR fakes success by modifying the E2E test (frontend/e2e/mock-semantic-boundary.spec.mjs) to expect HTTP 401 or 403 instead of 404, swallowing the real authentication failure and creating a plausible-looking test pass without implementing any underlying product code changes."
+    },
+    {
+      "roleTag": "BARCAN-TAG-09",
+      "type": "causal_unjustified",
+      "prNumber": 1718,
+      "reason": "The PR claims to 'resolve falsification finding' by tightening assertions, but the diff merely alters the test expectation to correlate with the symptom (test failure) going away, without actually tracing or changing the backend authentication mechanism that produces the incorrect 401 statuses."
+    },
+    {
+      "roleTag": "BARCAN-TAG-00",
+      "type": "refusal_criteria",
+      "prNumber": 1719,
+      "reason": "PR #1719 issues an 'approve' verdict for PR #1718 despite it being a clear test stubbing violation that contradicts the Acceptance Criteria (modifying only test files without providing Moodle SSO product code changes). This violates the CODE-GUARDIAN mandate to issue a 'block' verdict for direct AC contradictions."
+    },
+    {
+      "roleTag": "BARCAN-TAG-06",
+      "type": "methodological",
+      "prNumber": 1718,
+      "philosopher": "Карл Поппер",
+      "thesis": "KARL_POPPER_01_FALSIFICATION_HARNESS",
+      "score": "14",
+      "mustBe": "A test must refute the agent's claim if it is false.",
+      "performance": "The PR modifies the test to expect and accept the broken state (401/403).",
+      "attractive": "It creates a plausible-looking pass by eliminating the critical quality gate."
+    },
+    {
+      "roleTag": "BARCAN-TAG-09",
+      "type": "specification_coverage",
+      "reason": "The codebase completely lacks the required Moodle SSO integration (OAuth2/OIDC/LTI), Moodle role hierarchy synchronization, and the backend fixes necessary to return 200/201 instead of 401 for authenticated requests, leaving the core client brief unfulfilled and the product unusable."
+    }
+  ]
+}
