@@ -1,0 +1,44 @@
+{
+  "violations": [
+    {
+      "roleTag": "BARCAN-TAG-02",
+      "type": "stub",
+      "prNumber": 1722,
+      "reason": "In AuthController.java (ssoLogin), the catch block for Moodle SSO fallback fakes a successful recovery by immediately retrying fetchOidcProfile(request.moodle_token()) and ignoring request.fallback_password(). This fakes authentication by swallowing the real failure without performing any real work to validate the fallback credentials."
+    },
+    {
+      "roleTag": "BARCAN-TAG-02",
+      "type": "layer_violation",
+      "prNumber": 1722,
+      "reason": "The fallback_password data field is passed in the SsoLoginRequest from the client test, but the backend integration is unwired; AuthController.java silently drops the field and never invokes any validation logic against it."
+    },
+    {
+      "roleTag": "BARCAN-TAG-00",
+      "type": "refusal_criteria",
+      "prNumber": 1724,
+      "reason": "PR #1724 issues an 'approve' verdict for PR #1722 despite noting that the retry logic in AuthController.java is broken. This violates the CODE-GUARDIAN policy to REJECT (block) PRs containing hard violations such as faked authentication logic and direct AC contradictions."
+    },
+    {
+      "roleTag": "BARCAN-TAG-00",
+      "type": "refusal_criteria",
+      "prNumber": 1723,
+      "reason": "PR #1723 blocked PR #1722 with a hallucinatory reason, falsely claiming that PR #1722 'only modifies the test file... and provides no actual backend API product code changes'. This contradicts the actual diff (which modifies AuthController.java) and violates the requirement that verdicts must be true and grounded in the code."
+    },
+    {
+      "roleTag": "BARCAN-TAG-06",
+      "type": "methodological",
+      "prNumber": 1722,
+      "philosopher": "Карл Поппер",
+      "thesis": "KARL_POPPER_01_FALSIFICATION_HARNESS",
+      "score": "14",
+      "mustBe": "Write the check that would refute the agent's claim before accepting the claim.",
+      "performance": "The test testMoodleSsoUnreachableServerWithFallbackPassword_Returns200OK in PR #1722 passes even though the backend completely ignores the fallback_password, meaning the test fails to refute incorrect or missing credentials (a false green).",
+      "attractive": "It creates a plausible-looking test pass for the autonomous fallback requirement while silently bypassing actual authentication."
+    },
+    {
+      "roleTag": "BARCAN-TAG-09",
+      "type": "specification_coverage",
+      "reason": "The codebase and merged PRs completely lack the required implementation for synchronizing the Moodle role hierarchy (Admin, Senior Researcher, etc.) and automatically differentiating access rights to closed strains and analytical reports based on Moodle departments and courses (Items 2 and 3 of the client brief)."
+    }
+  ]
+}
