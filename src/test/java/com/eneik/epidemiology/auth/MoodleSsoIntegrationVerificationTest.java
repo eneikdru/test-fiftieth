@@ -30,6 +30,9 @@ public class MoodleSsoIntegrationVerificationTest {
     private UserRepository userRepository;
 
     @Autowired
+    private com.eneik.epidemiology.user.UserService userService;
+
+    @Autowired
     private AuthController authController;
 
     private org.springframework.test.web.client.MockRestServiceServer mockServer;
@@ -77,5 +80,23 @@ public class MoodleSsoIntegrationVerificationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(ssoBody))
                 .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @DisplayName("Given valid Moodle SSO request with fallback password when Moodle server is unreachable, When POST /api/v1/auth/sso/moodle received, Then backend returns 200 OK with access token")
+    void testMoodleSsoUnreachableServerWithFallbackPassword_Returns200OK() throws Exception {
+        userService.createUser("moodle_fallback_user", "ValidFallback123!", "fallback@inst.ru", "Fallback User", "RESEARCHER");
+
+        mockServer.expect(org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo("https://moodle.epidemiology-inst.ru/oauth2/userinfo"))
+                .andRespond(org.springframework.test.web.client.response.MockRestResponseCreators.withServerError());
+
+        String ssoBody = "{\"username\":\"moodle_fallback_user\",\"moodle_token\":\"unreachable_token\",\"fallback_password\":\"ValidFallback123!\"}";
+
+        mockMvc.perform(post("/api/v1/auth/sso/moodle")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(ssoBody))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.access_token", notNullValue()))
+                .andExpect(jsonPath("$.user.username", is("moodle_fallback_user")));
     }
 }
