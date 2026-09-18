@@ -21,37 +21,45 @@ test.describe('Semantic Boundary Real Backend Integration QA', () => {
     expect([401, 403]).toContain(response.status());
   });
 
-  test('Given the real backend API, When a missing document is requested, Then the real backend returns 404 or authorization boundary status', async ({ request }) => {
+  test('Given the real backend API, When a missing document is requested without authorization, Then the real backend returns authorization boundary status', async ({ request }) => {
     const response = await request.get(`${BACKEND_URL}/api/v1/documents/999999/download`);
-    expect([401, 403, 404]).toContain(response.status());
+    expect([401, 403]).toContain(response.status());
+    expect(response.status()).not.toBe(404);
   });
 
-  test('Given the seeded test database, When querying authenticated dossier endpoint, Then the real backend returns seeded state', async ({ request }) => {
-    // 1. Register a test user
-    const username = `qa_e2e_user_${Date.now()}`;
-    const registerResponse = await request.post(`${BACKEND_URL}/api/v1/auth/register`, {
+  test('Given the seeded test database, When querying authenticated dossier endpoint via Moodle SSO, Then the real backend returns seeded state', async ({ request }) => {
+    // 1. Authenticate via Moodle SSO integration layer
+    const username = `qa_sso_user_${Date.now()}`;
+    const ssoResponse = await request.post(`${BACKEND_URL}/api/v1/auth/sso/moodle`, {
       data: {
         username,
-        password: 'Password123!',
-        email: `${username}@test.com`,
-        full_name: 'QA E2E User'
+        moodle_token: 'mock_moodle_sso_token',
+        fallback_password: 'Password123!'
       }
     });
-    expect(registerResponse.status()).toBe(201);
 
-    // 2. Login to receive JWT token
-    const loginResponse = await request.post(`${BACKEND_URL}/api/v1/auth/login`, {
-      data: {
-        username,
-        password: 'Password123!'
+    let token;
+    if (ssoResponse.status() === 200) {
+      const ssoBody = await ssoResponse.json();
+      token = ssoBody.access_token;
+    } else {
+      // Fallback if external LMS is unreachable: register/login via fallback
+      const loginResponse = await request.post(`${BACKEND_URL}/api/v1/auth/sso/moodle`, {
+        data: {
+          username,
+          moodle_token: 'fallback_token',
+          fallback_password: 'Password123!'
+        }
+      });
+      if (loginResponse.status() === 200) {
+        const loginBody = await loginResponse.json();
+        token = loginBody.access_token;
       }
-    });
-    expect(loginResponse.status()).toBe(200);
-    const loginBody = await loginResponse.json();
-    const token = loginBody.access_token;
+    }
+
     expect(token).toBeTruthy();
 
-    // 3. Query seeded dossier documents for employee 'Иванов'
+    // 2. Query seeded dossier documents for employee 'Иванов'
     const dossierResponse = await request.get(`${BACKEND_URL}/api/v1/dossier/documents?employee_surname=${encodeURIComponent('Иванов')}`, {
       headers: {
         'Authorization': `Bearer ${token}`
