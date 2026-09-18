@@ -1,0 +1,44 @@
+{
+  "violations": [
+    {
+      "roleTag": "BARCAN-TAG-09",
+      "type": "specification_coverage",
+      "reason": "The Task Plan in PR #1726 and the merged implementation entirely ignore the primary issue in the first client brief: 15 tests failing due to authenticated requests receiving HTTP 401 on dossier endpoints (e.g., EmployeeDossierControllerTest). The codebase still leaves the core product unusable."
+    },
+    {
+      "roleTag": "BARCAN-TAG-00",
+      "type": "refusal_criteria",
+      "prNumber": 1728,
+      "reason": "PR #1728 violates the CODE-GUARDIAN policy by issuing an 'approve' verdict for PR #1727 despite the diff introducing a hard security vulnerability (removing 'isServerError' allows any request with an invalid SSO token to bypass auth using a local password, even when the SSO server is healthy)."
+    },
+    {
+      "roleTag": "BARCAN-TAG-07",
+      "type": "refusal_criteria",
+      "prNumber": 1726,
+      "reason": "The Task Plan in PR #1726 lacks a 'definitionOfDone' (DOD) field, thereby failing to mention error state patterns (400, 401, 403, or error). This violates the BARCAN-TAG-07 refusal criteria (Игнорирование векторов атак через негативные сценарии) which requires explicit definition of safe error handling."
+    },
+    {
+      "roleTag": "BARCAN-TAG-02",
+      "type": "stub",
+      "prNumber": 1727,
+      "reason": "In AuthController.java (ssoLogin), PR #1727 removes the 'isServerError' check, which fakes a successful fallback recovery for any Moodle SSO failure (like a rejected token). This swallows the real Unauthorized failure from the LMS and returns a plausible-looking success via the fallback backdoor without doing the real work of isolating true server errors."
+    },
+    {
+      "roleTag": "BARCAN-TAG-02",
+      "type": "causal_unjustified",
+      "prNumber": 1727,
+      "reason": "PR #1727 claims to 'Validate Moodle SSO fallback credentials', but the diff shows the validation (userService.verifyPassword) was already present. The agent merely deleted the 'isServerError' check to make a failing test pass, correlating with the symptom going away rather than tracing the actual root cause of why 'isServerError' was false during fallback."
+    },
+    {
+      "roleTag": "BARCAN-TAG-12",
+      "type": "methodological",
+      "prNumber": 1727,
+      "philosopher": "Скотт Шапиро",
+      "thesis": "SKOTT_SHAPIRO_01_JOINT_COMMITMENT_LOCK",
+      "score": "13",
+      "mustBe": "Once agents share a contract, no agent may silently reinterpret its obligations.",
+      "performance": "The agent in PR #1727 silently reinterpreted the shared requirement for autonomous fallback by removing the 'isServerError' check entirely, altering the shared contract from 'fallback on failure' to a global SSO bypass for any rejected token.",
+      "attractive": "It locally optimizes test passage by unconditionally opening the fallback path, avoiding the harder work of correctly simulating and detecting a server error state."
+    }
+  ]
+}
