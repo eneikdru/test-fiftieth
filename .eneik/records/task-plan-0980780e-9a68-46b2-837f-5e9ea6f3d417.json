@@ -1,0 +1,34 @@
+{
+  "epics": [
+    {
+      "existingEpicId": "3f39f1a7-d7cd-4c01-9a16-e951a621cca7",
+      "sixSigmaMetric": "Number of unresolved audit findings affecting core product authentication",
+      "tocConstraintRef": "Authentication verification and fallback simulation",
+      "sourceIndex": 0,
+      "requirements": [
+        "R1: Fix authentication vulnerability in AuthController by properly detecting LMS server errors rather than unconditionally skipping verification, ensuring failed auth returns 401 instead of a fallback backdoor.",
+        "R2: Fix HTTP 401 errors on dossier endpoints (e.g. EmployeeDossierControllerTest) for authenticated requests so that the core product is usable.",
+        "R3: Explicitly define safe error handling patterns (400, 401, 403, or error) for authentication and dossier operations to satisfy security policies."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Fix SSO auth vulnerabilities and dossier endpoint authorization",
+          "roleTag": "BARCAN-TAG-02",
+          "jtbd": "When resolving the audit findings for this epic, I want to properly secure both the fallback auth path and dossier endpoints while documenting error states, so that the authentication system functions correctly without bypassing security.",
+          "acceptanceCriteria": "Given a login request with an invalid SSO token when the SSO server is healthy,\nWhen AuthController.ssoLogin processes the request,\nThen it returns a 401 Unauthorized status and does not use the fallback password.\n\nGiven an authenticated request to a dossier endpoint,\nWhen the endpoint is accessed,\nThen it correctly authorizes the user and returns the expected resource (200 OK) rather than a 401.\n\nGiven the need for explicit error handling definition,\nWhen the task is completed,\nThen the definition of done explicitly handles and documents 400, 401, 403, and server error scenarios.",
+          "leanValue": "essential",
+          "cynefinDomain": "complicated",
+          "tocConstraintRef": "Correctly validating LMS errors and dossier authorization",
+          "sixSigmaMetric": "Percentage of security tests passing without fallback bypass or false 401s",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1",
+            "R2",
+            "R3"
+          ]
+        }
+      ]
+    }
+  ]
+}
