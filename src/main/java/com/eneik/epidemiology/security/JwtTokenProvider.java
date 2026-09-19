@@ -1,5 +1,7 @@
 package com.eneik.epidemiology.security;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -16,6 +18,8 @@ import java.util.Base64;
 
 @Component
 public class JwtTokenProvider {
+
+    private static final Logger log = LoggerFactory.getLogger(JwtTokenProvider.class);
 
     private final String secretKey;
     private final long accessTokenValidityInSeconds;
@@ -157,7 +161,8 @@ public class JwtTokenProvider {
                 if (val != null && !val.trim().isEmpty()) {
                     return val;
                 }
-            } catch (IllegalArgumentException ignored) {
+            } catch (IllegalArgumentException e) {
+                log.debug("Claim key '{}' not present or invalid in token payload: {}", key, e.getMessage());
             }
         }
         return null;
@@ -174,30 +179,35 @@ public class JwtTokenProvider {
     }
 
     public String extractJsonValue(String json, String key) {
+        JsonNode tree;
         try {
-            JsonNode tree = objectMapper.readTree(json);
-            if (tree != null && tree.has(key) && !tree.get(key).isNull()) {
-                JsonNode node = tree.get(key);
-                if (node.isArray() && node.size() > 0) {
-                    JsonNode first = node.get(0);
-                    if (first.isObject()) {
-                        if (first.has("authority") && !first.get("authority").isNull()) {
-                            return first.get("authority").asText();
-                        }
-                        if (first.has("role") && !first.get("role").isNull()) {
-                            return first.get("role").asText();
-                        }
-                    }
-                    return first.asText();
-                }
-                return node.asText();
-            }
-            throw new IllegalArgumentException("Key '" + key + "' not found in JSON payload");
-        } catch (IllegalArgumentException e) {
-            throw e;
+            tree = objectMapper.readTree(json);
         } catch (Exception e) {
             throw new IllegalArgumentException("Malformed JSON payload: " + e.getMessage(), e);
         }
+
+        if (tree == null || !tree.has(key) || tree.get(key).isNull()) {
+            throw new IllegalArgumentException("Key '" + key + "' not found in JSON payload");
+        }
+
+        JsonNode node = tree.get(key);
+        if (!node.isArray() || node.isEmpty()) {
+            return node.asText();
+        }
+
+        JsonNode first = node.get(0);
+        if (!first.isObject()) {
+            return first.asText();
+        }
+
+        if (first.has("authority") && !first.get("authority").isNull()) {
+            return first.get("authority").asText();
+        }
+        if (first.has("role") && !first.get("role").isNull()) {
+            return first.get("role").asText();
+        }
+
+        return first.asText();
     }
 
     private String hmacSha256(String data, String secret) {

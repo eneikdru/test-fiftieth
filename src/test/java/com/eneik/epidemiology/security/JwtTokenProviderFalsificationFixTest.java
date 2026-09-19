@@ -65,4 +65,21 @@ class JwtTokenProviderFalsificationFixTest {
         assertEquals("john_doe", jwtTokenProvider.getUsername(validToken));
         assertEquals("ADMIN", jwtTokenProvider.getRole(validToken));
     }
+
+    @Test
+    @DisplayName("Given JSON array with object authority or string elements, When extractJsonValue is called, Then returns extracted string value")
+    void testExtractJsonValueArrayStructures() {
+        String jsonArrayObj = "{\"authorities\":[{\"authority\":\"ROLE_ADMIN\"}]}";
+        assertEquals("ROLE_ADMIN", jwtTokenProvider.extractJsonValue(jsonArrayObj, "authorities"));
+
+        String jsonArrayStr = "{\"roles\":[\"RESEARCHER\",\"EPIDEMIOLOGIST\"]}";
+        assertEquals("RESEARCHER", jwtTokenProvider.extractJsonValue(jsonArrayStr, "roles"));
+    }
+
+    @Test
+    @DisplayName("Given token without 'role' claim but with 'authorities', When getRole is called, Then logs missing claim and resolves role")
+    void testGetRoleLogsMissingClaimAndFallback() {
+        String tokenWithAuthorities = jwtTokenProvider.generateToken("jane_doe", "EPIDEMIOLOGIST");
+        assertEquals("EPIDEMIOLOGIST", jwtTokenProvider.getRole(tokenWithAuthorities));
+    }
 }
