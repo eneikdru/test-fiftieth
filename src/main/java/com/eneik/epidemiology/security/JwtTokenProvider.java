@@ -150,11 +150,17 @@ public class JwtTokenProvider {
         }
         String[] parts = token.split("\\.");
         String payload = new String(Base64.getUrlDecoder().decode(parts[1]), StandardCharsets.UTF_8);
-        try {
-            return extractJsonValue(payload, "role");
-        } catch (IllegalArgumentException e) {
-            return null;
+        String[] claimKeys = new String[]{"role", "roles", "authorities"};
+        for (String key : claimKeys) {
+            try {
+                String val = extractJsonValue(payload, key);
+                if (val != null && !val.trim().isEmpty()) {
+                    return val;
+                }
+            } catch (IllegalArgumentException ignored) {
+            }
         }
+        return null;
     }
 
     private long extractExpiration(String base64Payload) {
@@ -171,7 +177,20 @@ public class JwtTokenProvider {
         try {
             JsonNode tree = objectMapper.readTree(json);
             if (tree != null && tree.has(key) && !tree.get(key).isNull()) {
-                return tree.get(key).asText();
+                JsonNode node = tree.get(key);
+                if (node.isArray() && node.size() > 0) {
+                    JsonNode first = node.get(0);
+                    if (first.isObject()) {
+                        if (first.has("authority") && !first.get("authority").isNull()) {
+                            return first.get("authority").asText();
+                        }
+                        if (first.has("role") && !first.get("role").isNull()) {
+                            return first.get("role").asText();
+                        }
+                    }
+                    return first.asText();
+                }
+                return node.asText();
             }
             throw new IllegalArgumentException("Key '" + key + "' not found in JSON payload");
         } catch (IllegalArgumentException e) {
