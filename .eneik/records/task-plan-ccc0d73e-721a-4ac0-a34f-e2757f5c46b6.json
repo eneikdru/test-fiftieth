@@ -1,0 +1,33 @@
+{
+  "epics": [
+    {
+      "existingEpicId": "923b27c2-0a60-4d19-9648-792111a139e5",
+      "sourceIndex": 0,
+      "requirements": [
+        "R1: The verification delivery doc python script must be real and executable, not just a mocked output simulation.",
+        "R2: The HTTP 401 resolution must actually prevent valid authenticated requests from being rejected by fixing the underlying authentication problem, not just updating the plan.",
+        "R3: The declared enforcement of full specification coverage must have operational consequence in code, explicitly ensuring authenticated API invariants."
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Fix fake verification script and resolve HTTP 401 on authenticated requests",
+          "roleTag": "BARCAN-TAG-02",
+          "jtbd": "When implementing the fix for this epic, I want the verification logic to run correctly and the authentication check to properly process valid requests, so that authenticated users are no longer blocked and the delivery pipeline successfully runs real verification.",
+          "acceptanceCriteria": "Given a valid authenticated request is sent to the API, When the request is processed, Then it should return 200/201 and not 401.\nGiven the delivery plan script is executed, When verification runs, Then it must execute real system verification logic rather than faking the output.",
+          "definitionOfDone": "The verification script path is corrected to run real logic. The authentication logic is patched so valid authenticated requests return 200 or 201. Error patterns (e.g., HTTP 401, 403, or invalid token) are correctly returned only when the request is genuinely invalid or unauthorized.",
+          "leanValue": "essential",
+          "cynefinDomain": "complicated",
+          "tocConstraintRef": "authentication middleware mapping / script execution pipeline",
+          "sixSigmaMetric": "percent reduction in false positive 401 rejections and zero faked verification scripts",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1",
+            "R2",
+            "R3"
+          ]
+        }
+      ]
+    }
+  ]
+}
