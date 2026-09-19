@@ -2,9 +2,10 @@ version: '3.8'
 
 services:
   db:
+    ports: !override
+      - "${POSTGRES_HOST_PORT:-15432}:5432"
 
   backend:
-    # Backend service definition with Dockerfile build context and actuator health check
     build:
       context: .
       dockerfile: Dockerfile
