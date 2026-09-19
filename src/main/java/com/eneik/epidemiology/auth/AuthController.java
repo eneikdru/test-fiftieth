@@ -61,6 +61,7 @@ public class AuthController {
     private final com.eneik.epidemiology.telemetry.TelemetryService telemetryService;
     private final JdbcTemplate jdbcTemplate;
     private final TokenRevocationService tokenRevocationService;
+    private final OidcTokenValidator oidcTokenValidator;
     private final java.util.Random random;
 
     @org.springframework.beans.factory.annotation.Autowired
@@ -79,6 +80,7 @@ public class AuthController {
         this.telemetryService = telemetryService;
         this.jdbcTemplate = jdbcTemplate;
         this.tokenRevocationService = tokenRevocationService;
+        this.oidcTokenValidator = new OidcTokenValidator();
         this.restTemplate = restTemplate != null ? restTemplate : new org.springframework.web.client.RestTemplate();
         this.random = random != null ? random : new java.security.SecureRandom();
     }
@@ -1251,106 +1253,43 @@ public class AuthController {
             return null;
         }
 
-        validateOidcTokenSignature(token);
-
-        try {
-            String[] parts = token.split("\\.");
-            if (parts.length != 3) {
-                throw new InvalidSignatureException("Invalid token format");
-            }
-            String payloadJson = new String(java.util.Base64.getUrlDecoder().decode(parts[1]), java.nio.charset.StandardCharsets.UTF_8);
-            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
-            com.fasterxml.jackson.databind.JsonNode claims = mapper.readTree(payloadJson);
-
-            // Validate 'iss' (Issuer) claim
-            if (!claims.has("iss") || claims.get("iss").isNull()) {
-                throw new MissingClaimException("OIDC token missing 'iss' claim");
-            }
-            String tokenIssuer = claims.get("iss").asText().trim();
-            if (!tokenIssuer.equalsIgnoreCase(moodleServerUrl.trim())) {
-                throw new InvalidClaimException("OIDC token issuer '" + tokenIssuer + "' does not match trusted Moodle provider '" + moodleServerUrl + "'");
-            }
-
-            // Validate 'aud' (Audience) claim
-            if (!claims.has("aud") || claims.get("aud").isNull()) {
-                throw new MissingClaimException("OIDC token missing 'aud' claim");
-            }
-            boolean audienceValid = false;
-            com.fasterxml.jackson.databind.JsonNode audNode = claims.get("aud");
-            if (audNode.isArray()) {
-                for (com.fasterxml.jackson.databind.JsonNode element : audNode) {
-                    if (moodleClientId.trim().equalsIgnoreCase(element.asText().trim())) {
-                        audienceValid = true;
-                        break;
-                    }
-                }
-            } else {
-                if (moodleClientId.trim().equalsIgnoreCase(audNode.asText().trim())) {
-                    audienceValid = true;
-                }
-            }
-            if (!audienceValid) {
-                throw new InvalidClaimException("OIDC token audience does not match application client ID '" + moodleClientId + "'");
-            }
-
-            String username = claims.has("username") ? claims.get("username").asText() :
-                             (claims.has("preferred_username") ? claims.get("preferred_username").asText() :
-                             (claims.has("sub") ? claims.get("sub").asText() : null));
-
-            if (username == null || username.trim().isEmpty()) {
-                throw new MissingClaimException("OIDC token missing 'username', 'preferred_username', or 'sub' claim");
-            }
-
-            String moodleRole = claims.has("moodle_role") ? claims.get("moodle_role").asText() :
-                              (claims.has("role") ? claims.get("role").asText() : "Пользователь");
-
-            String department = claims.has("department") ? claims.get("department").asText() :
-                              (claims.has("custom_department") ? claims.get("custom_department").asText() : "");
-            String email = claims.has("email") ? claims.get("email").asText() : "";
-            String fullName = claims.has("full_name") ? claims.get("full_name").asText() :
-                            (claims.has("name") ? claims.get("name").asText() : username);
-            boolean suspended = claims.has("suspended") ? claims.get("suspended").asBoolean() : false;
-            if (!suspended && claims.has("deleted")) {
-                suspended = claims.get("deleted").asBoolean();
-            }
-            String courses = claims.has("courses") ? claims.get("courses").asText() :
-                           (claims.has("custom_courses") ? claims.get("custom_courses").asText() : "");
-
-            return new MoodleProfile(username, moodleRole, department, email, fullName, courses, suspended);
-        } catch (com.eneik.epidemiology.auth.exceptions.OidcValidationException e) {
-            throw e;
-        } catch (com.eneik.epidemiology.auth.OidcValidationException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new com.eneik.epidemiology.auth.exceptions.OidcValidationException("Error extracting claims from OIDC ID token", e);
-        }
-    }
-
-    private void validateOidcTokenSignature(String token) {
         JwkProvider provider = getJwkProvider();
-        try {
-            String[] parts = token.split("\\.");
-            if (parts.length != 3) {
-                throw new InvalidSignatureException("Token does not have 3 parts");
-            }
-            String headerJson = new String(java.util.Base64.getUrlDecoder().decode(parts[0]), java.nio.charset.StandardCharsets.UTF_8);
-            com.fasterxml.jackson.databind.JsonNode headerNode = new com.fasterxml.jackson.databind.ObjectMapper().readTree(headerJson);
-            if (!headerNode.has("kid")) {
-                throw new InvalidSignatureException("Missing kid in token header");
-            }
-            String keyId = headerNode.get("kid").asText();
-            Jwk jwk = provider.get(keyId);
-            Algorithm algorithm = Algorithm.RSA256((RSAPublicKey) jwk.getPublicKey(), null);
-            DecodedJWT jwt = JWT.require(algorithm).build().verify(token);
+        OidcTokenValidationResult validationResult = oidcTokenValidator.validateOidcToken(
+                token,
+                provider,
+                moodleServerUrl,
+                moodleClientId
+        );
 
-            if (jwt.getExpiresAt() != null && jwt.getExpiresAt().before(new java.util.Date())) {
-                throw new InvalidSignatureException("Token is expired");
+        if (validationResult.isFailure()) {
+            com.eneik.epidemiology.auth.OidcValidationException ex = validationResult.failure().orElseThrow();
+            if (ex instanceof com.eneik.epidemiology.auth.OidcValidationException.OidcMissingClaimException e) {
+                throw new MissingClaimException(e.getMessage());
+            } else if (ex instanceof com.eneik.epidemiology.auth.OidcValidationException.OidcInvalidIssuerException e) {
+                throw new InvalidClaimException(e.getMessage());
+            } else if (ex instanceof com.eneik.epidemiology.auth.OidcValidationException.OidcInvalidAudienceException e) {
+                throw new InvalidClaimException(e.getMessage());
+            } else if (ex instanceof com.eneik.epidemiology.auth.OidcValidationException.OidcInvalidSignatureException e) {
+                throw new InvalidSignatureException(e.getMessage());
+            } else if (ex instanceof com.eneik.epidemiology.auth.OidcValidationException.OidcTokenExpiredException e) {
+                throw new InvalidSignatureException(e.getMessage());
+            } else if (ex instanceof com.eneik.epidemiology.auth.OidcValidationException.OidcMalformedTokenException e) {
+                throw new InvalidSignatureException(e.getMessage());
+            } else {
+                throw new com.eneik.epidemiology.auth.exceptions.OidcValidationException(ex.getMessage(), ex);
             }
-        } catch (com.auth0.jwk.JwkException | com.auth0.jwt.exceptions.JWTVerificationException e) {
-            throw new InvalidSignatureException("OIDC signature validation exception: " + e.getMessage(), e);
-        } catch (Exception e) {
-            throw new InvalidSignatureException("OIDC signature validation generic exception: " + e.getMessage(), e);
         }
+
+        OidcTokenValidationResult.OidcProfile oidcProf = validationResult.profile().orElseThrow();
+        return new MoodleProfile(
+                oidcProf.username(),
+                oidcProf.moodleRole(),
+                oidcProf.department(),
+                oidcProf.email(),
+                oidcProf.fullName(),
+                oidcProf.courses(),
+                oidcProf.suspended()
+        );
     }
 
     private String mapMoodleRole(String moodleRole) {
