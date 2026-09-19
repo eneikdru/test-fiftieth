@@ -219,4 +219,32 @@ public class JwtAuthenticationFilterTest {
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.error_code", is("UNAUTHORIZED")));
     }
+
+    @Test
+    @DisplayName("Given JWT token with array roles claim or authorities claim key, When JwtTokenProvider parses token, Then role is correctly extracted and granted 200 OK")
+    void testArrayAndFallbackRoleClaims_ExtractedAndGranted200() throws Exception {
+        JwtTokenProvider realTokenProvider = new JwtTokenProvider("default-secret-key-for-jwt-signing-2026-epidemiology-portal", 3600);
+
+        // Construct token manually with 'roles': ['RESEARCHER']
+        String tokenWithRolesArray = realTokenProvider.generateToken("user_roles_array", "RESEARCHER");
+
+        Mockito.when(jwtTokenProvider.validateToken(tokenWithRolesArray)).thenAnswer(invocation -> realTokenProvider.validateToken(tokenWithRolesArray));
+        Mockito.when(tokenRevocationService.isTokenRevoked(tokenWithRolesArray)).thenReturn(false);
+        Mockito.when(jwtTokenProvider.getUsername(tokenWithRolesArray)).thenAnswer(invocation -> realTokenProvider.getUsername(tokenWithRolesArray));
+        Mockito.when(jwtTokenProvider.getRole(tokenWithRolesArray)).thenAnswer(invocation -> realTokenProvider.getRole(tokenWithRolesArray));
+
+        Mockito.when(documentRepository.fullTextSearch(isNull(), Mockito.eq("PROTOCOL"), isNull(), isNull(), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(Collections.emptyList()));
+
+        mockMvc.perform(get("/api/v1/protocols")
+                .header("Authorization", "Bearer " + tokenWithRolesArray))
+                .andExpect(status().isOk());
+
+        // Verify direct claim extraction with array format
+        String jsonPayloadArray = "{\"sub\":\"user_arr\",\"roles\":[\"RESEARCHER\"],\"exp\":9999999999}";
+        org.junit.jupiter.api.Assertions.assertEquals("RESEARCHER", realTokenProvider.extractJsonValue(jsonPayloadArray, "roles"));
+
+        String jsonPayloadAuthObj = "{\"sub\":\"user_obj\",\"authorities\":[{\"authority\":\"ROLE_ADMIN\"}],\"exp\":9999999999}";
+        org.junit.jupiter.api.Assertions.assertEquals("ROLE_ADMIN", realTokenProvider.extractJsonValue(jsonPayloadAuthObj, "authorities"));
+    }
 }
