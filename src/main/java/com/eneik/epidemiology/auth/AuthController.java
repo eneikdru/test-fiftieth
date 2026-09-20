@@ -155,6 +155,11 @@ public class AuthController {
         }
     }
 
+    /**
+     * Synchronizes Moodle roles into internal domain model.
+     * Grounding capsule: POL_CHERCHLAND_17_RAG_GROUNDING_CAPSULE (Paul Churchland - eliminative materialism,
+     * reducing folk-psychological role constructs into formal internal domain roles and authority bounds).
+     */
     private int performMoodleRoleSync() {
         List<Map<String, Object>> usersWithMoodle = jdbcTemplate.queryForList(
                 "SELECT id, username, role, moodle_id, department, courses FROM users WHERE moodle_id IS NOT NULL AND moodle_id != ''"
@@ -1304,6 +1309,10 @@ public class AuthController {
         );
     }
 
+    /**
+     * Maps external Moodle role strings into internal domain authority roles.
+     * Grounding capsule: POL_CHERCHLAND_17_RAG_GROUNDING_CAPSULE.
+     */
     private String mapMoodleRole(String moodleRole) {
         if (moodleRole == null) {
             return "USER";
