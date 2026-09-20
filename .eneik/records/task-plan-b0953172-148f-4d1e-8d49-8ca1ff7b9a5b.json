@@ -1,0 +1,37 @@
+{
+  "epics": [
+    {
+      "existingEpicId": "3f39f1a7-d7cd-4c01-9a16-e951a621cca7",
+      "sixSigmaMetric": "Defect escape rate related to authentication and authorization",
+      "tocConstraintRef": "Authentication verification and Moodle role synchronization flow",
+      "sourceIndex": 0,
+      "requirements": [
+        "R1: Implement HTTP 401 error resolution for valid authenticated requests (Finding 1)",
+        "R2: Implement Moodle SSO role mapping and profile population (Finding 1 & 4)",
+        "R3: Provide explicitly descriptive PR review feedback and non-empty critical reasons when evaluating implementation (Finding 2)",
+        "R4: Include a mandatory Definition of Done (DoD) in task plans that explicitly mentions handling 400, 401, 403, or error conditions (Finding 3)"
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Resolve Moodle SSO, HTTP 401 defects, and methodological findings in single follow-up batch",
+          "roleTag": "BARCAN-TAG-09",
+          "jtbd": "When implementing the self-falsification findings for this epic, I want to fix the OIDC token extraction to populate the MoodleProfile and resolve the 401 error, and ensure methodological adherence to reporting and task planning rules, so that the authentication flow functions securely and team procedures are followed.",
+          "acceptanceCriteria": "Given a valid authenticated Moodle request, When it is processed by the OIDC token validation, Then the user receives a 200/201 response instead of a 401.\nGiven a decoded OIDC token, When processed by the system, Then the 'moodle_role' and 'department' claims are extracted and populated into the MoodleProfile.\nGiven an automated review or plan generation, When writing output, Then the criticalReason is informative and non-empty, and the task plan explicitly mentions 400, 401, 403, or error handling.",
+          "definitionOfDone": "Authentication returns 200/201 for valid requests and properly maps roles; the system gracefully handles invalid auth or parsing with 401, 403, or error status.",
+          "leanValue": "essential",
+          "cynefinDomain": "complicated",
+          "tocConstraintRef": "Token claims extraction logic in auth provider",
+          "sixSigmaMetric": "Authentication success rate and correct role mapping without 401 regression",
+          "hasUi": false,
+          "requirementRefs": [
+            "R1",
+            "R2",
+            "R3",
+            "R4"
+          ]
+        }
+      ]
+    }
+  ]
+}
