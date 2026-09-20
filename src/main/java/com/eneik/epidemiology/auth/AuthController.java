@@ -825,31 +825,43 @@ public class AuthController {
 
         MoodleProfile profile = null;
         boolean isServerError = false;
-        try {
-            profile = fetchMoodleProfile(request.moodle_token());
-        } catch (LmsServerException e) {
-            isServerError = true;
+        String token = request.moodle_token().trim();
+
+        if (token.startsWith("eyJ")) {
             try {
-                profile = fetchOidcProfile(request.moodle_token());
-            } catch (OidcValidationException validationException) {
-                log.warn("OIDC Validation Failure during SSO login server error fallback: {}", validationException.getMessage());
-                profile = null;
+                profile = fetchOidcProfile(token);
+            } catch (Exception e) {
+                log.debug("Direct OIDC token parsing skipped for Moodle SSO token: {}", e.getMessage());
             }
-        } catch (org.springframework.security.authentication.BadCredentialsException e) {
+        }
+
+        if (profile == null) {
             try {
-                profile = fetchOidcProfile(request.moodle_token());
-            } catch (OidcValidationException validationException) {
-                log.warn("OIDC Validation Failure during SSO login bad credentials fallback: {}", validationException.getMessage());
-                profile = null;
-            }
-        } catch (Exception e) {
-            log.warn("Moodle token fetch failed for user {}: {}", request.username(), e.getMessage());
-            isServerError = true;
-            try {
-                profile = fetchOidcProfile(request.moodle_token());
-            } catch (Exception validationException) {
-                log.warn("OIDC Validation Failure during SSO login fallback: {}", validationException.getMessage());
-                profile = null;
+                profile = fetchMoodleProfile(token);
+            } catch (LmsServerException e) {
+                isServerError = true;
+                try {
+                    profile = fetchOidcProfile(token);
+                } catch (OidcValidationException validationException) {
+                    log.warn("OIDC Validation Failure during SSO login server error fallback: {}", validationException.getMessage());
+                    profile = null;
+                }
+            } catch (org.springframework.security.authentication.BadCredentialsException e) {
+                try {
+                    profile = fetchOidcProfile(token);
+                } catch (OidcValidationException validationException) {
+                    log.warn("OIDC Validation Failure during SSO login bad credentials fallback: {}", validationException.getMessage());
+                    profile = null;
+                }
+            } catch (Exception e) {
+                log.warn("Moodle token fetch failed for user {}: {}", request.username(), e.getMessage());
+                isServerError = true;
+                try {
+                    profile = fetchOidcProfile(token);
+                } catch (Exception validationException) {
+                    log.warn("OIDC Validation Failure during SSO login fallback: {}", validationException.getMessage());
+                    profile = null;
+                }
             }
         }
 
