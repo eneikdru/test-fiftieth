@@ -101,6 +101,40 @@ class OidcTokenValidationResultTest {
     }
 
     @Test
+    @DisplayName("Given OIDC token with moodle_role and custom_department claims, When validated, Then extracts claims correctly into OidcProfile")
+    void testValidateOidcToken_CustomClaimsExtraction() {
+        Date futureExpiry = new Date(System.currentTimeMillis() + 3600000);
+        Algorithm algorithm = Algorithm.RSA256(rsaPublicKey, rsaPrivateKey);
+        String token = JWT.create()
+                .withKeyId("test-kid")
+                .withSubject("moodle_custom_user")
+                .withClaim("username", "moodle_custom_user")
+                .withClaim("moodle_role", "Старший исследователь")
+                .withClaim("custom_department", "Эпидемиологический мониторинг")
+                .withClaim("custom_courses", "EPID-201,EPID-202")
+                .withClaim("email", "custom@epidemiology-inst.ru")
+                .withClaim("full_name", "Спец Пользователь")
+                .withClaim("suspended", false)
+                .withIssuer(TRUSTED_ISSUER)
+                .withAudience(CLIENT_ID)
+                .withIssuedAt(new Date())
+                .withExpiresAt(futureExpiry)
+                .sign(algorithm);
+
+        OidcTokenValidationResult result = validator.validateOidcToken(token, jwkProvider, TRUSTED_ISSUER, CLIENT_ID);
+
+        assertTrue(result.isSuccess());
+        OidcTokenValidationResult.OidcProfile profile = result.profile().get();
+        assertEquals("moodle_custom_user", profile.username());
+        assertEquals("Старший исследователь", profile.moodleRole());
+        assertEquals("Эпидемиологический мониторинг", profile.department());
+        assertEquals("EPID-201,EPID-202", profile.courses());
+        assertEquals("custom@epidemiology-inst.ru", profile.email());
+        assertEquals("Спец Пользователь", profile.fullName());
+        assertFalse(profile.suspended());
+    }
+
+    @Test
     @DisplayName("Given an OIDC token missing 'iss' claim, When validated, Then returns Failure with OidcMissingClaimException")
     void testValidateOidcToken_MissingIssuer_ReturnsMissingClaimException() {
         Date futureExpiry = new Date(System.currentTimeMillis() + 3600000);
