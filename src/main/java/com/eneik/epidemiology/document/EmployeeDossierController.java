@@ -93,6 +93,11 @@ public class EmployeeDossierController {
     @PostMapping("/reports")
     @Transactional
     public ResponseEntity<?> generateDossierReport(@RequestBody(required = false) Map<String, Object> requestBody) {
+        org.springframework.security.core.Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated() || "anonymousUser".equals(authentication.getName())) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error_code", "UNAUTHORIZED", "message", "Требуется авторизация для выполнения данной операции."));
+        }
+
         if (requestBody == null || !requestBody.containsKey("employee_id") || !requestBody.containsKey("template_type")) {
             return ResponseEntity.badRequest().body(Map.of(
                     "error_code", "VALIDATION_ERROR",
@@ -146,11 +151,6 @@ public class EmployeeDossierController {
             if (requestBody.containsKey("include_doc_types") && requestBody.get("include_doc_types") != null) {
                  List<String> docTypes = (List<String>) requestBody.get("include_doc_types");
                  documents = documents.stream().filter(d -> docTypes.contains(d.getDocType())).toList();
-            }
-
-            org.springframework.security.core.Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-            if (authentication == null || !authentication.isAuthenticated() || "anonymousUser".equals(authentication.getName())) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error_code", "UNAUTHORIZED", "message", "Требуется авторизация для выполнения данной операции."));
             }
 
             String currentUsername = authentication.getName();
