@@ -270,13 +270,17 @@ public class EmployeeDossierController {
             return documents;
         }
         List<String> userCoursesList = currentUser.getCourses() != null && !currentUser.getCourses().isEmpty()
-                ? java.util.Arrays.asList(currentUser.getCourses().split("\\s*,\\s*"))
+                ? java.util.Arrays.stream(currentUser.getCourses().split("\\s*,\\s*")).map(String::trim).toList()
                 : java.util.Collections.emptyList();
         return documents.stream().filter(d -> {
             if (!"STRAIN_ISOLATION".equals(d.getDocType()) && !"REPORT".equals(d.getDocType())) return true;
             boolean isPublic = d.getAccessDepartment() == null && d.getAccessCourse() == null;
             boolean depMatch = d.getAccessDepartment() != null && d.getAccessDepartment().equals(currentUser.getDepartment());
-            boolean courseMatch = d.getAccessCourse() != null && userCoursesList.contains(d.getAccessCourse());
+            boolean courseMatch = false;
+            if (d.getAccessCourse() != null && !d.getAccessCourse().trim().isEmpty()) {
+                List<String> requiredCourses = java.util.Arrays.stream(d.getAccessCourse().split("\\s*,\\s*")).map(String::trim).toList();
+                courseMatch = requiredCourses.stream().anyMatch(userCoursesList::contains);
+            }
             return isPublic || depMatch || courseMatch;
         }).toList();
     }
@@ -290,9 +294,13 @@ public class EmployeeDossierController {
         }
         boolean depMatch = report.getAccessDepartment() != null && report.getAccessDepartment().equals(currentUser.getDepartment());
         List<String> userCoursesList = currentUser.getCourses() != null && !currentUser.getCourses().isEmpty()
-                ? java.util.Arrays.asList(currentUser.getCourses().split("\\s*,\\s*"))
+                ? java.util.Arrays.stream(currentUser.getCourses().split("\\s*,\\s*")).map(String::trim).toList()
                 : java.util.Collections.emptyList();
-        boolean courseMatch = report.getAccessCourse() != null && userCoursesList.contains(report.getAccessCourse());
+        boolean courseMatch = false;
+        if (report.getAccessCourse() != null && !report.getAccessCourse().trim().isEmpty()) {
+            List<String> requiredCourses = java.util.Arrays.stream(report.getAccessCourse().split("\\s*,\\s*")).map(String::trim).toList();
+            courseMatch = requiredCourses.stream().anyMatch(userCoursesList::contains);
+        }
         return !depMatch && !courseMatch;
     }
 

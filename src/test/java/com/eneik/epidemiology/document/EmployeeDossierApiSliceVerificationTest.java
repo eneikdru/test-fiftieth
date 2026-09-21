@@ -145,4 +145,28 @@ public class EmployeeDossierApiSliceVerificationTest {
         org.junit.jupiter.api.Assertions.assertTrue(pdfBytes.length > 4);
         org.junit.jupiter.api.Assertions.assertEquals("%PDF", new String(pdfBytes, 0, 4));
     }
+
+    @WithMockUser(username = "moodle_user", roles = "USER")
+    @Test
+    @DisplayName("Given a user with Moodle courses, When querying restricted documents and reports, Then access is granted based on course match.")
+    void testMoodleCourseBasedAccessControl() throws Exception {
+        User moodleUser = new User();
+        moodleUser.setUsername("moodle_user");
+        moodleUser.setPasswordHash("hash");
+        moodleUser.setRole("USER");
+        moodleUser.setDepartment("Вирусология");
+        moodleUser.setCourses("EPID-101, VIRO-202");
+        moodleUser.setCreatedAt(java.time.OffsetDateTime.now());
+        userRepository.save(moodleUser);
+
+        EmployeeDocument restrictedDoc = new EmployeeDocument("EMP-102", "REPORT", "Закрытый аналитический отчет", LocalDate.of(2024, 6, 1), "Секретно");
+        restrictedDoc.setAccessCourse("VIRO-202");
+        employeeDocumentRepository.save(restrictedDoc);
+
+        mockMvc.perform(get("/api/v1/dossier/documents")
+                        .param("employee_id", "EMP-102"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].employee_id").value("EMP-102"));
+    }
 }

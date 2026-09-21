@@ -45,11 +45,14 @@ public class StrainController {
         boolean isPublic = strain.getAccessDepartment() == null && strain.getAccessCourse() == null;
         boolean matchesDepartment = strain.getAccessDepartment() != null && strain.getAccessDepartment().equals(user.getDepartment());
         boolean matchesCourse = false;
-        if (strain.getAccessCourse() != null && user.getCourses() != null) {
+        if (strain.getAccessCourse() != null && !strain.getAccessCourse().trim().isEmpty() && user.getCourses() != null && !user.getCourses().trim().isEmpty()) {
             List<String> userCourses = Arrays.stream(user.getCourses().split(","))
                     .map(String::trim)
                     .collect(Collectors.toList());
-            matchesCourse = userCourses.contains(strain.getAccessCourse());
+            List<String> strainCourses = Arrays.stream(strain.getAccessCourse().split(","))
+                    .map(String::trim)
+                    .collect(Collectors.toList());
+            matchesCourse = strainCourses.stream().anyMatch(userCourses::contains);
         }
 
         return isPublic || matchesDepartment || matchesCourse;
