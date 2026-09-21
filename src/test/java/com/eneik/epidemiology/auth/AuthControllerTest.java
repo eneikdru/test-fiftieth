@@ -972,4 +972,28 @@ class AuthControllerTest {
                 .andExpect(jsonPath("$.access_token", notNullValue()))
                 .andExpect(jsonPath("$.user.username", is("timeout_user")));
     }
+
+    @Test
+    @org.springframework.security.test.context.support.WithMockUser(username = "admin_user", roles = "ADMIN")
+    @DisplayName("Given users with Moodle roles, When sync-roles endpoint is called by an authenticated admin, Then performs role synchronization and returns synced count")
+    void testSyncMoodleRoles_ActivelyUpdatesRolesAndReturnsCount() throws Exception {
+        User moodleUser = userService.createUserWithMoodle(
+                "moodle_sync_user",
+                "Password123!",
+                "moodle_sync@test.ru",
+                "Moodle Sync User",
+                "USER",
+                "instructor_role",
+                "Эпидемиология",
+                "EPID-101"
+        );
+
+        mockMvc.perform(post("/api/v1/auth/moodle/sync-roles"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success", is(true)))
+                .andExpect(jsonPath("$.synced_users_count", notNullValue()));
+
+        User updatedUser = userService.findByUsername("moodle_sync_user").orElseThrow();
+        org.junit.jupiter.api.Assertions.assertEquals("EPIDEMIOLOGIST", updatedUser.getRole());
+    }
 }
