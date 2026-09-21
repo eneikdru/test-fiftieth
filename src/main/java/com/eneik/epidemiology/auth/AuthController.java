@@ -160,7 +160,7 @@ public class AuthController {
      * Grounding capsule: POL_CHERCHLAND_17_RAG_GROUNDING_CAPSULE
      * Source Row: 17
      * Publication Anchor: Matter and Consciousness / A Neurocomputational Perspective (Paul Churchland - eliminative materialism)
-     * Relevance Score: 3.000952
+     * Relevance Score: 3.000942
      * Defect Taxonomy Item: D014 RAG hallucination
      */
     private int performMoodleRoleSync() {
@@ -1317,7 +1317,7 @@ public class AuthController {
      * Grounding capsule: POL_CHERCHLAND_17_RAG_GROUNDING_CAPSULE
      * Source Row: 17
      * Publication Anchor: Matter and Consciousness / A Neurocomputational Perspective (Paul Churchland - eliminative materialism)
-     * Relevance Score: 3.000952
+     * Relevance Score: 3.000942
      * Defect Taxonomy Item: D014 RAG hallucination
      */
     private String mapMoodleRole(String moodleRole) {
