@@ -1,0 +1,33 @@
+{
+  "epics": [
+    {
+      "existingEpicId": "3f39f1a7-d7cd-4c01-9a16-e951a621cca7",
+      "sixSigmaMetric": "100% of confirmed self-falsification findings resolved without regressions",
+      "tocConstraintRef": "Test failures and port conflicts blocking CI pipeline",
+      "sourceIndex": 0,
+      "requirements": [
+        "R1: Fix HTTP 401 errors on endpoints that must answer 200/201 to resolve the 15 test failures",
+        "R2: Correct the automated code review pipeline script to stop approving non-existent PRs (e.g., PR #0) to avoid stubs",
+        "R3: Investigate and stop the actual mechanism or process that is occupying port 18080 instead of merely parameterizing the docker-compose binding"
+      ],
+      "coverageComplete": true,
+      "slices": [
+        {
+          "title": "Resolve Self-Falsification Batch Findings",
+          "roleTag": "BARCAN-TAG-02",
+          "jtbd": "When implementing the fixes for this epic, I want to resolve the HTTP 401 errors, fix the review stub, and stop the process occupying port 18080, so that the CI pipeline passes reliably.",
+          "acceptanceCriteria": "Given the API is accessed with valid credentials, When the request is processed, Then it should answer with 200/201 instead of 401.\nGiven the automated review pipeline executes, When it processes the review queue, Then it should fail or skip non-existent PRs like #0 instead of claiming approval.\nGiven the application starts, When it attempts to bind to port 18080, Then it should succeed because the actual mechanism occupying the port has been identified and altered, not just bypassed.",
+          "leanValue": "essential",
+          "cynefinDomain": "complicated",
+          "tocConstraintRef": "Multiple distinct root causes (auth, review pipeline, port bindings)",
+          "sixSigmaMetric": "0 unresolved findings and 100% test pass rate",
+          "requirementRefs": [
+            "R1",
+            "R2",
+            "R3"
+          ]
+        }
+      ]
+    }
+  ]
+}
